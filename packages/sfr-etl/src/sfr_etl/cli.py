@@ -11,6 +11,7 @@ from sfr_core.models import Institution
 from sfr_core.settings import Settings, get_settings
 from sfr_etl.client import OpenAlexClient
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
+from sfr_etl.works import ingest_works
 
 log = structlog.get_logger(__name__)
 
@@ -121,6 +122,32 @@ def etl_authors(
     typer.echo(
         f"Ingested {stats['total']} authors "
         f"({stats['candidates']} supervisor candidates) "
+        f"[network={client.n_network_requests}, cache_hits={client.n_cache_hits}]"
+    )
+
+
+@etl_app.command("works")
+def etl_works(
+    since_years: Annotated[int | None, typer.Option(help="Recency window in years")] = None,
+    per_author: Annotated[int | None, typer.Option(help="Max works stored per author")] = None,
+    refresh: Annotated[bool, typer.Option("--refresh", help="Bypass the raw cache")] = False,
+) -> None:
+    """Ingest works (recent + most cited) for all supervisor candidates."""
+    settings = _load_settings()
+    upgrade_to_head(settings.sfr_db_url)
+    client = _make_client(settings, refresh)
+    engine = make_engine(settings.sfr_db_url)
+
+    with session_scope(engine) as session:
+        totals = ingest_works(
+            session,
+            client,
+            since_years=since_years if since_years is not None else settings.works_since_years,
+            per_author=per_author if per_author is not None else settings.works_per_author,
+        )
+    typer.echo(
+        f"Ingested {totals['works']} works for {totals['authors']} candidates "
+        f"({totals['with_abstract']} with abstract) "
         f"[network={client.n_network_requests}, cache_hits={client.n_cache_hits}]"
     )
 

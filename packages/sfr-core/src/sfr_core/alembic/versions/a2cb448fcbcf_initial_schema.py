@@ -119,9 +119,10 @@ def upgrade() -> None:
             ["authors.id"],
         ),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("author_id", "openalex_id"),
     )
     op.create_index(op.f("ix_works_author_id"), "works", ["author_id"], unique=False)
-    op.create_index(op.f("ix_works_openalex_id"), "works", ["openalex_id"], unique=True)
+    op.create_index(op.f("ix_works_openalex_id"), "works", ["openalex_id"], unique=False)
     # ### end Alembic commands ###
 
 

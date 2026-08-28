@@ -3,7 +3,17 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -56,9 +66,12 @@ class Author(Base):
 
 class Work(Base):
     __tablename__ = "works"
+    # One row per (profile author, work): the same work may legitimately appear in
+    # several candidates' profiles (co-authorship), so uniqueness is composite.
+    __table_args__ = (UniqueConstraint("author_id", "openalex_id"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    openalex_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    openalex_id: Mapped[str] = mapped_column(String(64), index=True)
     # SFR-0: single "whose profile this work counts towards" link (SPEC §3),
     # not full many-to-many authorship.
     author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"), index=True)
