@@ -64,6 +64,22 @@ def test_short_profile_extended_from_abstract() -> None:
     assert len(text) >= 300
 
 
+def test_overshoot_cut_at_word_boundary() -> None:
+    # forces the extension pass to overshoot a tight max_chars
+    works = [work("Одна работа", abstract="длинноеслово " * 100)]
+    text = build_profile_text(
+        name="Иван Петров",
+        institution_name=None,
+        topics=[],
+        works=works,
+        min_chars=400,
+        max_chars=420,
+    )
+    assert len(text) <= 420
+    assert not text.endswith("длинноесл")  # no mid-word cut
+    assert text.endswith("…")
+
+
 def test_source_language_preserved() -> None:
     works = [work("Квантовая запутанность в фотонных системах", abstract="Мы исследуем " * 30)]
     text = build(works=works)

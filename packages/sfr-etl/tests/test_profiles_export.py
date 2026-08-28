@@ -12,7 +12,7 @@ from sfr_core.settings import Settings
 from sfr_etl.export import export_profiles_jsonl
 from sfr_etl.ingest import upsert_author, upsert_institution
 from sfr_etl.profiles import build_profiles
-from sfr_etl.report import compute_stats, render_report, sample_profiles
+from sfr_etl.report import compute_stats, read_notes, render_report, sample_profiles
 from sfr_etl.works import upsert_work
 
 SETTINGS = Settings(_env_file=None, openalex_mailto="test@example.com")  # type: ignore[call-arg]
@@ -111,3 +111,43 @@ def test_report_stats_and_render(engine: Engine) -> None:
     assert "# REPORT" in markdown
     assert "Иван Петров" in markdown
     assert "Топ-15 тем" in markdown
+
+
+def test_render_report_shows_cold_and_warm_runs_and_notes() -> None:
+    run_stats = {
+        "etl works": [
+            {"seconds": 310.6, "network": 523, "cache_hits": 0},
+            {"seconds": 1.3, "network": 0, "cache_hits": 522},
+        ]
+    }
+    empty_stats = {
+        "n_authors": 0,
+        "n_candidates": 0,
+        "n_with_h_index": 0,
+        "n_candidates_with_abstract": 0,
+        "n_candidates_with_recent_work": 0,
+        "median_works_count": 0,
+        "median_h_index": 0,
+        "median_works_count_candidates": 0,
+        "median_h_index_candidates": 0,
+        "n_works": 0,
+        "n_works_with_abstract": 0,
+        "n_profiles": 0,
+        "n_profiles_in_range": 0,
+        "profile_len_min": 0,
+        "profile_len_max": 0,
+        "top_topics": [],
+        "duplicate_candidate_names": [],
+        "n_candidates_without_works": 0,
+        "n_mega_collab_authors": 0,
+    }
+    markdown = render_report(empty_stats, [], run_stats, 0, 0.0, notes="## Ручной разбор\n\ntext")
+    assert "первый прогон — 310.6 c, network=523" in markdown
+    assert "повторный (кэш) — 1.3 c, network=0" in markdown
+    assert markdown.rstrip().endswith("text")
+
+
+def test_read_notes_missing_file(tmp_path: Path) -> None:
+    assert read_notes(tmp_path / "nope.md") == ""
+    (tmp_path / "notes.md").write_text("hi", encoding="utf-8")
+    assert read_notes(tmp_path / "notes.md") == "hi"

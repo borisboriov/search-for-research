@@ -16,7 +16,8 @@ uv run sfr institutions resolve "Moscow Institute of Physics and Technology"
 make etl                        # авторы → работы → профили → data/exports/profiles.jsonl
 ```
 
-Отчёт о прогоне: `make report` → `docs/REPORT.md`.
+Отчёт о прогоне: `make report` → `docs/REPORT.md` (статистика генерируется,
+ручной разбор и DoD-чеклист живут в `docs/REPORT_notes.md` и подклеиваются в конец).
 
 ## Команды
 

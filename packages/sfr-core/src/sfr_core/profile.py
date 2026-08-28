@@ -9,7 +9,6 @@ from dataclasses import dataclass
 FRAGMENT_CHARS = 220
 MAX_TOPICS = 7
 MAX_WORKS = 10
-MIN_WORKS_PREFERRED = 5
 
 
 @dataclass(frozen=True)
@@ -97,4 +96,9 @@ def build_profile_text(
             if len(text) >= min_chars:
                 break
 
-    return text[:max_chars]
+    if len(text) > max_chars:
+        # The extension pass can overshoot: cut back at a whitespace boundary, not mid-word.
+        cut = text[:max_chars]
+        boundary = max(cut.rfind(" "), cut.rfind("\n"))
+        text = cut[:boundary] + "…" if boundary > 0 else cut
+    return text

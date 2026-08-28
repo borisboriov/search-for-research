@@ -123,6 +123,7 @@ def render_report(
     run_stats: dict[str, Any],
     cache_files: int,
     cache_mb: float,
+    notes: str = "",
 ) -> str:
     now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     lines: list[str] = [
@@ -173,11 +174,11 @@ def render_report(
         "",
         f"- Кэш raw-ответов: {cache_files} файлов, {cache_mb:.1f} MiB",
     ]
-    for step, meta in run_stats.items():
-        lines.append(
-            f"- `{step}`: {meta.get('seconds', '?')} c, network={meta.get('network', '?')}, "
-            f"cache_hits={meta.get('cache_hits', '?')}"
-        )
+    for step, history in run_stats.items():
+        runs = history if isinstance(history, list) else [history]
+        lines.append(f"- `{step}`: первый прогон — {_format_run(runs[0])}")
+        if len(runs) > 1:
+            lines.append(f"  повторный (кэш) — {_format_run(runs[-1])}")
     lines += [
         "",
         "## Проблемы данных (автоматические проверки)",
@@ -194,7 +195,21 @@ def render_report(
         f"из {stats['n_works']}",
         "",
     ]
+    if notes:
+        lines += [notes.strip(), ""]
     return "\n".join(lines)
+
+
+def read_notes(path: Path) -> str:
+    """Hand-written analysis appended to the generated report (survives regeneration)."""
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def _format_run(run: dict[str, Any]) -> str:
+    text = f"{run.get('seconds', '?')} c"
+    if "network" in run:
+        text += f", network={run['network']}, cache_hits={run.get('cache_hits', '?')}"
+    return text
 
 
 def _pct(part: int, total: int) -> str:

@@ -19,6 +19,7 @@ from sfr_etl.profiles import build_profiles
 from sfr_etl.report import (
     cache_size_info,
     compute_stats,
+    read_notes,
     read_run_stats,
     render_report,
     sample_profiles,
@@ -57,7 +58,11 @@ def _make_client(settings: Settings, refresh: bool) -> OpenAlexClient:
 def _record_run_stats(
     settings: Settings, step: str, seconds: float, client: OpenAlexClient | None = None
 ) -> None:
-    """Persist per-step run metadata (for `sfr report`)."""
+    """Append per-step run metadata (for `sfr report`).
+
+    History is kept, not overwritten: the report shows the cold first run and the
+    latest (cache-warm) one, which is exactly what the DoD asks about.
+    """
     path = settings.data_dir / "run_stats.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     stats = read_run_stats(path)
@@ -65,8 +70,12 @@ def _record_run_stats(
     if client is not None:
         entry["network"] = client.n_network_requests
         entry["cache_hits"] = client.n_cache_hits
-    stats[step] = entry
-    path.write_text(json.dumps(stats, indent=2), encoding="utf-8")
+    history = stats.get(step)
+    if not isinstance(history, list):
+        history = [history] if history else []
+    history.append(entry)
+    stats[step] = history
+    path.write_text(json.dumps(stats, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def _select_institution(session_institutions: list[Institution], wanted: str | None) -> Institution:
@@ -230,9 +239,11 @@ def report(
         samples = sample_profiles(session)
     run_stats = read_run_stats(settings.data_dir / "run_stats.json")
     cache_files, cache_mb = cache_size_info(settings.raw_cache_dir)
+    notes = read_notes(out.parent / "REPORT_notes.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
-        render_report(stats, samples, run_stats, cache_files, cache_mb), encoding="utf-8"
+        render_report(stats, samples, run_stats, cache_files, cache_mb, notes),
+        encoding="utf-8",
     )
     typer.echo(f"Report written to {out}")
 
