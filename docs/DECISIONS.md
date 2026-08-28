@@ -17,13 +17,16 @@ ruff/mypy/pytest/coverage настроены один раз в корне, а �
 **Почему:** один источник настроек, `make lint`/`typecheck`/`test` работают из корня.
 **Альтернативы:** по-пакетные конфиги — дублирование и рассинхрон.
 
-## 2026-08-28 — пин Python 3.12 (.python-version)
+## 2026-08-28 — macOS: UF_HIDDEN на .venv ломает editable-импорты → `make unhide`
 
-На macOS uv помечает `.venv` флагом `hidden`, а Python 3.13 (site.py) пропускает
-hidden `.pth`-файлы — editable-пакеты workspace переставали импортироваться.
-**Почему:** Python 3.12 не имеет этой проверки; SPEC требует «3.12+», CI и так на 3.12.
-**Альтернативы:** `chflags nohidden` после каждого sync (хрупко), не-editable установка
-(неудобно при разработке).
+На macOS uv помечает содержимое `.venv` флагом `UF_HIDDEN`, а CPython (3.13 и
+бэкпорт в 3.12.13) пропускает hidden `.pth`-файлы в site-packages — editable-пакеты
+workspace молча перестают импортироваться (`ModuleNotFoundError: sfr_core`).
+**Решение:** цель `unhide` в Makefile (`chflags -R nohidden .venv`), прогоняется перед
+всеми uv-командами; на Linux/CI — no-op. Плюс пин Python 3.12 (`.python-version`) —
+версия из SPEC и CI.
+**Альтернативы:** не-editable установка (`--no-editable`) — неудобно при разработке;
+PYTHONPATH-хаки — маскируют проблему.
 
 ## 2026-08-28 — сверка с реальным OpenAlex API (пробные запросы)
 
