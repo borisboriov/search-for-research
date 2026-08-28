@@ -15,7 +15,7 @@ from sfr_etl.client import OpenAlexClient
 
 log = structlog.get_logger(__name__)
 
-_CYRILLIC_RE = re.compile("[а-яА-ЯёЁ]")  # noqa: RUF001 — intentional Cyrillic range
+_CYRILLIC_RE = re.compile("[а-яА-ЯёЁ]")
 
 
 def short_id(openalex_url: str) -> str:
