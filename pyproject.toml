@@ -42,6 +42,9 @@ select = [
     "RUF", # ruff-specific
 ]
 
+[tool.ruff.lint.isort]
+known-first-party = ["sfr_core", "sfr_etl"]
+
 # ---------------------------------------------------------------------------
 # Mypy: strict for sfr_core, basic for sfr_etl (per SPEC §2)
 # ---------------------------------------------------------------------------
