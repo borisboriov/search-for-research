@@ -219,3 +219,9 @@ __marimo__/
 
 # JetBrains
 .idea/
+
+# scratch
+_to_delete/
+
+# SFR data: raw API cache, sqlite, exports
+data/

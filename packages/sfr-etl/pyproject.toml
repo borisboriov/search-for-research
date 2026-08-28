@@ -1,0 +1,22 @@
+[project]
+name = "sfr-etl"
+version = "0.1.0"
+description = "Search For Research ETL: OpenAlex client, ingest, profile building, CLI"
+requires-python = ">=3.12"
+dependencies = [
+    "sfr-core",
+    "httpx>=0.27",
+    "tenacity>=9.0",
+    "typer>=0.12",
+    "structlog>=24.4",
+]
+
+[project.scripts]
+sfr = "sfr_etl.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sfr_etl"]
