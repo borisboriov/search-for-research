@@ -29,8 +29,10 @@ class ApiSettings(BaseSettings):
     index_dir: Path | None = None
 
     # "We found nobody confident enough" — a warning, not a refusal (SFR-1, NEXT.md).
-    # Calibrated in SFR-2 §4; see docs/SFR2_REPORT.md for the table behind the number.
-    score_threshold: float = 0.35
+    # 0.27 is the SFR-2 recalibration on 17 confirmed out-of-domain queries: it catches
+    # 17/17 of them and cuts none of the 26 real ones, with ~0.06 of margin on each side.
+    # It belongs to the `frida_clean` index — mpnet's own scale calibrates to 0.43.
+    score_threshold: float = 0.27
 
     default_k: int = 10
     max_k: int = 50

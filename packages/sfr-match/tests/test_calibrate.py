@@ -47,7 +47,7 @@ def test_row_counts_wrong_cuts_and_caught_ood() -> None:
     ]
 
 
-def test_recommendation_is_the_highest_threshold_that_cuts_no_in_domain_query() -> None:
+def test_recommendation_never_cuts_a_real_query() -> None:
     rows = calibrate(
         {"q1": 0.34, "q2": 0.50},
         {},
@@ -58,6 +58,23 @@ def test_recommendation_is_the_highest_threshold_that_cuts_no_in_domain_query() 
     assert best is not None
     assert best.threshold == 0.34  # 0.40 would wrongly cut q1
     assert best.ood_caught == 2
+
+
+def test_recommendation_sits_in_the_middle_of_the_safe_plateau() -> None:
+    """Separated distributions leave a whole interval; the edge of it is fragile."""
+    rows = calibrate({"q1": 0.50}, {}, {"o1": 0.20}, [0.21, 0.25, 0.30, 0.35, 0.40, 0.45, 0.55])
+    best = recommend(rows)
+    assert best is not None
+    assert best.ood_caught == 1
+    assert best.threshold == 0.35  # middle of 0.21..0.45, not 0.45
+
+
+def test_edge_queries_are_spared_when_that_costs_no_coverage() -> None:
+    rows = calibrate({"q1": 0.50}, {"q2": 0.30}, {"o1": 0.20}, [0.25, 0.28, 0.35])
+    best = recommend(rows)
+    assert best is not None
+    assert best.false_cuts_edge == 0
+    assert best.ood_caught == 1
 
 
 def test_no_recommendation_when_every_threshold_cuts_something() -> None:

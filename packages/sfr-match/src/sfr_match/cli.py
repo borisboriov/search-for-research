@@ -285,7 +285,7 @@ def stats(profiles_path: ProfilesOpt = DEFAULT_PROFILES_PATH) -> None:
 SFR2_RUNS_DIR = Path("data/eval/runs_sfr2")
 SFR2_OOD_RUNS_DIR = Path("data/eval/runs_ood")
 SFR2_INDEX_ROOT = Path("data/indexes_sfr2")
-SFR1_THRESHOLD = 0.35
+SFR1_THRESHOLD = 0.35  # what SFR-2 recalibrated away from
 
 RunsOpt = Annotated[Path, typer.Option("--runs-dir")]
 OodRunsOpt = Annotated[Path, typer.Option("--ood-runs-dir")]

@@ -5,9 +5,14 @@ each of them has its own score scale. Calibration therefore takes the top-1 scor
 of one run over real queries and one run over queries confirmed to have no answer
 in the corpus, and reports what every candidate threshold would cost.
 
-Criterion: no false cut on in-domain queries, and as much of the out-of-domain set
-caught as that allows. The threshold is a warning, not a refusal (SFR-1) — but a
-warning shown on a query that did have a good answer is still a wrong warning.
+Criterion: no false cut on real queries (in-domain and edge), and as much of the
+out-of-domain set caught as that allows. The threshold is a warning, not a refusal
+(SFR-1) — but a warning shown on a query that did have a good answer is still wrong.
+
+When several thresholds achieve the same coverage — which happens as soon as the two
+score distributions actually separate — the middle of that plateau is taken, not its
+upper edge: a threshold pressed against the lowest real query is one unlucky query
+away from being wrong, in a set of 22.
 """
 
 from dataclasses import dataclass
@@ -71,6 +76,18 @@ def calibrate(
 
 
 def recommend(rows: list[ThresholdRow]) -> ThresholdRow | None:
-    """Highest threshold that cuts no in-domain query — OOD coverage only grows with it."""
-    safe = [row for row in rows if row.is_safe]
-    return max(safe, key=lambda row: (row.ood_caught, row.threshold)) if safe else None
+    """Best coverage among thresholds that cut nothing real, taken at maximum margin.
+
+    Prefers thresholds that spare edge queries too; falls back to «in-domain only»
+    if sparing edge queries costs coverage.
+    """
+    for candidates in (
+        [row for row in rows if row.is_safe and row.false_cuts_edge == 0],
+        [row for row in rows if row.is_safe],
+    ):
+        if not candidates:
+            continue
+        best_coverage = max(row.ood_caught for row in candidates)
+        plateau = [row for row in candidates if row.ood_caught == best_coverage]
+        return plateau[len(plateau) // 2]
+    return None
