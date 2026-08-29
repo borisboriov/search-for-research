@@ -6,11 +6,12 @@ description = "Search For Research — cross-university research supervisor matc
 requires-python = ">=3.12"
 
 [tool.uv.workspace]
-members = ["packages/sfr-core", "packages/sfr-etl"]
+members = ["packages/sfr-core", "packages/sfr-etl", "packages/sfr-match"]
 
 [tool.uv.sources]
 sfr-core = { workspace = true }
 sfr-etl = { workspace = true }
+sfr-match = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -45,14 +46,14 @@ select = [
 ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["sfr_core", "sfr_etl"]
+known-first-party = ["sfr_core", "sfr_etl", "sfr_match"]
 
 # ---------------------------------------------------------------------------
 # Mypy: strict for sfr_core, basic for sfr_etl (per SPEC §2)
 # ---------------------------------------------------------------------------
 [tool.mypy]
 python_version = "3.12"
-mypy_path = ["packages/sfr-core/src", "packages/sfr-etl/src"]
+mypy_path = ["packages/sfr-core/src", "packages/sfr-etl/src", "packages/sfr-match/src"]
 explicit_package_bases = true
 namespace_packages = true
 warn_unused_configs = true
@@ -64,20 +65,27 @@ check_untyped_defs = true
 module = "sfr_core.*"
 strict = true
 
+# rank-bm25 ships no py.typed marker.
+[[tool.mypy.overrides]]
+module = "rank_bm25.*"
+ignore_missing_imports = true
+
 # ---------------------------------------------------------------------------
 # Pytest + coverage (threshold per SPEC §5: pure logic >= 80%)
 # ---------------------------------------------------------------------------
 [tool.pytest.ini_options]
-testpaths = ["packages/sfr-core/tests", "packages/sfr-etl/tests"]
-addopts = "--cov=sfr_core --cov=sfr_etl --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["packages/sfr-core/tests", "packages/sfr-etl/tests", "packages/sfr-match/tests"]
+addopts = "--cov=sfr_core --cov=sfr_etl --cov=sfr_match --cov-report=term-missing --cov-fail-under=80"
 markers = [
     "integration: live OpenAlex API smoke tests (excluded in CI)",
+    "slow: downloads/runs a real embedding model (excluded in CI)",
 ]
 
 [tool.coverage.run]
 # CLI wiring and alembic migrations are excluded from the coverage target (SPEC §5).
 omit = [
     "*/sfr_etl/cli.py",
+    "*/sfr_match/cli.py",
     "*/alembic/*",
 ]
 
