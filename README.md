@@ -10,6 +10,10 @@
 eval-харнесс), golden set из 30 запросов студентов, сравнение 5 вариантов
 (4 модели + BM25) × чистка profile_text. Результат — `docs/SFR1_REPORT.md`.
 
+**Итерация SFR-2** — сервис поиска: `apps/api` (FastAPI `/api/match`), контейнер,
+FAISS на пути поиска в Linux, перекалиброванный порог «мы никого не нашли» и
+эксперимент о том, что класть в индекс. Результат — `docs/SFR2_REPORT.md`.
+
 ## Quickstart
 
 ```bash
@@ -38,6 +42,11 @@ make etl                        # авторы → работы → профил
 | `make eval` | Полный прогон мини-теста: индексы → golden set → пул → отчёт |
 | `make eval-report` | Только перегенерация `docs/SFR1_REPORT.md` |
 | `make test-slow` | Смоук-тест с настоящей моделью (не гоняется в CI) |
+| `make index-sfr2` | Шесть индексов SFR-2: frida/mpnet × три состава `profile_text` |
+| `make eval-sfr2` | Воспроизведение цифр `docs/SFR2_REPORT.md` (нужны индексы) |
+| `make api` | uvicorn на `localhost:8000` |
+| `make docker-build` / `make docker-up` / `make docker-down` | Контейнер с API |
+| `make bench` | Замер ресурсов и латентности → `docs/sfr2_resources.json` |
 
 CLI-пайплайн по шагам:
 
@@ -63,6 +72,18 @@ uv run sfr-match report                      # → docs/SFR1_REPORT.md
 Флаг `--clean` строит вариант с очищенным `profile_text` (LaTeX-мусор и
 «аннотации-списки авторов» — проблемы №1–2 из `docs/REPORT.md`).
 
+### Сервис поиска (SFR-2)
+
+```bash
+make index-sfr2                              # офлайн-сборка индексов (API их не строит)
+make api                                     # или make docker-up
+curl -s localhost:8000/api/health | jq
+curl -s localhost:8000/api/match -H 'content-type: application/json' \
+  -d '{"query":"нейросети для медицинских изображений","k":5}' | jq
+```
+
+Подробности — `apps/api/README.md`. Настройки сервиса: переменные `SFR_API_*`.
+
 ## Структура
 
 ```
@@ -70,9 +91,11 @@ packages/sfr-core/   # доменное ядро: модели SQLAlchemy, на�
 packages/sfr-etl/    # клиент OpenAlex, ингест, сборка профилей, CLI `sfr`
 packages/sfr-match/  # индекс, поиск, eval-харнесс, CLI `sfr-match`
                      #   eval/ — golden set и судейские оценки (в git, это актив)
-apps/api/, apps/web/ # заглушки под SFR-1/2 (FastAPI, Next.js)
+apps/api/            # FastAPI-сервис поиска (SFR-2): /api/match, /api/supervisors, /api/health
+apps/web/            # заглушка под SFR-3 (Next.js)
+scripts/             # bench_api.py — замер ресурсов контейнера
 data/                # gitignored: raw-кэш API, SQLite, экспорты, индексы, прогоны eval
-docs/                # DECISIONS.md, REPORT.md, SFR1_REPORT.md, NEXT.md
+docs/                # DECISIONS.md, REPORT.md, SFR1_REPORT.md, SFR2_REPORT.md, NEXT.md
 ```
 
 Требования: Python 3.12+, [uv](https://docs.astral.sh/uv/).

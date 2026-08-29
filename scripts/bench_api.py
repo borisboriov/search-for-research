@@ -38,6 +38,14 @@ QUERIES = [
 ]
 BASE_URL = "http://127.0.0.1:8000"
 
+# Shown in the report as «запрос → ответ»: one broad, one narrow, one deliberately
+# outside the corpus (that one must come back with below_threshold = true).
+EXAMPLE_QUERIES = [
+    "нейросети для медицинских изображений",
+    "нейтринные эксперименты и безнейтринный двойной бета-распад",
+    "как самому починить стиральную машину, которая не сливает воду",
+]
+
 
 def percentile(values: list[float], share: float) -> float:
     ordered = sorted(values)
@@ -125,6 +133,34 @@ def rankings() -> dict[str, list[tuple[str, float]]]:
         }
 
 
+def examples(k: int = 5) -> list[dict[str, Any]]:
+    """Full API answers for the report — the same shape a front-end would render."""
+    captured = []
+    with httpx.Client() as client:
+        for query in EXAMPLE_QUERIES:
+            _, body = ask(client, query, k=k)
+            captured.append(
+                {
+                    "request": {"query": query, "k": k},
+                    "took_ms": body["took_ms"],
+                    "below_threshold": body["below_threshold"],
+                    "index_version": body["index_version"],
+                    "results": [
+                        {
+                            "rank": hit["rank"],
+                            "name": hit["name"],
+                            "score": hit["score"],
+                            "institution": hit["institution"],
+                            "h_index": hit["h_index"],
+                            "topics": hit["topics"],
+                        }
+                        for hit in body["results"]
+                    ],
+                }
+            )
+    return captured
+
+
 def compose_up(model: str, search_backend: str) -> None:
     run(
         ["docker", "compose", "up", "-d", "--force-recreate"],
@@ -187,6 +223,7 @@ def bench_model(model: str, requests_n: int, docker: bool) -> dict[str, Any]:
             "requests": requests_n,
             "image_mb": image_size_mb() if docker else None,
             "faiss_rankings": rankings(),
+            "examples": examples(),
         }
     finally:
         if docker:
@@ -265,6 +302,10 @@ def main() -> None:
             result["faiss_vs_numpy"] = compare_backends(model, result.pop("faiss_rankings"))
         else:
             result.pop("faiss_rankings")
+        # The report shows examples from the model that actually ships.
+        model_examples = result.pop("examples", [])
+        if model == "frida" or "examples" not in report:
+            report["examples"] = model_examples
         report["models"].append(result)
         print(json.dumps({k: v for k, v in result.items() if k != "health"}, ensure_ascii=False))
 
