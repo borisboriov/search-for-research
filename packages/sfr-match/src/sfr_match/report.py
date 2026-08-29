@@ -22,6 +22,8 @@ class VariantMetrics:
     clean: bool
     n_profiles: int
     n_in_domain: int
+    success1_strict: float
+    success3_strict: float
     success5_strict: float
     success5_soft: float
     ndcg10: float
@@ -57,6 +59,8 @@ def compute_metrics(
     out_of_domain = [query for query in queries if query.expect == "out-of-domain"]
 
     strict: list[float] = []
+    strict1: list[float] = []
+    strict3: list[float] = []
     soft: list[float] = []
     ndcgs: list[float] = []
     rrs: list[float] = []
@@ -68,6 +72,9 @@ def compute_metrics(
         graded10 = _grades(run, query, judgments, 10)
         pool = [j.grade for (qid, _), j in judgments.items() if qid == query.id]
         strict.append(float(success_at_k(graded5, k=5, min_grade=2)))
+        # SFR-1 lesson: Success@5 did not notice the corpus doubling; Success@1 did.
+        strict1.append(float(success_at_k(graded5, k=1, min_grade=2)))
+        strict3.append(float(success_at_k(graded5, k=3, min_grade=2)))
         soft.append(float(success_at_k(graded5, k=5, min_grade=1)))
         ndcgs.append(ndcg_at_k(graded10, pool, k=10))
         rrs.append(reciprocal_rank(graded10, min_grade=2))
@@ -94,6 +101,8 @@ def compute_metrics(
         clean=run.clean,
         n_profiles=run.n_profiles,
         n_in_domain=len(in_domain),
+        success1_strict=mean(strict1),
+        success3_strict=mean(strict3),
         success5_strict=mean(strict),
         success5_soft=mean(soft),
         ndcg10=mean(ndcgs),

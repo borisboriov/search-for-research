@@ -2,12 +2,14 @@
 
 import json
 import time
+from dataclasses import asdict
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import structlog
 import typer
 
+from sfr_match.calibrate import calibrate, grid, recommend, top1_scores
 from sfr_match.composition import COMPOSITIONS, Composition
 from sfr_match.evalset import (
     eval_dir,
@@ -34,6 +36,14 @@ from sfr_match.report import (
     read_notes,
     render_report,
     sample_for_review,
+)
+from sfr_match.report2 import (
+    RESOURCES_PATH,
+    SFR2_NOTES_PATH,
+    SFR2_REPORT_PATH,
+    indexed_text_chars,
+    load_resources,
+    render_sfr2_report,
 )
 from sfr_match.search import load_backend
 
@@ -268,3 +278,115 @@ def stats(profiles_path: ProfilesOpt = DEFAULT_PROFILES_PATH) -> None:
             indent=2,
         )
     )
+
+
+# --- SFR-2 -----------------------------------------------------------------
+
+SFR2_RUNS_DIR = Path("data/eval/runs_sfr2")
+SFR2_OOD_RUNS_DIR = Path("data/eval/runs_ood")
+SFR2_INDEX_ROOT = Path("data/indexes_sfr2")
+SFR1_THRESHOLD = 0.35
+
+RunsOpt = Annotated[Path, typer.Option("--runs-dir")]
+OodRunsOpt = Annotated[Path, typer.Option("--ood-runs-dir")]
+VariantOpt = Annotated[str, typer.Option("--variant", help="Index slug the threshold belongs to")]
+
+
+def _calibration(
+    runs_dir: Path, ood_runs_dir: Path, variant: str
+) -> tuple[list[Any], Any, dict[str, int]]:
+    """Threshold rows for one variant: real queries against confirmed out-of-domain ones."""
+    runs = {run.variant: run for run in load_runs(runs_dir)}
+    ood_runs = {run.variant: run for run in load_runs(ood_runs_dir)}
+    if variant not in runs or variant not in ood_runs:
+        raise _fail(
+            f"нет прогонов варианта {variant!r}: golden={sorted(runs)}, ood={sorted(ood_runs)}"
+        )
+    queries = load_queries(query_set_path("golden"))
+    ood_queries = load_queries(query_set_path("ood"))
+    in_domain = top1_scores(runs[variant], queries, {"in-domain"})
+    edge = top1_scores(runs[variant], queries, {"edge"})
+    ood = top1_scores(ood_runs[variant], ood_queries, {"out-of-domain"})
+    rows = calibrate(in_domain, edge, ood, grid(in_domain, edge, ood))
+    counts = {"in_domain": len(in_domain), "edge": len(edge), "ood": len(ood)}
+    return rows, recommend(rows), counts
+
+
+@app.command(name="calibrate")
+def calibrate_cmd(
+    runs_dir: RunsOpt = SFR2_RUNS_DIR,
+    ood_runs_dir: OodRunsOpt = SFR2_OOD_RUNS_DIR,
+    variant: VariantOpt = "frida_clean",
+    out: Annotated[Path, typer.Option("--out")] = Path("data/eval/calibration.json"),
+) -> None:
+    """Recalibrate the «we found nobody» threshold on the extended OOD set (SPEC_SFR2 §4)."""
+    try:
+        rows, best, counts = _calibration(runs_dir, ood_runs_dir, variant)
+    except (FileNotFoundError, ValueError) as exc:
+        raise _fail(str(exc)) from exc
+    payload = {
+        "variant": variant,
+        "counts": counts,
+        "recommended": None if best is None else asdict(best),
+        "rows": [asdict(row) for row in rows],
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    typer.secho(
+        f"{variant}: точек in-domain {counts['in_domain']}, edge {counts['edge']}, "
+        f"ood {counts['ood']} → порог "
+        + (
+            f"{best.threshold:.2f} (ловит {best.ood_caught}/{counts['ood']})"
+            if best
+            else "не найден"
+        ),
+        fg=typer.colors.GREEN,
+    )
+
+
+@app.command(name="report-sfr2")
+def report_sfr2(
+    runs_dir: RunsOpt = SFR2_RUNS_DIR,
+    ood_runs_dir: OodRunsOpt = SFR2_OOD_RUNS_DIR,
+    index_root: Annotated[Path, typer.Option("--index-root")] = SFR2_INDEX_ROOT,
+    variant: VariantOpt = "frida_clean",
+    resources: Annotated[Path, typer.Option("--resources")] = RESOURCES_PATH,
+    out: Annotated[Path, typer.Option("--out")] = SFR2_REPORT_PATH,
+    notes: Annotated[Path, typer.Option("--notes")] = SFR2_NOTES_PATH,
+) -> None:
+    """Assemble docs/SFR2_REPORT.md from runs, judgments, calibration and measurements."""
+    try:
+        runs = load_runs(runs_dir)
+        queries = load_queries(query_set_path("golden"))
+        ood_queries = load_queries(query_set_path("ood"))
+        judgments = load_judgments()
+        rows, best, counts = _calibration(runs_dir, ood_runs_dir, variant)
+    except (FileNotFoundError, ValueError) as exc:
+        raise _fail(str(exc)) from exc
+
+    metrics = sorted(
+        (compute_metrics(run, queries, judgments) for run in runs),
+        key=lambda m: (m.model_key, m.variant),
+    )
+    chars = {m.variant: indexed_text_chars(index_root / m.variant) for m in metrics}
+    versions = {run.variant: run.index_version for run in runs}
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(
+        render_sfr2_report(
+            composition=metrics,
+            chars=chars,
+            index_versions=versions,
+            calibration=rows,
+            recommended=best,
+            calibration_counts=counts,
+            calibration_variant=variant,
+            previous_threshold=SFR1_THRESHOLD,
+            resources=load_resources(resources),
+            queries=queries,
+            ood_queries=ood_queries,
+            n_profiles=metrics[0].n_profiles if metrics else 0,
+            notes=read_notes(notes),
+        ),
+        encoding="utf-8",
+    )
+    typer.secho(f"отчёт: {len(metrics)} вариантов → {out}", fg=typer.colors.GREEN)

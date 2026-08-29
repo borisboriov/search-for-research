@@ -8,7 +8,15 @@ requires-python = ">=3.12"
 [tool.uv.workspace]
 members = ["packages/sfr-core", "packages/sfr-etl", "packages/sfr-match", "apps/api"]
 
+# torch drags CUDA wheels (gigabytes) on Linux, and the deploy target is a CPU-only
+# VPS. The CPU index is used on Linux only; macOS keeps the PyPI build.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
 [tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
 sfr-core = { workspace = true }
 sfr-etl = { workspace = true }
 sfr-match = { workspace = true }
