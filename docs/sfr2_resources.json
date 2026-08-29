@@ -1,0 +1,318 @@
+{
+  "measured_at": "2026-08-29 20:44:34",
+  "host": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "docker": true,
+    "docker_info": "8217145344 8 aarch64"
+  },
+  "models": [
+    {
+      "model": "frida",
+      "health": {
+        "status": "ok",
+        "model": "ai-forever/FRIDA",
+        "index_version": "frida_clean-535p-abe35971",
+        "profiles_count": 535,
+        "score_threshold": 0.35,
+        "search_backend": "faiss",
+        "compose": "full",
+        "built_at": "2026-08-29T17:19:34+00:00"
+      },
+      "cold_start_s": 22.4,
+      "rss_idle_mb": 3297.3,
+      "rss_load_mb": 3443.7,
+      "seq_p50_ms": 575.6,
+      "seq_p95_ms": 774.5,
+      "seq_mean_ms": 604.5,
+      "conc4_p50_ms": 2067.9,
+      "conc4_p95_ms": 2327.5,
+      "conc4_rps": 1.93,
+      "requests": 30,
+      "image_mb": 2365.3,
+      "faiss_vs_numpy": {
+        "backend_checked": "numpy",
+        "queries": 8,
+        "identical_order": true,
+        "mismatched_queries": [],
+        "max_score_delta": 1.1920928955078125e-07
+      }
+    },
+    {
+      "model": "mpnet",
+      "health": {
+        "status": "ok",
+        "model": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "index_version": "mpnet_clean-535p-abe35971",
+        "profiles_count": 535,
+        "score_threshold": 0.35,
+        "search_backend": "faiss",
+        "compose": "full",
+        "built_at": "2026-08-29T17:08:28+00:00"
+      },
+      "cold_start_s": 13.4,
+      "rss_idle_mb": 1085.4,
+      "rss_load_mb": 1164.3,
+      "seq_p50_ms": 69.1,
+      "seq_p95_ms": 107.8,
+      "seq_mean_ms": 73.5,
+      "conc4_p50_ms": 249.5,
+      "conc4_p95_ms": 304.7,
+      "conc4_rps": 15.7,
+      "requests": 30,
+      "image_mb": 2365.3,
+      "faiss_vs_numpy": {
+        "backend_checked": "numpy",
+        "queries": 8,
+        "identical_order": true,
+        "mismatched_queries": [],
+        "max_score_delta": 1.7881393432617188e-07
+      }
+    }
+  ],
+  "examples": [
+    {
+      "request": {
+        "query": "нейросети для медицинских изображений",
+        "k": 5
+      },
+      "took_ms": 594.0,
+      "below_threshold": false,
+      "index_version": "frida_clean-535p-abe35971",
+      "results": [
+        {
+          "rank": 1,
+          "name": "Egor Ershov",
+          "score": 0.4049336016178131,
+          "institution": "Московский физико-технический институт",
+          "h_index": 11,
+          "topics": [
+            "Image Enhancement Techniques",
+            "Advanced Vision and Imaging",
+            "Image and Object Detection Techniques",
+            "Color Science and Applications",
+            "Image Processing and 3D Reconstruction"
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "V. A. Knyaz",
+          "score": 0.3728678822517395,
+          "institution": "Московский физико-технический институт",
+          "h_index": 18,
+          "topics": [
+            "3D Surveying and Cultural Heritage",
+            "Forensic Anthropology and Bioarchaeology Studies",
+            "Dental Radiography and Imaging",
+            "Image Processing and 3D Reconstruction",
+            "Advanced Vision and Imaging"
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "Alexander V. Priezzhev",
+          "score": 0.3587096929550171,
+          "institution": "Московский государственный университет",
+          "h_index": 26,
+          "topics": [
+            "Blood properties and coagulation",
+            "Optical Imaging and Spectroscopy Techniques",
+            "Erythrocyte Function and Pathophysiology",
+            "Photoacoustic and Ultrasonic Imaging",
+            "Spectroscopy Techniques in Biomedical and Chemical Research"
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "В. Е. Синицын",
+          "score": 0.3315969407558441,
+          "institution": "Московский государственный университет",
+          "h_index": 28,
+          "topics": [
+            "Cardiac Imaging and Diagnostics",
+            "Advanced MRI Techniques and Applications",
+            "Cardiomyopathy and Myosin Studies",
+            "Advanced X-ray and CT Imaging",
+            "Radiation Dose and Imaging"
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "Vladislav Pavlov",
+          "score": 0.3186054229736328,
+          "institution": "Московский физико-технический институт",
+          "h_index": 15,
+          "topics": [
+            "Adrenal and Paraganglionic Tumors",
+            "Cancer, Hypoxia, and Metabolism",
+            "Pituitary Gland Disorders and Treatments",
+            "Glioma Diagnosis and Treatment",
+            "Traumatic Brain Injury and Neurovascular Disturbances"
+          ]
+        }
+      ]
+    },
+    {
+      "request": {
+        "query": "нейтринные эксперименты и безнейтринный двойной бета-распад",
+        "k": 5
+      },
+      "took_ms": 627.0,
+      "below_threshold": false,
+      "index_version": "frida_clean-535p-abe35971",
+      "results": [
+        {
+          "rank": 1,
+          "name": "Л. В. Инжечик",
+          "score": 0.43403756618499756,
+          "institution": "Московский физико-технический институт",
+          "h_index": 22,
+          "topics": [
+            "Neutrino Physics Research",
+            "Particle physics theoretical and experimental studies",
+            "Astrophysics and Cosmic Phenomena",
+            "Dark Matter and Cosmic Phenomena",
+            "Particle Detector Development and Performance"
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "N. Nikitin",
+          "score": 0.4095105230808258,
+          "institution": "Московский государственный университет",
+          "h_index": 46,
+          "topics": [
+            "Particle physics theoretical and experimental studies",
+            "Quantum Chromodynamics and Particle Interactions",
+            "High-Energy Particle Collisions Research",
+            "Neutrino Physics Research",
+            "Particle Detector Development and Performance"
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "N. Smirnov",
+          "score": 0.38458821177482605,
+          "institution": "Московский государственный университет",
+          "h_index": 93,
+          "topics": [
+            "Particle physics theoretical and experimental studies",
+            "High-Energy Particle Collisions Research",
+            "Quantum Chromodynamics and Particle Interactions",
+            "Particle Detector Development and Performance",
+            "Dark Matter and Cosmic Phenomena"
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "P. Egorov",
+          "score": 0.3783596158027649,
+          "institution": "Московский физико-технический институт",
+          "h_index": 25,
+          "topics": [
+            "Particle physics theoretical and experimental studies",
+            "Quantum Chromodynamics and Particle Interactions",
+            "High-Energy Particle Collisions Research",
+            "Neutrino Physics Research",
+            "Black Holes and Theoretical Physics"
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "A. Berezhnoy",
+          "score": 0.37294918298721313,
+          "institution": "Московский государственный университет",
+          "h_index": 69,
+          "topics": [
+            "Particle physics theoretical and experimental studies",
+            "Quantum Chromodynamics and Particle Interactions",
+            "High-Energy Particle Collisions Research",
+            "Neutrino Physics Research",
+            "Dark Matter and Cosmic Phenomena"
+          ]
+        }
+      ]
+    },
+    {
+      "request": {
+        "query": "как самому починить стиральную машину, которая не сливает воду",
+        "k": 5
+      },
+      "took_ms": 622.6,
+      "below_threshold": true,
+      "index_version": "frida_clean-535p-abe35971",
+      "results": [
+        {
+          "rank": 1,
+          "name": "А. А. Остапчук",
+          "score": 0.07712756097316742,
+          "institution": "Московский физико-технический институт",
+          "h_index": 12,
+          "topics": [
+            "earthquake and tectonic studies",
+            "Geotechnical and Geomechanical Engineering",
+            "Earthquake Detection and Analysis",
+            "High-pressure geophysics and materials",
+            "Seismology and Earthquake Studies"
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "Nikolai A. Simonov",
+          "score": 0.07301215827465057,
+          "institution": "Московский физико-технический институт",
+          "h_index": 13,
+          "topics": [
+            "Microwave Imaging and Scattering Analysis",
+            "Geophysical Methods and Applications",
+            "Mathematical Approximation and Integration",
+            "Electromagnetic Scattering and Analysis",
+            "Advanced Numerical Methods in Computational Mathematics"
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "В. В. Соколов",
+          "score": 0.07283131778240204,
+          "institution": "Московский физико-технический институт",
+          "h_index": 28,
+          "topics": [
+            "Nonlinear Waves and Solitons",
+            "Algebraic structures and combinatorial models",
+            "Nonlinear Photonic Systems",
+            "Advanced Topics in Algebra",
+            "Advanced Differential Equations and Dynamical Systems"
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "A. G. Yagola",
+          "score": 0.05742066353559494,
+          "institution": "Московский государственный университет",
+          "h_index": 20,
+          "topics": [
+            "Numerical methods in inverse problems",
+            "Surface Roughness and Optical Measurements",
+            "Statistical and numerical algorithms",
+            "Optical Coatings and Gratings",
+            "Differential Equations and Boundary Problems"
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "Vladimir Temlyakov",
+          "score": 0.0554877445101738,
+          "institution": "Московский государственный университет",
+          "h_index": 36,
+          "topics": [
+            "Mathematical Approximation and Integration",
+            "Sparse and Compressive Sensing Techniques",
+            "Image and Signal Denoising Methods",
+            "Mathematical Analysis and Transform Methods",
+            "Approximation Theory and Sequence Spaces"
+          ]
+        }
+      ]
+    }
+  ]
+}
