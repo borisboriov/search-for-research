@@ -1,5 +1,5 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
-	index eval eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench
+	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -59,8 +59,10 @@ index: unhide
 		uv run sfr-match index -m $$m --clean || exit 1; \
 	done
 
-# Full reproduction: build every index, run the golden set, regenerate the report.
-eval: index
+# Full SFR-1 reproduction. NOT the default target any more: it ends in
+# `sfr-match report`, which rewrites the frozen docs/SFR1_REPORT.md — and the
+# judging pool has grown since, so nDCG there would move retroactively.
+eval-sfr1: index
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --no-clean
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --clean
 	uv run sfr-match pool
@@ -68,7 +70,7 @@ eval: index
 
 # Report only (rankings and judgments already on disk).
 eval-report: unhide
-	uv run sfr-match report
+	uv run sfr-match report-sfr2
 
 # ---------------------------------------------------------------------------
 # SFR-2: search API over the two-university corpus
@@ -94,6 +96,8 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # Full SFR-2 reproduction: every composition on the golden set, the OOD set for
 # threshold calibration, then the report. Index building is a separate target
 # (hours of embedding); this one only needs the indexes to exist.
+eval: eval-sfr2
+
 eval-sfr2: unhide
 	@for c in $(SFR2_COMPOSITIONS); do \
 		uv run sfr-match eval --models frida,mpnet --clean --compose $$c \

@@ -39,11 +39,11 @@ make etl                        # авторы → работы → профил
 | `make etl` | Полный пайплайн ингеста (нужен предварительный `institutions resolve`) |
 | `make report` | Генерация `docs/REPORT.md` |
 | `make index` | Сборка всех индексов SFR-1 (5 вариантов × clean/no-clean) |
-| `make eval` | Полный прогон мини-теста: индексы → golden set → пул → отчёт |
-| `make eval-report` | Только перегенерация `docs/SFR1_REPORT.md` |
+| `make eval-sfr1` | Прогон мини-теста SFR-1. **Перезаписывает замороженный `docs/SFR1_REPORT.md`** — см. `docs/DECISIONS.md` |
+| `make eval-report` | Только перегенерация `docs/SFR2_REPORT.md` |
 | `make test-slow` | Смоук-тест с настоящей моделью (не гоняется в CI) |
 | `make index-sfr2` | Шесть индексов SFR-2: frida/mpnet × три состава `profile_text` |
-| `make eval-sfr2` | Воспроизведение цифр `docs/SFR2_REPORT.md` (нужны индексы) |
+| `make eval` (= `make eval-sfr2`) | Воспроизведение всех цифр `docs/SFR2_REPORT.md` (нужны индексы) |
 | `make api` | uvicorn на `localhost:8000` |
 | `make docker-build` / `make docker-up` / `make docker-down` | Контейнер с API |
 | `make bench` | Замер ресурсов и латентности → `docs/sfr2_resources.json` |
