@@ -8,7 +8,14 @@ from typing import Annotated
 import structlog
 import typer
 
-from sfr_match.evalset import eval_dir, load_judgments, load_queries, write_jsonl
+from sfr_match.composition import COMPOSITIONS, Composition
+from sfr_match.evalset import (
+    eval_dir,
+    load_judgments,
+    load_queries,
+    query_set_path,
+    write_jsonl,
+)
 from sfr_match.evaluate import (
     DEFAULT_RUNS_DIR,
     POOL_DEPTH,
@@ -37,6 +44,15 @@ app = typer.Typer(no_args_is_help=True, help="Search For Research matching (SFR-
 ModelOpt = Annotated[str, typer.Option("--model", "-m", help="Model key or HuggingFace id")]
 CleanOpt = Annotated[bool, typer.Option("--clean/--no-clean", help="Apply profile-text cleaning")]
 ProfilesOpt = Annotated[Path, typer.Option("--profiles", help="Path to profiles.jsonl")]
+ComposeOpt = Annotated[
+    str, typer.Option("--compose", help=f"What goes into the index: {', '.join(COMPOSITIONS)}")
+]
+
+
+def _compose(value: str) -> Composition:
+    if value not in COMPOSITIONS:
+        raise _fail(f"unknown --compose {value!r}; known: {', '.join(COMPOSITIONS)}")
+    return value
 
 
 def _fail(message: str) -> typer.Exit:
@@ -50,18 +66,20 @@ def index(
     clean: CleanOpt = False,
     profiles_path: ProfilesOpt = DEFAULT_PROFILES_PATH,
     index_root: Annotated[Path, typer.Option("--index-root")] = DEFAULT_INDEX_ROOT,
+    compose: ComposeOpt = "full",
 ) -> None:
     """Build a search index from profiles.jsonl."""
+    mode = _compose(compose)
     try:
         spec = resolve_model(model)
-        records = load_profiles(profiles_path, clean=clean)
+        records = load_profiles(profiles_path, clean=clean, compose=mode)
     except (KeyError, FileNotFoundError, ValueError) as exc:
         raise _fail(str(exc)) from exc
-    out_dir = index_path(spec, clean=clean, root=index_root)
-    meta = build_index(records, spec, clean=clean, out_dir=out_dir)
+    out_dir = index_path(spec, clean=clean, compose=mode, root=index_root)
+    meta = build_index(records, spec, clean=clean, out_dir=out_dir, compose=mode)
     typer.secho(
-        f"{spec.slug(clean=clean)}: {meta.n_profiles} профилей, dim={meta.dim}, "
-        f"{meta.build_seconds:.1f} c → {out_dir}",
+        f"{meta.slug}: {meta.n_profiles} профилей, dim={meta.dim}, "
+        f"{meta.build_seconds:.1f} c → {out_dir} ({meta.version})",
         fg=typer.colors.GREEN,
     )
 
@@ -105,21 +123,28 @@ def eval_cmd(
     k: Annotated[int, typer.Option("--k")] = 10,
     index_root: Annotated[Path, typer.Option("--index-root")] = DEFAULT_INDEX_ROOT,
     runs_dir: Annotated[Path, typer.Option("--runs-dir")] = DEFAULT_RUNS_DIR,
+    compose: ComposeOpt = "full",
+    queries_set: Annotated[
+        str, typer.Option("--queries", help="Query set: golden | ood | external")
+    ] = "golden",
 ) -> None:
-    """Run the golden set against every model/variant and store the rankings."""
+    """Run a query set against every model/variant and store the rankings."""
+    mode = _compose(compose)
     variants = [(name.strip(), False) for name in models.split(",") if name.strip()]
     if clean is True:
         variants = [(name, True) for name, _ in variants]
     elif clean is None:
         pass
     try:
-        queries = load_queries()
+        queries = load_queries(query_set_path(queries_set))
     except (FileNotFoundError, ValueError) as exc:
         raise _fail(str(exc)) from exc
+    if not queries:
+        raise _fail(f"набор запросов {queries_set!r} пуст — заполнять его людям, не агенту")
 
     for name, use_clean in variants:
         spec = resolve_model(name)
-        directory = index_path(spec, clean=use_clean, root=index_root)
+        directory = index_path(spec, clean=use_clean, compose=mode, root=index_root)
         if not (directory / "meta.json").exists():
             raise _fail(f"нет индекса {directory} — сначала `sfr-match index -m {name}`")
         backend = load_backend(directory, spec.key)
@@ -138,6 +163,9 @@ def pool(
     depth: Annotated[int, typer.Option("--depth")] = POOL_DEPTH,
     out: Annotated[Path, typer.Option("--out")] = Path("data/eval/pool.jsonl"),
     index_root: Annotated[Path, typer.Option("--index-root")] = DEFAULT_INDEX_ROOT,
+    queries_set: Annotated[
+        str, typer.Option("--queries", help="Query set: golden | ood | external")
+    ] = "golden",
 ) -> None:
     """Emit the judging pool: unique (query, author) pairs sorted by author id.
 
@@ -146,7 +174,7 @@ def pool(
     """
     try:
         runs = load_runs(runs_dir)
-        queries = {query.id: query for query in load_queries()}
+        queries = {query.id: query for query in load_queries(query_set_path(queries_set))}
     except (FileNotFoundError, ValueError) as exc:
         raise _fail(str(exc)) from exc
     docs_dir = next((d for d in sorted(index_root.iterdir()) if (d / "docs.json").exists()), None)

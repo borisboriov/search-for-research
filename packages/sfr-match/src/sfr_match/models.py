@@ -26,8 +26,9 @@ class ModelSpec:
     def prepare_document(self, text: str) -> str:
         return self.document_prefix + text
 
-    def slug(self, *, clean: bool) -> str:
-        return f"{self.key}_clean" if clean else self.key
+    def slug(self, *, clean: bool, compose: str = "full") -> str:
+        base = f"{self.key}_clean" if clean else self.key
+        return base if compose == "full" else f"{base}__{compose}"
 
 
 REGISTRY: dict[str, ModelSpec] = {

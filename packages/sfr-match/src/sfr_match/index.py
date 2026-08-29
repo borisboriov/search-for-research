@@ -3,13 +3,16 @@
 261 profiles — a flat index is exact and instant; nothing more clever is warranted.
 """
 
+import hashlib
 import json
 import time
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
 
+from sfr_match.composition import Composition
 from sfr_match.embedders import Embedder, make_embedder
 from sfr_match.models import ModelSpec, resolve_model
 from sfr_match.profiles import ProfileRecord
@@ -33,10 +36,41 @@ class IndexMeta:
     build_seconds: float
     query_prefix: str = ""
     document_prefix: str = ""
+    # Added in SFR-2; the defaults keep SFR-1 index directories loadable.
+    compose: str = "full"
+    built_at: str = ""
+    corpus_sha: str = ""
+
+    @property
+    def slug(self) -> str:
+        base = f"{self.model_key}_clean" if self.clean else self.model_key
+        return base if self.compose == "full" else f"{base}__{self.compose}"
+
+    @property
+    def version(self) -> str:
+        """Identity of the served index — API and index must not drift apart unnoticed."""
+        return f"{self.slug}-{self.n_profiles}p-{self.corpus_sha[:8] or 'unknown'}"
 
 
-def index_path(spec: ModelSpec, *, clean: bool, root: Path = DEFAULT_INDEX_ROOT) -> Path:
-    return root / spec.slug(clean=clean)
+def corpus_sha(profiles: list[ProfileRecord]) -> str:
+    """Fingerprint of what was indexed: ids and the exact embedded texts."""
+    digest = hashlib.sha256()
+    for profile in profiles:
+        digest.update(profile.id.encode())
+        digest.update(b"\x00")
+        digest.update(profile.indexed_text.encode())
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def index_path(
+    spec: ModelSpec,
+    *,
+    clean: bool,
+    compose: Composition = "full",
+    root: Path = DEFAULT_INDEX_ROOT,
+) -> Path:
+    return root / spec.slug(clean=clean, compose=compose)
 
 
 def _write_docs(out_dir: Path, profiles: list[ProfileRecord]) -> None:
@@ -46,8 +80,10 @@ def _write_docs(out_dir: Path, profiles: list[ProfileRecord]) -> None:
             "name": profile.name,
             "institution": profile.institution,
             "h_index": profile.h_index,
+            "works_count": profile.works_count,
             "topics": profile.topics,
             "profile_text": profile.profile_text,
+            "display_text": profile.display_text or profile.profile_text,
             "indexed_text": profile.indexed_text,
         }
         for profile in profiles
@@ -62,6 +98,7 @@ def build_index(
     clean: bool,
     out_dir: Path,
     embedder: Embedder | None = None,
+    compose: Composition = "full",
 ) -> IndexMeta:
     """Embed (or tokenise) every profile and persist the index next to its metadata."""
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -95,6 +132,9 @@ def build_index(
         build_seconds=round(build_seconds, 3),
         query_prefix=spec.query_prefix,
         document_prefix=spec.document_prefix,
+        compose=compose,
+        built_at=datetime.now(UTC).isoformat(timespec="seconds"),
+        corpus_sha=corpus_sha(profiles),
     )
     (out_dir / META_FILE).write_text(
         json.dumps(asdict(meta), ensure_ascii=False, indent=2), encoding="utf-8"
@@ -127,5 +167,11 @@ def load_faiss_vectors(index_dir: Path) -> np.ndarray:
     return vectors
 
 
-def resolve_index_dir(model: str, *, clean: bool, root: Path = DEFAULT_INDEX_ROOT) -> Path:
-    return index_path(resolve_model(model), clean=clean, root=root)
+def resolve_index_dir(
+    model: str,
+    *,
+    clean: bool,
+    compose: Composition = "full",
+    root: Path = DEFAULT_INDEX_ROOT,
+) -> Path:
+    return index_path(resolve_model(model), clean=clean, compose=compose, root=root)

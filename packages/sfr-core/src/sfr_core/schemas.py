@@ -16,6 +16,8 @@ class ProfileExport(BaseModel):
     name: str
     institution: str | None = None
     h_index: int | None = None
+    # Total works known to OpenAlex, not the number of ingested ``works`` below.
+    works_count: int | None = None
     topics: list[str] = []
     profile_text: str
     works: list[WorkExport] = []

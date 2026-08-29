@@ -43,6 +43,7 @@ def export_profiles_jsonl(session: Session, out_path: Path) -> int:
                     else None
                 ),
                 h_index=author.h_index,
+                works_count=author.works_count,
                 topics=topics[:MAX_EXPORT_TOPICS],
                 profile_text=profile.profile_text,
                 works=[

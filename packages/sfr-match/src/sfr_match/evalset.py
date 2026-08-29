@@ -16,6 +16,15 @@ QueryKind = Literal["in-domain", "edge", "out-of-domain"]
 
 _ENV_EVAL_DIR = "SFR_MATCH_EVAL_DIR"
 
+# Named query sets. They live in separate files on purpose: SFR-1 metrics are
+# computed over ``golden`` alone, and growing that file would silently move
+# already-published numbers (nDCG is computed against the judged pool).
+QUERY_SETS = {
+    "golden": "queries.jsonl",  # SFR-1 golden set, frozen at 30 queries
+    "ood": "ood_queries.jsonl",  # SFR-2 out-of-domain set for threshold calibration
+    "external": "external_queries.jsonl",  # queries collected from real students
+}
+
 
 def eval_dir() -> Path:
     """Directory holding queries/judgments — ``packages/sfr-match/eval``.
@@ -34,6 +43,9 @@ class Query(BaseModel):
     text: str = Field(min_length=3)
     expect: QueryKind
     comment: str = ""
+    # Who wrote the query: "" for the sets written by the agent, "student" for the
+    # external set (SPEC_SFR2 §6). Declared explicitly — pydantic drops unknown keys.
+    source: str = ""
 
     @field_validator("id")
     @classmethod
@@ -66,6 +78,13 @@ def _iter_jsonl(path: Path) -> Iterator[dict[str, object]]:
             if not isinstance(record, dict):
                 raise ValueError(f"{path}:{lineno}: expected a JSON object")
             yield record
+
+
+def query_set_path(name: str) -> Path:
+    """Resolve a query-set name to its file; unknown names fail loudly."""
+    if name not in QUERY_SETS:
+        raise ValueError(f"unknown query set {name!r}; known: {', '.join(QUERY_SETS)}")
+    return eval_dir() / QUERY_SETS[name]
 
 
 def load_queries(path: Path | None = None) -> list[Query]:

@@ -28,8 +28,10 @@ class Run:
     hf_id: str | None
     clean: bool
     k: int
-    n_profiles: int
-    build_seconds: float
+    compose: str = "full"
+    n_profiles: int = 0
+    build_seconds: float = 0.0
+    index_version: str = ""
     results: list[QueryRun] = field(default_factory=list)
 
     @property
@@ -78,13 +80,15 @@ def run_queries(backend: Backend, queries: list[Query], k: int = 10) -> Run:
         )
     meta = backend.meta
     return Run(
-        variant=f"{meta.model_key}_clean" if meta.clean else meta.model_key,
+        variant=meta.slug,
         model_key=meta.model_key,
         hf_id=meta.hf_id,
         clean=meta.clean,
         k=k,
+        compose=meta.compose,
         n_profiles=meta.n_profiles,
         build_seconds=meta.build_seconds,
+        index_version=meta.version,
         results=results,
     )
 

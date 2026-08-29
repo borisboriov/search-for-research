@@ -6,27 +6,36 @@ from pathlib import Path
 
 from sfr_core.schemas import ProfileExport
 from sfr_match.cleaning import clean_profile_text
+from sfr_match.composition import Composition, compose_indexed_text
 
 DEFAULT_PROFILES_PATH = Path("data/exports/profiles.jsonl")
 
 
 @dataclass(frozen=True)
 class ProfileRecord:
-    """One supervisor profile plus the exact text that was indexed."""
+    """One supervisor profile: the card fields, the card text and the indexed text."""
 
     id: str
     name: str
     institution: str | None
     h_index: int | None
     topics: list[str]
-    profile_text: str
-    indexed_text: str
+    profile_text: str  # exactly as exported by SFR-0
+    indexed_text: str  # what the embedder sees (composition + optional cleaning)
+    display_text: str = ""  # what a user sees on the card — always cleaned, never composed
+    works_count: int | None = None
 
 
-def load_profiles(path: Path | None = None, *, clean: bool = False) -> list[ProfileRecord]:
-    """Read the export; ``clean=True`` applies the SFR-1 preprocessor at index time.
+def load_profiles(
+    path: Path | None = None,
+    *,
+    clean: bool = False,
+    compose: Composition = "full",
+) -> list[ProfileRecord]:
+    """Read the export; build the indexed text (SPEC_SFR2 §5) and the card text.
 
-    The raw JSONL is never rewritten (SPEC_SFR1 §5).
+    ``compose`` picks what goes into the index, ``clean=True`` then applies the
+    SFR-1 preprocessor to it. The raw JSONL is never rewritten (SPEC_SFR1 §5).
     """
     path = path or DEFAULT_PROFILES_PATH
     if not path.exists():
@@ -45,7 +54,7 @@ def load_profiles(path: Path | None = None, *, clean: bool = False) -> list[Prof
                 export = ProfileExport.model_validate(json.loads(line))
             except Exception as exc:
                 raise ValueError(f"{path}:{lineno}: {exc}") from exc
-            text = clean_profile_text(export.profile_text) if clean else export.profile_text
+            text = compose_indexed_text(export, compose)
             records.append(
                 ProfileRecord(
                     id=export.id,
@@ -54,7 +63,9 @@ def load_profiles(path: Path | None = None, *, clean: bool = False) -> list[Prof
                     h_index=export.h_index,
                     topics=list(export.topics),
                     profile_text=export.profile_text,
-                    indexed_text=text,
+                    indexed_text=clean_profile_text(text) if clean else text,
+                    display_text=clean_profile_text(export.profile_text),
+                    works_count=export.works_count,
                 )
             )
     if not records:

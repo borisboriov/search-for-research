@@ -84,6 +84,7 @@ def test_export_jsonl_valid_lines(engine: Engine, tmp_path: Path) -> None:
             "name",
             "institution",
             "h_index",
+            "works_count",
             "topics",
             "profile_text",
             "works",
