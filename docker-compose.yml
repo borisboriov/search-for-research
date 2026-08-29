@@ -1,0 +1,26 @@
+# Local run of the SFR-2 API. The index is built offline and mounted read-only;
+# the model is downloaded once into the HF cache volume (or bind-mounted from the
+# host with SFR_HF_CACHE=$HOME/.cache/huggingface, which is what the bench does).
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: sfr-api:latest
+    container_name: sfr-api
+    ports:
+      - "${SFR_API_PORT:-8000}:8000"
+    environment:
+      SFR_API_MODEL: ${SFR_API_MODEL:-frida}
+      SFR_API_INDEX_ROOT: /app/data/indexes_sfr2
+      SFR_API_SCORE_THRESHOLD: ${SFR_API_SCORE_THRESHOLD:-0.35}
+      # auto = faiss on Linux (this container), numpy on macOS
+      SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
+      HF_HOME: /models
+      OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
+    volumes:
+      - ./data/indexes_sfr2:/app/data/indexes_sfr2:ro
+      - ${SFR_HF_CACHE:-hf-cache}:/models
+
+volumes:
+  hf-cache:

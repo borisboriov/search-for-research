@@ -90,3 +90,18 @@ index-sfr2: unhide
 
 api: unhide
 	uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
+
+docker-build:
+	docker compose build
+
+# Bind-mounts the host HuggingFace cache so the model is not re-downloaded.
+docker-up:
+	SFR_HF_CACHE=$$HOME/.cache/huggingface docker compose up -d
+	@echo "curl -s localhost:8000/api/health"
+
+docker-down:
+	docker compose down
+
+# Resource + latency measurements for the report (SPEC_SFR2 §3).
+bench: unhide
+	uv run python scripts/bench_api.py --out docs/sfr2_resources.json
