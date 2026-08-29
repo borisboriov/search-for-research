@@ -88,6 +88,26 @@ index-sfr2: unhide
 		done; \
 	done
 
+SFR2_RUNS := data/eval/runs_sfr2
+SFR2_OOD_RUNS := data/eval/runs_ood
+
+# Full SFR-2 reproduction: every composition on the golden set, the OOD set for
+# threshold calibration, then the report. Index building is a separate target
+# (hours of embedding); this one only needs the indexes to exist.
+eval-sfr2: unhide
+	@for c in $(SFR2_COMPOSITIONS); do \
+		uv run sfr-match eval --models frida,mpnet --clean --compose $$c \
+			--index-root $(SFR2_INDEX_ROOT) --runs-dir $(SFR2_RUNS) || exit 1; \
+	done
+	uv run sfr-match eval --models frida,mpnet --clean --compose full --queries ood \
+		--index-root $(SFR2_INDEX_ROOT) --runs-dir $(SFR2_OOD_RUNS)
+	uv run sfr-match pool --runs-dir $(SFR2_RUNS) --index-root $(SFR2_INDEX_ROOT) \
+		--out data/eval/pool_sfr2.jsonl
+	uv run sfr-match pool --runs-dir $(SFR2_OOD_RUNS) --queries ood \
+		--index-root $(SFR2_INDEX_ROOT) --out data/eval/pool_ood.jsonl
+	uv run sfr-match calibrate --runs-dir $(SFR2_RUNS) --ood-runs-dir $(SFR2_OOD_RUNS)
+	uv run sfr-match report-sfr2
+
 api: unhide
 	uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
 
