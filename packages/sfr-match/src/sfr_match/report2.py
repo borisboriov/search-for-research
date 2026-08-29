@@ -78,7 +78,11 @@ def render_resources(resources: dict[str, Any]) -> list[str]:
 
 def render_faiss_check(resources: dict[str, Any]) -> list[str]:
     checks = [
-        (entry["model"], entry["faiss_vs_numpy"])
+        (
+            entry["model"],
+            entry.get("health", {}).get("search_backend", "?"),
+            entry["faiss_vs_numpy"],
+        )
         for entry in resources.get("models", [])
         if entry.get("faiss_vs_numpy")
     ]
@@ -87,24 +91,30 @@ def render_faiss_check(resources: dict[str, Any]) -> list[str]:
     lines = [
         "## FAISS ≡ NumPy на живых векторах",
         "",
-        "| Модель | Бэкенд в контейнере | Запросов сверено | Порядок совпал | "
+        "Один и тот же индекс опрашивается дважды: бэкендом, который выбирается "
+        "автоматически в контейнере, и принудительным `SFR_SEARCH_BACKEND=numpy`.",
+        "",
+        "| Модель | Бэкенд контейнера | Сверено с | Запросов | Порядок совпал | "
         "Макс. расхождение score |",
-        "|---|---|---|---|---|",
+        "|---|---|---|---|---|---|",
     ]
-    for model, check in checks:
+    for model, backend, check in checks:
         verdict = (
             "да" if check["identical_order"] else "НЕТ: " + ", ".join(check["mismatched_queries"])
         )
         lines.append(
-            f"| `{model}` | {check['backend_checked']} | {check['queries']} | "
+            f"| `{model}` | {backend} | {check['backend_checked']} | {check['queries']} | "
             f"{verdict} | {check['max_score_delta']:.2e} |"
         )
     lines.append("")
     return lines
 
 
-def _changes_only(rows: list[ThresholdRow]) -> list[ThresholdRow]:
-    """Only thresholds where something changes — the rest of the grid is noise."""
+UNSAFE_TAIL = 4
+
+
+def _changes_only(rows: list[ThresholdRow]) -> tuple[list[ThresholdRow], int]:
+    """Thresholds where something changes; the useless tail is counted, not printed."""
     kept: list[ThresholdRow] = []
     previous: tuple[int, int, int] | None = None
     for row in rows:
@@ -112,7 +122,11 @@ def _changes_only(rows: list[ThresholdRow]) -> list[ThresholdRow]:
         if key != previous:
             kept.append(row)
             previous = key
-    return kept
+    # Once a threshold cuts real queries it is already rejected; a few rows show the
+    # slope, the rest just repeat "worse".
+    safe = [row for row in kept if row.is_safe]
+    unsafe = [row for row in kept if not row.is_safe]
+    return safe + unsafe[:UNSAFE_TAIL], max(0, len(unsafe) - UNSAFE_TAIL)
 
 
 def render_calibration(
@@ -135,20 +149,35 @@ def render_calibration(
         "| Порог top-1 | Ошибочно отсечёт in-domain | Ошибочно отсечёт edge | Верно отсечёт OOD |",
         "|---|---|---|---|",
     ]
-    for row in _changes_only(rows):
+    shown, hidden = _changes_only(rows)
+    if recommended and all(row.threshold != recommended.threshold for row in shown):
+        # The recommendation sits inside a plateau, so dedup dropped its row — put it back.
+        shown = sorted([*shown, recommended], key=lambda row: row.threshold)
+    for row in shown:
         mark = " **←**" if recommended and row.threshold == recommended.threshold else ""
         lines.append(
             f"| {row.threshold:.2f}{mark} | {row.false_cuts_in_domain} / {counts['in_domain']} | "
             f"{row.false_cuts_edge} / {counts['edge']} | {row.ood_caught} / {counts['ood']} |"
         )
+    if hidden:
+        lines.append(f"| … | ещё {hidden} значений, каждое режет только больше | | |")
     lines.append("")
     if recommended:
+        plateau = [
+            row
+            for row in rows
+            if row.is_safe and row.false_cuts_edge == 0 and row.ood_caught == recommended.ood_caught
+        ]
+        window = f"{min(r.threshold for r in plateau):.2f}…{max(r.threshold for r in plateau):.2f}"
         lines += [
-            f"**Рекомендация: {recommended.threshold:.2f}** — самый высокий порог, который не "
-            f"отсекает ни одного in-domain запроса; ловит "
+            f"**Рекомендация: {recommended.threshold:.2f}** — середина интервала {window}, "
+            f"внутри которого отсекаются все посторонние запросы и ни один живой. Ловит "
             f"{recommended.ood_caught} из {counts['ood']} посторонних "
             f"({_pct(recommended.ood_caught / counts['ood']) if counts['ood'] else '—'}). "
             f"Было в SFR-1: {previous_threshold:.2f}.",
+            "",
+            "Берётся именно середина, а не верхний край: порог у края отстоит от ближайшего "
+            "живого запроса на сотые доли и держится на одной формулировке из 22.",
             "",
         ]
     else:

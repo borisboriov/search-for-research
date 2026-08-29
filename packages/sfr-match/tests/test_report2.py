@@ -32,6 +32,7 @@ RESOURCES = {
             "conc4_p95_ms": 900.0,
             "conc4_rps": 5.1,
             "image_mb": 2365.0,
+            "health": {"search_backend": "faiss"},
             "faiss_vs_numpy": {
                 "backend_checked": "numpy",
                 "queries": 8,
@@ -97,9 +98,20 @@ def test_resources_section_admits_when_nothing_was_measured() -> None:
     assert "Замер не выполнялся" in "\n".join(render_resources({}))
 
 
-def test_faiss_check_reports_the_backend_and_the_score_delta() -> None:
+def test_faiss_check_names_both_backends_and_the_score_delta() -> None:
     text = "\n".join(render_faiss_check(RESOURCES))
     assert "FAISS ≡ NumPy" in text and "да" in text
+    assert "| `frida` | faiss | numpy |" in text  # container backend vs the forced one
+
+
+def test_calibration_table_hides_the_useless_tail() -> None:
+    in_domain = {f"q{i}": score for i, score in enumerate([0.30, 0.36, 0.42, 0.47, 0.52, 0.57])}
+    rows = calibrate(in_domain, {}, {"o1": 0.20}, [0.25, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60])
+    text = "\n".join(
+        render_calibration(rows, recommend(rows), {"in_domain": 6, "edge": 0, "ood": 1}, "v", 0.35)
+    )
+    assert "| 0.25 **←**" in text  # the safe row stays, marked as the recommendation
+    assert "ещё 2 значений" in text and "| 0.60 |" not in text
 
 
 def test_faiss_check_is_skipped_when_there_was_no_check() -> None:
@@ -116,6 +128,7 @@ def test_calibration_table_collapses_thresholds_that_change_nothing() -> None:
     assert "| 0.20 |" in text and "| 0.21 |" not in text  # identical rows are dropped
     assert "**←**" in text  # the recommendation is marked
     assert "Было в SFR-1: 0.35" in text
+    assert "середина интервала" in text
 
 
 def test_calibration_says_so_when_no_threshold_is_safe() -> None:

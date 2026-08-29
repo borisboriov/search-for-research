@@ -13,7 +13,8 @@ services:
     environment:
       SFR_API_MODEL: ${SFR_API_MODEL:-frida}
       SFR_API_INDEX_ROOT: /app/data/indexes_sfr2
-      SFR_API_SCORE_THRESHOLD: ${SFR_API_SCORE_THRESHOLD:-0.35}
+      # Порог не задаём: значение по умолчанию живёт в settings.py (откалибровано
+      # в SFR-2), и дублировать его здесь значит однажды забыть обновить одно из двух.
       # auto = faiss on Linux (this container), numpy on macOS
       SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
       HF_HOME: /models
