@@ -10,6 +10,7 @@ from sfr_match.evaluate import build_pool, load_run, run_queries, save_run
 from sfr_match.index import build_index, index_path, load_meta
 from sfr_match.models import resolve_model
 from sfr_match.profiles import ProfileRecord, load_profiles
+from sfr_match.runtime import select_search_backend
 from sfr_match.search import Bm25Backend, DenseBackend
 
 
@@ -183,3 +184,72 @@ def test_warmup_runs_before_the_first_timed_query(
     run_queries(backend, queries, k=1)
     assert embedder.seen[0][1] is True  # a query encode happened before the golden set
     assert len(embedder.seen) == 2  # warmup + the single query
+
+
+def test_search_backend_is_faiss_everywhere_except_macos() -> None:
+    assert select_search_backend(platform="linux", env={}) == "faiss"
+    assert select_search_backend(platform="darwin", env={}) == "numpy"
+
+
+def test_search_backend_env_override_wins_over_the_platform() -> None:
+    env = {"SFR_SEARCH_BACKEND": "numpy"}
+    assert select_search_backend(platform="linux", env=env) == "numpy"
+    assert select_search_backend(platform="darwin", env={"SFR_SEARCH_BACKEND": "faiss"}) == "faiss"
+
+
+def test_unknown_search_backend_is_rejected() -> None:
+    with pytest.raises(ValueError, match="SFR_SEARCH_BACKEND"):
+        select_search_backend(platform="linux", env={"SFR_SEARCH_BACKEND": "annoy"})
+
+
+def test_dense_backend_uses_the_searcher_this_platform_selected(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    """On Linux (CI, the container) this asserts FAISS is really on the search path."""
+    spec, out_dir, _, _ = _build(tmp_path, profiles, "e5-base", fake_embedder)
+    backend = DenseBackend(out_dir, spec, embedder=fake_embedder(spec))
+    assert backend.searcher.name == select_search_backend()
+
+
+def test_faiss_and_numpy_searchers_return_the_same_ranking(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    """SPEC_SFR2 §3: switching the searcher must not change what the user sees.
+
+    Scores must agree numerically and the result sets must be identical; the order
+    of *exactly tied* scores may differ (NumPy breaks ties by index, FAISS does not),
+    so ordering is asserted only where the scores actually differ.
+    """
+    import numpy as np
+
+    from sfr_match.index import VECTORS_FILE, load_vectors
+    from sfr_match.runtime import FaissSearcher, NumpySearcher
+
+    spec, out_dir, _, _ = _build(tmp_path, profiles, "e5-base", fake_embedder)
+    numpy_searcher = NumpySearcher(load_vectors(out_dir))
+    faiss_searcher = FaissSearcher(out_dir / VECTORS_FILE)
+    embedder = fake_embedder(spec)
+    for text in ("сверхпроводимость купратов", "нейросети тексты", "vehicle routing"):
+        query = embedder.encode([text], is_query=True)
+        numpy_order, numpy_scores = numpy_searcher.top_k(query, 3)
+        faiss_order, faiss_scores = faiss_searcher.top_k(query, 3)
+        assert np.allclose(numpy_scores, faiss_scores, atol=1e-6)
+        assert set(numpy_order) == set(faiss_order)
+        untied = [
+            i
+            for i, score in enumerate(numpy_scores)
+            if all(abs(score - other) > 1e-6 for j, other in enumerate(numpy_scores) if j != i)
+        ]
+        assert [numpy_order[i] for i in untied] == [faiss_order[i] for i in untied]
+
+
+def test_searcher_falls_back_to_numpy_without_an_index_file(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    import numpy as np
+
+    from sfr_match.runtime import make_searcher
+
+    assert (
+        make_searcher(tmp_path / "absent.faiss", np.zeros((1, 4), dtype="float32")).name == "numpy"
+    )
