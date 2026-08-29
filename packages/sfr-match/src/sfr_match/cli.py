@@ -217,11 +217,21 @@ def review_sample(
     n: Annotated[int, typer.Option("--n")] = 20,
     runs_dir: Annotated[Path, typer.Option("--runs-dir")] = DEFAULT_RUNS_DIR,
     index_root: Annotated[Path, typer.Option("--index-root")] = DEFAULT_INDEX_ROOT,
+    out: Annotated[
+        Path | None,
+        typer.Option("--out", help="Default: eval/judgments_for_review.md (SFR-1 sample)"),
+    ] = None,
+    queries_set: Annotated[str, typer.Option("--queries")] = "golden",
+    seed: Annotated[int, typer.Option("--seed")] = 20260829,
 ) -> None:
-    """Write eval/judgments_for_review.md — a random sample for human re-check."""
+    """Write a random sample of judgments for a human re-check.
+
+    The output path is explicit on purpose: the SFR-1 sample was already checked by
+    hand, and overwriting it would destroy that record.
+    """
     try:
         runs = load_runs(runs_dir)
-        queries = load_queries()
+        queries = load_queries(query_set_path(queries_set))
         judgments = load_judgments()
     except (FileNotFoundError, ValueError) as exc:
         raise _fail(str(exc)) from exc
@@ -230,9 +240,10 @@ def review_sample(
         raise _fail(f"нет ни одного индекса в {index_root}")
     profiles = {str(doc["id"]): doc for doc in load_docs(docs_dir)}
     pool_pairs = [pair for pair in build_pool(runs) if pair in judgments]
-    out = eval_dir() / "judgments_for_review.md"
+    out = out or (eval_dir() / "judgments_for_review.md")
     out.write_text(
-        sample_for_review(pool_pairs, queries, judgments, profiles, n=n), encoding="utf-8"
+        sample_for_review(pool_pairs, queries, judgments, profiles, n=n, seed=seed),
+        encoding="utf-8",
     )
     typer.secho(f"{n} пар → {out}", fg=typer.colors.GREEN)
 
