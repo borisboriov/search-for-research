@@ -28,6 +28,9 @@ class Backend(Protocol):
 
     def search(self, query: str, k: int = 10) -> list[Hit]: ...
 
+    def warmup(self) -> None:
+        """Load whatever is lazy, so it is not charged to the first query's latency."""
+
 
 def _hits(docs: list[dict[str, Any]], order: list[int], scores: list[float]) -> list[Hit]:
     return [
@@ -62,6 +65,9 @@ class DenseBackend:
             self._embedder = make_embedder(self.spec)
         return self._embedder
 
+    def warmup(self) -> None:
+        self.embedder.encode(["разогрев"], is_query=True)
+
     def search(self, query: str, k: int = 10) -> list[Hit]:
         vector = self.embedder.encode([query], is_query=True)
         order, scores = top_k(self.vectors, vector, min(k, len(self.docs)))
@@ -76,6 +82,9 @@ class Bm25Backend:
         self.spec = spec
         self.docs: list[dict[str, Any]] = load_docs(index_dir)
         self.bm25 = build_bm25([str(doc["indexed_text"]) for doc in self.docs])
+
+    def warmup(self) -> None:
+        """Nothing lazy: the BM25 corpus is built in __init__."""
 
     def search(self, query: str, k: int = 10) -> list[Hit]:
         scores = np.asarray(self.bm25.get_scores(tokenize(query)))  # type: ignore[attr-defined]

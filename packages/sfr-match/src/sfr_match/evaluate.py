@@ -50,7 +50,12 @@ class Run:
 
 
 def run_queries(backend: Backend, queries: list[Query], k: int = 10) -> Run:
-    """Search every golden-set query, recording ranking and per-query latency."""
+    """Search every golden-set query, recording ranking and per-query latency.
+
+    The backend is warmed up first: loading the model is a one-off cost of the
+    process, not part of query latency.
+    """
+    backend.warmup()
     results: list[QueryRun] = []
     for query in queries:
         started = time.perf_counter()

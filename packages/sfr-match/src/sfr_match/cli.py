@@ -80,6 +80,7 @@ def search(
         backend = load_backend(index_path(spec, clean=clean, root=index_root), spec.key)
     except (KeyError, FileNotFoundError) as exc:
         raise _fail(str(exc)) from exc
+    backend.warmup()  # model loading is not part of query latency
     started = time.perf_counter()
     hits = backend.search(query, k=k)
     elapsed_ms = (time.perf_counter() - started) * 1000

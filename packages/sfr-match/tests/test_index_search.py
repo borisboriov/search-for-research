@@ -170,3 +170,16 @@ def test_numpy_scan_matches_faiss_exactly(
     order, scores = top_k(vectors, query, 3)
     assert order == [int(i) for i in faiss_order[0]]
     assert np.allclose(scores, faiss_scores[0], atol=1e-6)
+
+
+def test_warmup_runs_before_the_first_timed_query(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    """Model loading must not be charged to query latency (SPEC_SFR1 §5)."""
+    spec, out_dir, _, _ = _build(tmp_path, profiles, "e5-base", fake_embedder)
+    embedder = fake_embedder(spec)
+    backend = DenseBackend(out_dir, spec, embedder=embedder)
+    queries = [Query(id="q1", text="сверхпроводимость", expect="in-domain")]
+    run_queries(backend, queries, k=1)
+    assert embedder.seen[0][1] is True  # a query encode happened before the golden set
+    assert len(embedder.seen) == 2  # warmup + the single query
