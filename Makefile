@@ -1,5 +1,5 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
-	index eval eval-report
+	index eval eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -22,7 +22,7 @@ format: unhide
 
 typecheck: unhide
 	uv run mypy packages/sfr-core/src/sfr_core packages/sfr-etl/src/sfr_etl \
-		packages/sfr-match/src/sfr_match
+		packages/sfr-match/src/sfr_match apps/api/src/sfr_api
 
 test: unhide
 	uv run pytest -m "not integration and not slow"
@@ -69,3 +69,24 @@ eval: index
 # Report only (rankings and judgments already on disk).
 eval-report: unhide
 	uv run sfr-match report
+
+# ---------------------------------------------------------------------------
+# SFR-2: search API over the two-university corpus
+# ---------------------------------------------------------------------------
+SFR2_PROFILES := data/exports/profiles_mipt_msu.jsonl
+SFR2_INDEX_ROOT := data/indexes_sfr2
+SFR2_MODELS := frida mpnet
+SFR2_COMPOSITIONS := full topics topics_titles
+
+# Six indexes: two models x three profile_text compositions (SPEC_SFR2 §5).
+# Cleaning is on for all of them, so the comparison is internally consistent.
+index-sfr2: unhide
+	@for m in $(SFR2_MODELS); do \
+		for c in $(SFR2_COMPOSITIONS); do \
+			uv run sfr-match index -m $$m --clean --compose $$c \
+				--profiles $(SFR2_PROFILES) --index-root $(SFR2_INDEX_ROOT) || exit 1; \
+		done; \
+	done
+
+api: unhide
+	uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
