@@ -225,3 +225,6 @@ _to_delete/
 
 # SFR data: raw API cache, sqlite, exports
 data/
+
+# macOS
+.DS_Store

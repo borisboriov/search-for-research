@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 48" width="340" height="48">
+  <g fill="none" stroke="#3B52C9" stroke-width="2.4">
+    <circle cx="18" cy="24" r="12"/>
+    <circle cx="30" cy="24" r="12"/>
+    <path d="M24 13.6A12 12 0 0 1 24 34.4A12 12 0 0 1 24 13.6Z" fill="#3B52C9" stroke="none"/>
+  </g>
+  <text x="58" y="32" font-family="Spectral, Georgia, serif" font-weight="500" font-size="26" letter-spacing="-0.4" fill="#1B2233">Search for Research</text>
+</svg>

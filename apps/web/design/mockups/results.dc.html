@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Golos+Text:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Golos Text', system-ui, sans-serif; background: #FBFAF7; color: #1B2233; }
+    a { color: #3B52C9; text-decoration: none; } a:hover { color: #2A3DA0; }
+  </style>
+</helmet>
+<div style="width: 1440px; background: #FBFAF7; display: flex; flex-direction: column;">
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 22px 64px; border-bottom: 1px solid #E4E2DB; background: #FBFAF7;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <svg width="30" height="30" viewBox="0 0 48 48" fill="none" stroke="#3B52C9" stroke-width="2.6"><circle cx="18" cy="24" r="12"></circle><circle cx="30" cy="24" r="12"></circle><path d="M24 13.6A12 12 0 0 1 24 34.4A12 12 0 0 1 24 13.6Z" fill="#3B52C9" stroke="none"></path></svg>
+      <span style="font-family: 'Spectral', Georgia, serif; font-size: 21px; font-weight: 500; letter-spacing: -0.015em;">Search for Research</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 32px;">
+      <span style="font-size: 15px; color: #5A6478;">Как это работает</span>
+      <span style="font-size: 15px; color: #5A6478;">Научрукам</span>
+      <div style="width: 36px; height: 36px; border-radius: 999px; background: #EEF1FC; color: #3B52C9; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: center;">Б</div>
+    </div>
+  </div>  <div style="display: flex; flex-direction: column; gap: 20px; padding: 36px 64px 0 64px;">
+    <div style="display: flex; align-items: center; gap: 12px; background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 14px; padding: 16px 18px;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9AA1B0" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M15.5 15.5 L21 21"></path></svg>
+      <div style="font-size: 16px; flex-grow: 1; color: #1B2233;">применение графовых нейросетей к предсказанию свойств молекул, хочу совмещать ML и химию</div>
+      <div style="font-size: 14px; font-weight: 500; color: #3B52C9; white-space: nowrap;">Изменить запрос</div>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 9px 14px; border-radius: 999px; white-space: nowrap;"><span>Вуз: все</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9 L12 15 L18 9"></path></svg></div><div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 9px 14px; border-radius: 999px; white-space: nowrap;"><span>h-index: любой</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9 L12 15 L18 9"></path></svg></div><div style="display: flex; align-items: center; gap: 8px; background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 9px 14px; border-radius: 999px; white-space: nowrap;"><span>Должность: любая</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9 L12 15 L18 9"></path></svg></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="font-size: 14px; color: #5A6478;">Найдено 5 научруков · 2 вуза</div>
+        <div style="display: flex; align-items: center; gap: 8px; background: #EEF1FC; color: #3B52C9; border: 1px solid #C4CBEC; font-size: 14px; font-weight: 500; padding: 9px 14px; border-radius: 999px; white-space: nowrap;"><span>По совпадению</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5A6478" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9 L12 15 L18 9"></path></svg></div>
+      </div>
+    </div>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 14px; padding: 24px 64px 56px 64px;">
+      <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 52px; height: 52px; border-radius: 999px; background: #EEF1FC; color: #3B52C9; font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">АК</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 600;">А. В. Ковалёв</div>
+            <div style="font-size: 14px; color: #5A6478;">МФТИ · профессор</div>
+          </div>
+          <div style="font-size: 15px; line-height: 1.5; color: #5A6478;">Графовые нейросети, молекулярное моделирование, ML в химии</div>
+          <div style="display: flex; gap: 18px; font-size: 13px; color: #9AA1B0;"><span>h-index 24</span><span>118 публикаций</span><span>Последняя: Graph neural networks for molecular property prediction · 2025</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0;">
+          <div style="background: #EEF1FC; color: #3B52C9; font-size: 15px; font-weight: 600; padding: 6px 11px; border-radius: 8px; white-space: nowrap;">92%</div>
+          <div style="background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 10px 16px; border-radius: 10px; white-space: nowrap;">Открыть профиль</div>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 52px; height: 52px; border-radius: 999px; background: #EEF1FC; color: #3B52C9; font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">ЕС</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 600;">Е. М. Соколова</div>
+            <div style="font-size: 14px; color: #5A6478;">МГУ · вед. науч. сотрудник</div>
+          </div>
+          <div style="font-size: 15px; line-height: 1.5; color: #5A6478;">Хемоинформатика, предсказание свойств соединений, drug design</div>
+          <div style="display: flex; gap: 18px; font-size: 13px; color: #9AA1B0;"><span>h-index 19</span><span>86 публикаций</span><span>Последняя: Transfer learning in QSAR modelling · 2024</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0;">
+          <div style="background: #EEF1FC; color: #3B52C9; font-size: 15px; font-weight: 600; padding: 6px 11px; border-radius: 8px; white-space: nowrap;">87%</div>
+          <div style="background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 10px 16px; border-radius: 10px; white-space: nowrap;">Открыть профиль</div>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 52px; height: 52px; border-radius: 999px; background: #EEF1FC; color: #3B52C9; font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">ИТ</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 600;">И. П. Тихонов</div>
+            <div style="font-size: 14px; color: #5A6478;">МФТИ · доцент</div>
+          </div>
+          <div style="font-size: 15px; line-height: 1.5; color: #5A6478;">Генеративные модели для дизайна молекул, диффузионные модели</div>
+          <div style="display: flex; gap: 18px; font-size: 13px; color: #9AA1B0;"><span>h-index 12</span><span>41 публикаций</span><span>Последняя: Diffusion models for de novo molecule generation · 2025</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0;">
+          <div style="background: #EEF1FC; color: #3B52C9; font-size: 15px; font-weight: 600; padding: 6px 11px; border-radius: 8px; white-space: nowrap;">81%</div>
+          <div style="background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 10px 16px; border-radius: 10px; white-space: nowrap;">Открыть профиль</div>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 52px; height: 52px; border-radius: 999px; background: #FDF3EA; color: #C46A2B; font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">ДЛ</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 600;">Д. А. Лебедев</div>
+            <div style="font-size: 14px; color: #5A6478;">МФТИ · доцент</div>
+          </div>
+          <div style="font-size: 15px; line-height: 1.5; color: #5A6478;">Байесовские методы в материаловедении — смежная область, которая может расширить тему</div>
+          <div style="display: flex; gap: 18px; font-size: 13px; color: #9AA1B0;"><span>h-index 15</span><span>54 публикаций</span><span>Последняя: Bayesian optimisation of alloy compositions · 2024</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0;">
+          <div style="background: #FDF3EA; color: #C46A2B; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 8px; white-space: nowrap;">неожиданный вариант</div>
+          <div style="background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 10px 16px; border-radius: 10px; white-space: nowrap;">Открыть профиль</div>
+        </div>
+      </div>
+      <div style="background: #FFFFFF; border: 1px solid #E4E2DB; border-radius: 14px; padding: 22px 24px; display: flex; align-items: center; gap: 20px;">
+        <div style="width: 52px; height: 52px; border-radius: 999px; background: #EEF1FC; color: #3B52C9; font-weight: 600; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">НМ</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 17px; font-weight: 600;">Н. С. Морозова</div>
+            <div style="font-size: 14px; color: #5A6478;">МГУ · доцент</div>
+          </div>
+          <div style="font-size: 15px; line-height: 1.5; color: #5A6478;">Вычислительная химия, квантово-химические расчёты, ML-потенциалы</div>
+          <div style="display: flex; gap: 18px; font-size: 13px; color: #9AA1B0;"><span>h-index 17</span><span>63 публикаций</span><span>Последняя: ML interatomic potentials for organic crystals · 2025</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 12px; flex-shrink: 0;">
+          <div style="background: #EEF1FC; color: #3B52C9; font-size: 15px; font-weight: 600; padding: 6px 11px; border-radius: 8px; white-space: nowrap;">74%</div>
+          <div style="background: #FFFFFF; color: #1B2233; border: 1px solid #E4E2DB; font-size: 14px; font-weight: 500; padding: 10px 16px; border-radius: 10px; white-space: nowrap;">Открыть профиль</div>
+        </div>
+      </div>
+    <div style="display: flex; justify-content: center; gap: 6px; font-size: 13px; color: #9AA1B0; padding-top: 10px;"><span>Наукометрия — по данным открытого каталога OpenAlex.</span><span style="color: #3B52C9;">Как работает подбор</span></div>
+  </div>  <div style="display: flex; justify-content: space-between; align-items: center; padding: 28px 64px; border-top: 1px solid #E4E2DB;">
+    <div style="display: flex; align-items: center; gap: 10px;"><svg width="22" height="22" viewBox="0 0 48 48" fill="none" stroke="#1B2233" stroke-width="2.6"><circle cx="18" cy="24" r="12"></circle><circle cx="30" cy="24" r="12"></circle><path d="M24 13.6A12 12 0 0 1 24 34.4A12 12 0 0 1 24 13.6Z" fill="#1B2233" stroke="none"></path></svg><div style="font-family: 'Spectral', Georgia, serif; font-size: 16px; font-weight: 500;">Search for Research</div></div>
+    <div style="display: flex; gap: 28px; font-size: 14px; color: #9AA1B0;"><span>О проекте</span><span>Научрукам</span><span>Контакты</span></div>
+    <div style="font-size: 13px; color: #9AA1B0;">Данные: OpenAlex (CC0)</div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
