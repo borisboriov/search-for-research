@@ -34,6 +34,14 @@ class ApiSettings(BaseSettings):
     # It belongs to the `frida_clean` index — mpnet's own scale calibrates to 0.43.
     score_threshold: float = 0.27
 
+    # Card enrichment (citations, top works) built offline by `sfr export cards`.
+    # Optional: a missing file degrades to empty card fields (tests, bare index).
+    cards_path: Path | None = Path("data/exports/cards.jsonl")
+
+    # Catalogue listing (sitemap, landing preview): page size cap.
+    list_default_limit: int = 100
+    list_max_limit: int = 1000
+
     default_k: int = 10
     max_k: int = 50
     min_query_chars: int = 3

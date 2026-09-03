@@ -1,5 +1,6 @@
-"""Contract of the three endpoints, driven by the fake backend (SPEC_SFR2 §2)."""
+"""Contract of the endpoints, driven by the fake backend (SPEC_SFR2 §2, SFR-3 §4)."""
 
+import json
 from pathlib import Path
 
 import pytest
@@ -142,3 +143,81 @@ def test_from_settings_warms_the_backend_up(
     settings = ApiSettings(index_dir=write_index(tmp_path / "frida_clean"), warmup=True)
     MatchService.from_settings(settings)
     assert backend.warmups == 1
+
+
+# --- SFR-3 §4: card enrichment and the catalogue listing -----------------------------
+
+EXTRAS = {
+    "A1": {
+        "id": "A1",
+        "cited_by_count": 4210,
+        "position": None,
+        "email": None,
+        "top_works": [{"title": "GERDA: final results", "year": 2020}],
+    }
+}
+
+
+def enriched_client(backend: FakeBackend, tmp_path: Path) -> TestClient:
+    cards = tmp_path / "cards.jsonl"
+    cards.write_text(
+        "\n".join(json.dumps(record, ensure_ascii=False) for record in EXTRAS.values()),
+        encoding="utf-8",
+    )
+    settings = ApiSettings(warmup=False, cards_path=cards)
+    return TestClient(create_app(settings, MatchService(backend, settings)))
+
+
+def test_card_is_enriched_from_the_cards_file(backend: FakeBackend, tmp_path: Path) -> None:
+    body = enriched_client(backend, tmp_path).get("/api/supervisors/A1").json()
+    assert body["cited_by_count"] == 4210
+    assert body["top_works"] == [{"title": "GERDA: final results", "year": 2020}]
+    assert body["position"] is None and body["email"] is None
+
+
+def test_match_results_carry_the_same_enrichment(backend: FakeBackend, tmp_path: Path) -> None:
+    body = enriched_client(backend, tmp_path).post("/api/match", json={"query": "нейтрино"}).json()
+    by_id = {r["author_id"]: r for r in body["results"]}
+    assert by_id["A1"]["cited_by_count"] == 4210
+    assert by_id["A2"]["cited_by_count"] is None  # not in the enrichment file
+    assert by_id["A2"]["top_works"] == []
+
+
+def test_missing_cards_file_degrades_to_empty_fields(backend: FakeBackend) -> None:
+    """The enrichment is optional by design: no file — no crash, empty fields."""
+    body = client(backend, cards_path=Path("nowhere/cards.jsonl")).get("/api/supervisors/A1").json()
+    assert body["cited_by_count"] is None
+    assert body["top_works"] == []
+
+
+def test_serendipity_is_declared_but_never_set_by_the_api(backend: FakeBackend) -> None:
+    body = client(backend).post("/api/match", json={"query": "нейтрино"}).json()
+    assert all(result["serendipity"] is False for result in body["results"])
+
+
+def test_supervisors_listing_returns_every_profile(backend: FakeBackend) -> None:
+    body = client(backend).get("/api/supervisors").json()
+    assert body["total"] == 3
+    assert [item["author_id"] for item in body["items"]] == ["A1", "A2", "A3"]
+    assert body["items"][0]["name"] == "Л. В. Инжечик"
+    assert body["items"][0]["institution"] == "МФТИ"
+    assert body["next_cursor"] is None
+
+
+def test_supervisors_listing_paginates_by_cursor(backend: FakeBackend) -> None:
+    api = client(backend)
+    first = api.get("/api/supervisors", params={"limit": 2}).json()
+    assert [item["author_id"] for item in first["items"]] == ["A1", "A2"]
+    assert first["next_cursor"] == "A2"
+    second = api.get("/api/supervisors", params={"limit": 2, "cursor": "A2"}).json()
+    assert [item["author_id"] for item in second["items"]] == ["A3"]
+    assert second["next_cursor"] is None
+
+
+def test_supervisors_listing_rejects_bad_limit_and_cursor(backend: FakeBackend) -> None:
+    api = client(backend)
+    assert api.get("/api/supervisors", params={"limit": 0}).status_code == 422
+    assert api.get("/api/supervisors", params={"limit": 9999}).status_code == 422
+    response = api.get("/api/supervisors", params={"cursor": "A999"})
+    assert response.status_code == 422
+    assert "A999" in response.json()["detail"]

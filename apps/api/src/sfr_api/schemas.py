@@ -10,6 +10,13 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class TopWork(BaseModel):
+    """One publication on the card: titles carry the signal (SFR-2), so title first."""
+
+    title: str
+    year: int | None = None
+
+
 class SupervisorCard(BaseModel):
     author_id: str
     name: str
@@ -19,8 +26,25 @@ class SupervisorCard(BaseModel):
     topics: list[str] = []
     profile_text: str
 
+    # SFR-3 additions (§4 SPEC_SFR3). All optional: the search index does not
+    # carry them — they come from the cards enrichment file (`sfr export cards`)
+    # and default to empty when it is absent (tests, bare index).
+    cited_by_count: int | None = None
+    position: str | None = Field(
+        default=None, description="Должность, если есть в данных каталога; сейчас в данных нет"
+    )
+    email: str | None = Field(
+        default=None, description="Только из данных каталога, ничего не парсим; сейчас нет"
+    )
+    top_works: list[TopWork] = []
+    serendipity: bool = Field(
+        default=False,
+        description="Зарезервировано: API пока не выставляет, фронт умеет рисовать",
+    )
+
     @classmethod
-    def from_doc(cls, doc: dict[str, Any]) -> "SupervisorCard":
+    def from_doc(cls, doc: dict[str, Any], extra: dict[str, Any] | None = None) -> "SupervisorCard":
+        extra = extra or {}
         return cls(
             author_id=str(doc["id"]),
             name=str(doc["name"]),
@@ -29,6 +53,10 @@ class SupervisorCard(BaseModel):
             works_count=doc.get("works_count"),
             topics=list(doc.get("topics") or []),
             profile_text=str(doc.get("display_text") or doc["profile_text"]),
+            cited_by_count=extra.get("cited_by_count"),
+            position=extra.get("position"),
+            email=extra.get("email"),
+            top_works=[TopWork(**w) for w in extra.get("top_works") or []],
         )
 
 
@@ -50,6 +78,22 @@ class MatchResponse(BaseModel):
     )
     index_version: str
     took_ms: float
+
+
+class SupervisorSummary(BaseModel):
+    """One row of the catalogue listing — enough for a sitemap entry or a link."""
+
+    author_id: str
+    name: str
+    institution: str | None = None
+
+
+class SupervisorsPage(BaseModel):
+    items: list[SupervisorSummary]
+    next_cursor: str | None = Field(
+        default=None, description="author_id to pass as ?cursor= for the next page; null = end"
+    )
+    total: int
 
 
 class HealthResponse(BaseModel):

@@ -17,10 +17,13 @@ services:
       # в SFR-2), и дублировать его здесь значит однажды забыть обновить одно из двух.
       # auto = faiss on Linux (this container), numpy on macOS
       SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
+      # Card enrichment (SFR-3): optional, built offline by `make export-cards`.
+      SFR_API_CARDS_PATH: /app/data/exports/cards.jsonl
       HF_HOME: /models
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
     volumes:
       - ./data/indexes_sfr2:/app/data/indexes_sfr2:ro
+      - ./data/exports:/app/data/exports:ro
       - ${SFR_HF_CACHE:-hf-cache}:/models
 
 volumes:

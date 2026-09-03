@@ -1,5 +1,6 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
-	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench
+	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
+	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -112,6 +113,10 @@ eval-sfr2: unhide
 	uv run sfr-match calibrate --runs-dir $(SFR2_RUNS) --ood-runs-dir $(SFR2_OOD_RUNS)
 	uv run sfr-match report-sfr2
 
+# Card enrichment for the API (SFR-3): citations + top works, from the local DB.
+export-cards: unhide
+	uv run sfr export cards --out data/exports/cards.jsonl
+
 api: unhide
 	uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
 
@@ -129,3 +134,28 @@ docker-down:
 # Resource + latency measurements for the report (SPEC_SFR2 §3).
 bench: unhide
 	uv run python scripts/bench_api.py --out docs/sfr2_resources.json
+
+# ---------------------------------------------------------------------------
+# SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.
+# ---------------------------------------------------------------------------
+web-setup:
+	cd apps/web && npm ci
+
+web-dev:
+	cd apps/web && npm run dev
+
+web-lint:
+	cd apps/web && npm run lint
+
+web-typecheck:
+	cd apps/web && npm run typecheck
+
+web-test:
+	cd apps/web && npm run test
+
+web-build:
+	cd apps/web && npm run build
+
+# Playwright against a live API (`make api` in another terminal). Local only, not in CI.
+web-e2e:
+	cd apps/web && npm run e2e

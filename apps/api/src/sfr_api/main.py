@@ -8,7 +8,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from sfr_api.schemas import HealthResponse, MatchRequest, MatchResponse, SupervisorCard
+from sfr_api.schemas import (
+    HealthResponse,
+    MatchRequest,
+    MatchResponse,
+    SupervisorCard,
+    SupervisorsPage,
+)
 from sfr_api.service import MatchService, QueryError
 from sfr_api.settings import ApiSettings
 
@@ -25,6 +31,25 @@ def match(request: Request, body: MatchRequest) -> MatchResponse:
     """Find supervisors for a free-text description of research interests."""
     try:
         return _service(request).match(body.query, body.k)
+    except QueryError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.get("/supervisors", response_model=SupervisorsPage)
+def supervisors(
+    request: Request, limit: int | None = None, cursor: str | None = None
+) -> SupervisorsPage:
+    """Paginated catalogue listing: author_id + name + institution (sitemap, previews)."""
+    service = _service(request)
+    settings: ApiSettings = request.app.state.settings
+    limit = settings.list_default_limit if limit is None else limit
+    if limit < 1 or limit > settings.list_max_limit:
+        raise HTTPException(
+            status_code=422,
+            detail=f"limit должен быть от 1 до {settings.list_max_limit}, получено {limit}.",
+        )
+    try:
+        return service.list_supervisors(limit, cursor)
     except QueryError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 

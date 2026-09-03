@@ -13,7 +13,7 @@ from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Institution
 from sfr_core.settings import Settings, get_settings
 from sfr_etl.client import OpenAlexClient
-from sfr_etl.export import export_profiles_jsonl
+from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
 from sfr_etl.profiles import build_profiles
 from sfr_etl.report import (
@@ -224,6 +224,21 @@ def export_jsonl(
         n_lines = export_profiles_jsonl(session, out)
     _record_run_stats(settings, "export jsonl", time.monotonic() - started)
     typer.echo(f"Exported {n_lines} profiles to {out}")
+
+
+@export_app.command("cards")
+def export_cards(
+    out: Annotated[Path, typer.Option(help="Output JSONL path")] = Path("data/exports/cards.jsonl"),
+) -> None:
+    """Export card enrichment for the API (SFR-3): citations + top works per supervisor."""
+    settings = _load_settings()
+    upgrade_to_head(settings.sfr_db_url)
+    engine = make_engine(settings.sfr_db_url)
+    started = time.monotonic()
+    with session_scope(engine) as session:
+        n_lines = export_cards_jsonl(session, out)
+    _record_run_stats(settings, "export cards", time.monotonic() - started)
+    typer.echo(f"Exported {n_lines} cards to {out}")
 
 
 @app.command("report")
