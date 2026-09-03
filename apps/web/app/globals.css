@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+/* Токены дизайн-системы v1 (design/DESIGN_SYSTEM.md §1) — источник истины.
+   Значения не менять здесь: правится дизайн-система, потом этот файл. */
+@theme {
+  --color-bg: #fbfaf7;
+  --color-bg-muted: #f2f1ec;
+  --color-surface: #ffffff;
+  --color-border: #e4e2db;
+  --color-fg: #1b2233;
+  --color-fg-muted: #5a6478;
+  --color-fg-subtle: #9aa1b0;
+  --color-accent: #3b52c9;
+  --color-accent-hover: #2a3da0;
+  --color-accent-soft: #eef1fc;
+  --color-accent-deep: #26307a;
+  --color-accent-deep-fg: #c4cbec;
+  --color-accent-border: #c4cbec;
+  --color-serendipity: #c46a2b;
+  --color-serendipity-soft: #fdf3ea;
+  --color-danger: #b3261e;
+
+  --font-display: var(--font-spectral), Georgia, serif;
+  --font-sans: var(--font-golos), system-ui, sans-serif;
+
+  --radius-btn: 10px;
+  --radius-card: 14px;
+  --radius-search: 16px;
+  --radius-badge: 8px;
+
+  --shadow-search: 0 8px 28px rgba(27, 34, 51, 0.06);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+
+/* Единственная анимация интерфейса: один reveal списка результатов
+   (fade + сдвиг 8px, 200 мс) — DESIGN_HANDOFF «Правила поведения». */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-reveal {
+  animation: reveal 200ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-reveal {
+    animation: none;
+  }
+}
