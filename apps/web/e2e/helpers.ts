@@ -4,8 +4,8 @@ export const DESKTOP = { width: 1440, height: 900 };
 export const MOBILE = { width: 390, height: 844 };
 
 // Реальный профиль из превью лендинга (lib/preview.ts) — стабильный id каталога.
-export const KNOWN_AUTHOR_ID = "A5070267730";
-export const KNOWN_AUTHOR_NAME = "Ivan Smirnov";
+export const KNOWN_AUTHOR_ID = "A5050048876";
+export const KNOWN_AUTHOR_NAME = "Konstantin Vorontsov";
 
 export async function screenshot(page: Page, name: string): Promise<void> {
   // Скриншоты сверяются с макетами глазами — дождаться шрифтов обязательно,

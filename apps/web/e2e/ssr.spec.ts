@@ -10,8 +10,8 @@ test("HTML профиля содержит имя, вуз, темы и мета�
   const html = await response.text();
   expect(html).toContain(KNOWN_AUTHOR_NAME);
   expect(html).toContain("МФТИ");
-  expect(html).toContain("Natural Language Processing");
-  expect(html).toMatch(/<title>Ivan Smirnov — МФТИ \| Search for Research<\/title>/);
+  expect(html).toContain("Topic Modeling");
+  expect(html).toMatch(/<title>Konstantin Vorontsov — МФТИ \| Search for Research<\/title>/);
   expect(html).toContain('rel="canonical"');
   expect(html).toContain('property="og:title"');
 });
