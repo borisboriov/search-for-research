@@ -117,8 +117,11 @@ eval-sfr2: unhide
 export-cards: unhide
 	uv run sfr export cards --out data/exports/cards.jsonl
 
+# Локальный API сервит тот же индекс, что и контейнер (SFR-2, 535 профилей);
+# переопределяется переменной окружения SFR_API_INDEX_ROOT.
 api: unhide
-	uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
+	SFR_API_INDEX_ROOT=$${SFR_API_INDEX_ROOT:-$(SFR2_INDEX_ROOT)} \
+		uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
 
 docker-build:
 	docker compose build

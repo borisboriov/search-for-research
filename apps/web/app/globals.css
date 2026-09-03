@@ -2,6 +2,14 @@
 
 /* Токены дизайн-системы v1 (design/DESIGN_SYSTEM.md §1) — источник истины.
    Значения не менять здесь: правится дизайн-система, потом этот файл. */
+/* Шрифтовые токены ссылаются на переменные next/font (заданы классом на body),
+   поэтому объявлены inline — обычный @theme разрешал бы их на :root, где
+   переменных next/font ещё нет. */
+@theme inline {
+  --font-display: var(--font-spectral), Georgia, serif;
+  --font-sans: var(--font-golos), system-ui, sans-serif;
+}
+
 @theme {
   --color-bg: #fbfaf7;
   --color-bg-muted: #f2f1ec;
@@ -20,9 +28,6 @@
   --color-serendipity-soft: #fdf3ea;
   --color-danger: #b3261e;
 
-  --font-display: var(--font-spectral), Georgia, serif;
-  --font-sans: var(--font-golos), system-ui, sans-serif;
-
   --radius-btn: 10px;
   --radius-card: 14px;
   --radius-search: 16px;
@@ -34,7 +39,7 @@
 body {
   background: var(--color-bg);
   color: var(--color-fg);
-  font-family: var(--font-sans);
+  font-family: var(--font-golos), system-ui, sans-serif;
 }
 
 /* Единственная анимация интерфейса: один reveal списка результатов
