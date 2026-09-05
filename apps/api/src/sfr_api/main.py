@@ -1,9 +1,11 @@
 """FastAPI application: three endpoints over one preloaded index (SPEC_SFR2 §2)."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -27,12 +29,31 @@ def _service(request: Request) -> MatchService:
 
 
 @router.post("/match", response_model=MatchResponse)
-def match(request: Request, body: MatchRequest) -> MatchResponse:
-    """Find supervisors for a free-text description of research interests."""
+async def match(request: Request, body: MatchRequest) -> MatchResponse:
+    """Find supervisors for a free-text description of research interests.
+
+    CPU inference is guarded: at most ``match_concurrency`` encodes run at once,
+    ``match_queue_limit`` more wait on the semaphore, the rest get an honest 503
+    instead of thrashing the model (REVIEW_SFR3 Medium). The counter is safe
+    without a lock — the event loop is single-threaded and there is no await
+    between the check and the increment.
+    """
+    state = request.app.state
+    settings: ApiSettings = state.settings
+    if state.match_inflight >= settings.match_concurrency + settings.match_queue_limit:
+        raise HTTPException(
+            status_code=503,
+            detail="Сервис перегружен, запрос не принят. Попробуйте через минуту.",
+        )
+    state.match_inflight += 1
     try:
-        return _service(request).match(body.query, body.k)
-    except QueryError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        async with state.match_semaphore:
+            try:
+                return await run_in_threadpool(_service(request).match, body.query, body.k)
+            except QueryError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+    finally:
+        state.match_inflight -= 1
 
 
 @router.get("/supervisors", response_model=SupervisorsPage)
@@ -89,6 +110,8 @@ def create_app(settings: ApiSettings | None = None, service: MatchService | None
     )
     app.state.settings = settings
     app.state.service = service
+    app.state.match_semaphore = asyncio.Semaphore(settings.match_concurrency)
+    app.state.match_inflight = 0
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

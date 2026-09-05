@@ -47,4 +47,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=5s --timeout=3s --start-period=180s --retries=40 \
     CMD curl -fsS http://127.0.0.1:8000/api/health || exit 1
 
-CMD ["uvicorn", "sfr_api.main:app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+# --limit-concurrency 8: сверх восьми одновременных соединений uvicorn отвечает
+# 503 сразу — вместе с Semaphore(2) в приложении это потолок для CPU-инференса
+# (REVIEW_SFR3 Medium). Под пиковой нагрузкой healthcheck тоже может поймать 503.
+CMD ["uvicorn", "sfr_api.main:app", "--factory", "--host", "0.0.0.0", "--port", "8000", \
+    "--limit-concurrency", "8"]

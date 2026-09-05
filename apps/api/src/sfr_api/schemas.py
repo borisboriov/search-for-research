@@ -66,7 +66,10 @@ class MatchResult(SupervisorCard):
 
 
 class MatchRequest(BaseModel):
-    query: str
+    # Жёсткая граница на уровне схемы — страховка от мегабайтных тел до входа
+    # в сервис (REVIEW_SFR3 Medium). Человеческая валидация (3..500 символов
+    # с текстом подсказки) остаётся в MatchService.validate.
+    query: str = Field(min_length=3, max_length=2000)
     k: int | None = None
 
 

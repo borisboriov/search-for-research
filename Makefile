@@ -121,7 +121,8 @@ export-cards: unhide
 # переопределяется переменной окружения SFR_API_INDEX_ROOT.
 api: unhide
 	SFR_API_INDEX_ROOT=$${SFR_API_INDEX_ROOT:-$(SFR2_INDEX_ROOT)} \
-		uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000
+		uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000 \
+		--limit-concurrency 8
 
 docker-build:
 	docker compose build

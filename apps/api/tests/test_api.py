@@ -75,9 +75,12 @@ def test_k_defaults_to_ten_and_can_be_narrowed(backend: FakeBackend) -> None:
 @pytest.mark.parametrize(
     ("payload", "fragment"),
     [
-        ({"query": ""}, "слишком короткий"),
+        # пустая строка режется уже схемой (min_length=3) — текст общий, не сервисный
+        ({"query": ""}, "не прошёл проверку"),
         ({"query": "  ab  "}, "слишком короткий"),
         ({"query": "я" * 501}, "слишком длинный"),
+        # длиннее max_length схемы (2000) — страховка от мегабайтных тел
+        ({"query": "я" * 2001}, "не прошёл проверку"),
         ({"query": "нейтрино", "k": 0}, "k должно быть"),
         ({"query": "нейтрино", "k": 999}, "k должно быть"),
     ],
@@ -95,6 +98,24 @@ def test_malformed_body_also_gets_a_sentence_not_a_pydantic_dump(backend: FakeBa
     response = client(backend).post("/api/match", json={"k": 5})
     assert response.status_code == 422
     assert isinstance(response.json()["detail"], str)
+
+
+def test_match_returns_503_when_inference_queue_is_full(backend: FakeBackend) -> None:
+    """Сверх concurrency+queue запрос не встаёт в хвост, а сразу получает 503."""
+    api = client(backend, match_concurrency=1, match_queue_limit=0)
+    api.app.state.match_inflight = 1  # как будто один запрос уже кодируется
+    response = api.post("/api/match", json={"query": "нейтрино"})
+    assert response.status_code == 503
+    assert "перегружен" in response.json()["detail"]
+    api.app.state.match_inflight = 0
+    assert api.post("/api/match", json={"query": "нейтрино"}).status_code == 200
+
+
+def test_match_inflight_counter_returns_to_zero_after_requests(backend: FakeBackend) -> None:
+    api = client(backend)
+    api.post("/api/match", json={"query": "нейтрино"})
+    api.post("/api/match", json={"query": "  ab  "})  # и после 422 тоже
+    assert api.app.state.match_inflight == 0
 
 
 def test_supervisor_card_is_available_by_id(backend: FakeBackend) -> None:

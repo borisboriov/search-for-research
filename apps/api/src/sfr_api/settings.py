@@ -47,6 +47,13 @@ class ApiSettings(BaseSettings):
     min_query_chars: int = 3
     max_query_chars: int = 500
 
+    # Инференс FRIDA на CPU не параллелится бесплатно: 40 потоков threadpool
+    # дают x10 латентность и рост памяти (REVIEW_SFR3 Medium). Одновременно
+    # кодируют не больше match_concurrency запросов, ещё match_queue_limit
+    # ждут в очереди, остальным — честный 503 сразу.
+    match_concurrency: int = 2
+    match_queue_limit: int = 6
+
     # The future Next.js front (SFR-3) runs on localhost; nothing else is allowed by default.
     cors_origins: list[str] = [
         "http://localhost:3000",
