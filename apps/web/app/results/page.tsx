@@ -127,7 +127,10 @@ function ResultsForQuery({ query }: { query: string }) {
     }
     return filtered; // API уже отдаёт по убыванию score
   }, [results, filters]);
-  const universities = new Set(visible.map((result) => result.institution)).size;
+  // Короткие имена + отсев null: иначе «2 вуза» при одном (REVIEW_SFR3 Low)
+  const universities = new Set(
+    visible.map((result) => institutionShort(result.institution)).filter(Boolean),
+  ).size;
   const counter = counterText(visible.length, universities);
 
   return (

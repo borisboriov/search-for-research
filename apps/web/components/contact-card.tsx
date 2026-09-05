@@ -8,13 +8,42 @@ import { Button } from "@/components/ui/button";
 import { buildLetter } from "@/lib/letter";
 import type { SupervisorCard } from "@/lib/types";
 
+// Фолбэк для сред без Clipboard API (например, http без TLS — REVIEW_SFR3 Low:
+// кнопка молча не работала): скрытая textarea + execCommand("copy").
+function legacyCopy(text: string): boolean {
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  try {
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    area.remove();
+  }
+}
+
 function useCopy(): [boolean, (text: string) => void] {
   const [copied, setCopied] = useState(false);
   function copy(text: string) {
-    void navigator.clipboard.writeText(text).then(() => {
+    const done = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+    };
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(done)
+        .catch(() => {
+          if (legacyCopy(text)) done();
+        });
+    } else if (legacyCopy(text)) {
+      done();
+    }
   }
   return [copied, copy];
 }

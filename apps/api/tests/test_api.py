@@ -235,6 +235,15 @@ def test_supervisors_listing_paginates_by_cursor(backend: FakeBackend) -> None:
     assert second["next_cursor"] is None
 
 
+def test_get_422_does_not_mention_json_body(backend: FakeBackend) -> None:
+    """На GET /supervisors?limit=abc подсказка про query-параметры, не про JSON."""
+    response = client(backend).get("/api/supervisors", params={"limit": "abc"})
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert "query-параметр" in detail
+    assert "JSON" not in detail
+
+
 def test_supervisors_listing_rejects_bad_limit_and_cursor(backend: FakeBackend) -> None:
     api = client(backend)
     assert api.get("/api/supervisors", params={"limit": 0}).status_code == 422

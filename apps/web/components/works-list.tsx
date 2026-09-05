@@ -36,10 +36,12 @@ export function WorksList({ card }: { card: SupervisorCard }) {
         )}
       </div>
       <ul>
-        {works.map((work) => {
+        {works.map((work, index) => {
           const fragment = fragments.get(work.title);
           return (
-            <li key={`${work.title}-${work.year}`} className="border-t border-border py-3.5">
+            // индекс в ключе: у расщеплённых профилей встречаются дубли
+            // «название-год» (REVIEW_SFR3 Low)
+            <li key={`${work.title}-${work.year}-${index}`} className="border-t border-border py-3.5">
               {fragment ? (
                 <details className="group">
                   <summary className="flex cursor-pointer list-none flex-col gap-1 [&::-webkit-details-marker]:hidden">

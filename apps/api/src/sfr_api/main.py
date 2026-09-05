@@ -125,10 +125,13 @@ def create_app(settings: ApiSettings | None = None, service: MatchService | None
         """FastAPI's default 422 body is a list of pydantic errors — say it in words."""
         errors = exc.errors() if isinstance(exc, RequestValidationError) else []
         fields = ", ".join(str(error["loc"][-1]) for error in errors) or "тело запроса"
-        detail = (
-            f"Запрос не прошёл проверку ({fields}). "
-            'Ожидается JSON вида {"query": "описание интересов", "k": 10}.'
+        # На GET нет JSON-тела — подсказка про него только сбивает (REVIEW_SFR3 Low)
+        hint = (
+            "Проверьте query-параметры запроса."
+            if request.method == "GET"
+            else 'Ожидается JSON вида {"query": "описание интересов", "k": 10}.'
         )
+        detail = f"Запрос не прошёл проверку ({fields}). {hint}"
         return JSONResponse(status_code=422, content={"detail": detail})
 
     app.include_router(router)
