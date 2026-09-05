@@ -55,6 +55,15 @@ class Author(Base):
     h_index: Mapped[int | None] = mapped_column(Integer)
     i10_index: Mapped[int | None] = mapped_column(Integer)
     is_supervisor_candidate: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    # SFR-5: область OpenAlex (topics[].field), по которой автор стратифицирован
+    # при отборе. Хранится, чтобы отчёт показывал состав каталога без пересчёта.
+    primary_field: Mapped[str | None] = mapped_column(String(128), index=True)
+    # SFR-5, дедупликация: расщеплённый профиль склеен в канонического автора.
+    # Непустое значение = строка выбыла из каталога (профиль не строится).
+    merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("authors.id"), index=True)
+    # SFR-5: подозрение на чужую склейку (два несвязанных тематических домена
+    # в одном профиле OpenAlex). Флаг, а не расклейка — см. SPEC_SFR5 §3.
+    suspect_merge: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     fetched_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     raw: Mapped[dict[str, Any] | None] = mapped_column(JSON)
 
@@ -82,6 +91,10 @@ class Work(Base):
     cited_by_count: Mapped[int] = mapped_column(Integer, default=0)
     language: Mapped[str | None] = mapped_column(String(16))
     is_recent: Mapped[bool] = mapped_column(Boolean, default=False)
+    # SFR-5: число организаций-соавторов работы. Признак мегаколлаборации
+    # (ATLAS/CMS дают 200–400 против 2–5 у обычной статьи) — такие работы
+    # получают пониженный вес при сборке profile_text.
+    institutions_distinct_count: Mapped[int | None] = mapped_column(Integer)
 
     author: Mapped[Author] = relationship(back_populates="works")
 
