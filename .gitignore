@@ -230,3 +230,6 @@ data/
 
 # macOS
 .DS_Store
+
+# SFR-4b: временный каталог отчётов make audit
+.audit-*/

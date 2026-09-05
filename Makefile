@@ -1,7 +1,7 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
-	deploy-local deploy-local-down
+	deploy-local deploy-local-down audit
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -189,3 +189,12 @@ deploy-local:
 deploy-local-down:
 	SITE_ADDRESS=http://localhost:8080 NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
 	$(DEPLOY_COMPOSE) down
+
+# ---------------------------------------------------------------------------
+# SFR-4b: аудит безопасности (статический анализ + зависимости + секреты).
+# Полный список инструментов и политика падения — docs/SECURITY_CI.md.
+# Питоновские сканеры — из uv-группы security, бинарные (gitleaks, trivy,
+# hadolint) — из PATH или из запиненного docker-образа; чего нет — SKIP.
+# ---------------------------------------------------------------------------
+audit: unhide
+	uv run --group security python scripts/audit.py $(AUDIT_ARGS)
