@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { StatesShowcase } from "@/components/states-showcase";
 
@@ -11,5 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default function StatesPage() {
+  // Инструмент вёрстки с вымышленными данными не должен жить на проде
+  // (REVIEW_SFR3 Low).
+  if (process.env.NODE_ENV === "production") notFound();
   return <StatesShowcase />;
 }

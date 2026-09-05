@@ -17,7 +17,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: uv sync --all-packages
+        # --locked: CI обязан падать, если uv.lock разошёлся с pyproject —
+        # иначе зелёный CI при красном Docker-билде (--frozen) (REVIEW_SFR3).
+        run: uv sync --locked --all-packages
 
       - name: Lint
         run: make lint
@@ -55,5 +57,9 @@ jobs:
         run: npm run test
 
       # Сборка должна проходить без живого API: страницы деградируют, не падают.
+      # NEXT_PUBLIC_SITE_URL обязателен на прод-билде (next.config падает без
+      # него); CI-артефакт никуда не деплоится, поэтому значение — заглушка.
       - name: Build
         run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://ci.search-for-research.invalid

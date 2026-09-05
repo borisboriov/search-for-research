@@ -18,7 +18,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /usr/local/bin/uv
+# Пин до патч-версии: плавающий 0.11 может молча сменить поведение резолвера
+# между сборками (REVIEW_SFR3 Medium).
+COPY --from=ghcr.io/astral-sh/uv:0.11.33 /uv /usr/local/bin/uv
 
 WORKDIR /app
 
@@ -39,6 +41,14 @@ RUN mkdir -p packages/sfr-core/src/sfr_core packages/sfr-etl/src/sfr_etl \
 COPY packages/ packages/
 COPY apps/api/ apps/api/
 RUN uv sync --frozen --package sfr-api --no-dev
+
+# Не root: компрометация API не должна давать root в контейнере (REVIEW_SFR3
+# Medium). /models принадлежит app, чтобы named-том для HF-кэша (первый старт
+# скачивает веса) остался записываемым; индекс и cards монтируются read-only.
+RUN useradd --system --create-home --uid 10001 app \
+    && mkdir -p /models \
+    && chown -R app:app /models
+USER app
 
 ENV PATH="/app/.venv/bin:$PATH" \
     SFR_API_INDEX_ROOT=/app/data/indexes_sfr2

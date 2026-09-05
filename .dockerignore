@@ -10,3 +10,10 @@ _to_delete
 **/__pycache__
 *.md
 !apps/api/README.md
+# Секреты и лишний вес не должны попадать в контекст сборки (REVIEW_SFR3 Medium)
+.env*
+**/tests
+**/node_modules
+apps/web/.next
+apps/web/e2e
+apps/web/test-results
