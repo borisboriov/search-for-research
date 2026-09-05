@@ -143,13 +143,16 @@ def ingest_works(
     since_years: int,
     per_author: int,
     institution_db_id: int | None = None,
+    only_missing: bool = False,
     commit_every: int = 100,
 ) -> dict[str, int]:
     """Ingest works for supervisor candidates (optionally of a single institution).
 
     ``commit_every`` fixes intermediate progress: SFR-5 runs this over thousands of
     authors, and a single transaction would mean losing hours of network work to
-    one failure at the end.
+    one failure at the end. ``only_missing`` пропускает авторов с уже
+    загруженными работами — на повторных прогонах это разница между двумя
+    запросами на автора и нулём.
 
     Склеенные дубли исключаются наравне с остальными потребителями каталога:
     ``upsert_author`` пересчитывает ``is_supervisor_candidate`` из эвристики на
@@ -163,6 +166,11 @@ def ingest_works(
     )
     if institution_db_id is not None:
         query = query.where(Author.last_known_institution_id == institution_db_id)
+    if only_missing:
+        # Пропустить тех, у кого работы уже загружены: каждый лишний автор —
+        # два запроса из дневной квоты OpenAlex, а на каталоге в пять тысяч
+        # повторный проход стоит дороже, чем весь остальной пайплайн.
+        query = query.where(~select(Work.id).where(Work.author_id == Author.id).exists())
     candidates = list(session.execute(query).scalars())
     totals = {"authors": 0, "works": 0, "with_abstract": 0}
     for author in candidates:

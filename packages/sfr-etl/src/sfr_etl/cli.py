@@ -239,6 +239,13 @@ def etl_works(
     institution: Annotated[
         str | None, typer.Option(help="Только кандидаты этого вуза (по умолчанию — все)")
     ] = None,
+    only_missing: Annotated[
+        bool,
+        typer.Option(
+            "--only-missing/--all",
+            help="Пропустить авторов, у которых работы уже загружены (экономит квоту)",
+        ),
+    ] = False,
     refresh: Annotated[bool, typer.Option("--refresh", help="Bypass the raw cache")] = False,
 ) -> None:
     """Ingest works (recent + most cited) for supervisor candidates.
@@ -263,6 +270,7 @@ def etl_works(
             since_years=since_years if since_years is not None else settings.works_since_years,
             per_author=per_author if per_author is not None else settings.works_per_author,
             institution_db_id=institution_db_id,
+            only_missing=only_missing,
         )
     _record_run_stats(settings, "etl works", time.monotonic() - started, client)
     typer.echo(

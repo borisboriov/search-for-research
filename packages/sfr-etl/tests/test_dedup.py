@@ -288,3 +288,23 @@ def test_recovered_signal_is_readable_not_hardcoded(engine: Engine) -> None:
     with session_scope(engine) as session:
         merges, _ = find_splits(session)
         assert [g.signal for g in merges] == ["orcid"], "признак восстановлен из raw"
+
+
+def test_ingest_works_only_missing_skips_authors_that_have_works(engine: Engine) -> None:
+    """Повторный проход не должен стоить двух запросов квоты на уже загруженного автора."""
+    with session_scope(engine) as session:
+        inst_id = upsert_institution(session, INSTITUTION_RECORD).id
+        loaded = upsert_author(session, record("A1", "Есть работы"), inst_id, SETTINGS)
+        upsert_author(session, record("A2", "Работ нет"), inst_id, SETTINGS)
+        upsert_work(session, topical_work("W1", "Optics"), loaded.id, since_year=2022)
+
+    with session_scope(engine) as session:
+        client = CountingWorksClient()
+        totals = ingest_works(session, client, since_years=5, per_author=5, only_missing=True)  # type: ignore[arg-type]
+    assert totals["authors"] == 1, "в сеть пошли только те, у кого работ нет"
+    assert len(client.calls) == 2
+
+    with session_scope(engine) as session:
+        client = CountingWorksClient()
+        ingest_works(session, client, since_years=5, per_author=5)  # type: ignore[arg-type]
+    assert len(client.calls) == 4, "без флага ходим за обоими — прежнее поведение"
