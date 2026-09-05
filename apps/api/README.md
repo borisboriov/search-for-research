@@ -1,6 +1,6 @@
 # apps/api — сервис поиска научных руководителей
 
-FastAPI поверх индекса, собранного офлайн (`make index-sfr2`). Модель и индекс
+FastAPI поверх индекса, собранного офлайн (`make index-sfr5`). Модель и индекс
 грузятся один раз при старте, прогреваются и переиспользуются; API индекс **не строит**.
 
 ## Эндпоинты
@@ -20,7 +20,7 @@ FastAPI поверх индекса, собранного офлайн (`make in
 ## Запуск
 
 ```bash
-make index-sfr2                 # собрать индекс (офлайн, один раз)
+make index-sfr5                 # собрать индекс (офлайн, один раз)
 make api                        # uvicorn на localhost:8000
 curl -s localhost:8000/api/health | jq
 curl -s localhost:8000/api/match -H 'content-type: application/json' \

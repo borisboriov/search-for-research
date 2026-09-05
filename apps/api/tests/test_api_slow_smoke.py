@@ -15,7 +15,7 @@ pytestmark = pytest.mark.slow
 def test_real_index_answers_a_real_query() -> None:
     settings = ApiSettings()
     if not (settings.resolved_index_dir() / "meta.json").exists():
-        pytest.skip(f"нет индекса {settings.resolved_index_dir()} — сначала `make index-sfr2`")
+        pytest.skip(f"нет индекса {settings.resolved_index_dir()} — сначала `make index-sfr5`")
     with TestClient(create_app(settings)) as client:
         health = client.get("/api/health").json()
         assert health["profiles_count"] > 100

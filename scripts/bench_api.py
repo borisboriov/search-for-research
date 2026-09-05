@@ -235,7 +235,13 @@ def bench_model(model: str, requests_n: int, docker: bool) -> dict[str, Any]:
 
 
 def start_uvicorn(model: str) -> "subprocess.Popen[bytes]":
-    env = {**os.environ, "SFR_API_MODEL": model, "SFR_API_INDEX_ROOT": "data/indexes_sfr2"}
+    # Индекс берётся из окружения: docker-ветка того же бенчмарка меряет
+    # боевой корпус, и хардкод здесь означал бы две ветки на разных данных.
+    env = {
+        **os.environ,
+        "SFR_API_MODEL": model,
+        "SFR_API_INDEX_ROOT": os.environ.get("SFR_API_INDEX_ROOT", "data/indexes_sfr5"),
+    }
     return subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "sfr_api.main:app", "--factory", "--port", "8000"],
         env=env,

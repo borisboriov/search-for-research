@@ -122,8 +122,9 @@ eval-sfr2: unhide
 	uv run sfr-match report-sfr2
 
 # Card enrichment for the API (SFR-3): citations + top works, from the local DB.
-export-cards: unhide
-	uv run sfr export cards --out data/exports/cards.jsonl
+# Псевдоним export-sfr5: до SFR-5 цель писала в data/exports/cards.jsonl, который
+# сервис больше не читает, — регенерация «по документации» ничего не меняла.
+export-cards: export-sfr5
 
 # Локальный API сервит боевой индекс SFR-5 (12 вузов); переопределяется
 # переменной окружения SFR_API_INDEX_ROOT — например, на data/indexes_sfr2,

@@ -17,7 +17,7 @@ services:
       # в SFR-5), и дублировать его здесь значит однажды забыть обновить одно из двух.
       # auto = faiss on Linux (this container), numpy on macOS
       SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
-      # Card enrichment (SFR-3): optional, built offline by `make export-cards`.
+      # Card enrichment (SFR-3): optional, built offline by `make export-sfr5`.
       SFR_API_CARDS_PATH: /app/data/exports/cards_sfr5.jsonl
       HF_HOME: /models
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
