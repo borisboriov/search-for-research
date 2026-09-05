@@ -10,9 +10,22 @@ import typer
 from sqlalchemy import select
 
 from sfr_core.db import make_engine, session_scope, upgrade_to_head
-from sfr_core.models import Institution
+from sfr_core.models import Author, Institution
 from sfr_core.settings import Settings, get_settings
+from sfr_etl.catalog import (
+    DEFAULT_FIELD_FLOOR,
+    fetch_candidate_pool,
+    ingest_selected,
+    stratified_select,
+)
 from sfr_etl.client import OpenAlexClient
+from sfr_etl.dedup import (
+    apply_merges,
+    detect_suspect_merges,
+    find_splits,
+    render_dedup_review,
+    suspect_examples,
+)
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
 from sfr_etl.profiles import build_profiles
@@ -24,7 +37,7 @@ from sfr_etl.report import (
     render_report,
     sample_profiles,
 )
-from sfr_etl.works import ingest_works
+from sfr_etl.works import backfill_institutions_distinct_count, ingest_works
 
 log = structlog.get_logger(__name__)
 
@@ -142,24 +155,77 @@ def etl_authors(
     institution: Annotated[
         str | None, typer.Option(help="OpenAlex institution ID (defaults to the only one in DB)")
     ] = None,
-    max: Annotated[int, typer.Option(help="Max authors to ingest")] = 300,
+    max: Annotated[int, typer.Option(help="Max authors to ingest (strategy=top)")] = 300,
+    strategy: Annotated[
+        str,
+        typer.Option(
+            help="top — верхушка по works_count (SFR-0); "
+            "stratified — квота с раскладкой по областям OpenAlex (SFR-5)"
+        ),
+    ] = "top",
+    quota: Annotated[
+        int, typer.Option(help="Сколько авторов вуза оставить (strategy=stratified)")
+    ] = 500,
+    floor: Annotated[
+        int, typer.Option(help="Минимум мест на область, если они у неё есть")
+    ] = DEFAULT_FIELD_FLOOR,
+    keep: Annotated[
+        str | None,
+        typer.Option(help="Author-ID через запятую: обязаны попасть в отбор (уже в каталоге)"),
+    ] = None,
+    keep_existing: Annotated[
+        bool,
+        typer.Option(
+            "--keep-existing/--no-keep-existing",
+            help="Сохранить авторов этого вуза, уже отмеченных кандидатами "
+            "(на них стоят судейские оценки и превью лендинга)",
+        ),
+    ] = True,
     refresh: Annotated[bool, typer.Option("--refresh", help="Bypass the raw cache")] = False,
 ) -> None:
-    """Ingest authors affiliated with the institution (sorted by works_count desc)."""
+    """Ingest authors affiliated with the institution.
+
+    ``top`` повторяет отбор SFR-0 (сортировка по works_count), ``stratified``
+    набирает квоту с раскладкой по областям — см. `sfr_etl.catalog`.
+    """
+    if strategy not in {"top", "stratified"}:
+        typer.secho(f"unknown --strategy {strategy!r}: top | stratified", fg="red", err=True)
+        raise typer.Exit(code=1)
     settings = _load_settings()
     upgrade_to_head(settings.sfr_db_url)
     client = _make_client(settings, refresh)
     engine = make_engine(settings.sfr_db_url)
+    keep_ids = [part.strip() for part in (keep or "").split(",") if part.strip()]
 
     started = time.monotonic()
+    fields_line = ""
     with session_scope(engine) as session:
         institutions = list(session.execute(select(Institution)).scalars())
         target = _select_institution(institutions, institution)
-        stats = ingest_authors(session, client, target, settings, max_authors=max)
+        if strategy == "top":
+            stats = ingest_authors(session, client, target, settings, max_authors=max)
+        else:
+            if keep_existing:
+                keep_ids += [
+                    author.openalex_id
+                    for author in session.execute(
+                        select(Author).where(
+                            Author.is_supervisor_candidate.is_(True),
+                            Author.last_known_institution_id == target.id,
+                        )
+                    ).scalars()
+                ]
+            pool = fetch_candidate_pool(client, target, settings)
+            selected, sizes = stratified_select(
+                pool, quota=quota, settings=settings, floor=floor, keep_ids=keep_ids
+            )
+            stats = ingest_selected(session, selected, target, settings)
+            stats["pool"] = len(pool)
+            fields_line = f", областей в пуле {len(sizes)}"
     _record_run_stats(settings, "etl authors", time.monotonic() - started, client)
     typer.echo(
         f"Ingested {stats['total']} authors "
-        f"({stats['candidates']} supervisor candidates) "
+        f"({stats['candidates']} supervisor candidates){fields_line} "
         f"[network={client.n_network_requests}, cache_hits={client.n_cache_hits}]"
     )
 
@@ -168,9 +234,16 @@ def etl_authors(
 def etl_works(
     since_years: Annotated[int | None, typer.Option(help="Recency window in years")] = None,
     per_author: Annotated[int | None, typer.Option(help="Max works stored per author")] = None,
+    institution: Annotated[
+        str | None, typer.Option(help="Только кандидаты этого вуза (по умолчанию — все)")
+    ] = None,
     refresh: Annotated[bool, typer.Option("--refresh", help="Bypass the raw cache")] = False,
 ) -> None:
-    """Ingest works (recent + most cited) for all supervisor candidates."""
+    """Ingest works (recent + most cited) for supervisor candidates.
+
+    ``--institution`` разбивает многочасовой прогон SFR-5 на вузы: сбой стоит
+    одного вуза, а не всего каталога.
+    """
     settings = _load_settings()
     upgrade_to_head(settings.sfr_db_url)
     client = _make_client(settings, refresh)
@@ -178,17 +251,77 @@ def etl_works(
 
     started = time.monotonic()
     with session_scope(engine) as session:
+        institution_db_id = None
+        if institution is not None:
+            institutions = list(session.execute(select(Institution)).scalars())
+            institution_db_id = _select_institution(institutions, institution).id
         totals = ingest_works(
             session,
             client,
             since_years=since_years if since_years is not None else settings.works_since_years,
             per_author=per_author if per_author is not None else settings.works_per_author,
+            institution_db_id=institution_db_id,
         )
     _record_run_stats(settings, "etl works", time.monotonic() - started, client)
     typer.echo(
         f"Ingested {totals['works']} works for {totals['authors']} candidates "
         f"({totals['with_abstract']} with abstract) "
         f"[network={client.n_network_requests}, cache_hits={client.n_cache_hits}]"
+    )
+
+
+@etl_app.command("backfill-mega")
+def etl_backfill_mega() -> None:
+    """Разнести счётчик организаций-соавторов по одинаковым работам (без сети)."""
+    settings = _load_settings()
+    upgrade_to_head(settings.sfr_db_url)
+    engine = make_engine(settings.sfr_db_url)
+    with session_scope(engine) as session:
+        stats = backfill_institutions_distinct_count(session)
+    typer.echo(f"Заполнено {stats['filled']} строк по {stats['known_works']} известным работам")
+
+
+@etl_app.command("dedup")
+def etl_dedup(
+    apply: Annotated[
+        bool, typer.Option("--apply/--dry-run", help="Записать склейки в БД или только показать")
+    ] = True,
+    review_out: Annotated[
+        Path, typer.Option(help="Куда положить выборку на ручную проверку")
+    ] = Path("packages/sfr-match/eval/dedup_for_review.md"),
+    examples: Annotated[int, typer.Option(help="Сколько примеров каждого вида в файл")] = 10,
+) -> None:
+    """Склеить расщеплённые профили и отметить подозрительные (SPEC_SFR5 §3).
+
+    Склейка необратима в пределах БД (работы переезжают на канонического автора),
+    поэтому по умолчанию сначала стоит посмотреть `--dry-run`.
+    """
+    settings = _load_settings()
+    upgrade_to_head(settings.sfr_db_url)
+    engine = make_engine(settings.sfr_db_url)
+    started = time.monotonic()
+    with session_scope(engine) as session:
+        merges, namesakes = find_splits(session)
+        merge_stats = {"groups": 0, "duplicates": 0, "works_moved": 0, "works_dropped": 0}
+        if apply:
+            merge_stats = apply_merges(session, merges)
+            suspect_stats = detect_suspect_merges(session)
+            suspects = suspect_examples(session, limit=max(examples, 20))
+        else:
+            suspect_stats = {"checked": 0, "suspect": 0}
+            suspects = []
+        review_out.parent.mkdir(parents=True, exist_ok=True)
+        review_out.write_text(
+            render_dedup_review(merges, namesakes, suspects, n_examples=examples),
+            encoding="utf-8",
+        )
+    _record_run_stats(settings, "etl dedup", time.monotonic() - started)
+    typer.echo(
+        f"Склеек: {len(merges)} (дублей {merge_stats['duplicates']}, "
+        f"работ перенесено {merge_stats['works_moved']}, дублей работ снято "
+        f"{merge_stats['works_dropped']}); тёзок без сигнала: {len(namesakes)}; "
+        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']} "
+        f"→ {review_out}"
     )
 
 
@@ -221,7 +354,7 @@ def export_jsonl(
     engine = make_engine(settings.sfr_db_url)
     started = time.monotonic()
     with session_scope(engine) as session:
-        n_lines = export_profiles_jsonl(session, out)
+        n_lines = export_profiles_jsonl(session, out, settings)
     _record_run_stats(settings, "export jsonl", time.monotonic() - started)
     typer.echo(f"Exported {n_lines} profiles to {out}")
 
@@ -236,7 +369,7 @@ def export_cards(
     engine = make_engine(settings.sfr_db_url)
     started = time.monotonic()
     with session_scope(engine) as session:
-        n_lines = export_cards_jsonl(session, out)
+        n_lines = export_cards_jsonl(session, out, settings)
     _record_run_stats(settings, "export cards", time.monotonic() - started)
     typer.echo(f"Exported {n_lines} cards to {out}")
 
