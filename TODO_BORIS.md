@@ -10,17 +10,9 @@
 
 ## Открыто
 
-- [ ] **SFR-4: дописать строки в `.env.example`** — **~2 минуты.**
-      У агента нет прав на env-файлы. Добавить:
-      ```
-      # SFR-4: серая зона порога и границы словесных грейдов (шкала frida_clean)
-      SFR_API_SCORE_WEAK=0.36
-      SFR_API_SCORE_HIGH=0.42
-      # SFR-4: соль хеша IP в логах /match (на сервере: openssl rand -hex 16)
-      SFR_API_LOG_SALT=
-      # SFR-4: секрет пост-деплойной ревалидации фронта (openssl rand -hex 32)
-      REVALIDATE_SECRET=
-      ```
+- [x] **SFR-4: дописать строки в `.env.example`** — ✅ 05.09, вставлено Борисом,
+      проверено агентом по git diff (блок SFR-4: SCORE_WEAK/SCORE_HIGH/LOG_SALT/
+      REVALIDATE_SECRET). Уйдёт вместе с общим пушем.
       Для боевого сервера есть отдельный `deploy/env.example` — он уже в git.
 
 - [ ] **SFR-4: `git push` и взгляд на CI** — **~5 минут.**
