@@ -1,0 +1,7 @@
+# Выгружено security/semgrep/fetch-rules.sh
+# Дата выгрузки: 2026-09-05
+# Источник: https://semgrep.dev/c/p/<pack>
+31c1dfa46e8ddd97f9ac98c607ddd77b20a2c3356d7ec987359961d47ec27035  python.yaml  (151 правил)
+63fbcca1826e787ca43282bf139ccec16745ad6551c87850b9ccee9ca9f98c0b  typescript.yaml  (74 правил)
+c0a42f0e25cb1ec4f5c81a177d166e440b931620d5b8ecce75c9845282c615dc  docker.yaml  (7 правил)
+feffd1ac057188bf075c916fc19108d314ec3c4b6080b46d68613ef320c911d4  react.yaml  (4 правил)
