@@ -1,0 +1,91 @@
+# Аудит безопасности (SFR-4b): те же семь проверок, что и `make audit`.
+#
+# Отдельный workflow, а не job в ci.yml: расписание живёт вместе с проверками,
+# которым оно нужно (новые CVE появляются без изменений кода), и красный
+# аудит не путается с красными тестами в списке проверок PR.
+#
+# Ни одного токена и ни одной платной возможности GitHub: сканеры — открытые
+# бинарники с релизов, правила semgrep вендорены в security/semgrep/.
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Понедельник, 04:17 UTC. Кода могло не быть неделю — новые CVE появились.
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks сканирует всю историю, а не только последний коммит.
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python deps (with security group)
+        run: uv sync --locked --all-packages --group security
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      # npm audit смотрит на установленное дерево, а не только на lock-файл.
+      - name: Install web deps
+        run: npm ci
+        working-directory: apps/web
+
+      # Бинарные сканеры ставим сами с релизов вместо готовых actions: сторонние
+      # actions — это ещё один поставщик кода в CI, а часть из них (gitleaks
+      # для организаций) требует лицензионный ключ. Версии и sha256 запинены;
+      # при обновлении версии пересчитать хэш (см. docs/SECURITY_CI.md).
+      - name: Install pinned scanners
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          TRIVY_VERSION: "0.74.0"
+          TRIVY_SHA256: "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"
+          HADOLINT_VERSION: "2.15.1"
+          HADOLINT_SHA256: "c7187db94eeeeca956519a6af171adc31453941a1e777961f6e680f697c8c507"
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+
+          curl -sSfL -o "$tmp/gitleaks.tar.gz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  $tmp/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf "$tmp/gitleaks.tar.gz" -C "$tmp" gitleaks
+
+          curl -sSfL -o "$tmp/trivy.tar.gz" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  $tmp/trivy.tar.gz" | sha256sum -c -
+          tar -xzf "$tmp/trivy.tar.gz" -C "$tmp" trivy
+
+          curl -sSfL -o "$tmp/hadolint" \
+            "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-linux-x86_64"
+          echo "${HADOLINT_SHA256}  $tmp/hadolint" | sha256sum -c -
+
+          chmod +x "$tmp/gitleaks" "$tmp/trivy" "$tmp/hadolint"
+          sudo mv "$tmp/gitleaks" "$tmp/trivy" "$tmp/hadolint" /usr/local/bin/
+          gitleaks version && trivy --version | head -1 && hadolint --version
+
+      # --no-images: образов на раннере нет, а собирать их ради скана — это
+      # скачивание torch и весов FRIDA (десятки минут). CVE базовых образов
+      # ловятся при пересборке на деплое: `make audit` локально сканирует их
+      # (docs/SECURITY_CI.md, §«Что CI не проверяет»).
+      # --strict: в CI все инструменты обязаны быть, SKIP = дефект job'а.
+      - name: Audit
+        run: make audit AUDIT_ARGS="--no-images --strict"
