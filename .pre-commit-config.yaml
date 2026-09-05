@@ -13,3 +13,8 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: gitleaks
+        name: gitleaks (staged)
+        entry: security/gitleaks-precommit.sh
+        language: script
+        pass_filenames: false
