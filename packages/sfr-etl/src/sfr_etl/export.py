@@ -9,14 +9,19 @@ from sqlalchemy.orm import Session, selectinload
 from sfr_core.models import Author, SupervisorProfile
 from sfr_core.profile import WorkForProfile, select_works_for_profile
 from sfr_core.schemas import CardExport, ProfileExport, TopWorkCard, WorkExport
+from sfr_core.settings import Settings, get_settings
+from sfr_etl.profiles import is_mega_collaboration
 
 log = structlog.get_logger(__name__)
 
 MAX_EXPORT_TOPICS = 10
 
 
-def export_profiles_jsonl(session: Session, out_path: Path) -> int:
+def export_profiles_jsonl(
+    session: Session, out_path: Path, settings: Settings | None = None
+) -> int:
     """Write one JSON line per supervisor profile. Returns the number of lines."""
+    settings = settings or get_settings()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     profiles = list(
         session.execute(
@@ -54,6 +59,7 @@ def export_profiles_jsonl(session: Session, out_path: Path) -> int:
                         publication_year=w.publication_year,
                         cited_by_count=w.cited_by_count,
                         has_abstract=bool(w.abstract_text),
+                        is_mega_collaboration=is_mega_collaboration(w, settings),
                     )
                     for w in sorted(author.works, key=lambda w: -(w.publication_year or 0))
                 ],
@@ -64,7 +70,7 @@ def export_profiles_jsonl(session: Session, out_path: Path) -> int:
     return n_lines
 
 
-def export_cards_jsonl(session: Session, out_path: Path) -> int:
+def export_cards_jsonl(session: Session, out_path: Path, settings: Settings | None = None) -> int:
     """Card enrichment for the API (SFR-3): author citations + 10 top works.
 
     Works are picked by the same most-cited-then-freshest heuristic as
@@ -72,6 +78,7 @@ def export_cards_jsonl(session: Session, out_path: Path) -> int:
     publications the model indexed. ``position``/``email`` stay ``None``: there is
     no such data in the catalogue and nothing new is parsed (SPEC_SFR3 §4).
     """
+    settings = settings or get_settings()
     out_path.parent.mkdir(parents=True, exist_ok=True)
     profiles = list(
         session.execute(
@@ -92,6 +99,7 @@ def export_cards_jsonl(session: Session, out_path: Path) -> int:
                         publication_year=w.publication_year,
                         cited_by_count=w.cited_by_count,
                         abstract_text=None,
+                        is_mega_collaboration=is_mega_collaboration(w, settings),
                     )
                     for w in author.works
                 ]

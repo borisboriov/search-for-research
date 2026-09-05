@@ -47,6 +47,7 @@ def _titles(export: ProfileExport) -> list[str]:
             publication_year=work.publication_year,
             cited_by_count=work.cited_by_count,
             abstract_text=None,
+            is_mega_collaboration=work.is_mega_collaboration,
         )
         for work in export.works
     ]

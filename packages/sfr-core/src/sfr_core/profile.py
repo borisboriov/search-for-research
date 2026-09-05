@@ -9,6 +9,10 @@ from dataclasses import dataclass
 FRAGMENT_CHARS = 220
 MAX_TOPICS = 7
 MAX_WORKS = 10
+# Профиль без загруженных работ: единственный источник смысла — темы автора,
+# поэтому их берётся больше. Появилось в SFR-5, когда часть каталога осталась
+# без работ (дневной бюджет OpenAlex, см. docs/DECISIONS.md).
+MAX_TOPICS_NO_WORKS = 20
 
 
 @dataclass(frozen=True)
@@ -17,6 +21,10 @@ class WorkForProfile:
     publication_year: int | None
     cited_by_count: int
     abstract_text: str | None
+    # SFR-5: работа мегаколлаборации (сотни организаций-соавторов). Такие работы
+    # цитируются на порядки чаще личных и, попав в profile_text, делают профиль
+    # физика ATLAS неотличимым от профиля любого другого участника эксперимента.
+    is_mega_collaboration: bool = False
 
 
 def _truncate_at_word(text: str, limit: int) -> str:
@@ -29,9 +37,7 @@ def _truncate_at_word(text: str, limit: int) -> str:
     return cut + "…"
 
 
-def select_works_for_profile(
-    works: list[WorkForProfile], max_works: int = MAX_WORKS
-) -> list[WorkForProfile]:
+def _select(works: list[WorkForProfile], max_works: int) -> list[WorkForProfile]:
     """Most-cited first (up to half the slots), then the freshest — dedupe, cap."""
     by_citations = sorted(works, key=lambda w: w.cited_by_count, reverse=True)
     by_year = sorted(works, key=lambda w: w.publication_year or 0, reverse=True)
@@ -44,6 +50,25 @@ def select_works_for_profile(
             break
         if work not in selected:
             selected.append(work)
+    return selected
+
+
+def select_works_for_profile(
+    works: list[WorkForProfile], max_works: int = MAX_WORKS
+) -> list[WorkForProfile]:
+    """Works for the profile text, mega-collaboration papers deprioritised (SFR-5).
+
+    Собственные работы автора выбираются первыми; работы мегаколлабораций
+    добираются только в оставшиеся слоты. Для физика, у которого других работ
+    нет, профиль не пустеет — он просто состоит из них.
+    """
+    regular = [w for w in works if not w.is_mega_collaboration]
+    selected = _select(regular, max_works)
+    if len(selected) < max_works:
+        mega = [w for w in works if w.is_mega_collaboration]
+        for work in _select(mega, max_works - len(selected)):
+            if work not in selected:
+                selected.append(work)
     return selected
 
 
@@ -68,8 +93,9 @@ def build_profile_text(
         header += f" h-index: {h_index}."
     parts.append(header)
 
+    topics_cap = MAX_TOPICS if works else MAX_TOPICS_NO_WORKS
     if topics:
-        parts.append("Ключевые темы: " + "; ".join(topics[:MAX_TOPICS]) + ".")
+        parts.append("Ключевые темы: " + "; ".join(topics[:topics_cap]) + ".")
 
     selected = select_works_for_profile(works)
     for work in selected:

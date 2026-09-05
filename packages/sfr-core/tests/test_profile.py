@@ -96,3 +96,44 @@ def test_select_works_prefers_cited_then_recent() -> None:
     selected = select_works_for_profile(works, max_works=2)
     assert selected[0].title == "old-cited"
     assert selected[1].title == "new-uncited"
+
+
+def test_mega_collaboration_works_fill_only_leftover_slots() -> None:
+    """SFR-5: статьи коллабораций цитируются на порядки чаще личных работ и,
+    попав в profile_text, делают профили всех участников одинаковыми."""
+    mega = [
+        WorkForProfile(
+            title=f"Observation of the Higgs boson, part {i}",
+            publication_year=2025,
+            cited_by_count=10_000 + i,
+            abstract_text=None,
+            is_mega_collaboration=True,
+        )
+        for i in range(12)
+    ]
+    own = [
+        WorkForProfile(
+            title=f"Silicon detector calibration {i}",
+            publication_year=2020 + i,
+            cited_by_count=5,
+            abstract_text=None,
+        )
+        for i in range(4)
+    ]
+    selected = select_works_for_profile(mega + own)
+    assert [w.title for w in selected[:4]] == [w.title for w in own]
+    assert all(w.is_mega_collaboration for w in selected[4:])
+
+
+def test_profile_without_works_uses_more_topics() -> None:
+    """Профиль без загруженных работ держится на темах — их берётся больше."""
+    topics = [f"Тема {i}" for i in range(20)]
+    text = build_profile_text(name="X", institution_name="Y", topics=topics, works=[])
+    assert "Тема 19" in text
+    with_works = build_profile_text(
+        name="X",
+        institution_name="Y",
+        topics=topics,
+        works=[WorkForProfile("T", 2025, 1, "a" * 400)],
+    )
+    assert "Тема 19" not in with_works

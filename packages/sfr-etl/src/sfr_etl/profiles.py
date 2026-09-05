@@ -4,18 +4,29 @@ import structlog
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from sfr_core.models import Author, SupervisorProfile
+from sfr_core.models import Author, SupervisorProfile, Work
 from sfr_core.profile import WorkForProfile, build_profile_text
 from sfr_core.settings import Settings
 
 log = structlog.get_logger(__name__)
 
 
+def is_mega_collaboration(work: Work, settings: Settings) -> bool:
+    """Работа с сотнями организаций-соавторов (SPEC_SFR5 §3).
+
+    Порог живёт в settings. Работы, загруженные до SFR-5, не несут счётчика
+    организаций (``None``) и мегаколлаборациями не считаются — на новом корпусе
+    поле заполнено у всех, старое значение осталось бы только у неперезалитых.
+    """
+    count = work.institutions_distinct_count
+    return count is not None and count >= settings.mega_collaboration_institutions
+
+
 def candidate_authors(session: Session) -> list[Author]:
     return list(
         session.execute(
             select(Author)
-            .where(Author.is_supervisor_candidate.is_(True))
+            .where(Author.is_supervisor_candidate.is_(True), Author.merged_into_id.is_(None))
             .options(
                 selectinload(Author.works),
                 selectinload(Author.topics),
@@ -36,6 +47,7 @@ def build_profiles(session: Session, settings: Settings) -> dict[str, int]:
                 publication_year=w.publication_year,
                 cited_by_count=w.cited_by_count,
                 abstract_text=w.abstract_text,
+                is_mega_collaboration=is_mega_collaboration(w, settings),
             )
             for w in author.works
         ]

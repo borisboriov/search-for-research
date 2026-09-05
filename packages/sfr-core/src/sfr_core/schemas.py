@@ -9,6 +9,9 @@ class WorkExport(BaseModel):
     publication_year: int | None = None
     cited_by_count: int = 0
     has_abstract: bool = False
+    # SFR-5: работа мегаколлаборации; по умолчанию False, чтобы экспорты SFR-0…4
+    # оставались читаемыми этой схемой.
+    is_mega_collaboration: bool = False
 
 
 class TopWorkCard(BaseModel):

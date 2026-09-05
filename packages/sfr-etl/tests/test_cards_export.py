@@ -24,7 +24,7 @@ def export_from(engine: Engine, tmp_path: Path) -> list[dict[str, object]]:
     with session_scope(engine) as session:
         build_profiles(session, SETTINGS)
         out = tmp_path / "cards.jsonl"
-        n = export_cards_jsonl(session, out)
+        n = export_cards_jsonl(session, out, SETTINGS)
     lines = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
     assert n == len(lines)
     return lines

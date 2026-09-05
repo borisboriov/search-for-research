@@ -16,8 +16,14 @@ log = structlog.get_logger(__name__)
 
 # Trim the payload: only the fields the pipeline relies on (verified against the live API).
 WORK_SELECT_FIELDS = (
-    "id,display_name,publication_year,cited_by_count,language,topics,abstract_inverted_index"
+    "id,display_name,publication_year,cited_by_count,language,topics,"
+    "abstract_inverted_index,institutions_distinct_count"
 )
+
+# Работа, у которой соавторствуют столько организаций, — мегаколлаборация
+# (ATLAS/CMS дают 200–400 против 2–5 у обычной статьи; порог проверен на живых
+# данных, SFR-5). Такие работы получают пониженный вес в profile_text.
+MEGA_COLLABORATION_INSTITUTIONS = 30
 
 
 def merge_work_records(
@@ -66,12 +72,21 @@ def upsert_work(
     work.title = title
     work.publication_year = record.get("publication_year")
     work.abstract_text = reconstruct_abstract(record.get("abstract_inverted_index"))
+    # Подобласть и область сохраняются рядом с темой: детектор чужих склеек
+    # (SFR-5) кластеризует работы по подобластям — по самим темам корпус
+    # рассыпается в пыль, их в OpenAlex тысячи.
     work.topics = [
-        {"display_name": t.get("display_name"), "score": t.get("score")}
+        {
+            "display_name": t.get("display_name"),
+            "score": t.get("score"),
+            "subfield": (t.get("subfield") or {}).get("display_name"),
+            "field": (t.get("field") or {}).get("display_name"),
+        }
         for t in record.get("topics") or []
     ]
     work.cited_by_count = record.get("cited_by_count") or 0
     work.language = record.get("language")
+    work.institutions_distinct_count = record.get("institutions_distinct_count")
     work.is_recent = work.publication_year is not None and work.publication_year >= since_year
     return work
 
@@ -128,11 +143,19 @@ def ingest_works(
     *,
     since_years: int,
     per_author: int,
+    institution_db_id: int | None = None,
+    commit_every: int = 100,
 ) -> dict[str, int]:
-    """Ingest works for all supervisor candidates."""
-    candidates = list(
-        session.execute(select(Author).where(Author.is_supervisor_candidate.is_(True))).scalars()
-    )
+    """Ingest works for supervisor candidates (optionally of a single institution).
+
+    ``commit_every`` fixes intermediate progress: SFR-5 runs this over thousands of
+    authors, and a single transaction would mean losing hours of network work to
+    one failure at the end.
+    """
+    query = select(Author).where(Author.is_supervisor_candidate.is_(True))
+    if institution_db_id is not None:
+        query = query.where(Author.last_known_institution_id == institution_db_id)
+    candidates = list(session.execute(query).scalars())
     totals = {"authors": 0, "works": 0, "with_abstract": 0}
     for author in candidates:
         stats = ingest_works_for_author(
@@ -141,7 +164,36 @@ def ingest_works(
         totals["authors"] += 1
         totals["works"] += stats["saved"]
         totals["with_abstract"] += stats["with_abstract"]
+        if commit_every and totals["authors"] % commit_every == 0:
+            session.commit()
         if totals["authors"] % 25 == 0:
             log.info("works_progress", **totals)
     log.info("works_ingested", **totals)
     return totals
+
+
+def backfill_institutions_distinct_count(session: Session) -> dict[str, int]:
+    """Разнести число организаций-соавторов по одинаковым работам разных авторов.
+
+    Одна и та же статья лежит в БД строкой на каждого своего автора из каталога,
+    а счётчик организаций появился в середине выкачки (SFR-5) — у части строк
+    он есть, у части тех же самых работ ``NULL``. Ходить за ним в сеть незачем:
+    значение — свойство работы, а не автора.
+    """
+    known: dict[str, int] = {}
+    for work_id, count in session.execute(
+        select(Work.openalex_id, Work.institutions_distinct_count).where(
+            Work.institutions_distinct_count.is_not(None)
+        )
+    ):
+        known[work_id] = max(known.get(work_id, 0), int(count))
+    stats = {"known_works": len(known), "filled": 0}
+    for work in session.execute(
+        select(Work).where(Work.institutions_distinct_count.is_(None))
+    ).scalars():
+        count = known.get(work.openalex_id)
+        if count is not None:
+            work.institutions_distinct_count = count
+            stats["filled"] += 1
+    log.info("works_backfilled", **stats)
+    return stats

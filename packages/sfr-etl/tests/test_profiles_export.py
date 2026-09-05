@@ -73,7 +73,7 @@ def test_export_jsonl_valid_lines(engine: Engine, tmp_path: Path) -> None:
     out = tmp_path / "exports" / "profiles.jsonl"
     with session_scope(engine) as session:
         build_profiles(session, SETTINGS)
-        n = export_profiles_jsonl(session, out)
+        n = export_profiles_jsonl(session, out, SETTINGS)
     assert n == 3
     lines = out.read_text(encoding="utf-8").strip().split("\n")
     assert len(lines) == 3

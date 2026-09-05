@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     works_since_years: int = 5
     works_per_author: int = 25
 
+    # Сколько организаций-соавторов делают работу мегаколлаборацией (SPEC_SFR5 §3).
+    # Порог, а не код: на живых данных ATLAS/CMS дают 200–400, обычная статья 2–5.
+    mega_collaboration_institutions: int = 30
+
     # profile_text bounds (SPEC §3).
     profile_text_min_chars: int = 300
     profile_text_max_chars: int = 1500
