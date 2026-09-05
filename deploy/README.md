@@ -50,6 +50,7 @@ source .env
 curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$SITE_ADDRESS/api/revalidate
 
 # 7. Проверки
+docker exec sfr-proxy id                              # uid=10001(caddy), не root (SFR-4b)
 curl -s https://$SITE_ADDRESS/api/health || true      # 404 — так и должно быть (API закрыт)
 curl -s -o /dev/null -w '%{http_code}\n' https://$SITE_ADDRESS/            # 200, лендинг
 n=$(curl -s https://$SITE_ADDRESS/sitemap.xml | grep -c '/supervisor/')
@@ -65,6 +66,9 @@ git pull
 # если менялись артефакты — с машины разработчика: deploy/sync-artifacts.sh user@host
 cd deploy
 docker compose up -d --build        # пересборка только изменившихся образов
+# --build здесь не только про наш код: пересборка подтягивает патчи базовых
+# образов и `apk upgrade` в прокси. Это единственный способ закрывать CVE
+# базы — CI их не видит (docs/SECURITY_CI.md).
 source .env
 curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$SITE_ADDRESS/api/revalidate
 curl -s https://$SITE_ADDRESS/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
@@ -108,3 +112,30 @@ make deploy-local-down
 поисковые боты (Googlebot/YandexBot/… по User-Agent) страницы читают без
 лимитов. Превышение — HTTP 429. UA спуфится — для пилота это осознанный
 компромисс.
+
+## Прокси работает не от root (SFR-4b)
+
+С SFR-4b контейнер `proxy` запускается от `caddy` (uid 10001), а не от root:
+это единственный контейнер, смотрящий в интернет. Два следствия.
+
+1. **Порты 80/443.** Бинарю Caddy проставлена файловая capability
+   `cap_net_bind_service` (`setcap` в Dockerfile) — без неё непривилегированный
+   процесс не займёт порт ниже 1024. Локальная репетиция слушает 8080 и эту
+   ветку **не проверяет**: после первого боевого запуска убедиться, что прокси
+   поднялся (`docker compose ps proxy` — healthy) и сайт открывается по https.
+   Если нет — `docker logs sfr-proxy` покажет `permission denied` на bind;
+   временный обход до разбора: убрать строку `USER caddy` из
+   `deploy/proxy/Dockerfile` и пересобрать.
+
+2. **Тома `caddy-data` и `caddy-config`.** Владельца docker снимает с каталога
+   образа в момент **создания** тома. Тома, созданные до SFR-4b, остались
+   root'овыми, и Caddy в них не запишет ни сертификат, ни access-лог. На
+   работающем стенде их надо пересоздать:
+
+   ```bash
+   docker compose down
+   docker volume rm sfr-deploy_caddy-data sfr-deploy_caddy-config
+   docker compose up -d --build     # TLS-сертификат будет выпущен заново
+   ```
+
+   На чистом сервере ничего делать не нужно.
