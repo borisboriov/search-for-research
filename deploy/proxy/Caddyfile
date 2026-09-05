@@ -41,14 +41,19 @@
 		format json
 	}
 
-	# Поисковые боты (SEO — органический канал, NEXT.md): страницы для них
-	# без лимитов. На POST /api/match лимит действует и для них — ботам
-	# поиска он не нужен, а спуферам UA нечего дарить.
-	@bot header_regexp bot User-Agent (?i)(googlebot|yandex(bot|images|mobilebot)|bingbot|applebot|duckduckbot|baiduspider)
-
-	# Лимит подбора: FRIDA на CPU — ~2 rps. Двухслойно: burst 10 за 10 секунд
-	# (скрипт) + 30 в минуту устойчиво. Не 10/мин: за одним NAT-IP может
-	# сидеть целая лаборатория (пилот в кампусе).
+	# Один rate_limit на уровне сайта, зоны различаются матчерами. Не через
+	# handle-блоки: handle в порядке директив Caddy идёт раньше rate_limit,
+	# и «внешние» зоны никогда не выполнялись бы (поймано на репетиции).
+	#
+	# /api/match: FRIDA на CPU — ~2 rps. Burst 10 за 10 секунд (скрипт) +
+	# 30 в минуту устойчиво. Не 10/мин: за одним NAT-IP может сидеть целая
+	# лаборатория (пилот в кампусе). Ботам лимит /api/match тоже действует —
+	# поиску он не нужен, а спуферам UA нечего дарить.
+	#
+	# Страницы: 120/мин хватает живому человеку с запасом, но охлаждает
+	# перебор /supervisor/* скриптом. Исключения из зоны pages:
+	# - статика /_next/*: одна загрузка страницы тянет её десятками;
+	# - поисковые боты по User-Agent (SEO — органический канал, NEXT.md).
 	rate_limit {
 		zone match_burst {
 			match {
@@ -68,27 +73,16 @@
 			events 30
 			window 1m
 		}
-	}
-
-	handle @bot {
-		reverse_proxy web:3000
-	}
-
-	handle {
-		# Каталожные страницы и GET — щадяще: 120/мин хватает живому человеку
-		# с запасом, но охлаждает перебор /supervisor/* скриптом. Статические
-		# ассеты не считаем: одна загрузка страницы тянет их десятками, лимит
-		# сгорал бы за два-три перехода.
-		rate_limit {
-			zone pages {
-				match {
-					not path /_next/* /icon.svg /favicon.ico
-				}
-				key {remote_host}
-				events 120
-				window 1m
+		zone pages {
+			match {
+				not path /_next/* /icon.svg /favicon.ico
+				not header_regexp User-Agent (?i)(googlebot|yandex(bot|images|mobilebot)|bingbot|applebot|duckduckbot|baiduspider)
 			}
+			key {remote_host}
+			events 120
+			window 1m
 		}
-		reverse_proxy web:3000
 	}
+
+	reverse_proxy web:3000
 }

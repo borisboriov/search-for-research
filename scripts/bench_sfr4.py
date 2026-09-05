@@ -45,7 +45,8 @@ from concurrent.futures import ThreadPoolExecutor
 queries, workers = json.loads(sys.argv[1]), int(sys.argv[2])
 
 def one(i):
-    q = queries[i % len(queries)] + f" вариант {i}"  # уникальный текст: мимо кэша
+    # уникальный текст на секцию и запрос: иначе секции читают кэш друг друга
+    q = queries[i % len(queries)] + f" секция {workers} вариант {i}"
     body = json.dumps({"query": q, "k": 10}).encode()
     req = urllib.request.Request("http://127.0.0.1:8000/api/match", data=body,
                                  headers={"Content-Type": "application/json"})
@@ -161,10 +162,9 @@ def rate_limit_pages_and_bots() -> dict[str, Any]:
 def ttfb(url: str, client: httpx.Client) -> float:
     started = time.perf_counter()
     with client.stream("GET", url) as response:
-        for _ in response.iter_bytes():
-            break
-        response.read()
-    return round((time.perf_counter() - started) * 1000, 1)
+        next(response.iter_bytes(), b"")  # первый чанк тела и есть TTFB
+        elapsed = (time.perf_counter() - started) * 1000
+    return round(elapsed, 1)
 
 
 def api_closed_from_host() -> bool:
