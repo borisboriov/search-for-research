@@ -34,6 +34,18 @@ class ApiSettings(BaseSettings):
     # It belongs to the `frida_clean` index — mpnet's own scale calibrates to 0.43.
     score_threshold: float = 0.27
 
+    # The grey zone (SPEC_SFR4 §0.9, decision of 05.09): 0.27 was calibrated on
+    # everyday out-of-domain queries (scores <= 0.21), but academically-phrased
+    # queries with no answer in the corpus land higher — the live "computer
+    # science backend engineering" run scored 0.34 with a garbage top-10 and no
+    # warning. 0.36 sits between the minimum of live true hits (0.31) and their
+    # mean (0.43): top-1 below it means "matches are weak", shown as a banner
+    # while the results stay visible. Belongs to frida_clean, like 0.27.
+    score_weak: float = 0.36
+    # Word grades on the cards use the same scale: >= score_high is "высокое
+    # совпадение", [score_weak, score_high) is "среднее", below — "слабое".
+    score_high: float = 0.42
+
     # Card enrichment (citations, top works) built offline by `sfr export cards`.
     # Optional: a missing file degrades to empty card fields (tests, bare index).
     cards_path: Path | None = Path("data/exports/cards.jsonl")

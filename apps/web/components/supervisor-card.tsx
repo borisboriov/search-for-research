@@ -31,7 +31,7 @@ export function SupervisorResultCard({ result, query }: { result: MatchResult; q
             </span>
           </span>
         </div>
-        <MatchBadge score={result.score} serendipity={result.serendipity} className="sm:hidden" />
+        <MatchBadge score={result.score} grade={result.grade} serendipity={result.serendipity} className="sm:hidden" />
       </div>
 
       <AvatarInitials
@@ -66,7 +66,7 @@ export function SupervisorResultCard({ result, query }: { result: MatchResult; q
         </p>
       </div>
       <div className="hidden shrink-0 flex-col items-end gap-3 sm:flex">
-        <MatchBadge score={result.score} serendipity={result.serendipity} />
+        <MatchBadge score={result.score} grade={result.grade} serendipity={result.serendipity} />
         <Link
           href={href}
           className="rounded-btn border border-border bg-surface px-4 py-2.5 text-[14px] font-medium whitespace-nowrap hover:bg-bg focus-visible:outline-2 focus-visible:outline-accent"

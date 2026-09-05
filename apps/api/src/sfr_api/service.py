@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any
 
 from sfr_api.schemas import (
+    Confidence,
+    Grade,
     HealthResponse,
     MatchResponse,
     MatchResult,
@@ -93,6 +95,22 @@ class MatchService:
     def _card(self, doc: dict[str, Any]) -> SupervisorCard:
         return SupervisorCard.from_doc(doc, self.extras.get(str(doc["id"])))
 
+    def _grade(self, score: float) -> Grade:
+        """Словесный грейд бейджа; границы — в settings, фронт их не дублирует."""
+        if score >= self.settings.score_high:
+            return "high"
+        if score >= self.settings.score_weak:
+            return "medium"
+        return "low"
+
+    def _confidence(self, top_score: float) -> Confidence:
+        """Уверенность выдачи по top-1 (SPEC_SFR4 §0.9: серая зона порога)."""
+        if top_score < self.settings.score_threshold:
+            return "none"
+        if top_score < self.settings.score_weak:
+            return "weak"
+        return "ok"
+
     def match(self, query: str, k: int | None = None) -> MatchResponse:
         text, top_k = self.validate(query, k)
         started = time.perf_counter()
@@ -103,13 +121,16 @@ class MatchService:
                 **self._card(self.by_id[hit.author_id]).model_dump(),
                 score=hit.score,
                 rank=hit.rank,
+                grade=self._grade(hit.score),
             )
             for hit in hits
         ]
         top_score = results[0].score if results else 0.0
+        confidence = self._confidence(top_score)
         return MatchResponse(
             results=results,
-            below_threshold=top_score < self.settings.score_threshold,
+            below_threshold=confidence == "none",
+            confidence=confidence,
             index_version=self.backend.meta.version,
             took_ms=round(took_ms, 1),
         )
@@ -151,6 +172,8 @@ class MatchService:
             index_version=meta.version,
             profiles_count=meta.n_profiles,
             score_threshold=self.settings.score_threshold,
+            score_weak=self.settings.score_weak,
+            score_high=self.settings.score_high,
             search_backend=select_search_backend(),
             compose=meta.compose,
             built_at=meta.built_at,

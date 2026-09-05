@@ -22,14 +22,17 @@ const RESULT: MatchResult = {
   serendipity: false,
   score: 0.4321,
   rank: 1,
+  grade: "high",
 };
 
 describe("SupervisorResultCard: обычное состояние", () => {
-  it("показывает имя, вуз, процент и первые три темы", () => {
+  it("показывает имя, вуз, словесный грейд (не процент) и первые три темы", () => {
     render(<SupervisorResultCard result={RESULT} query="nlp" />);
     expect(screen.getAllByText("Ivan Smirnov").length).toBeGreaterThan(0);
     expect(screen.getAllByText("МФТИ")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("43%")[0]).toBeInTheDocument();
+    // Грейд словами на бейдже; процент — только в tooltip (SPEC_SFR4 §0.9)
+    expect(screen.getAllByText("высокое совпадение")[0]).toBeInTheDocument();
+    expect(screen.queryByText("43%")).not.toBeInTheDocument();
     expect(
       screen.getByText("NLP, Mental Health via Writing, Topic Modeling"),
     ).toBeInTheDocument();
@@ -53,7 +56,7 @@ describe("SupervisorResultCard: serendipity", () => {
       <SupervisorResultCard result={{ ...RESULT, serendipity: true }} query="nlp" />,
     );
     expect(screen.getAllByText("неожиданный вариант")[0]).toBeInTheDocument();
-    expect(screen.queryByText("43%")).not.toBeInTheDocument();
+    expect(screen.queryByText("высокое совпадение")).not.toBeInTheDocument();
     expect(
       screen.getByText("Смежная область, которая может расширить тему"),
     ).toBeInTheDocument();

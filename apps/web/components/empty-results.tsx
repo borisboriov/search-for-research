@@ -63,6 +63,34 @@ export function EmptyResults({
   );
 }
 
+/** Серая зона порога (confidence == "weak", SPEC_SFR4 §0.9): top-1 выше
+ * «уверенных совпадений нет», но ниже минимума живых попаданий. Выдача
+ * остаётся видимой — баннер над ней, а не пустое состояние. */
+export function WeakBanner() {
+  return (
+    <Card className="mt-2 flex items-start gap-3 rounded-search px-5 py-4 sm:items-center sm:gap-3.5 sm:px-7 sm:py-5">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft">
+        <svg
+          viewBox="0 0 48 48"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.6}
+          strokeDasharray="4 4"
+          className="size-5 text-accent"
+          aria-hidden
+        >
+          <circle cx="18" cy="24" r="12" />
+          <circle cx="30" cy="24" r="12" />
+        </svg>
+      </span>
+      <p className="text-[14px] leading-relaxed text-fg-muted sm:text-[15px]">
+        Совпадения слабые — похоже, в базе пока нет специалистов по этой теме. Попробуйте
+        переформулировать или уточнить запрос.
+      </p>
+    </Card>
+  );
+}
+
 /** 422 или невалидный ?q= — подсказка про сам запрос, не «сервис недоступен»
  * (REVIEW_SFR3 Medium: ручной ?q=ab показывал ложную ошибку с вечным «Повторить»). */
 export function QueryHint({

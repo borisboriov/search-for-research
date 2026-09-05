@@ -20,14 +20,23 @@ export interface SupervisorCard {
   serendipity: boolean;
 }
 
+/** Словесный грейд бейджа: границы шкалы живут в настройках API (см. /health). */
+export type Grade = "high" | "medium" | "low";
+
+/** Уверенность выдачи по top-1: none — «уверенных совпадений нет»,
+ * weak — серая зона (баннер, выдача остаётся), ok — обычная выдача. */
+export type Confidence = "none" | "weak" | "ok";
+
 export interface MatchResult extends SupervisorCard {
   score: number;
   rank: number;
+  grade: Grade;
 }
 
 export interface MatchResponse {
   results: MatchResult[];
   below_threshold: boolean;
+  confidence: Confidence;
   index_version: string;
   took_ms: number;
 }
@@ -50,6 +59,8 @@ export interface HealthResponse {
   index_version: string;
   profiles_count: number;
   score_threshold: number;
+  score_weak: number;
+  score_high: number;
   search_backend: string;
   compose: string;
   built_at: string;

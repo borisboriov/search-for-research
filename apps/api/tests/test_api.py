@@ -52,12 +52,53 @@ def test_results_are_ranked_by_descending_score(backend: FakeBackend) -> None:
 def test_below_threshold_is_true_when_the_top_score_is_under_the_cutoff() -> None:
     body = client(FakeBackend(top_score=0.21)).post("/api/match", json={"query": "право"}).json()
     assert body["below_threshold"] is True
+    assert body["confidence"] == "none"
     assert body["results"], "порог — предупреждение, а не отказ: выдача всё равно возвращается"
 
 
 def test_below_threshold_is_false_above_the_cutoff() -> None:
     body = client(FakeBackend(top_score=0.34)).post("/api/match", json={"query": "нейтрино"}).json()
     assert body["below_threshold"] is False
+
+
+# --- SFR-4 §0.9: серая зона порога и словесные грейды --------------------------------
+
+
+def test_confidence_is_weak_in_the_grey_zone() -> None:
+    """Живой случай Бориса: «backend engineering» дал top-1 = 0.34 — мусорная
+    выдача выше старого порога 0.27. Теперь это weak, не молчание."""
+    body = client(FakeBackend(top_score=0.34)).post("/api/match", json={"query": "бэкенд"}).json()
+    assert body["confidence"] == "weak"
+    assert body["below_threshold"] is False
+    assert body["results"], "выдача остаётся — баннер, а не отказ"
+
+
+def test_confidence_is_ok_above_the_weak_threshold() -> None:
+    body = client(FakeBackend(top_score=0.43)).post("/api/match", json={"query": "нейтрино"}).json()
+    assert body["confidence"] == "ok"
+
+
+def test_grades_follow_the_settings_boundaries() -> None:
+    """0.43, 0.42, 0.41 → high (>= 0.42), high, medium; границы включительно."""
+    body = client(FakeBackend(top_score=0.43)).post("/api/match", json={"query": "нейтрино"}).json()
+    assert [r["grade"] for r in body["results"]] == ["high", "high", "medium"]
+
+
+def test_grade_is_low_under_the_weak_boundary() -> None:
+    body = client(FakeBackend(top_score=0.35)).post("/api/match", json={"query": "нейтрино"}).json()
+    assert all(r["grade"] == "low" for r in body["results"])
+
+
+def test_grade_boundaries_come_from_settings() -> None:
+    api = client(FakeBackend(top_score=0.43), score_weak=0.1, score_high=0.2)
+    body = api.post("/api/match", json={"query": "нейтрино"}).json()
+    assert all(r["grade"] == "high" for r in body["results"])
+
+
+def test_health_exposes_the_grade_boundaries() -> None:
+    body = client(FakeBackend()).get("/api/health").json()
+    assert body["score_weak"] == pytest.approx(0.36)
+    assert body["score_high"] == pytest.approx(0.42)
 
 
 def test_threshold_comes_from_settings() -> None:

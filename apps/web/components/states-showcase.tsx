@@ -1,6 +1,7 @@
 "use client";
 
-import { EmptyResults, ErrorState } from "@/components/empty-results";
+import { EmptyResults, ErrorState, QueryHint, WeakBanner } from "@/components/empty-results";
+import { MatchBadge } from "@/components/match-badge";
 import { SupervisorCardSkeleton, SupervisorResultCard } from "@/components/supervisor-card";
 import type { MatchResult } from "@/lib/types";
 
@@ -18,8 +19,9 @@ const SAMPLE: MatchResult = {
   email: null,
   top_works: [{ title: "Bayesian optimisation of alloy compositions", year: 2024 }],
   serendipity: false,
-  score: 0.92,
+  score: 0.44,
   rank: 1,
+  grade: "high",
 };
 
 export function StatesShowcase() {
@@ -28,8 +30,19 @@ export function StatesShowcase() {
       <h1 className="font-display text-[28px] font-semibold">Состояния компонентов (dev)</h1>
 
       <section className="flex flex-col gap-3.5">
-        <h2 className="text-[16px] font-semibold">Карточка: обычная</h2>
+        <h2 className="text-[16px] font-semibold">Карточка: обычная (грейд high)</h2>
         <SupervisorResultCard result={SAMPLE} query="образец" />
+      </section>
+
+      <section className="flex flex-col gap-3.5">
+        <h2 className="text-[16px] font-semibold">
+          Бейджи: три грейда (SPEC_SFR4 §0.9 — процент в tooltip)
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          <MatchBadge score={0.44} grade="high" />
+          <MatchBadge score={0.38} grade="medium" />
+          <MatchBadge score={0.31} grade="low" />
+        </div>
       </section>
 
       <section className="flex flex-col gap-3.5">
@@ -43,6 +56,22 @@ export function StatesShowcase() {
       <section className="flex flex-col gap-3.5">
         <h2 className="text-[16px] font-semibold">Карточка: skeleton</h2>
         <SupervisorCardSkeleton />
+      </section>
+
+      <section className="flex flex-col gap-3.5">
+        <h2 className="text-[16px] font-semibold">
+          Серая зона порога: баннер «совпадения слабые», выдача остаётся
+        </h2>
+        <WeakBanner />
+        <SupervisorResultCard
+          result={{ ...SAMPLE, author_id: "A0000000002", score: 0.31, grade: "low" }}
+          query="образец"
+        />
+      </section>
+
+      <section className="flex flex-col gap-3.5">
+        <h2 className="text-[16px] font-semibold">Невалидный запрос / 422</h2>
+        <QueryHint message="Запрос слишком короткий: 2 символа, нужно хотя бы 3." onEditQuery={() => {}} />
       </section>
 
       <section className="flex flex-col gap-3.5">

@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
-import { EmptyResults, ErrorState, QueryHint } from "@/components/empty-results";
+import { EmptyResults, ErrorState, QueryHint, WeakBanner } from "@/components/empty-results";
 import { DEFAULT_FILTERS, FiltersRow, FiltersSheetRow, type FilterState } from "@/components/filters";
 import { QueryBar } from "@/components/query-bar";
 import { validateQuery } from "@/components/search-box";
@@ -160,12 +160,14 @@ function ResultsForQuery({ query }: { query: string }) {
           <QueryHint message={state.message} onEditQuery={() => setEditingQuery(true)} />
         )}
 
-        {state.kind === "done" && state.response.below_threshold && (
+        {state.kind === "done" && state.response.confidence === "none" && (
           <EmptyResults onEditQuery={() => setEditingQuery(true)} onExample={submitQuery} />
         )}
 
-        {state.kind === "done" && !state.response.below_threshold && (
+        {state.kind === "done" && state.response.confidence !== "none" && (
           <>
+            {/* Серая зона: баннер над выдачей, сама выдача остаётся (§0.9) */}
+            {state.response.confidence === "weak" && <WeakBanner />}
             <FiltersRow
               filters={filters}
               institutions={institutions}
