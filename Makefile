@@ -178,7 +178,13 @@ deploy-local:
 	NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
 	REVALIDATE_SECRET=local-rehearsal \
 	$(DEPLOY_COMPOSE) up -d --build
-	@echo "прокси: http://localhost:8080 · api снаружи недоступен (проверка: curl localhost:8000 -> отказ)"
+	@# Пересозданный контейнер web теряет рантайм-кэш ISR: без ревалидации
+	@# sitemap и лендинг отдают билд-снапшот (собранный без API). На бою этот
+	@# шаг — часть процедуры деплоя (deploy/README.md).
+	@until curl -sf -o /dev/null http://localhost:8080/; do sleep 1; done
+	@curl -s -X POST -H "x-revalidate-secret: local-rehearsal" \
+		http://localhost:8080/api/revalidate && echo
+	@echo "прокси: http://localhost:8080 · api снаружи недоступен (проверка: docker port sfr-api -> пусто)"
 
 deploy-local-down:
 	SITE_ADDRESS=http://localhost:8080 NEXT_PUBLIC_SITE_URL=http://localhost:8080 \

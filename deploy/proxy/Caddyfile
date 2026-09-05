@@ -46,16 +46,26 @@
 	# поиска он не нужен, а спуферам UA нечего дарить.
 	@bot header_regexp bot User-Agent (?i)(googlebot|yandex(bot|images|mobilebot)|bingbot|applebot|duckduckbot|baiduspider)
 
-	# Лимит подбора: FRIDA на CPU — ~2 rps; 10 запросов/мин с IP — это
-	# человек, думающий над формулировками, а не скрипт.
+	# Лимит подбора: FRIDA на CPU — ~2 rps. Двухслойно: burst 10 за 10 секунд
+	# (скрипт) + 30 в минуту устойчиво. Не 10/мин: за одним NAT-IP может
+	# сидеть целая лаборатория (пилот в кампусе).
 	rate_limit {
-		zone match {
+		zone match_burst {
 			match {
 				method POST
 				path /api/match
 			}
 			key {remote_host}
 			events 10
+			window 10s
+		}
+		zone match_sustained {
+			match {
+				method POST
+				path /api/match
+			}
+			key {remote_host}
+			events 30
 			window 1m
 		}
 	}
@@ -65,10 +75,15 @@
 	}
 
 	handle {
-		# Каталожные страницы и GET — щадяще: 120/мин хватает живому
-		# человеку с запасом, но охлаждает перебор /supervisor/* скриптом.
+		# Каталожные страницы и GET — щадяще: 120/мин хватает живому человеку
+		# с запасом, но охлаждает перебор /supervisor/* скриптом. Статические
+		# ассеты не считаем: одна загрузка страницы тянет их десятками, лимит
+		# сгорал бы за два-три перехода.
 		rate_limit {
 			zone pages {
+				match {
+					not path /_next/* /icon.svg /favicon.ico
+				}
 				key {remote_host}
 				events 120
 				window 1m

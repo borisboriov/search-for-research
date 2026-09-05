@@ -42,6 +42,13 @@ for (const [label, viewport] of [
     });
 
     test(`витрина состояний (${label})`, async ({ page }) => {
+      // Против прод-стека (SFR_WEB_URL, make deploy-local) витрина обязана
+      // отдавать 404 — проверяем сам гард; в dev она открыта.
+      if (process.env.SFR_WEB_URL) {
+        const response = await page.goto("/dev/states");
+        expect(response?.status()).toBe(404);
+        return;
+      }
       await page.goto("/dev/states");
       await expect(page.getByText("неожиданный вариант").filter({ visible: true }).first()).toBeVisible();
       await screenshot(page, `states-${label}`);
