@@ -229,11 +229,19 @@ def review_sample(
     ] = None,
     queries_set: Annotated[str, typer.Option("--queries")] = "golden",
     seed: Annotated[int, typer.Option("--seed")] = 20260829,
+    iteration: Annotated[
+        str,
+        typer.Option("--iteration", help="Брать только оценки этой итерации (поле iteration)"),
+    ] = "",
 ) -> None:
     """Write a random sample of judgments for a human re-check.
 
     The output path is explicit on purpose: the SFR-1 sample was already checked by
     hand, and overwriting it would destroy that record.
+
+    ``--iteration`` ограничивает выборку новой партией оценок: судейский пул
+    растёт от итерации к итерации, и без фильтра 20 случайных пар оказываются
+    в основном теми, что человек уже проверял.
     """
     try:
         runs = load_runs(runs_dir)
@@ -245,7 +253,17 @@ def review_sample(
     if docs_dir is None:
         raise _fail(f"нет ни одного индекса в {index_root}")
     profiles = {str(doc["id"]): doc for doc in load_docs(docs_dir)}
-    pool_pairs = [pair for pair in build_pool(runs) if pair in judgments]
+    pool_pairs = [
+        pair
+        for pair in build_pool(runs)
+        if pair in judgments and (not iteration or judgments[pair].iteration == iteration)
+    ]
+    if not pool_pairs:
+        raise _fail(
+            "нет оценённых пар"
+            + (f" с iteration={iteration!r}" if iteration else "")
+            + f" в пуле прогонов {runs_dir}"
+        )
     out = out or (eval_dir() / "judgments_for_review.md")
     out.write_text(
         sample_for_review(pool_pairs, queries, judgments, profiles, n=n, seed=seed),

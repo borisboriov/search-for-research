@@ -82,3 +82,24 @@ def test_write_jsonl_keeps_cyrillic_readable(tmp_path: Path) -> None:
 def test_eval_dir_points_at_the_versioned_package_data() -> None:
     assert eval_dir().name == "eval"
     assert (eval_dir() / "queries.jsonl").exists()
+
+
+def test_judgment_iteration_is_optional_and_backward_compatible(tmp_path: Path) -> None:
+    """Метка итерации (SFR-5) не должна ломать чтение оценок прошлых итераций."""
+    path = tmp_path / "judgments.jsonl"
+    path.write_text(
+        '{"query_id": "q1", "author_id": "A1", "grade": 2, "rationale": "прямое"}\n'
+        '{"query_id": "q2", "author_id": "A2", "grade": 1, "rationale": "смежное",'
+        ' "iteration": "sfr5"}\n',
+        encoding="utf-8",
+    )
+    judgments = load_judgments(path)
+    assert judgments[("q1", "A1")].iteration == "", "строка без поля читается как прежде"
+    assert judgments[("q2", "A2")].iteration == "sfr5"
+
+
+def test_real_judgments_carry_the_sfr5_batch() -> None:
+    """В версионируемом наборе партия SFR-5 размечена — на ней стоит выборка на проверку."""
+    judgments = load_judgments()
+    marked = [j for j in judgments.values() if j.iteration == "sfr5"]
+    assert len(marked) == 83
