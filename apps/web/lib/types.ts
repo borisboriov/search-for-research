@@ -58,6 +58,7 @@ export interface HealthResponse {
   model: string;
   index_version: string;
   profiles_count: number;
+  institutions_count: number;
   score_threshold: number;
   score_weak: number;
   score_high: number;

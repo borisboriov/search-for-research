@@ -22,8 +22,10 @@ def test_health_names_the_model_and_the_index_it_serves(backend: FakeBackend) ->
     assert body["status"] == "ok"
     assert body["model"] == "ai-forever/FRIDA"
     assert body["profiles_count"] == 3
+    # Число вузов считает API, а не вёрстка лендинга (SFR-5): в DOCS два вуза.
+    assert body["institutions_count"] == 2
     assert body["index_version"].startswith("frida_clean-3p-")
-    assert body["score_threshold"] == pytest.approx(0.27)
+    assert body["score_threshold"] == pytest.approx(0.29)  # перекалибровано в SFR-5
     assert body["search_backend"] in {"faiss", "numpy"}
 
 
@@ -65,9 +67,12 @@ def test_below_threshold_is_false_above_the_cutoff() -> None:
 
 
 def test_confidence_is_weak_in_the_grey_zone() -> None:
-    """Живой случай Бориса: «backend engineering» дал top-1 = 0.34 — мусорная
-    выдача выше старого порога 0.27. Теперь это weak, не молчание."""
-    body = client(FakeBackend(top_score=0.34)).post("/api/match", json={"query": "бэкенд"}).json()
+    """Серая зона: top-1 между «уверенных нет» (0.29) и «выдача обычная» (0.33).
+    Пример SFR-5 — киноведческий запрос, 0.310: в каталоге 12 вузов киноведов
+    нет, а звучит запрос академически. (Прежний пример, «backend engineering»
+    с 0.34, перестал быть посторонним — Иннополис и ИТМО принесли в каталог
+    программную инженерию.)"""
+    body = client(FakeBackend(top_score=0.31)).post("/api/match", json={"query": "кино"}).json()
     assert body["confidence"] == "weak"
     assert body["below_threshold"] is False
     assert body["results"], "выдача остаётся — баннер, а не отказ"
@@ -79,13 +84,13 @@ def test_confidence_is_ok_above_the_weak_threshold() -> None:
 
 
 def test_grades_follow_the_settings_boundaries() -> None:
-    """0.43, 0.42, 0.41 → high (>= 0.42), high, medium; границы включительно."""
-    body = client(FakeBackend(top_score=0.43)).post("/api/match", json={"query": "нейтрино"}).json()
+    """0.45, 0.44, 0.43 → high (>= 0.44), high, medium; границы включительно."""
+    body = client(FakeBackend(top_score=0.45)).post("/api/match", json={"query": "нейтрино"}).json()
     assert [r["grade"] for r in body["results"]] == ["high", "high", "medium"]
 
 
 def test_grade_is_low_under_the_weak_boundary() -> None:
-    body = client(FakeBackend(top_score=0.35)).post("/api/match", json={"query": "нейтрино"}).json()
+    body = client(FakeBackend(top_score=0.32)).post("/api/match", json={"query": "нейтрино"}).json()
     assert all(r["grade"] == "low" for r in body["results"])
 
 
@@ -97,8 +102,8 @@ def test_grade_boundaries_come_from_settings() -> None:
 
 def test_health_exposes_the_grade_boundaries() -> None:
     body = client(FakeBackend()).get("/api/health").json()
-    assert body["score_weak"] == pytest.approx(0.36)
-    assert body["score_high"] == pytest.approx(0.42)
+    assert body["score_weak"] == pytest.approx(0.33)
+    assert body["score_high"] == pytest.approx(0.44)
 
 
 # --- SFR-4 §2: кэш ответов /match и логи запросов ------------------------------------

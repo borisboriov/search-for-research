@@ -132,7 +132,12 @@ export default async function LandingPage() {
               label={`${pluralize(health.profiles_count, "научрук", "научрука", "научруков")} в каталоге`}
             />
           )}
-          <Stat value="2 вуза" label="на старте: МФТИ и МГУ, дальше — больше" />
+          {health && (
+            <Stat
+              value={`${formatNumber(health.institutions_count)} ${pluralize(health.institutions_count, "вуз", "вуза", "вузов")}`}
+              label="в каталоге, дальше — больше"
+            />
+          )}
           <Stat value="100%" label="открытые данные — OpenAlex" />
         </section>
 

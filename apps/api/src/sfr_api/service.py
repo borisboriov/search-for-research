@@ -59,6 +59,9 @@ class MatchService:
         self.by_id: dict[str, dict[str, Any]] = {str(doc["id"]): doc for doc in backend.docs}
         # Stable listing order for pagination: author_id is the natural key of the corpus.
         self.ordered_ids: list[str] = sorted(self.by_id)
+        self.institutions_count = len(
+            {doc.get("institution") for doc in backend.docs if doc.get("institution")}
+        )
         self.extras = extras if extras is not None else load_cards_extras(settings.cards_path)
         # LRU-кэш ответов /match (SPEC_SFR4 §2). Замок обязателен: match идёт
         # в threadpool, одновременных потоков — match_concurrency.
@@ -209,6 +212,7 @@ class MatchService:
             model=meta.hf_id or meta.model_key,
             index_version=meta.version,
             profiles_count=meta.n_profiles,
+            institutions_count=self.institutions_count,
             score_threshold=self.settings.score_threshold,
             score_weak=self.settings.score_weak,
             score_high=self.settings.score_high,

@@ -4,13 +4,13 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from sfr_match.index import DEFAULT_INDEX_ROOT, resolve_index_dir
+from sfr_match.index import resolve_index_dir
 
 
 class ApiSettings(BaseSettings):
     """Read from ``SFR_API_*`` environment variables (and ``.env``).
 
-    The index is *not* built here: it is produced offline by ``make index-sfr2``
+    The index is *not* built here: it is produced offline by ``make index-sfr5``
     and mounted read-only. The service only needs to know which directory to open.
     """
 
@@ -22,33 +22,37 @@ class ApiSettings(BaseSettings):
     )
 
     # Which index to serve. index_dir, when set, wins over the model/clean/compose triple.
-    index_root: Path = DEFAULT_INDEX_ROOT
+    # SFR-5: боевой индекс — каталог 12 вузов (`make index-sfr5`); индекс SFR-2
+    # остаётся на диске для воспроизводимости SFR-2 и включается через env.
+    index_root: Path = Path("data/indexes_sfr5")
     model: str = "frida"
     clean: bool = True
     compose: str = "full"
     index_dir: Path | None = None
 
     # "We found nobody confident enough" — a warning, not a refusal (SFR-1, NEXT.md).
-    # 0.27 is the SFR-2 recalibration on 17 confirmed out-of-domain queries: it catches
-    # 17/17 of them and cuts none of the 26 real ones, with ~0.06 of margin on each side.
-    # It belongs to the `frida_clean` index — mpnet's own scale calibrates to 0.43.
-    score_threshold: float = 0.27
+    # SFR-5 перекалибровал порог на корпусе 12 вузов (frida_clean-5540p-a2f13892):
+    # 0.29 — середина безопасного интервала 0.26…0.31, отсекает 18 из 19
+    # подтверждённых посторонних запросов и не режет ни одного из 26 настоящих.
+    # Порог принадлежит паре модель×индекс; у mpnet своя шкала.
+    # ВАЖНО: цифра промежуточная — у 5 007 профилей из 5 540 ещё нет работ
+    # (дневной бюджет OpenAlex, docs/DECISIONS.md); после бэкфилла перекалибровать.
+    score_threshold: float = 0.29
 
-    # The grey zone (SPEC_SFR4 §0.9, decision of 05.09): 0.27 was calibrated on
-    # everyday out-of-domain queries (scores <= 0.21), but academically-phrased
-    # queries with no answer in the corpus land higher — the live "computer
-    # science backend engineering" run scored 0.34 with a garbage top-10 and no
-    # warning. 0.36 sits between the minimum of live true hits (0.31) and their
-    # mean (0.43): top-1 below it means "matches are weak", shown as a banner
-    # while the results stay visible. Belongs to frida_clean, like 0.27.
-    score_weak: float = 0.36
-    # Word grades on the cards use the same scale: >= score_high is "высокое
-    # совпадение", [score_weak, score_high) is "среднее", below — "слабое".
-    score_high: float = 0.42
+    # Серая зона (SPEC_SFR4 §0.9). На корпусе 12 вузов распределения разошлись:
+    # самый высокий посторонний запрос даёт 0.310, самый слабый настоящий — 0.350.
+    # 0.33 — середина этого зазора: top-1 ниже означает «совпадения слабые»,
+    # выдача остаётся, но с баннером.
+    score_weak: float = 0.33
+    # Словесные грейды карточек — та же шкала: >= score_high «высокое совпадение»,
+    # [score_weak, score_high) «среднее», ниже — «слабое». 0.44 — медиана top-1
+    # по удачным запросам golden set; величина выведена из распределения, а не
+    # откалибрована (набора «высоких» совпадений для калибровки не существует).
+    score_high: float = 0.44
 
     # Card enrichment (citations, top works) built offline by `sfr export cards`.
     # Optional: a missing file degrades to empty card fields (tests, bare index).
-    cards_path: Path | None = Path("data/exports/cards.jsonl")
+    cards_path: Path | None = Path("data/exports/cards_sfr5.jsonl")
 
     # Catalogue listing (sitemap, landing preview): page size cap.
     list_default_limit: int = 100

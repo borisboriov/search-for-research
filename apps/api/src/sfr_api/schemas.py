@@ -122,6 +122,10 @@ class HealthResponse(BaseModel):
     model: str
     index_version: str
     profiles_count: int
+    # SFR-5: сколько вузов в каталоге. Цифра переехала из вёрстки лендинга
+    # в API — на фронте она была захардкожена («2 вуза») и молча устарела,
+    # когда каталог вырос до 12.
+    institutions_count: int
     score_threshold: float
     score_weak: float
     score_high: float
