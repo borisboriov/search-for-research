@@ -1,0 +1,79 @@
+# Прокси Search For Research (SFR-4 §1–2).
+#
+# SITE_ADDRESS: "search-for-research.ru" на бою (Caddy сам выпускает TLS,
+# слушает 80/443) или "http://localhost:8080" на локальной репетиции
+# (без TLS — префикс http:// отключает auto-HTTPS для этого сайта).
+#
+# Наружу смотрит только этот контейнер: api в compose-сети без
+# опубликованных портов, все запросы к нему идут через web (Next).
+
+{
+	# rate_limit — сторонний модуль, у него нет места в стандартном порядке
+	order rate_limit before reverse_proxy
+}
+
+{$SITE_ADDRESS} {
+	encode gzip
+
+	# Тела больше 16 КБ к нам не приходят легально: /api/match ограничен
+	# 4 КБ на прокси Next и 2000 символами в API (эквивалент
+	# client_max_body_size 16k из спеки).
+	request_body {
+		max_size 16KB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
+	# Access-лог в JSON: помимо мониторинга — воронка пилота
+	# «/results -> открыл /supervisor/*» по паре (uri, Referer) (SFR-4 §4).
+	log {
+		output file /data/access.log {
+			roll_size 50MiB
+			roll_keep 5
+		}
+		format json
+	}
+
+	# Поисковые боты (SEO — органический канал, NEXT.md): страницы для них
+	# без лимитов. На POST /api/match лимит действует и для них — ботам
+	# поиска он не нужен, а спуферам UA нечего дарить.
+	@bot header_regexp bot User-Agent (?i)(googlebot|yandex(bot|images|mobilebot)|bingbot|applebot|duckduckbot|baiduspider)
+
+	# Лимит подбора: FRIDA на CPU — ~2 rps; 10 запросов/мин с IP — это
+	# человек, думающий над формулировками, а не скрипт.
+	rate_limit {
+		zone match {
+			match {
+				method POST
+				path /api/match
+			}
+			key {remote_host}
+			events 10
+			window 1m
+		}
+	}
+
+	handle @bot {
+		reverse_proxy web:3000
+	}
+
+	handle {
+		# Каталожные страницы и GET — щадяще: 120/мин хватает живому
+		# человеку с запасом, но охлаждает перебор /supervisor/* скриптом.
+		rate_limit {
+			zone pages {
+				key {remote_host}
+				events 120
+				window 1m
+			}
+		}
+		reverse_proxy web:3000
+	}
+}

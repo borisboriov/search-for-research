@@ -1,6 +1,7 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
-	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e
+	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
+	deploy-local deploy-local-down
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -163,3 +164,22 @@ web-build:
 # Playwright against a live API (`make api` in another terminal). Local only, not in CI.
 web-e2e:
 	cd apps/web && npm run e2e
+
+# ---------------------------------------------------------------------------
+# SFR-4: репетиция боевой компоновки (api + web + proxy) на локальной машине.
+# Прокси слушает http://localhost:8080, API наружу не публикуется вовсе.
+# e2e против неё: SFR_WEB_URL=http://localhost:8080 make web-e2e
+# ---------------------------------------------------------------------------
+DEPLOY_COMPOSE := docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.local.yml
+
+deploy-local:
+	SFR_HF_CACHE=$$HOME/.cache/huggingface \
+	SITE_ADDRESS=http://localhost:8080 \
+	NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
+	REVALIDATE_SECRET=local-rehearsal \
+	$(DEPLOY_COMPOSE) up -d --build
+	@echo "прокси: http://localhost:8080 · api снаружи недоступен (проверка: curl localhost:8000 -> отказ)"
+
+deploy-local-down:
+	SITE_ADDRESS=http://localhost:8080 NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
+	$(DEPLOY_COMPOSE) down

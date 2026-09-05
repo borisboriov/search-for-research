@@ -1,0 +1,93 @@
+# Боевая компоновка Search For Research (SFR-4 §1): api + web + proxy.
+#
+# Наружу опубликован только proxy (80/443). API из интернета недостижим:
+# у контейнера api нет ports, клиентские запросы идут браузер -> proxy ->
+# web (Next route handler) -> api по внутренней сети compose.
+#
+# Артефакты НЕ собираются на сервере — их привозит deploy/sync-artifacts.sh:
+#   data/indexes_sfr2/          индекс (make index-sfr2, офлайн)
+#   data/exports/cards.jsonl    обогащение карточек (make export-cards)
+# Веса FRIDA качаются в том hf-cache при первом старте (~2 ГБ, единожды).
+#
+# Переменные — из deploy/.env (cp env.example .env): SITE_ADDRESS,
+# NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_CLAIM_EMAIL, REVALIDATE_SECRET,
+# SFR_API_LOG_SALT. Локальная репетиция — make deploy-local (см. Makefile).
+
+name: sfr-deploy
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    image: sfr-api:latest
+    container_name: sfr-api
+    restart: unless-stopped
+    environment:
+      SFR_API_MODEL: ${SFR_API_MODEL:-frida}
+      SFR_API_INDEX_ROOT: /app/data/indexes_sfr2
+      SFR_API_CARDS_PATH: /app/data/exports/cards.jsonl
+      # Пороги не задаём: значения по умолчанию живут в settings.py
+      # (перекалиброваны в SFR-2/SFR-4), дублировать их здесь — рассинхрон.
+      SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
+      SFR_API_LOG_SALT: ${SFR_API_LOG_SALT:-}
+      HF_HOME: /models
+      OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
+    volumes:
+      - ../data/indexes_sfr2:/app/data/indexes_sfr2:ro
+      - ../data/exports:/app/data/exports:ro
+      - ${SFR_HF_CACHE:-hf-cache}:/models
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?задай в deploy/.env — канонический адрес сайта}
+        NEXT_PUBLIC_CLAIM_EMAIL: ${NEXT_PUBLIC_CLAIM_EMAIL:-}
+    image: sfr-web:latest
+    container_name: sfr-web
+    restart: unless-stopped
+    environment:
+      SFR_API_URL: http://api:8000
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
+    depends_on:
+      api:
+        condition: service_healthy
+    logging: *logging
+
+  proxy:
+    build:
+      context: proxy
+    image: sfr-proxy:latest
+    container_name: sfr-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?задай в deploy/.env — домен или http://localhost:8080}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      # admin-endpoint Caddy слушает 127.0.0.1:2019 внутри контейнера
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    logging: *logging
+
+volumes:
+  hf-cache:
+  caddy-data:
+  caddy-config:
