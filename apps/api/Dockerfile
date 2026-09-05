@@ -14,6 +14,10 @@ ENV UV_TORCH_BACKEND=cpu \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/models
 
+# Версии apt не пинуем: Debian вымывает старые версии из репозитория, и пин
+# ломает сборку через месяц. Воспроизводимость даёт тег базового образа,
+# свежесть пакетов — пересборка образа на каждом деплое.
+# hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
@@ -48,6 +52,8 @@ RUN uv sync --frozen --package sfr-api --no-dev
 RUN useradd --system --create-home --uid 10001 app \
     && mkdir -p /models \
     && chown -R app:app /models
+# Имя вместо uid читается лучше, а сам uid зафиксирован строкой выше.
+# hadolint ignore=DL3066
 USER app
 
 ENV PATH="/app/.venv/bin:$PATH" \
@@ -55,7 +61,7 @@ ENV PATH="/app/.venv/bin:$PATH" \
 
 EXPOSE 8000
 HEALTHCHECK --interval=5s --timeout=3s --start-period=180s --retries=40 \
-    CMD curl -fsS http://127.0.0.1:8000/api/health || exit 1
+    CMD ["curl", "-fsS", "http://127.0.0.1:8000/api/health"]
 
 # --limit-concurrency 8: сверх восьми одновременных соединений uvicorn отвечает
 # 503 сразу — вместе с Semaphore(2) в приложении это потолок для CPU-инференса

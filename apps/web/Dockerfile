@@ -28,10 +28,19 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
+# npm в рантайме не нужен (запускается `node server.js`), а его связка в
+# node:24-slim тащит 4 HIGH-CVE с доступным фиксом (brace-expansion, ip-address,
+# tar) — trivy image, SFR-4b. Удаляем вместе с corepack: обновление базового
+# образа их всё равно чинит с задержкой, а поверхность лишняя.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
 # Не root: пользователь node есть в базовом образе (REVIEW_SFR3 Medium).
 COPY --from=build --chown=node:node /app/.next/standalone ./
 COPY --from=build --chown=node:node /app/.next/static ./.next/static
 COPY --from=build --chown=node:node /app/public ./public
+# Пользователь node есть в базовом образе node:24-slim с фиксированным uid 1000.
+# hadolint ignore=DL3066
 USER node
 
 EXPOSE 3000
