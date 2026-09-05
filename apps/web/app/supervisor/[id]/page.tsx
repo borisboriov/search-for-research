@@ -27,9 +27,20 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+// Формат OpenAlex author id: любая другая строка — мгновенный 404 без похода
+// в API, чтобы перебор мусорных id не грузил бэкенд и не раздувал ISR-кэш
+// (REVIEW_SFR3 Medium). getSupervisor при этом бросает на сеть/5xx — страница
+// отвечает 500 через error boundary и не кэшируется, а 404 остаётся только
+// за настоящим «нет такого НР».
+const AUTHOR_ID = /^A\d{4,12}$/;
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const card = await getSupervisor(id);
+  if (!AUTHOR_ID.test(id)) return { title: "Профиль не найден" };
+  // Ошибку API глотаем только здесь: упавший generateMetadata обходит
+  // error boundary и рендерит безликую 500 Next; пусть бросает сам рендер
+  // страницы — тогда пользователь видит наш error.tsx (а статус всё равно 500).
+  const card = await getSupervisor(id).catch(() => null);
   if (card === null) return { title: "Профиль не найден" };
   const university = institutionShort(card.institution);
   const title = university ? `${card.name} — ${university}` : card.name;
@@ -52,6 +63,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function SupervisorPage({ params }: PageProps) {
   const { id } = await params;
+  if (!AUTHOR_ID.test(id)) notFound();
   const card = await getSupervisor(id);
   if (card === null) notFound();
 

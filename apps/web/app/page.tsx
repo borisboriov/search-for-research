@@ -37,9 +37,13 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 export default async function LandingPage() {
+  // Ошибки API ловим локально: лендинг деградирует (без счётчика и превью),
+  // а не отдаёт 500 — статическая часть страницы ценнее счётчика. Цена:
+  // ревалидация при упавшем API кэширует деградированную версию на час;
+  // после деплоя её чинит пост-деплойная ревалидация (deploy/README.md).
   const [health, ...previewCards] = await Promise.all([
-    getHealth(),
-    ...PREVIEW_AUTHOR_IDS.map((id) => getSupervisor(id)),
+    getHealth().catch(() => null),
+    ...PREVIEW_AUTHOR_IDS.map((id) => getSupervisor(id).catch(() => null)),
   ]);
   const preview = previewCards.filter((card) => card !== null);
 
