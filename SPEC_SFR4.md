@@ -62,7 +62,7 @@ CLAIM_EMAIL=         # адрес для «Это вы?» (появится с �
 - [ ] `make deploy-local` поднимает api+web+proxy; e2e проходят против compose; API снаружи compose недоступен
 - [ ] `deploy/README.md` воспроизводим с нуля; артефакты синхронизируются скриптом
 - [ ] Rate limiting работает и не режет ботов (тест с UA Googlebot); логи `/match` пишутся в согласованном формате; кэш даёт hit на повторный запрос
-- [ ] (если VPS) `https://DOMAIN` — лендинг, профиль, sitemap = profiles_count, robots; перемер §3 в отчёте
+- [ ] (если VPS) `https://DOMAIN` — лендинг, профиль, sitemap = profiles_count, robots; перемер §3 в отчёте; **прокси на 80/443 не от root:** `docker compose ps proxy` → healthy, https открывается, в `docker logs sfr-proxy` нет `permission denied` на bind (ветка `cap_net_bind_service` из SFR-4b локально не проверяется — `deploy/README.md`, «Прокси работает не от root»)
 - [ ] `docs/PILOT_TEST_GUIDE.md`; DECISIONS/SESSIONS/TODO_BORIS обновлены; NEXT.md → план SFR-5 (пилотные фичи по спеке MVP v1.7: авторизация, заявки со статусами, отзывы, C6)
 
 Не дотянул — опиши честно, не маскируй.
