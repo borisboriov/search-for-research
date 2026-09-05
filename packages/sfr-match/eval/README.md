@@ -62,3 +62,27 @@ uv run sfr-match eval --queries external --models frida \
 разметит пары по той же рубрике, посчитает Success@1/@5 отдельно по внешнему набору
 и сравнит с golden set. Расхождение и будет честной оценкой того, насколько
 завышены нынешние цифры.
+
+## Логи /match как источник кандидатов (SFR-4)
+
+Каждый запрос к боевому API пишется JSON-строкой в stdout контейнера
+(`docker logs sfr-api | grep '"query"'`) с полями `query` (дословный текст),
+`top1_score`, `confidence` (none/weak/ok), `cache_hit`, `took_ms`, `ts`,
+`ip_hash`. Формат согласован с этим каталогом: поле `query` переносится в
+`external_queries.jsonl` как `text` без изменений, `expect`/`comment`
+проставляются руками при разборе (автор лога неизвестен — это гипотеза
+разбирающего, как и для запросов от людей). Личных данных в логах нет:
+IP — только солёным хешем.
+
+Быстрый отбор кандидатов из лога (упавшие в серую зону и мимо порога —
+самые информативные для перекалибровки):
+
+```bash
+docker logs sfr-api 2>/dev/null | grep '"query"' \
+  | python3 -c "import sys,json
+for line in sys.stdin:
+    r=json.loads(line)
+    if r['confidence'] in ('none','weak') and not r['cache_hit']:
+        print(json.dumps({'text': r['query'], 'top1': r['top1_score'],
+                          'confidence': r['confidence']}, ensure_ascii=False))"
+```
