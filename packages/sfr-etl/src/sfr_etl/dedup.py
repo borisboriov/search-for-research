@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import structlog
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
 from sfr_core.models import Author, AuthorTopic, SupervisorProfile, Work
@@ -149,6 +149,27 @@ def _catalogue_authors(session: Session) -> list[Author]:
     )
 
 
+def recovered_signal(canonical: Author, duplicate: Author) -> str:
+    """Восстановить признак, по которому пара была склеена.
+
+    Нужно для файла ручной проверки: строка «склеено ранее» не говорит человеку
+    ничего, а именно ради его глаз файл и существует. Восстанавливаем из ``raw`` —
+    исходных записей OpenAlex, которые склейка не трогает.
+
+    Признак «общая работа» после склейки невосстановим: работы дубля физически
+    переехали на канонического автора. Такая пара так и помечается — честнее,
+    чем подставить правдоподобный сигнал.
+    """
+    canonical_orcid = normalize_orcid((canonical.raw or {}).get("orcid") or canonical.orcid)
+    duplicate_orcid = normalize_orcid((duplicate.raw or {}).get("orcid") or duplicate.orcid)
+    if canonical_orcid and canonical_orcid == duplicate_orcid:
+        return "orcid"
+    shared_topics = set(_raw_topics(canonical)) & set(_raw_topics(duplicate))
+    if is_abbreviation_pair(canonical, duplicate) and len(shared_topics) >= ABBREV_TOPIC_OVERLAP:
+        return "abbrev+institution+topics"
+    return "склеено ранее (признак не восстановить — работы уже перенесены)"
+
+
 def applied_merges(session: Session) -> list[MergeGroup]:
     """Склейки, уже записанные в БД, — чтобы повторный прогон был идемпотентен.
 
@@ -166,7 +187,7 @@ def applied_merges(session: Session) -> list[MergeGroup]:
             group = MergeGroup(
                 canonical=canonical.openalex_id,
                 duplicates=[],
-                signal="склеено ранее",
+                signal=recovered_signal(canonical, duplicate),
                 names=[canonical.display_name],
                 institutions=[_institution_name(canonical)],
             )
@@ -359,6 +380,121 @@ def apply_merges(session: Session, groups: Sequence[MergeGroup]) -> dict[str, in
     return stats
 
 
+def _raw_counters(author: Author) -> tuple[int, int, int | None]:
+    """``works_count``, ``cited_by_count``, ``h_index`` из исходной записи OpenAlex."""
+    raw = author.raw or {}
+    summary = raw.get("summary_stats") or {}
+    return (
+        int(raw.get("works_count") or 0),
+        int(raw.get("cited_by_count") or 0),
+        summary.get("h_index"),
+    )
+
+
+def _raw_topics(author: Author) -> dict[str, float]:
+    """Темы автора из ``raw``: имя → score (``count``), как их кладёт ``upsert_author``."""
+    topics: dict[str, float] = {}
+    for topic in (author.raw or {}).get("topics") or []:
+        name = topic.get("display_name")
+        if name:
+            topics[str(name)] = topics.get(str(name), 0.0) + float(topic.get("count") or 0)
+    return topics
+
+
+def recompute_merged_aggregates(session: Session, *, dry_run: bool = False) -> dict[str, int]:
+    """Пересобрать счётчики и темы канонических авторов из ``raw``.
+
+    Зачем отдельный проход. ``apply_merges`` складывает ``works_count`` и
+    ``cited_by_count`` канонического автора с дублями и берёт максимальный
+    ``h_index``, но следующий же ``sfr etl authors`` перезаписывает эти колонки
+    свежими значениями OpenAlex и заново заливает темы (``upsert_author``) —
+    результат склейки пропадает молча. Повторная склейка его не вернёт: дубли
+    с проставленным ``merged_into_id`` пропускаются.
+
+    Поэтому агрегаты здесь не «досчитываются», а **собираются заново** из
+    ``Author.raw`` — нетронутых записей OpenAlex канонического автора и всех его
+    дублей. Функция идемпотентна по построению: текущие значения колонок она не
+    читает вовсе, только сравнивает с ними результат. Запускать после любого
+    ингеста авторов; на каталоге без склеек это no-op.
+
+    Группы, где у кого-то нет ``raw`` (данные из старых прогонов), пропускаются:
+    достроить их не из чего, а испортить существующие значения — можно.
+    """
+    stats = {"canonical": 0, "changed": 0, "skipped_no_raw": 0, "topics_rebuilt": 0}
+    canonical_ids = [
+        row
+        for (row,) in session.execute(
+            select(Author.merged_into_id).where(Author.merged_into_id.is_not(None)).distinct()
+        )
+    ]
+    for canonical_id in canonical_ids:
+        canonical = session.get(Author, canonical_id)
+        if canonical is None:  # pragma: no cover — FK гарантирует наличие
+            continue
+        duplicates = list(
+            session.execute(select(Author).where(Author.merged_into_id == canonical.id)).scalars()
+        )
+        stats["canonical"] += 1
+        cluster = [canonical, *duplicates]
+        if any(author.raw is None for author in cluster):
+            stats["skipped_no_raw"] += 1
+            continue
+
+        works = cited = 0
+        h_indexes: list[int] = []
+        topics: dict[str, float] = {}
+        orcid = None
+        for author in cluster:
+            author_works, author_cited, author_h = _raw_counters(author)
+            works += author_works
+            cited += author_cited
+            if author_h is not None:
+                h_indexes.append(int(author_h))
+            for name, score in _raw_topics(author).items():
+                topics[name] = topics.get(name, 0.0) + score
+            orcid = orcid or (author.raw or {}).get("orcid")
+        h_index = max(h_indexes) if h_indexes else None
+
+        current_topics = {
+            topic.topic_name: topic.score
+            for topic in session.execute(
+                select(AuthorTopic).where(AuthorTopic.author_id == canonical.id)
+            ).scalars()
+        }
+        counters_differ = (
+            canonical.works_count != works
+            or canonical.cited_by_count != cited
+            or canonical.h_index != h_index
+            or canonical.orcid != orcid
+        )
+        topics_differ = current_topics != topics
+        if not counters_differ and not topics_differ:
+            continue
+        stats["changed"] += 1
+        if dry_run:
+            log.info(
+                "dedup_aggregates_would_change",
+                author=canonical.openalex_id,
+                works_count=(canonical.works_count, works),
+                h_index=(canonical.h_index, h_index),
+                topics=(len(current_topics), len(topics)),
+            )
+            continue
+
+        canonical.works_count = works
+        canonical.cited_by_count = cited
+        canonical.h_index = h_index
+        canonical.orcid = orcid
+        if topics_differ:
+            session.execute(delete(AuthorTopic).where(AuthorTopic.author_id == canonical.id))
+            session.flush()
+            for name, score in topics.items():
+                session.add(AuthorTopic(author_id=canonical.id, topic_name=name, score=score))
+            stats["topics_rebuilt"] += 1
+    log.info("dedup_aggregates", dry_run=dry_run, **stats)
+    return stats
+
+
 def topic_subfields(session: Session) -> dict[str, str]:
     """Карта «тема → подобласть» из сырых записей авторов.
 
@@ -423,7 +559,9 @@ def detect_suspect_merges(session: Session) -> dict[str, int]:
         suspect = False
         if len(works) >= SUSPECT_MIN_WORKS:
             largest, second = suspect_clusters(works, mapping)
-            suspect = second >= SUSPECT_MIN_SHARE * len(works) and largest > second
+            # >= , а не > : профиль, ровно пополам расщеплённый между двумя
+            # людьми (6 + 6 из 12), — самая подозрительная форма из возможных.
+            suspect = second >= SUSPECT_MIN_SHARE * len(works) and largest >= second
         author.suspect_merge = suspect
         if suspect:
             stats["suspect"] += 1

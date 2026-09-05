@@ -20,10 +20,9 @@ WORK_SELECT_FIELDS = (
     "abstract_inverted_index,institutions_distinct_count"
 )
 
-# Работа, у которой соавторствуют столько организаций, — мегаколлаборация
-# (ATLAS/CMS дают 200–400 против 2–5 у обычной статьи; порог проверен на живых
-# данных, SFR-5). Такие работы получают пониженный вес в profile_text.
-MEGA_COLLABORATION_INSTITUTIONS = 30
+# Порог «сколько организаций-соавторов делают работу мегаколлаборацией» живёт
+# в settings (`Settings.mega_collaboration_institutions`), а не здесь: правило
+# проекта — пороги в настройках, не в коде.
 
 
 def merge_work_records(
@@ -151,8 +150,17 @@ def ingest_works(
     ``commit_every`` fixes intermediate progress: SFR-5 runs this over thousands of
     authors, and a single transaction would mean losing hours of network work to
     one failure at the end.
+
+    Склеенные дубли исключаются наравне с остальными потребителями каталога:
+    ``upsert_author`` пересчитывает ``is_supervisor_candidate`` из эвристики на
+    каждом апсерте и про склейку не знает, так что после повторного
+    ``sfr etl authors`` один флаг дубля больше не удерживает. Без фильтра
+    по ``merged_into_id`` дубль возвращается в очередь и стоит двух запросов
+    из дневной квоты OpenAlex — самого дефицитного ресурса проекта.
     """
-    query = select(Author).where(Author.is_supervisor_candidate.is_(True))
+    query = select(Author).where(
+        Author.is_supervisor_candidate.is_(True), Author.merged_into_id.is_(None)
+    )
     if institution_db_id is not None:
         query = query.where(Author.last_known_institution_id == institution_db_id)
     candidates = list(session.execute(query).scalars())

@@ -2,7 +2,7 @@
 
 Готовит агент, читает человек. Ниже три раздела: что склеено автоматически, кого решено **не** склеивать, и профили с подозрением на чужую склейку OpenAlex.
 
-Склеек: **16**; групп тёзок без сигнала: **84**; профилей с флагом `suspect_merge`: **15**.
+Склеек: **16**; групп тёзок без сигнала: **84**; профилей с флагом `suspect_merge`: **16**.
 
 ## Склеено автоматически — первые 16
 
@@ -10,22 +10,22 @@
 
 | Канонический | Имена | Вуз | Дубли | Сигнал |
 |---|---|---|---|---|
-| `A5010299342` | Андрей Андреевич Шкаликов; А. А. Шкаликов | Московский государственный университет | `A5076625726` | склеено ранее |
-| `A5016531787` | N. Yu. Tabachkova | Высшая школа экономики; Национальный исследовательский технологический университет МИСиС | `A5059699485` | склеено ранее |
-| `A5017119124` | Vsevolod V. Koryanov; V. V. Koryanov | Московский государственный технический университет имени Н. Э. Баумана | `A5007427934` | склеено ранее |
-| `A5028750791` | Svetlana G. Jorstad; S. G. Jorstad | Санкт-Петербургский государственный университет | `A5114375175` | склеено ранее |
-| `A5035715715` | Alexander Snigirev; A. Snigirev | Московский государственный университет | `A5105694793` | склеено ранее |
-| `A5062267829` | A. V. Pestov; Alexandr V. Pestov | Уральский федеральный университет | `A5109499265` | склеено ранее |
-| `A5065752368` | Evgeny A. Viktorov; E. A. Viktorov | Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики | `A5071720585` | склеено ранее |
-| `A5083666599` | T. Aushev | Московский физико-технический институт | `A5107138481` | склеено ранее |
-| `A5100367029` | Qiang Wang | Санкт-Петербургский государственный университет | `A5101786689` | склеено ранее |
-| `A5101454429` | Akihisa Inoue; A. Inoue | Национальный исследовательский технологический университет МИСиС | `A5101454427` | склеено ранее |
-| `A5104155912` | G. Chelkov; G. A. Chelkov | Московский физико-технический институт; Московский государственный университет | `A5107824305` | склеено ранее |
-| `A5108463072` | S. Lobanov; Sergei Lobanov | Новосибирский государственный университет | `A5108765594` | склеено ранее |
-| `A5110156933` | S. M. Klimentov; Sergei M. Klimentov | Национальный исследовательский ядерный университет МИФИ | `A5103461360` | склеено ранее |
-| `A5111713776` | E. V. Podivilov; Evgeny V. Podivilov | Новосибирский государственный университет | `A5112685205` | склеено ранее |
-| `A5112334685` | A. A. Chistyakov; Alexander A. Chistyakov | Национальный исследовательский ядерный университет МИФИ | `A5111954803` | склеено ранее |
-| `A5112367657` | A. G. Kharlamov | Новосибирский государственный университет | `A5107868597` | склеено ранее |
+| `A5010299342` | Андрей Андреевич Шкаликов; А. А. Шкаликов | Московский государственный университет | `A5076625726` | abbrev+institution+topics |
+| `A5016531787` | N. Yu. Tabachkova | Высшая школа экономики; Национальный исследовательский технологический университет МИСиС | `A5059699485` | orcid |
+| `A5017119124` | Vsevolod V. Koryanov; V. V. Koryanov | Московский государственный технический университет имени Н. Э. Баумана | `A5007427934` | abbrev+institution+topics |
+| `A5028750791` | Svetlana G. Jorstad; S. G. Jorstad | Санкт-Петербургский государственный университет | `A5114375175` | abbrev+institution+topics |
+| `A5035715715` | Alexander Snigirev; A. Snigirev | Московский государственный университет | `A5105694793` | abbrev+institution+topics |
+| `A5062267829` | A. V. Pestov; Alexandr V. Pestov | Уральский федеральный университет | `A5109499265` | abbrev+institution+topics |
+| `A5065752368` | Evgeny A. Viktorov; E. A. Viktorov | Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики | `A5071720585` | abbrev+institution+topics |
+| `A5083666599` | T. Aushev | Московский физико-технический институт | `A5107138481` | orcid |
+| `A5100367029` | Qiang Wang | Санкт-Петербургский государственный университет | `A5101786689` | orcid |
+| `A5101454429` | Akihisa Inoue; A. Inoue | Национальный исследовательский технологический университет МИСиС | `A5101454427` | abbrev+institution+topics |
+| `A5104155912` | G. Chelkov; G. A. Chelkov | Московский физико-технический институт; Московский государственный университет | `A5107824305` | orcid |
+| `A5108463072` | S. Lobanov; Sergei Lobanov | Новосибирский государственный университет | `A5108765594` | abbrev+institution+topics |
+| `A5110156933` | S. M. Klimentov; Sergei M. Klimentov | Национальный исследовательский ядерный университет МИФИ | `A5103461360` | abbrev+institution+topics |
+| `A5111713776` | E. V. Podivilov; Evgeny V. Podivilov | Новосибирский государственный университет | `A5112685205` | abbrev+institution+topics |
+| `A5112334685` | A. A. Chistyakov; Alexander A. Chistyakov | Национальный исследовательский ядерный университет МИФИ | `A5111954803` | abbrev+institution+topics |
+| `A5112367657` | A. G. Kharlamov | Новосибирский государственный университет | `A5107868597` | orcid |
 
 ## Не склеено: тёзки — первые 16
 
@@ -64,6 +64,7 @@
 | `A5056108259` | A. V. Leonidov | Московский физико-технический институт | 25 | 15+10 | High-Energy Particle Collisions Research; Quantum Chromodynamics and Particle Interactions; Particle physics theoretical and experimental studies; Complex Systems and Time Series Analysis |
 | `A5057992942` | А. Н. Тихонов | Московский государственный университет | 25 | 11+10 | Photosynthetic Processes and Mechanisms; Light effects on plants; Photoreceptor and optogenetics research; Spectroscopy and Quantum Chemical Studies |
 | `A5063730286` | A. A. Fomichev | Московский физико-технический институт | 25 | 14+11 | Advanced Fiber Laser Technologies; Solid State Laser Technologies; Laser Design and Applications; Geophysics and Sensor Technology |
+| `A5075392699` | Jingrui Zhang | Московский государственный университет | 25 | 10+10 | Optimal Power Flow Distribution; Electric Power System Optimization; Smart Grid Energy Management; Microgrid Control and Optimization |
 | `A5078430016` | Е. Г. Жижина | Высшая школа экономики | 25 | 15+9 | Polyoxometalates: Synthesis and Applications; Chemical Synthesis and Reactions; Oxidative Organic Chemistry Reactions; Advanced Mathematical Modeling in Engineering |
 | `A5079485396` | M. A. Kondratenko | Московский физико-технический институт | 25 | 18+7 | Particle Accelerators and Free-Electron Lasers; Superconducting Materials and Applications; Particle accelerators and beam dynamics; Particle physics theoretical and experimental studies |
 | `A5081771083` | А. В. Гаврилов | Московский государственный университет | 25 | 9+7 | Solid State Laser Technologies; Photorefractive and Nonlinear Optics; Laser Design and Applications; Methane Hydrates and Related Phenomena |

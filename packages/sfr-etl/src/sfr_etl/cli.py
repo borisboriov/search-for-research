@@ -23,6 +23,7 @@ from sfr_etl.dedup import (
     apply_merges,
     detect_suspect_merges,
     find_splits,
+    recompute_merged_aggregates,
     render_dedup_review,
     suspect_examples,
 )
@@ -61,6 +62,7 @@ def _load_settings() -> Settings:
 def _make_client(settings: Settings, refresh: bool) -> OpenAlexClient:
     return OpenAlexClient(
         settings.openalex_mailto,
+        api_key=settings.openalex_api_key,
         base_url=settings.openalex_base_url,
         max_rps=settings.openalex_max_rps,
         cache_dir=settings.raw_cache_dir,
@@ -303,8 +305,13 @@ def etl_dedup(
     with session_scope(engine) as session:
         merges, namesakes = find_splits(session)
         merge_stats = {"groups": 0, "duplicates": 0, "works_moved": 0, "works_dropped": 0}
+        aggregate_stats = {"canonical": 0, "changed": 0}
         if apply:
             merge_stats = apply_merges(session, merges)
+            # Отдельный проход, а не часть apply_merges: тот пропускает уже
+            # склеенных, а агрегаты нужно восстанавливать и после повторного
+            # ингеста авторов, который их перезаписывает.
+            aggregate_stats = recompute_merged_aggregates(session)
             suspect_stats = detect_suspect_merges(session)
             suspects = suspect_examples(session, limit=max(examples, 20))
         else:
@@ -320,7 +327,8 @@ def etl_dedup(
         f"Склеек: {len(merges)} (дублей {merge_stats['duplicates']}, "
         f"работ перенесено {merge_stats['works_moved']}, дублей работ снято "
         f"{merge_stats['works_dropped']}); тёзок без сигнала: {len(namesakes)}; "
-        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']} "
+        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']}; "
+        f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']} "
         f"→ {review_out}"
     )
 
@@ -361,7 +369,9 @@ def export_jsonl(
 
 @export_app.command("cards")
 def export_cards(
-    out: Annotated[Path, typer.Option(help="Output JSONL path")] = Path("data/exports/cards.jsonl"),
+    out: Annotated[Path, typer.Option(help="Output JSONL path")] = Path(
+        "data/exports/cards_sfr5.jsonl"
+    ),
 ) -> None:
     """Export card enrichment for the API (SFR-3): citations + top works per supervisor."""
     settings = _load_settings()
