@@ -26,6 +26,17 @@ test("лендинг → результаты → профиль → назад 
   await expect(page.getByText(/Найдено \d+/).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
 });
 
+// Серая зона (SPEC_SFR4 §0.9): живой запрос Бориса 05.09 — top-1 0.337 на
+// frida_clean, между «уверенных нет» (0.27) и минимумом живых попаданий (0.36).
+test("академически звучащий запрос без ответа в корпусе — баннер, выдача остаётся", async ({ page }) => {
+  await page.goto("/results?q=" + encodeURIComponent("интересно computer science backend engineering"));
+  await expect(page.getByText(/Совпадения слабые/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/Найдено \d+/).filter({ visible: true }).first()).toBeVisible();
+  // бейджи при этом — словесные, «слабое совпадение», процентов на карточках нет
+  // (первый матч — мобильный бейдж, на десктопе он скрыт — фильтруем по видимости)
+  await expect(page.getByText("слабое совпадение").filter({ visible: true }).first()).toBeVisible();
+});
+
 test("запрос можно изменить прямо на результатах", async ({ page }) => {
   await page.goto("/results?q=" + encodeURIComponent("физика элементарных частиц"));
   await expect(page.getByText(/Найдено \d+/).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
