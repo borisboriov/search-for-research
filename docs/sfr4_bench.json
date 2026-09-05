@@ -1,0 +1,90 @@
+{
+  "measured_at": "2026-09-05 15:33:41",
+  "stack": "make deploy-local (proxy localhost:8080)",
+  "api_port_8000_closed_from_host": true,
+  "rss_idle_mb": {
+    "sfr-proxy": 16.8,
+    "sfr-web": 104.1,
+    "sfr-api": 3090.4
+  },
+  "supervisor_ttfb_cold_ms": 14.3,
+  "supervisor_ttfb_cached_ms": 3.9,
+  "landing_ttfb_ms": 3.1,
+  "match_seq": {
+    "n": 16,
+    "workers": 1,
+    "wall_s": 3.6,
+    "codes": {
+      "200": 16
+    },
+    "p50_ms": 200.6,
+    "p95_ms": 254.1,
+    "max_ms": 582.5
+  },
+  "match_conc4": {
+    "n": 20,
+    "workers": 4,
+    "wall_s": 4.0,
+    "codes": {
+      "200": 20
+    },
+    "p50_ms": 753.1,
+    "p95_ms": 975.7,
+    "max_ms": 1038.1
+  },
+  "match_burst20": {
+    "n": 20,
+    "workers": 20,
+    "wall_s": 1.4,
+    "codes": {
+      "200": 7,
+      "503": 13
+    },
+    "p50_ms": 798.2,
+    "p95_ms": 1437.8,
+    "max_ms": 1437.8
+  },
+  "rss_after_burst_mb": {
+    "sfr-proxy": 17.1,
+    "sfr-web": 104.5,
+    "sfr-api": 3122.2
+  },
+  "rss_before_burst_mb": {
+    "sfr-proxy": 16.7,
+    "sfr-web": 104.2,
+    "sfr-api": 3152.9
+  },
+  "match_cache": {
+    "first_took_ms": 240.7,
+    "second_took_ms": 0.0,
+    "cache_hits": 1,
+    "cache_hit_rate": 0.018
+  },
+  "rate_limit_match": {
+    "codes": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      429,
+      429
+    ],
+    "got_429": true,
+    "ok_before_429": 10
+  },
+  "rate_limit_pages_bots": {
+    "human_total": 125,
+    "human_429": 35,
+    "bot_codes": [
+      200
+    ],
+    "bot_passed": true
+  },
+  "api_cold_start_s": 15.8
+}
