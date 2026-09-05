@@ -62,6 +62,7 @@ export interface HealthResponse {
   score_threshold: number;
   score_weak: number;
   score_high: number;
+  thresholds_match: boolean | null;
   search_backend: string;
   compose: string;
   built_at: string;

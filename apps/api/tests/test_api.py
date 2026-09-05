@@ -1,6 +1,7 @@
 """Contract of the endpoints, driven by the fake backend (SPEC_SFR2 §2, SFR-3 §4)."""
 
 import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -254,7 +255,7 @@ def test_cors_allows_the_future_front_on_localhost(backend: FakeBackend) -> None
 def test_a_missing_index_fails_at_startup_not_on_the_first_query(tmp_path: Path) -> None:
     settings = ApiSettings(index_dir=tmp_path / "nothing", warmup=False)
     with (
-        pytest.raises(FileNotFoundError, match="make index-sfr2"),
+        pytest.raises(FileNotFoundError, match="make index-sfr5"),
         TestClient(create_app(settings)),
     ):
         pass
@@ -362,3 +363,29 @@ def test_supervisors_listing_rejects_bad_limit_and_cursor(backend: FakeBackend) 
     response = api.get("/api/supervisors", params={"cursor": "A999"})
     assert response.status_code == 422
     assert "A999" in response.json()["detail"]
+
+
+# --- SFR-5 (фиксы ревью): сверка порогов индекса с настройками -----------------------
+
+
+def test_thresholds_match_is_none_without_stamp(backend: FakeBackend) -> None:
+    """Индексы SFR-1/SFR-2 штампа не несут — это не ошибка, сверять не с чем."""
+    body = client(backend).get("/api/health").json()
+    assert body["thresholds_match"] is None
+
+
+def test_thresholds_match_true_when_index_agrees_with_settings() -> None:
+    stamped = FakeBackend()
+    stamped.meta.thresholds = {"none": 0.29, "weak": 0.33, "high": 0.44}
+    body = client(stamped).get("/api/health").json()
+    assert body["thresholds_match"] is True
+
+
+def test_thresholds_mismatch_is_reported_and_logged(caplog: pytest.LogCaptureFixture) -> None:
+    """Пороги живут в двух местах и могут разъехаться молча — ловим на старте."""
+    stamped = FakeBackend()
+    stamped.meta.thresholds = {"none": 0.27, "weak": 0.36, "high": 0.42}  # шкала SFR-4
+    with caplog.at_level(logging.WARNING):
+        body = client(stamped).get("/api/health").json()
+    assert body["thresholds_match"] is False
+    assert "разошлись" in caplog.text

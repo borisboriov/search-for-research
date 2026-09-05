@@ -129,6 +129,9 @@ class HealthResponse(BaseModel):
     score_threshold: float
     score_weak: float
     score_high: float
+    # Совпадают ли пороги, проштампованные в meta.json индекса, с настройками
+    # сервиса (SFR-5). None — индекс без штампа, сверять не с чем.
+    thresholds_match: bool | None = None
     search_backend: str
     compose: str
     built_at: str

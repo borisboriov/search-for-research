@@ -5,6 +5,7 @@ seconds); it happens in the lifespan and never on a request — see ``main.py``.
 """
 
 import json
+import logging
 import threading
 import time
 from collections import OrderedDict
@@ -24,6 +25,8 @@ from sfr_api.schemas import (
 from sfr_api.settings import ApiSettings
 from sfr_match.runtime import select_search_backend
 from sfr_match.search import Backend, load_backend
+
+log = logging.getLogger(__name__)
 
 
 class QueryError(ValueError):
@@ -59,9 +62,14 @@ class MatchService:
         self.by_id: dict[str, dict[str, Any]] = {str(doc["id"]): doc for doc in backend.docs}
         # Stable listing order for pagination: author_id is the natural key of the corpus.
         self.ordered_ids: list[str] = sorted(self.by_id)
+        # Сколько вузов представлено в индексе. Цифра переехала сюда из вёрстки
+        # лендинга (SFR-5): там она была захардкожена и молча устарела. Считается
+        # по проиндексированным профилям, то есть это «вузов в индексе», а не
+        # размер каталога в БД — на боевом индексе величины совпадают.
         self.institutions_count = len(
             {doc.get("institution") for doc in backend.docs if doc.get("institution")}
         )
+        self.thresholds_match = self._check_thresholds()
         self.extras = extras if extras is not None else load_cards_extras(settings.cards_path)
         # LRU-кэш ответов /match (SPEC_SFR4 §2). Замок обязателен: match идёт
         # в threadpool, одновременных потоков — match_concurrency.
@@ -70,13 +78,46 @@ class MatchService:
         self.cache_hits = 0
         self.cache_misses = 0
 
+    def _check_thresholds(self) -> bool | None:
+        """Совпадают ли пороги, проштампованные в индексе, с настройками сервиса.
+
+        Пороги принадлежат паре модель×индекс, но живут в двух местах: в
+        settings (их читает рантайм) и в ``meta.json`` индекса (их пишет
+        ``sfr-match stamp-thresholds``). Разъехаться они могут молча — сервис
+        поднимется и будет отдавать чужую шкалу. Здесь это ловится на старте.
+
+        ``None`` — индекс без штампа (SFR-1/SFR-2 и тестовые): сверять не с чем,
+        это не ошибка.
+        """
+        stamped = self.backend.meta.thresholds
+        if not stamped:
+            return None
+        expected = {
+            "none": self.settings.score_threshold,
+            "weak": self.settings.score_weak,
+            "high": self.settings.score_high,
+        }
+        matches = all(stamped.get(name) == value for name, value in expected.items()) and set(
+            stamped
+        ) == set(expected)
+        if not matches:
+            log.warning(
+                "Пороги индекса и настроек разошлись: в %s проштамповано %s, "
+                "сервис отдаёт %s. Перештампуйте индекс (`sfr-match stamp-thresholds`) "
+                "или поправьте SFR_API_SCORE_*.",
+                self.backend.meta.version,
+                stamped,
+                expected,
+            )
+        return matches
+
     @classmethod
     def from_settings(cls, settings: ApiSettings) -> "MatchService":
         """Open the index named by settings; a missing index fails here, at startup."""
         index_dir: Path = settings.resolved_index_dir()
         if not (index_dir / "meta.json").exists():
             msg = (
-                f"индекс не найден: {index_dir}. Собрать офлайн — `make index-sfr2` "
+                f"индекс не найден: {index_dir}. Собрать офлайн — `make index-sfr5` "
                 "(или указать другой каталог в SFR_API_INDEX_DIR); API индекс не строит."
             )
             raise FileNotFoundError(msg)
@@ -213,6 +254,7 @@ class MatchService:
             index_version=meta.version,
             profiles_count=meta.n_profiles,
             institutions_count=self.institutions_count,
+            thresholds_match=self.thresholds_match,
             score_threshold=self.settings.score_threshold,
             score_weak=self.settings.score_weak,
             score_high=self.settings.score_high,
