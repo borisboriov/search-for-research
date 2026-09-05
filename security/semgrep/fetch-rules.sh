@@ -8,7 +8,7 @@
 #
 # Обновлять — осознанно: запустить скрипт, посмотреть diff правил, прогнать
 # `make audit`, разобрать новые находки, зафиксировать дату ниже и в
-# docs/SECURITY_CI.md.
+# docs/SFR4b_REPORT.md.
 #
 # Использование:  bash security/semgrep/fetch-rules.sh
 set -euo pipefail

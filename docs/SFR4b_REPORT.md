@@ -1,6 +1,6 @@
 # Аудит безопасности: что проверяется, чем и как читать красный job
 
-Итерация SFR-4b (05.09.2026), спека `SPEC_SFR4b_security_ci.md`. Слой
+Итерация SFR-4b (05.09.2026), спека `docs/specs/SPEC_SFR4b_security_ci.md`; до 05.09 файл назывался `SECURITY_CI.md`. Слой
 автоматических проверок поверх ревью: уязвимые зависимости, известные
 небезопасные паттерны, секреты, проблемы образов. Всё — открытые инструменты,
 **ни одного платного механизма GitHub, ни одного SaaS-аккаунта и ни одного
@@ -243,7 +243,7 @@ make audit AUDIT_ARGS="--fail-unfixed"       # строго: валить и CVE
 
 ## Definition of Done (честно)
 
-Чеклист §4 `SPEC_SFR4b_security_ci.md`.
+Чеклист §4 `docs/specs/SPEC_SFR4b_security_ci.md`.
 
 - [x] **`make audit` зелёный локально на текущем main.** Проверено в обоих
       режимах: полном (с образами) и `--no-images --strict`, то есть ровно
@@ -268,7 +268,7 @@ make audit AUDIT_ARGS="--fail-unfixed"       # строго: валить и CVE
       nDCG и MRR совпали с `docs/SFR2_REPORT.md`; разошлась только строка
       латентности — замер шёл на нагруженной машине, поэтому сгенерированный
       отчёт откачен).
-- [x] **`docs/SECURITY_CI.md`; DECISIONS, SESSIONS, TODO_BORIS обновлены;**
+- [x] **`docs/SFR4b_REPORT.md`; DECISIONS, SESSIONS, TODO_BORIS обновлены;**
       в `.claude/agents/sfr-reviewer.md` добавлена строка чеклиста
       «`make audit` зелёный» (файл вне git, правится локально).
 

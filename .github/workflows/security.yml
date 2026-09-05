@@ -51,7 +51,7 @@ jobs:
       # Бинарные сканеры ставим сами с релизов вместо готовых actions: сторонние
       # actions — это ещё один поставщик кода в CI, а часть из них (gitleaks
       # для организаций) требует лицензионный ключ. Версии и sha256 запинены;
-      # при обновлении версии пересчитать хэш (см. docs/SECURITY_CI.md).
+      # при обновлении версии пересчитать хэш (см. docs/SFR4b_REPORT.md).
       - name: Install pinned scanners
         env:
           GITLEAKS_VERSION: "8.30.1"
@@ -85,7 +85,7 @@ jobs:
       # --no-images: образов на раннере нет, а собирать их ради скана — это
       # скачивание torch и весов FRIDA (десятки минут). CVE базовых образов
       # ловятся при пересборке на деплое: `make audit` локально сканирует их
-      # (docs/SECURITY_CI.md, §«Что CI не проверяет»).
+      # (docs/SFR4b_REPORT.md, §«Что CI не проверяет»).
       # --strict: в CI все инструменты обязаны быть, SKIP = дефект job'а.
       - name: Audit
         run: make audit AUDIT_ARGS="--no-images --strict"

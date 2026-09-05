@@ -462,7 +462,7 @@ def main() -> int:
         failed += skipped
     if failed:
         print(f"\nПадение: {', '.join(r.name for r in failed)}")
-        print("Как читать и что делать — docs/SECURITY_CI.md")
+        print("Как читать и что делать — docs/SFR4b_REPORT.md")
         return 1
     print("\nВсё чисто" + (f" (пропущено: {len(skipped)})" if skipped else ""))
     return 0
