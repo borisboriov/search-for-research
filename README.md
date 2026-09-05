@@ -47,6 +47,9 @@ make etl                        # авторы → работы → профил
 | `make api` | uvicorn на `localhost:8000` |
 | `make docker-build` / `make docker-up` / `make docker-down` | Контейнер с API |
 | `make bench` | Замер ресурсов и латентности → `docs/sfr2_resources.json` |
+| `make catalog-sfr5` | Пересборка каталога из БД: склейка дублей, профили, экспорты |
+| `make index-sfr5` | Боевой индекс каталога 12 вузов (`data/indexes_sfr5`) |
+| `make eval-sfr5` | Регрессия на новом корпусе: golden + OOD, судейские пулы |
 
 CLI-пайплайн по шагам:
 
@@ -71,6 +74,24 @@ uv run sfr-match report                      # → docs/SFR1_REPORT.md
 Модели: `e5-base`, `mpnet`, `frida`, `minilm`, `bm25` (см. `sfr_match/models.py`).
 Флаг `--clean` строит вариант с очищенным `profile_text` (LaTeX-мусор и
 «аннотации-списки авторов» — проблемы №1–2 из `docs/REPORT.md`).
+
+### Каталог 12 вузов (SFR-5)
+
+```bash
+uv run sfr institutions resolve "ITMO University"
+uv run sfr etl authors --institution I173089394 --strategy stratified --quota 500
+uv run sfr etl works --institution I173089394     # сеть: см. предупреждение ниже
+make catalog-sfr5 && make index-sfr5 && make eval-sfr5
+```
+
+Отбор авторов идёт не «верхушкой по числу работ», а квотой с раскладкой по
+областям OpenAlex (`sfr_etl/catalog.py`); дедупликация и детектор чужих склеек —
+`sfr_etl/dedup.py`, выборка на ручную проверку — `packages/sfr-match/eval/dedup_for_review.md`.
+
+⚠️ **`sfr etl works` ходит в сеть на каждого автора**, а у OpenAlex с сентября
+2026 дневной бюджет — 1000 запросов бесплатно. Полный каталог требует ~11 000
+запросов; подробности и что с этим делать — `docs/SFR5_REPORT.md` и
+`docs/DECISIONS.md`.
 
 ### Сервис поиска (SFR-2)
 

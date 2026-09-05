@@ -14,14 +14,14 @@ set -euo pipefail
 HOST=${1:?использование: deploy/sync-artifacts.sh user@host [remote_dir]}
 REMOTE_DIR=${2:-search-for-research}
 
-for path in data/indexes_sfr2/frida_clean/meta.json data/exports/cards.jsonl; do
+for path in data/indexes_sfr5/frida_clean/meta.json data/exports/cards_sfr5.jsonl; do
     if [[ ! -f $path ]]; then
-        echo "нет $path — собери артефакты: make index-sfr2 / make export-cards" >&2
+        echo "нет $path — собери артефакты: make index-sfr5 / make export-sfr5" >&2
         exit 1
     fi
 done
 
-rsync -avc --delete data/indexes_sfr2/ "$HOST:$REMOTE_DIR/data/indexes_sfr2/"
-rsync -avc data/exports/cards.jsonl "$HOST:$REMOTE_DIR/data/exports/cards.jsonl"
+rsync -avc --delete data/indexes_sfr5/ "$HOST:$REMOTE_DIR/data/indexes_sfr5/"
+rsync -avc data/exports/cards_sfr5.jsonl "$HOST:$REMOTE_DIR/data/exports/cards_sfr5.jsonl"
 
-echo "готово: индекс и cards.jsonl на $HOST:$REMOTE_DIR"
+echo "готово: индекс и cards_sfr5.jsonl на $HOST:$REMOTE_DIR"

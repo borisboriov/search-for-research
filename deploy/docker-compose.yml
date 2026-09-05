@@ -5,8 +5,8 @@
 # web (Next route handler) -> api по внутренней сети compose.
 #
 # Артефакты НЕ собираются на сервере — их привозит deploy/sync-artifacts.sh:
-#   data/indexes_sfr2/          индекс (make index-sfr2, офлайн)
-#   data/exports/cards.jsonl    обогащение карточек (make export-cards)
+#   data/indexes_sfr5/            индекс (make index-sfr5, офлайн)
+#   data/exports/cards_sfr5.jsonl обогащение карточек (make export-sfr5)
 # Веса FRIDA качаются в том hf-cache при первом старте (~2 ГБ, единожды).
 #
 # Переменные — из deploy/.env (cp env.example .env): SITE_ADDRESS,
@@ -25,16 +25,16 @@ services:
     restart: unless-stopped
     environment:
       SFR_API_MODEL: ${SFR_API_MODEL:-frida}
-      SFR_API_INDEX_ROOT: /app/data/indexes_sfr2
-      SFR_API_CARDS_PATH: /app/data/exports/cards.jsonl
+      SFR_API_INDEX_ROOT: /app/data/indexes_sfr5
+      SFR_API_CARDS_PATH: /app/data/exports/cards_sfr5.jsonl
       # Пороги не задаём: значения по умолчанию живут в settings.py
-      # (перекалиброваны в SFR-2/SFR-4), дублировать их здесь — рассинхрон.
+      # (перекалиброваны в SFR-5), дублировать их здесь — рассинхрон.
       SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
       SFR_API_LOG_SALT: ${SFR_API_LOG_SALT:-}
       HF_HOME: /models
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
     volumes:
-      - ../data/indexes_sfr2:/app/data/indexes_sfr2:ro
+      - ../data/indexes_sfr5:/app/data/indexes_sfr5:ro
       - ../data/exports:/app/data/exports:ro
       - ${SFR_HF_CACHE:-hf-cache}:/models
     logging: &logging

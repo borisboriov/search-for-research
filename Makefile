@@ -1,7 +1,8 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
-	deploy-local deploy-local-down audit
+	deploy-local deploy-local-down audit \
+	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -98,6 +99,12 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # Full SFR-2 reproduction: every composition on the golden set, the OOD set for
 # threshold calibration, then the report. Index building is a separate target
 # (hours of embedding); this one only needs the indexes to exist.
+#
+# ВНИМАНИЕ (SFR-5): последний шаг перезаписывает docs/SFR2_REPORT.md, а набор
+# посторонних запросов с тех пор пересмотрен (17 → 19) — таблица калибровки и
+# nDCG в отчёте сдвинутся задним числом. Success@1/@3/@5 и MRR воспроизводятся
+# байт в байт; это и есть проверка. После прогона отчёт возвращать:
+#   git checkout docs/SFR2_REPORT.md
 eval: eval-sfr2
 
 eval-sfr2: unhide
@@ -118,10 +125,12 @@ eval-sfr2: unhide
 export-cards: unhide
 	uv run sfr export cards --out data/exports/cards.jsonl
 
-# Локальный API сервит тот же индекс, что и контейнер (SFR-2, 535 профилей);
-# переопределяется переменной окружения SFR_API_INDEX_ROOT.
+# Локальный API сервит боевой индекс SFR-5 (12 вузов); переопределяется
+# переменной окружения SFR_API_INDEX_ROOT — например, на data/indexes_sfr2,
+# чтобы поднять API на корпусе SFR-2.
 api: unhide
-	SFR_API_INDEX_ROOT=$${SFR_API_INDEX_ROOT:-$(SFR2_INDEX_ROOT)} \
+	SFR_API_INDEX_ROOT=$${SFR_API_INDEX_ROOT:-data/indexes_sfr5} \
+	SFR_API_CARDS_PATH=$${SFR_API_CARDS_PATH:-data/exports/cards_sfr5.jsonl} \
 		uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000 \
 		--limit-concurrency 8
 
@@ -139,6 +148,46 @@ docker-down:
 # Resource + latency measurements for the report (SPEC_SFR2 §3).
 bench: unhide
 	uv run python scripts/bench_api.py --out docs/sfr2_resources.json
+
+# ---------------------------------------------------------------------------
+# SFR-5: каталог 12 вузов, стратифицированный отбор, дедупликация, свой индекс.
+# Индекс SFR-2 (data/indexes_sfr2) не трогается: на нём стоит воспроизводимость
+# SFR-2 (`make eval-sfr2`).
+# ---------------------------------------------------------------------------
+SFR5_PROFILES := data/exports/profiles_sfr5.jsonl
+SFR5_CARDS := data/exports/cards_sfr5.jsonl
+SFR5_INDEX_ROOT := data/indexes_sfr5
+SFR5_RUNS := data/eval/runs_sfr5
+SFR5_OOD_RUNS := data/eval/runs_ood_sfr5
+
+# Пересборка каталога из БД: склейка дублей, профили, экспорты.
+# Ингест авторов и работ сюда не входит намеренно: он ходит в сеть и упирается
+# в дневной бюджет OpenAlex (docs/DECISIONS.md), команды — в docs/SFR5_REPORT.md.
+catalog-sfr5: unhide
+	uv run sfr etl backfill-mega
+	uv run sfr etl dedup --apply
+	uv run sfr etl build-profiles
+	$(MAKE) export-sfr5
+
+export-sfr5: unhide
+	uv run sfr export jsonl --out $(SFR5_PROFILES)
+	uv run sfr export cards --out $(SFR5_CARDS)
+
+# Один индекс: боевая пара frida + full (состав индекса решён в SFR-2).
+index-sfr5: unhide
+	uv run sfr-match index -m frida --clean --compose full \
+		--profiles $(SFR5_PROFILES) --index-root $(SFR5_INDEX_ROOT)
+
+# Регрессия на новом корпусе: golden + OOD, затем пул для судейства.
+eval-sfr5: unhide
+	uv run sfr-match eval --models frida --clean --compose full \
+		--index-root $(SFR5_INDEX_ROOT) --runs-dir $(SFR5_RUNS)
+	uv run sfr-match eval --models frida --clean --compose full --queries ood \
+		--index-root $(SFR5_INDEX_ROOT) --runs-dir $(SFR5_OOD_RUNS)
+	uv run sfr-match pool --runs-dir $(SFR5_RUNS) --index-root $(SFR5_INDEX_ROOT) \
+		--out data/eval/pool_sfr5.jsonl
+	uv run sfr-match pool --runs-dir $(SFR5_OOD_RUNS) --queries ood \
+		--index-root $(SFR5_INDEX_ROOT) --out data/eval/pool_ood_sfr5.jsonl
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.
