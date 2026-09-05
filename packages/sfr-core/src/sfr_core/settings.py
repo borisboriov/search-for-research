@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     )
 
     openalex_mailto: str
+    # Бесплатный ключ OpenAlex (openalex.org/settings/api) поднимает дневную
+    # квоту с $0.10 до $1 — с 1 000 до 10 000 list-запросов. Пусто = аноним:
+    # всё работает, но полный ингест каталога упрётся в лимит (SFR-5).
+    openalex_api_key: str = ""
     sfr_db_url: str = "sqlite:///data/sfr.db"
 
     openalex_base_url: str = "https://api.openalex.org"

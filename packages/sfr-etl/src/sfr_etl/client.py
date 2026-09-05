@@ -39,7 +39,7 @@ def _is_retryable(exc: BaseException) -> bool:
 class OpenAlexClient:
     """Synchronous OpenAlex client.
 
-    - always sends ``mailto`` (polite pool)
+    - always sends ``mailto`` (polite pool) and ``api_key``, если он задан
     - <= ``max_rps`` requests per second
     - exponential-backoff retries on 429/5xx, honouring ``Retry-After``
     - disk cache of raw responses keyed by hash of URL+params (``refresh`` bypasses reads)
@@ -49,6 +49,7 @@ class OpenAlexClient:
         self,
         mailto: str,
         *,
+        api_key: str = "",
         base_url: str = "https://api.openalex.org",
         max_rps: float = 10.0,
         cache_dir: Path = Path("data/raw"),
@@ -60,6 +61,7 @@ class OpenAlexClient:
         if not mailto or "@" not in mailto:
             raise ValueError("OpenAlexClient requires a valid mailto (polite pool)")
         self.mailto = mailto
+        self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.cache_dir = cache_dir
         self.refresh = refresh
@@ -73,9 +75,13 @@ class OpenAlexClient:
 
     # -- cache ---------------------------------------------------------------
 
+    # Ни адрес политного пула, ни ключ не влияют на содержимое ответа, поэтому
+    # в ключ кэша не входят: иначе появление ключа обесценило бы весь дисковый
+    # кэш разом и заставило выкачивать каталог заново (SFR-5).
+    _NOT_CACHEABLE = ("mailto", "api_key")
+
     def _cache_key(self, path: str, params: dict[str, Any]) -> str:
-        # mailto is excluded: it does not affect the response content.
-        cacheable = {k: v for k, v in params.items() if k != "mailto"}
+        cacheable = {k: v for k, v in params.items() if k not in self._NOT_CACHEABLE}
         raw = f"{path}?{urlencode(sorted(cacheable.items()))}"
         return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -100,7 +106,7 @@ class OpenAlexClient:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         envelope = {
             "path": path,
-            "params": {k: v for k, v in params.items() if k != "mailto"},
+            "params": {k: v for k, v in params.items() if k not in self._NOT_CACHEABLE},
             "body": body,
         }
         self._cache_path(key).write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
@@ -151,6 +157,8 @@ class OpenAlexClient:
         """GET a JSON endpoint, cache-aware. ``mailto`` is always attached."""
         params = dict(params or {})
         params["mailto"] = self.mailto
+        if self.api_key:
+            params["api_key"] = self.api_key
         key = self._cache_key(path, params)
         if not self.refresh:
             cached = self._cache_read(key)

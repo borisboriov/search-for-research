@@ -156,3 +156,47 @@ def test_cache_file_is_valid_envelope(tmp_path: Path) -> None:
     assert envelope["params"] == {"filter": "x"}
     assert "mailto" not in envelope["params"]
     assert envelope["body"] == {"n": 1}
+
+
+def test_api_key_is_sent_but_does_not_change_the_cache_key(tmp_path: Path) -> None:
+    """Ключ поднимает дневную квоту, но кэш обесценивать не должен.
+
+    Дисковый кэш `data/raw` — сотни мегабайт выкачанного каталога. Если ключ
+    попадёт в ключ кэша, его появление заставит выкачивать всё заново и съест
+    ту самую квоту, ради которой ключ и заводился (SFR-5).
+    """
+    anonymous = OpenAlexClient("dev@example.com", cache_dir=tmp_path)
+    with_key = OpenAlexClient("dev@example.com", api_key="secret-key", cache_dir=tmp_path)
+    params = {"filter": "x", "mailto": "dev@example.com"}
+    assert with_key._cache_key("/works", {**params, "api_key": "secret-key"}) == (
+        anonymous._cache_key("/works", params)
+    )
+
+
+def test_api_key_reaches_the_request(tmp_path: Path) -> None:
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json={"results": []}))
+    client = OpenAlexClient(
+        "dev@example.com",
+        api_key="secret-key",
+        cache_dir=tmp_path,
+        http_client=httpx.Client(transport=transport),
+    )
+    client.get("/works", {"filter": "x"})
+    envelope = json.loads(next(tmp_path.glob("*.json")).read_text(encoding="utf-8"))
+    assert "api_key" not in envelope["params"], "ключ не оседает в кэше на диске"
+
+
+def test_client_without_key_sends_none(tmp_path: Path) -> None:
+    captured: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured.append(str(request.url))
+        return httpx.Response(200, json={"results": []})
+
+    client = OpenAlexClient(
+        "dev@example.com",
+        cache_dir=tmp_path,
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),
+    )
+    client.get("/works", {"filter": "x"})
+    assert "api_key" not in captured[0]
