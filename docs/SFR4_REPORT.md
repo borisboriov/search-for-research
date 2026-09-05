@@ -91,6 +91,10 @@ top-1 = 0.34 и мусорную выдачу (физики/химики) **бе
   включая ботов); страницы — 120/мин, статика `/_next/*` не считается,
   поисковые боты по UA — без лимитов. UA спуфится — осознанный компромисс
   пилота.
+- Таймаут апстрима: `response_header_timeout 30s` на reverse_proxy —
+  эквивалент `proxy_read_timeout` из спеки; зависший Next не держит
+  соединения на прокси (15-секундный AbortSignal внутри Next покрывает
+  только путь /api/match).
 
 ## 4. Локальная репетиция (`make deploy-local`)
 
@@ -177,7 +181,10 @@ Uptime: `deploy/uptime-check.sh` (curl сайта + docker health трёх
   критерии удачного пилота. Google Form создаёт Борис.
 - Воронка «запрос → below_threshold/weak → открыл профиль» закрыта логами:
   `/match` — JSON-лог API; открытие профиля — access-лог Caddy (JSON, путь
-  `/supervisor/*` + Referer). Личных данных нет: IP — солёный хеш.
+  `/supervisor/*` + Referer). **Проверено вживую**: переход с
+  `/results?q=test` на профиль даёт в `/data/access.log` строку с
+  `request.uri = /supervisor/…` и `request.headers.Referer = …/results?q=test`.
+  Личных данных нет: IP — солёный хеш.
 - «Это вы?» скрывается целиком, если `NEXT_PUBLIC_CLAIM_EMAIL` пуст
   (пустой mailto больше не открывается).
 

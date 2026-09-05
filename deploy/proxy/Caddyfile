@@ -84,5 +84,12 @@
 		}
 	}
 
-	reverse_proxy web:3000
+	# Эквивалент nginx proxy_read_timeout из спеки: зависший upstream не
+	# должен держать соединения на прокси (15-секундный AbortSignal внутри
+	# Next покрывает только /api/match, не SSR-страницы).
+	reverse_proxy web:3000 {
+		transport http {
+			response_header_timeout 30s
+		}
+	}
 }
