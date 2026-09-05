@@ -1,8 +1,13 @@
 """FastAPI application: three endpoints over one preloaded index (SPEC_SFR2 §2)."""
 
 import asyncio
+import hashlib
+import json
+import logging
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.concurrency import run_in_threadpool
@@ -22,10 +27,57 @@ from sfr_api.settings import ApiSettings
 
 router = APIRouter(prefix="/api")
 
+# Лог запросов /match (SPEC_SFR4 §2): JSON-строки в stdout, ротацию делает
+# docker (json-file max-size). Это материал следующей калибровки порога —
+# текст запроса пишется дословно, IP только хешем (см. _ip_hash).
+match_logger = logging.getLogger("sfr_api.match")
+if not match_logger.handlers:  # uvicorn конфигурирует только свои логгеры
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(message)s"))
+    match_logger.addHandler(_handler)
+    match_logger.setLevel(logging.INFO)
+    match_logger.propagate = False
+
 
 def _service(request: Request) -> MatchService:
     service: MatchService = request.app.state.service
     return service
+
+
+def _ip_hash(request: Request, salt: str) -> str:
+    """Сырой IP в лог не попадает: sha256(соль + IP), первые 16 hex.
+
+    X-Forwarded-For ставит прокси (Caddy -> Next -> сюда); без него берём
+    адрес соединения. Пустая соль оставляет IPv4 перебираемым — на сервере
+    задаётся SFR_API_LOG_SALT.
+    """
+    forwarded = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    ip = forwarded or (request.client.host if request.client else "")
+    if not ip:
+        return ""
+    return hashlib.sha256((salt + ip).encode()).hexdigest()[:16]
+
+
+def _log_match(
+    request: Request, query: str, response: MatchResponse, *, cache_hit: bool, wall_ms: float
+) -> None:
+    service = _service(request)
+    settings: ApiSettings = request.app.state.settings
+    record = {
+        "ts": datetime.now(UTC).isoformat(timespec="milliseconds"),
+        "ip_hash": _ip_hash(request, settings.log_salt),
+        "query": query,
+        "query_len": len(query),
+        "top1_score": round(response.results[0].score, 4) if response.results else None,
+        "confidence": response.confidence,
+        "below_threshold": response.below_threshold,
+        "cache_hit": cache_hit,
+        "took_ms": response.took_ms,
+        "wall_ms": round(wall_ms, 1),
+        "model": service.backend.meta.hf_id or service.backend.meta.model_key,
+        "index_version": response.index_version,
+    }
+    match_logger.info(json.dumps(record, ensure_ascii=False))
 
 
 @router.post("/match", response_model=MatchResponse)
@@ -46,14 +98,20 @@ async def match(request: Request, body: MatchRequest) -> MatchResponse:
             detail="Сервис перегружен, запрос не принят. Попробуйте через минуту.",
         )
     state.match_inflight += 1
+    started = time.perf_counter()
     try:
         async with state.match_semaphore:
             try:
-                return await run_in_threadpool(_service(request).match, body.query, body.k)
+                response, cache_hit = await run_in_threadpool(
+                    _service(request).match_cached, body.query, body.k
+                )
             except QueryError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
     finally:
         state.match_inflight -= 1
+    wall_ms = (time.perf_counter() - started) * 1000
+    _log_match(request, body.query.strip(), response, cache_hit=cache_hit, wall_ms=wall_ms)
+    return response
 
 
 @router.get("/supervisors", response_model=SupervisorsPage)

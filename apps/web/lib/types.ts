@@ -64,4 +64,7 @@ export interface HealthResponse {
   search_backend: string;
   compose: string;
   built_at: string;
+  cache_hits: number;
+  cache_misses: number;
+  cache_hit_rate: number;
 }

@@ -101,6 +101,71 @@ def test_health_exposes_the_grade_boundaries() -> None:
     assert body["score_high"] == pytest.approx(0.42)
 
 
+# --- SFR-4 §2: кэш ответов /match и логи запросов ------------------------------------
+
+
+def test_repeated_query_is_served_from_cache(backend: FakeBackend) -> None:
+    api = client(backend)
+    first = api.post("/api/match", json={"query": "оптимизация маршрутов"}).json()
+    second = api.post("/api/match", json={"query": "  Оптимизация   МАРШРУТОВ  "}).json()
+    # нормализация: регистр и лишние пробелы не создают второй записи
+    assert len(backend.queries) == 1
+    assert second["results"] == first["results"]
+    assert second["took_ms"] == 0.0  # из кэша — поиск не выполнялся
+    health = api.get("/api/health").json()
+    assert health["cache_hits"] == 1
+    assert health["cache_misses"] == 1
+    assert health["cache_hit_rate"] == pytest.approx(0.5)
+
+
+def test_different_k_is_a_different_cache_entry(backend: FakeBackend) -> None:
+    api = client(backend)
+    api.post("/api/match", json={"query": "нейтрино"})
+    api.post("/api/match", json={"query": "нейтрино", "k": 1})
+    assert len(backend.queries) == 2
+
+
+def test_zero_ttl_disables_the_cache(backend: FakeBackend) -> None:
+    api = client(backend, match_cache_ttl_seconds=0)
+    api.post("/api/match", json={"query": "нейтрино"})
+    api.post("/api/match", json={"query": "нейтрино"})
+    assert len(backend.queries) == 2
+
+
+def test_cache_evicts_the_oldest_entry(backend: FakeBackend) -> None:
+    from sfr_api.service import MatchService
+    from sfr_api.settings import ApiSettings
+
+    settings = ApiSettings(warmup=False, match_cache_max_entries=2)
+    service = MatchService(backend, settings)
+    for query in ("первый запрос", "второй запрос", "третий запрос"):
+        service.match_cached(query)
+    assert len(service._cache) == 2
+    service.match_cached("первый запрос")  # вытеснен — снова miss
+    assert backend.queries.count("первый запрос") == 2
+
+
+def test_match_writes_a_json_log_line(
+    backend: FakeBackend, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Формат лога — материал следующей калибровки порога (SPEC_SFR4 §2)."""
+    with caplog.at_level("INFO", logger="sfr_api.match"):
+        client(backend).post(
+            "/api/match",
+            json={"query": "оптимизация маршрутов"},
+            headers={"X-Forwarded-For": "203.0.113.7"},
+        )
+    record = json.loads(caplog.records[-1].getMessage())
+    assert record["query"] == "оптимизация маршрутов"
+    assert record["query_len"] == len("оптимизация маршрутов")
+    assert record["confidence"] in {"none", "weak", "ok"}
+    assert record["cache_hit"] is False
+    assert isinstance(record["top1_score"], float)
+    assert record["model"] == "ai-forever/FRIDA"
+    assert record["index_version"].startswith("frida_clean")
+    assert record["ip_hash"] and "203.0.113.7" not in caplog.text
+
+
 def test_threshold_comes_from_settings() -> None:
     payload = {"query": "нейтрино"}
     high = client(FakeBackend(top_score=0.34), score_threshold=0.9).post("/api/match", json=payload)

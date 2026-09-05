@@ -128,3 +128,8 @@ class HealthResponse(BaseModel):
     search_backend: str
     compose: str
     built_at: str
+    # Кэш ответов /match (SPEC_SFR4 §2): hit-rate — прямой сигнал, сколько
+    # инференса сэкономлено на повторных запросах.
+    cache_hits: int
+    cache_misses: int
+    cache_hit_rate: float

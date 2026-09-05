@@ -5,7 +5,9 @@ seconds); it happens in the lifespan and never on a request — see ``main.py``.
 """
 
 import json
+import threading
 import time
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +60,12 @@ class MatchService:
         # Stable listing order for pagination: author_id is the natural key of the corpus.
         self.ordered_ids: list[str] = sorted(self.by_id)
         self.extras = extras if extras is not None else load_cards_extras(settings.cards_path)
+        # LRU-кэш ответов /match (SPEC_SFR4 §2). Замок обязателен: match идёт
+        # в threadpool, одновременных потоков — match_concurrency.
+        self._cache: OrderedDict[tuple[str, int], tuple[float, MatchResponse]] = OrderedDict()
+        self._cache_lock = threading.Lock()
+        self.cache_hits = 0
+        self.cache_misses = 0
 
     @classmethod
     def from_settings(cls, settings: ApiSettings) -> "MatchService":
@@ -110,6 +118,32 @@ class MatchService:
         if top_score < self.settings.score_weak:
             return "weak"
         return "ok"
+
+    def match_cached(self, query: str, k: int | None = None) -> tuple[MatchResponse, bool]:
+        """Match with the LRU cache in front; returns (response, cache_hit).
+
+        The key is the normalised query text + k — repeated queries are the
+        cheapest capacity FRIDA can get (~2 rps of raw encode on CPU). The
+        corpus is fixed, so a hit can only go stale by TTL, not by content.
+        """
+        text, top_k = self.validate(query, k)
+        key = (" ".join(text.lower().split()), top_k)
+        now = time.monotonic()
+        with self._cache_lock:
+            entry = self._cache.get(key)
+            if entry is not None and now - entry[0] < self.settings.match_cache_ttl_seconds:
+                self._cache.move_to_end(key)
+                self.cache_hits += 1
+                # took_ms — время поиска; из кэша поиск не выполнялся
+                return entry[1].model_copy(update={"took_ms": 0.0}), True
+            self.cache_misses += 1
+        response = self.match(query, k)
+        with self._cache_lock:
+            self._cache[key] = (now, response)
+            self._cache.move_to_end(key)
+            while len(self._cache) > self.settings.match_cache_max_entries:
+                self._cache.popitem(last=False)
+        return response, False
 
     def match(self, query: str, k: int | None = None) -> MatchResponse:
         text, top_k = self.validate(query, k)
@@ -166,7 +200,11 @@ class MatchService:
 
     def health(self) -> HealthResponse:
         meta = self.backend.meta
+        lookups = self.cache_hits + self.cache_misses
         return HealthResponse(
+            cache_hits=self.cache_hits,
+            cache_misses=self.cache_misses,
+            cache_hit_rate=round(self.cache_hits / lookups, 3) if lookups else 0.0,
             status="ok",
             model=meta.hf_id or meta.model_key,
             index_version=meta.version,

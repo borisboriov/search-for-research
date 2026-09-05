@@ -66,6 +66,16 @@ class ApiSettings(BaseSettings):
     match_concurrency: int = 2
     match_queue_limit: int = 6
 
+    # LRU-кэш ответов /match по нормализованному запросу (SPEC_SFR4 §2):
+    # дешёвый способ поднять потолок FRIDA (~2 rps на CPU). Корпус фиксирован,
+    # поэтому TTL щедрый; hit-rate отдаётся в /health. ttl=0 выключает кэш.
+    match_cache_ttl_seconds: int = 3600
+    match_cache_max_entries: int = 512
+
+    # Соль для хеша IP в логах /match: сырой IP в лог не пишется, а без соли
+    # sha256 от IPv4 перебирается. Задать на сервере (SFR_API_LOG_SALT).
+    log_salt: str = ""
+
     # The future Next.js front (SFR-3) runs on localhost; nothing else is allowed by default.
     cors_origins: list[str] = [
         "http://localhost:3000",
