@@ -3,9 +3,10 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
-import { EmptyResults, ErrorState } from "@/components/empty-results";
+import { EmptyResults, ErrorState, QueryHint } from "@/components/empty-results";
 import { DEFAULT_FILTERS, FiltersRow, FiltersSheetRow, type FilterState } from "@/components/filters";
 import { QueryBar } from "@/components/query-bar";
+import { validateQuery } from "@/components/search-box";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SupervisorCardSkeleton, SupervisorResultCard } from "@/components/supervisor-card";
@@ -15,15 +16,34 @@ import { institutionShort, pluralize } from "@/lib/utils";
 type State =
   | { kind: "loading" }
   | { kind: "error" }
+  | { kind: "invalid"; message: string }
   | { kind: "done"; response: MatchResponse };
 
 async function fetchMatch(text: string): Promise<State> {
+  // Границы те же, что у бэкенда: ручной ?q=ab — подсказка про запрос,
+  // а не поход в API и не ложное «Сервис недоступен» (REVIEW_SFR3 Medium).
+  const invalid = validateQuery(text);
+  if (invalid) return { kind: "invalid", message: invalid };
   try {
     const response = await fetch("/api/match", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: text, k: 10 }),
     });
+    if (response.status === 422) {
+      const payload: unknown = await response.json().catch(() => null);
+      const detail =
+        payload !== null && typeof payload === "object" && "detail" in payload
+          ? payload.detail
+          : null;
+      return {
+        kind: "invalid",
+        message:
+          typeof detail === "string"
+            ? detail
+            : "Запрос не прошёл проверку — попробуй переформулировать.",
+      };
+    }
     if (!response.ok) return { kind: "error" };
     return { kind: "done", response: (await response.json()) as MatchResponse };
   } catch {
@@ -132,6 +152,10 @@ function ResultsForQuery({ query }: { query: string }) {
         )}
 
         {state.kind === "error" && <ErrorState onRetry={retry} />}
+
+        {state.kind === "invalid" && (
+          <QueryHint message={state.message} onEditQuery={() => setEditingQuery(true)} />
+        )}
 
         {state.kind === "done" && state.response.below_threshold && (
           <EmptyResults onEditQuery={() => setEditingQuery(true)} onExample={submitQuery} />

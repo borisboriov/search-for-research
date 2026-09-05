@@ -63,6 +63,43 @@ export function EmptyResults({
   );
 }
 
+/** 422 или невалидный ?q= — подсказка про сам запрос, не «сервис недоступен»
+ * (REVIEW_SFR3 Medium: ручной ?q=ab показывал ложную ошибку с вечным «Повторить»). */
+export function QueryHint({
+  message,
+  onEditQuery,
+}: {
+  message: string;
+  onEditQuery: () => void;
+}) {
+  return (
+    <Card className="mt-2 flex flex-col items-center gap-[18px] rounded-search px-5 py-10 sm:px-12 sm:py-14">
+      <span className="flex size-16 items-center justify-center rounded-full bg-accent-soft">
+        <svg
+          viewBox="0 0 48 48"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.6}
+          className="size-[30px] text-accent"
+          aria-hidden
+        >
+          <circle cx="22" cy="22" r="12" />
+          <path d="M31 31 L40 40" strokeLinecap="round" />
+        </svg>
+      </span>
+      <h2 className="text-center font-display text-[24px] font-semibold sm:text-[28px]">
+        Поправь запрос
+      </h2>
+      <p className="max-w-[560px] text-center text-[15px] leading-relaxed text-fg-muted sm:text-[16px]">
+        {message}
+      </p>
+      <Button type="button" onClick={onEditQuery} className="mt-1.5">
+        Изменить запрос
+      </Button>
+    </Card>
+  );
+}
+
 /** Ошибка сети / API недоступен — в том же стиле (макета нет, SPEC_SFR3 §2). */
 export function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (
