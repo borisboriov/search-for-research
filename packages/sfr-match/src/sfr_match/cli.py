@@ -26,7 +26,13 @@ from sfr_match.evaluate import (
     run_queries,
     save_run,
 )
-from sfr_match.index import DEFAULT_INDEX_ROOT, build_index, index_path, load_docs
+from sfr_match.index import (
+    DEFAULT_INDEX_ROOT,
+    build_index,
+    index_path,
+    load_docs,
+    stamp_thresholds,
+)
 from sfr_match.models import DEFAULT_MODELS, resolve_model
 from sfr_match.profiles import DEFAULT_PROFILES_PATH, load_profiles
 from sfr_match.report import (
@@ -265,6 +271,25 @@ def report(
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(render_report(metrics, queries, judgments, read_notes(notes)), encoding="utf-8")
     typer.secho(f"отчёт: {len(metrics)} вариантов → {out}", fg=typer.colors.GREEN)
+
+
+@app.command(name="stamp-thresholds")
+def stamp_thresholds_cmd(
+    index_dir: Annotated[Path, typer.Option("--index-dir", help="Каталог индекса")],
+    none_: Annotated[float, typer.Option("--none", help="Порог «уверенных совпадений нет»")],
+    weak: Annotated[float, typer.Option("--weak", help="Верх серой зоны")],
+    high: Annotated[float, typer.Option("--high", help="Граница «высокого» совпадения")],
+) -> None:
+    """Записать откалиброванные пороги в meta.json индекса (SPEC_SFR5 §6).
+
+    Пороги принадлежат паре модель×индекс: собранный индекс и настройки API
+    должны нести одни и те же числа, иначе выдача и предупреждения разъедутся.
+    """
+    try:
+        meta = stamp_thresholds(index_dir, {"none": none_, "weak": weak, "high": high})
+    except FileNotFoundError as exc:
+        raise _fail(str(exc)) from exc
+    typer.secho(f"{meta.version}: пороги {meta.thresholds} → {index_dir}", fg=typer.colors.GREEN)
 
 
 @app.command()

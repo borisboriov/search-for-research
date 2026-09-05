@@ -40,6 +40,11 @@ class IndexMeta:
     compose: str = "full"
     built_at: str = ""
     corpus_sha: str = ""
+    # SFR-5: пороги уверенности, откалиброванные для этого индекса
+    # (`sfr-match stamp-thresholds`). Пишутся после сборки — калибровать их
+    # можно только по прогонам, — и служат сверкой: settings API и индекс
+    # не должны разъехаться незаметно. Источник истины для рантайма — settings.
+    thresholds: dict[str, float] | None = None
 
     @property
     def slug(self) -> str:
@@ -147,6 +152,16 @@ def load_meta(index_dir: Path) -> IndexMeta:
     if not path.exists():
         raise FileNotFoundError(f"{index_dir} has no index — run `sfr-match index` first")
     return IndexMeta(**json.loads(path.read_text(encoding="utf-8")))
+
+
+def stamp_thresholds(index_dir: Path, thresholds: dict[str, float]) -> IndexMeta:
+    """Дописать откалиброванные пороги в meta.json уже собранного индекса."""
+    meta = load_meta(index_dir)
+    meta.thresholds = dict(thresholds)
+    (index_dir / META_FILE).write_text(
+        json.dumps(asdict(meta), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return meta
 
 
 def load_docs(index_dir: Path) -> list[dict[str, object]]:

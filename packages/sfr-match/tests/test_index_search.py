@@ -253,3 +253,28 @@ def test_searcher_falls_back_to_numpy_without_an_index_file(
     assert (
         make_searcher(tmp_path / "absent.faiss", np.zeros((1, 4), dtype="float32")).name == "numpy"
     )
+
+
+def test_stamp_thresholds_roundtrip(tmp_path: Path) -> None:
+    """SFR-5: пороги дописываются в meta.json после калибровки и переживают чтение."""
+    from dataclasses import asdict
+
+    from sfr_match.index import IndexMeta, stamp_thresholds
+
+    index_dir = tmp_path / "frida_clean"
+    index_dir.mkdir()
+    meta = IndexMeta(
+        model_key="frida",
+        hf_id="ai-forever/FRIDA",
+        kind="dense",
+        clean=True,
+        n_profiles=5540,
+        dim=1536,
+        build_seconds=1.0,
+    )
+    (index_dir / "meta.json").write_text(
+        json.dumps(asdict(meta), ensure_ascii=False), encoding="utf-8"
+    )
+    stamped = stamp_thresholds(index_dir, {"none": 0.2, "weak": 0.3, "high": 0.4})
+    assert stamped.thresholds == {"none": 0.2, "weak": 0.3, "high": 0.4}
+    assert load_meta(index_dir).thresholds == {"none": 0.2, "weak": 0.3, "high": 0.4}
