@@ -327,7 +327,13 @@ def etl_dedup(
             suspects = []
         review_out.parent.mkdir(parents=True, exist_ok=True)
         review_out.write_text(
-            render_dedup_review(merges, namesakes, suspects, n_examples=examples),
+            render_dedup_review(
+                merges,
+                namesakes,
+                suspects,
+                n_suspects=suspect_stats["suspect"],
+                n_examples=examples,
+            ),
             encoding="utf-8",
         )
     _record_run_stats(settings, "etl dedup", time.monotonic() - started)

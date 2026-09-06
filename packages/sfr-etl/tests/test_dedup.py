@@ -181,6 +181,24 @@ def test_review_file_has_all_three_sections(engine: Engine) -> None:
     assert "## Подозрение на чужую склейку" in text
 
 
+def test_review_header_shows_suspect_count_not_sample_size(engine: Engine) -> None:
+    """В шапке — масштаб проблемы, а не длина обрезанной выборки (ревью SFR-5)."""
+    sample = [
+        {
+            "author_id": f"A{i}",
+            "name": f"Person {i}",
+            "institution": "Some University",
+            "n_works": 20,
+            "cluster_sizes": [12, 8],
+            "topics": ["Optics"],
+        }
+        for i in range(20)
+    ]
+    text = render_dedup_review([], [], sample, n_suspects=143, n_examples=10)
+    assert "профилей с флагом `suspect_merge`: **143**" in text
+    assert "первые 10 из 143" in text
+
+
 def test_mega_collaboration_counter_is_stored(engine: Engine) -> None:
     with session_scope(engine) as session:
         inst = upsert_institution(session, INSTITUTION_RECORD)

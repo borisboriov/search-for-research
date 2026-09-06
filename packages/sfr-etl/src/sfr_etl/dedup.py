@@ -601,13 +601,19 @@ def render_dedup_review(
     namesakes: Sequence[MergeGroup],
     suspects: Sequence[dict[str, Any]],
     *,
+    n_suspects: int | None = None,
     n_examples: int = 10,
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
     Файл нужен ровно затем, зачем `judgments_for_review*.md`: решения принимал
     агент, и без выборки на глазах человека они остаются непроверенными.
+
+    ``suspects`` — уже обрезанная выборка для таблицы, поэтому масштаб
+    (``n_suspects``) передаётся отдельно: печатать в шапке её длину значит
+    показывать человеку размер примера вместо размера проблемы.
     """
+    n_suspects = len(suspects) if n_suspects is None else n_suspects
     lines = [
         "# Дедупликация каталога (SFR-5) — выборка на ручную проверку",
         "",
@@ -616,7 +622,7 @@ def render_dedup_review(
         "на чужую склейку OpenAlex.",
         "",
         f"Склеек: **{len(merges)}**; групп тёзок без сигнала: **{len(namesakes)}**; "
-        f"профилей с флагом `suspect_merge`: **{len(suspects)}**.",
+        f"профилей с флагом `suspect_merge`: **{n_suspects}**.",
         "",
         f"## Склеено автоматически — первые {n_examples}",
         "",
@@ -651,7 +657,7 @@ def render_dedup_review(
         )
     lines += [
         "",
-        f"## Подозрение на чужую склейку — первые {n_examples}",
+        f"## Подозрение на чужую склейку — первые {n_examples} из {n_suspects}",
         "",
         "Работы профиля распадаются на две тематические группы без общей "
         "подобласти. Расклейка не делается: делить работы между людьми, которых "
