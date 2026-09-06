@@ -100,10 +100,15 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # threshold calibration, then the report. Index building is a separate target
 # (hours of embedding); this one only needs the indexes to exist.
 #
-# ВНИМАНИЕ (SFR-5): последний шаг перезаписывает docs/SFR2_REPORT.md, а набор
-# посторонних запросов с тех пор пересмотрен (17 → 19) — таблица калибровки и
-# nDCG в отчёте сдвинутся задним числом. Success@1/@3/@5 и MRR воспроизводятся
-# байт в байт; это и есть проверка. После прогона отчёт возвращать:
+# ВНИМАНИЕ (SFR-5): последний шаг перезаписывает docs/SFR2_REPORT.md, а входные
+# наборы с тех пор пересмотрены — посторонние 17 → 19, а в golden set четыре
+# запроса (q27-q30) перемечены из out-of-domain в edge/in-domain. Поэтому в
+# отчёте задним числом сдвинутся таблица калибровки, nDCG, строка состава
+# наборов — и Success@k тоже: compute_metrics считает по запросам in-domain, а
+# их теперь 24 вместо 22. Проверка «код цел, изменились данные» — прогон с
+# исходной разметкой (git stash push packages/sfr-match/eval/queries.jsonl):
+# на ней Success@1/@3/@5 и MRR воспроизводятся байт в байт.
+# Разбор прогона 06.09 — docs/SFR5_REPORT.md §8. После прогона отчёт возвращать:
 #   git checkout docs/SFR2_REPORT.md
 eval: eval-sfr2
 
@@ -175,9 +180,13 @@ export-sfr5: unhide
 	uv run sfr export cards --out $(SFR5_CARDS)
 
 # Один индекс: боевая пара frida + full (состав индекса решён в SFR-2).
+# Второй шаг обязателен: свежий meta.json приходит без порогов, и без штампа
+# сверка сервиса на старте молчит (`thresholds_match: null`). Числа берутся из
+# ApiSettings — в Makefile их дублировать нельзя, пороги живут в settings.
 index-sfr5: unhide
 	uv run sfr-match index -m frida --clean --compose full \
 		--profiles $(SFR5_PROFILES) --index-root $(SFR5_INDEX_ROOT)
+	SFR_API_INDEX_ROOT=$(SFR5_INDEX_ROOT) uv run python scripts/stamp_thresholds.py
 
 # Регрессия на новом корпусе: golden + OOD, затем пул для судейства.
 eval-sfr5: unhide
