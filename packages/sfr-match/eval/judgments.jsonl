@@ -974,3 +974,113 @@
 {"query_id": "q30", "author_id": "A5011298864", "grade": 2, "rationale": "цифровой маркетинг и соцсети", "iteration": "sfr5"}
 {"query_id": "q30", "author_id": "A5014447567", "grade": 2, "rationale": "цифровой маркетинг в соцсетях и потребление брендов", "iteration": "sfr5"}
 {"query_id": "q30", "author_id": "A5110589505", "grade": 1, "rationale": "соцсети как объект — но политика и динамика мнений, а не маркетинг", "iteration": "sfr5"}
+{"query_id": "q01", "author_id": "A5007086495", "grade": 1, "rationale": "нейросети применяет, но к ЭЭГ и мозговым интерфейсам, не к текстам", "iteration": "sfr5-backfill"}
+{"query_id": "q01", "author_id": "A5031192722", "grade": 1, "rationale": "распознавание эмоций и речи — смежно, но аудио, а не тексты соцсетей", "iteration": "sfr5-backfill"}
+{"query_id": "q01", "author_id": "A5038667261", "grade": 0, "rationale": "COVID-19 и мониторинг, совпадения нет", "iteration": "sfr5-backfill"}
+{"query_id": "q02", "author_id": "A5017151529", "grade": 2, "rationale": "радиомика и ML в медицинской визуализации, УЗИ", "iteration": "sfr5-backfill"}
+{"query_id": "q02", "author_id": "A5017328847", "grade": 2, "rationale": "сегментация медицинских изображений — прямое попадание", "iteration": "sfr5-backfill"}
+{"query_id": "q02", "author_id": "A5029567858", "grade": 1, "rationale": "обработка изображений и голография; медицинского приложения в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q02", "author_id": "A5064801935", "grade": 0, "rationale": "акушерство и преэклампсия", "iteration": "sfr5-backfill"}
+{"query_id": "q03", "author_id": "A5102786081", "grade": 2, "rationale": "детекторы частиц и физика высоких энергий", "iteration": "sfr5-backfill"}
+{"query_id": "q03", "author_id": "A5107963115", "grade": 2, "rationale": "столкновения высоких энергий, физика частиц", "iteration": "sfr5-backfill"}
+{"query_id": "q03", "author_id": "A5114377115", "grade": 2, "rationale": "физика частиц и детекторы на коллайдере", "iteration": "sfr5-backfill"}
+{"query_id": "q04", "author_id": "A5038973865", "grade": 2, "rationale": "сверхпроводимость и квантовый транспорт", "iteration": "sfr5-backfill"}
+{"query_id": "q04", "author_id": "A5044414277", "grade": 1, "rationale": "сверхпроводимость есть, но профиль делит её с метеорологией и гидродинамикой", "iteration": "sfr5-backfill"}
+{"query_id": "q04", "author_id": "A5087372080", "grade": 2, "rationale": "сверхпроводимость, MgB2 и сплавы", "iteration": "sfr5-backfill"}
+{"query_id": "q05", "author_id": "A5020887835", "grade": 1, "rationale": "вычислительные методы в науке, но предметно — поиск лекарств и энтомология", "iteration": "sfr5-backfill"}
+{"query_id": "q05", "author_id": "A5029567858", "grade": 1, "rationale": "алгоритмы обработки изображений; исследования самих алгоритмов нет", "iteration": "sfr5-backfill"}
+{"query_id": "q05", "author_id": "A5062232142", "grade": 1, "rationale": "когнитивные вычисления и обработка данных — применение, а не алгоритмика", "iteration": "sfr5-backfill"}
+{"query_id": "q05", "author_id": "A5110627797", "grade": 1, "rationale": "обработка данных и нейросети; алгоритмическая теория в темах не заявлена", "iteration": "sfr5-backfill"}
+{"query_id": "q06", "author_id": "A5011303108", "grade": 2, "rationale": "нелинейная оптика, твердотельные и волоконные лазеры, лазерная спектроскопия", "iteration": "sfr5-backfill"}
+{"query_id": "q06", "author_id": "A5013488476", "grade": 2, "rationale": "твердотельные лазеры и их конструирование", "iteration": "sfr5-backfill"}
+{"query_id": "q06", "author_id": "A5016758266", "grade": 2, "rationale": "фотонные устройства, волоконные лазеры, лазер-вещество", "iteration": "sfr5-backfill"}
+{"query_id": "q07", "author_id": "A5083103730", "grade": 1, "rationale": "физика частиц; глубокого обучения в темах профиля не видно", "iteration": "sfr5-backfill"}
+{"query_id": "q07", "author_id": "A5107174121", "grade": 1, "rationale": "физика частиц и КХД; ML как специализация не заявлен", "iteration": "sfr5-backfill"}
+{"query_id": "q07", "author_id": "A5107839879", "grade": 1, "rationale": "физика частиц; связь с нейросетями по темам не подтверждается", "iteration": "sfr5-backfill"}
+{"query_id": "q07", "author_id": "A5107902822", "grade": 1, "rationale": "физика частиц и детекторы; DL в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q07", "author_id": "A5112651411", "grade": 1, "rationale": "физика частиц; ML-специализация в темах не отражена", "iteration": "sfr5-backfill"}
+{"query_id": "q08", "author_id": "A5001784131", "grade": 2, "rationale": "NLP, тематическое моделирование, атрибуция авторства — русскоязычные данные", "iteration": "sfr5-backfill"}
+{"query_id": "q08", "author_id": "A5018958751", "grade": 0, "rationale": "вычислительная геология и ДЗЗ", "iteration": "sfr5-backfill"}
+{"query_id": "q08", "author_id": "A5058806392", "grade": 1, "rationale": "нейролингвистика и развитие речи — язык есть, NLP-методов нет", "iteration": "sfr5-backfill"}
+{"query_id": "q08", "author_id": "A5101711419", "grade": 0, "rationale": "геохимия и геостатистика почв", "iteration": "sfr5-backfill"}
+{"query_id": "q09", "author_id": "A5048702317", "grade": 2, "rationale": "квантовая информация и сверхпроводниковые кубиты — и теория, и железо", "iteration": "sfr5-backfill"}
+{"query_id": "q09", "author_id": "A5062570459", "grade": 2, "rationale": "квантовая информация, транспорт, сверхпроводимость — кубиты", "iteration": "sfr5-backfill"}
+{"query_id": "q09", "author_id": "A5078641429", "grade": 2, "rationale": "квантовая оптика и квантовая информация", "iteration": "sfr5-backfill"}
+{"query_id": "q09", "author_id": "A5111760858", "grade": 2, "rationale": "квантовая информация и алгоритмы квантовых вычислений", "iteration": "sfr5-backfill"}
+{"query_id": "q10", "author_id": "A5030454460", "grade": 1, "rationale": "вычислительная физика многих тел; data science как специализация не заявлен", "iteration": "sfr5-backfill"}
+{"query_id": "q10", "author_id": "A5075534567", "grade": 1, "rationale": "эксперименты физики частиц — данные есть, ML-пайплайнов в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q10", "author_id": "A5084513745", "grade": 1, "rationale": "физика частиц; анализ данных как тема не выделен", "iteration": "sfr5-backfill"}
+{"query_id": "q10", "author_id": "A5103568609", "grade": 1, "rationale": "столкновения высоких энергий; data science в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q10", "author_id": "A5112651411", "grade": 1, "rationale": "физика частиц; ML-пайплайны в темах не отражены", "iteration": "sfr5-backfill"}
+{"query_id": "q11", "author_id": "A5035075324", "grade": 2, "rationale": "планирование перевозок и управление трафиком — оптимизация маршрутов", "iteration": "sfr5-backfill"}
+{"query_id": "q11", "author_id": "A5086469184", "grade": 1, "rationale": "оптимизация управления, но аэрокосмические системы, а не логистика", "iteration": "sfr5-backfill"}
+{"query_id": "q11", "author_id": "A5112269203", "grade": 2, "rationale": "транспорт и логистика, цепи поставок и запасы", "iteration": "sfr5-backfill"}
+{"query_id": "q12", "author_id": "A5044023963", "grade": 2, "rationale": "анализ экономико-технологических систем — прямо предмет запроса", "iteration": "sfr5-backfill"}
+{"query_id": "q12", "author_id": "A5062482400", "grade": 0, "rationale": "морские и экологические исследования", "iteration": "sfr5-backfill"}
+{"query_id": "q12", "author_id": "A5064585831", "grade": 1, "rationale": "математические модели, но эпидемиология и лесное хозяйство, не экономика", "iteration": "sfr5-backfill"}
+{"query_id": "q12", "author_id": "A5102975236", "grade": 2, "rationale": "экономико-технологические системы и математическое моделирование", "iteration": "sfr5-backfill"}
+{"query_id": "q13", "author_id": "A5020727581", "grade": 2, "rationale": "структуры кристаллов и рентгеновская дифракция", "iteration": "sfr5-backfill"}
+{"query_id": "q13", "author_id": "A5048402137", "grade": 2, "rationale": "кристаллография, радиационные явления, рентгеновская дифракция", "iteration": "sfr5-backfill"}
+{"query_id": "q13", "author_id": "A5053351584", "grade": 2, "rationale": "структуры кристаллов и рентгеновская дифракция", "iteration": "sfr5-backfill"}
+{"query_id": "q14", "author_id": "A5007384660", "grade": 2, "rationale": "квантовая информация и криптография, квантовые вычисления", "iteration": "sfr5-backfill"}
+{"query_id": "q14", "author_id": "A5012166541", "grade": 2, "rationale": "квантовая информация и криптография — теория квантовых каналов", "iteration": "sfr5-backfill"}
+{"query_id": "q15", "author_id": "A5024187788", "grade": 2, "rationale": "тёмная материя и детекторы частиц", "iteration": "sfr5-backfill"}
+{"query_id": "q15", "author_id": "A5032951968", "grade": 2, "rationale": "астрофизика и тёмная материя", "iteration": "sfr5-backfill"}
+{"query_id": "q15", "author_id": "A5039966405", "grade": 2, "rationale": "физика частиц и детекторы тёмной материи", "iteration": "sfr5-backfill"}
+{"query_id": "q15", "author_id": "A5069514467", "grade": 2, "rationale": "астрофизика, тёмная материя, гамма-всплески", "iteration": "sfr5-backfill"}
+{"query_id": "q16", "author_id": "A5061341300", "grade": 0, "rationale": "оптогенетика и мембраны — совпадения нет", "iteration": "sfr5-backfill"}
+{"query_id": "q16", "author_id": "A5091785597", "grade": 2, "rationale": "память нового типа и нейроморфные вычисления", "iteration": "sfr5-backfill"}
+{"query_id": "q16", "author_id": "A5101578748", "grade": 2, "rationale": "память и нейроморфные вычисления, проводящие полимеры", "iteration": "sfr5-backfill"}
+{"query_id": "q17", "author_id": "A5009133662", "grade": 1, "rationale": "физика частиц и КХД; нейтринной специализации в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q17", "author_id": "A5059653984", "grade": 2, "rationale": "нейтринная физика — прямое попадание", "iteration": "sfr5-backfill"}
+{"query_id": "q17", "author_id": "A5070029333", "grade": 1, "rationale": "столкновения высоких энергий; нейтрино в темах не выделено", "iteration": "sfr5-backfill"}
+{"query_id": "q17", "author_id": "A5107886204", "grade": 1, "rationale": "физика частиц и детекторы; нейтринной темы в профиле нет", "iteration": "sfr5-backfill"}
+{"query_id": "q18", "author_id": "A5028599598", "grade": 2, "rationale": "магнитные свойства тонких плёнок", "iteration": "sfr5-backfill"}
+{"query_id": "q18", "author_id": "A5070044388", "grade": 2, "rationale": "магнитные тонкие плёнки и аморфные сплавы", "iteration": "sfr5-backfill"}
+{"query_id": "q19", "author_id": "A5030454460", "grade": 2, "rationale": "вычислительная физика многих тел — ровно стык физики и программирования", "iteration": "sfr5-backfill"}
+{"query_id": "q19", "author_id": "A5032107945", "grade": 0, "rationale": "материалы для термоядерного синтеза; вычислительной составляющей в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q19", "author_id": "A5063523050", "grade": 0, "rationale": "лазерная спектроскопия и ионосфера — эксперимент без программирования", "iteration": "sfr5-backfill"}
+{"query_id": "q19", "author_id": "A5085935136", "grade": 0, "rationale": "лазерная плазма и атомная физика; программирования в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q19", "author_id": "A5087415130", "grade": 0, "rationale": "материалы термоядерного синтеза и ионно-поверхностные взаимодействия", "iteration": "sfr5-backfill"}
+{"query_id": "q20", "author_id": "A5003003630", "grade": 2, "rationale": "космология и теория гравитации, чёрные дыры", "iteration": "sfr5-backfill"}
+{"query_id": "q20", "author_id": "A5083296409", "grade": 2, "rationale": "космология, тёмная материя, чёрные дыры", "iteration": "sfr5-backfill"}
+{"query_id": "q20", "author_id": "A5084788036", "grade": 2, "rationale": "космология, чёрные дыры, теория относительности", "iteration": "sfr5-backfill"}
+{"query_id": "q21", "author_id": "A5017448390", "grade": 2, "rationale": "механика плёнок, композиты, перовскиты — новые материалы", "iteration": "sfr5-backfill"}
+{"query_id": "q21", "author_id": "A5025897376", "grade": 2, "rationale": "композиты, керамика, аддитивные технологии", "iteration": "sfr5-backfill"}
+{"query_id": "q21", "author_id": "A5050234205", "grade": 2, "rationale": "люминесцентные и керамические материалы, свойства материалов", "iteration": "sfr5-backfill"}
+{"query_id": "q21", "author_id": "A5084061415", "grade": 1, "rationale": "сверхпроводящие материалы, но в приложении к электромашинам", "iteration": "sfr5-backfill"}
+{"query_id": "q21", "author_id": "A5087662164", "grade": 1, "rationale": "сверхпроводники и перовскиты — материалы, но фундаментальные, не «в технике»", "iteration": "sfr5-backfill"}
+{"query_id": "q22", "author_id": "A5035493078", "grade": 1, "rationale": "big data и экономический анализ; моделирование процессов как тема не выделено", "iteration": "sfr5-backfill"}
+{"query_id": "q22", "author_id": "A5038792420", "grade": 1, "rationale": "вычислительная биология — моделирование есть, «применимость на практике» иная", "iteration": "sfr5-backfill"}
+{"query_id": "q22", "author_id": "A5044023963", "grade": 2, "rationale": "моделирование экономико-технологических систем", "iteration": "sfr5-backfill"}
+{"query_id": "q22", "author_id": "A5047370658", "grade": 2, "rationale": "вычислительная гидродинамика и горение — моделирование реальных процессов", "iteration": "sfr5-backfill"}
+{"query_id": "q22", "author_id": "A5102975236", "grade": 2, "rationale": "математическое моделирование технических и экономических систем", "iteration": "sfr5-backfill"}
+{"query_id": "q23", "author_id": "A5025096043", "grade": 2, "rationale": "квантовая информация и алгоритмы квантовых вычислений", "iteration": "sfr5-backfill"}
+{"query_id": "q23", "author_id": "A5078641429", "grade": 2, "rationale": "квантовая оптика и квантовая информация", "iteration": "sfr5-backfill"}
+{"query_id": "q23", "author_id": "A5095070139", "grade": 2, "rationale": "алгоритмы квантовых вычислений и тензорные разложения", "iteration": "sfr5-backfill"}
+{"query_id": "q23", "author_id": "A5111760858", "grade": 2, "rationale": "квантовая информация и архитектура квантовых вычислений", "iteration": "sfr5-backfill"}
+{"query_id": "q24", "author_id": "A5011297003", "grade": 2, "rationale": "нейросети и нейродинамика — и модели, и приложения", "iteration": "sfr5-backfill"}
+{"query_id": "q24", "author_id": "A5056413709", "grade": 1, "rationale": "когнитивные вычисления и семантический веб — смежно", "iteration": "sfr5-backfill"}
+{"query_id": "q24", "author_id": "A5062232142", "grade": 1, "rationale": "когнитивные вычисления и обработка данных", "iteration": "sfr5-backfill"}
+{"query_id": "q24", "author_id": "A5072673405", "grade": 2, "rationale": "нейронные сети и их приложения", "iteration": "sfr5-backfill"}
+{"query_id": "q24", "author_id": "A5110627797", "grade": 2, "rationale": "нейросети, обработка изображений и видео", "iteration": "sfr5-backfill"}
+{"query_id": "q25", "author_id": "A5001985637", "grade": 1, "rationale": "квантовые жидкости и гелий — теория конденсированного состояния, но не куперовские пары", "iteration": "sfr5-backfill"}
+{"query_id": "q25", "author_id": "A5064613329", "grade": 0, "rationale": "перовскиты и топливные элементы", "iteration": "sfr5-backfill"}
+{"query_id": "q26", "author_id": "A5028424487", "grade": 2, "rationale": "геномика редких болезней, генетические ассоциации, CRISPR", "iteration": "sfr5-backfill"}
+{"query_id": "q26", "author_id": "A5047407238", "grade": 2, "rationale": "биоинформатика микробиома и алгоритмы машинного обучения", "iteration": "sfr5-backfill"}
+{"query_id": "q26", "author_id": "A5047990689", "grade": 2, "rationale": "геномика и филогенетика, микробные сообщества", "iteration": "sfr5-backfill"}
+{"query_id": "q26", "author_id": "A5075293015", "grade": 2, "rationale": "геномика и филогенетика растений", "iteration": "sfr5-backfill"}
+{"query_id": "q27", "author_id": "A5013206562", "grade": 0, "rationale": "геология и палеонтология", "iteration": "sfr5-backfill"}
+{"query_id": "q27", "author_id": "A5021338684", "grade": 0, "rationale": "геология и разведка углеводородов", "iteration": "sfr5-backfill"}
+{"query_id": "q27", "author_id": "A5024623698", "grade": 2, "rationale": "история России и российская политэкономия — прямое попадание", "iteration": "sfr5-backfill"}
+{"query_id": "q27", "author_id": "A5048342677", "grade": 0, "rationale": "системы здравоохранения", "iteration": "sfr5-backfill"}
+{"query_id": "q28", "author_id": "A5005068608", "grade": 0, "rationale": "демография; правовая рубрика выглядит артефактом склейки профиля", "iteration": "sfr5-backfill"}
+{"query_id": "q28", "author_id": "A5013860920", "grade": 1, "rationale": "судебная экспертиза и право — смежно, но не гражданское и договорное", "iteration": "sfr5-backfill"}
+{"query_id": "q28", "author_id": "A5018310469", "grade": 1, "rationale": "корпоративное управление и международный бизнес — соседняя область", "iteration": "sfr5-backfill"}
+{"query_id": "q28", "author_id": "A5067237593", "grade": 1, "rationale": "регуляторный анализ в экономике; договорного права в темах нет", "iteration": "sfr5-backfill"}
+{"query_id": "q29", "author_id": "A5006576648", "grade": 0, "rationale": "теплообмен и механообработка", "iteration": "sfr5-backfill"}
+{"query_id": "q29", "author_id": "A5032194897", "grade": 0, "rationale": "энтомология и биоразнообразие", "iteration": "sfr5-backfill"}
+{"query_id": "q29", "author_id": "A5033640300", "grade": 2, "rationale": "пищевая биотехнология, ферментированные продукты, состав пищи", "iteration": "sfr5-backfill"}
+{"query_id": "q29", "author_id": "A5078254205", "grade": 2, "rationale": "пищевая промышленность, гидролиз белков, состав пищевых продуктов", "iteration": "sfr5-backfill"}
+{"query_id": "q29", "author_id": "A5080064513", "grade": 0, "rationale": "термоядерная плазма", "iteration": "sfr5-backfill"}
+{"query_id": "q30", "author_id": "A5020072191", "grade": 1, "rationale": "соцсети как объект, но политика и динамика мнений, а не маркетинг", "iteration": "sfr5-backfill"}
