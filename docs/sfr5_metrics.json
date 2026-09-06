@@ -10,19 +10,14 @@
     "success_at_5": 0.9,
     "by_kind": {
       "edge": {
-        "n": 4,
+        "n": 6,
         "success_at_1": 0.5,
-        "success_at_5": 1.0
+        "success_at_5": 0.833
       },
       "in-domain": {
-        "n": 22,
-        "success_at_1": 0.773,
-        "success_at_5": 0.909
-      },
-      "out-of-domain": {
-        "n": 4,
-        "success_at_1": 0.5,
-        "success_at_5": 0.75
+        "n": 24,
+        "success_at_1": 0.75,
+        "success_at_5": 0.917
       }
     },
     "per_query": [
@@ -210,28 +205,28 @@
       },
       {
         "id": "q27",
-        "expect": "out-of-domain",
+        "expect": "edge",
         "s1": true,
         "s5": true,
         "top1": 0.348556
       },
       {
         "id": "q28",
-        "expect": "out-of-domain",
+        "expect": "edge",
         "s1": false,
         "s5": false,
         "top1": 0.370858
       },
       {
         "id": "q29",
-        "expect": "out-of-domain",
+        "expect": "in-domain",
         "s1": false,
         "s5": true,
         "top1": 0.424507
       },
       {
         "id": "q30",
-        "expect": "out-of-domain",
+        "expect": "in-domain",
         "s1": true,
         "s5": true,
         "top1": 0.481491
@@ -254,15 +249,15 @@
   },
   "calibration": {
     "counts": {
-      "in_domain": 22,
-      "edge": 4,
+      "in_domain": 24,
+      "edge": 6,
       "ood": 19
     },
     "recommended": {
-      "threshold": 0.38,
+      "threshold": 0.32,
       "false_cuts_in_domain": 0,
       "false_cuts_edge": 0,
-      "ood_caught": 19
+      "ood_caught": 18
     },
     "rows": [
       {
@@ -442,151 +437,151 @@
       {
         "threshold": 0.35,
         "false_cuts_in_domain": 0,
-        "false_cuts_edge": 0,
+        "false_cuts_edge": 1,
         "ood_caught": 18
       },
       {
         "threshold": 0.36,
         "false_cuts_in_domain": 0,
-        "false_cuts_edge": 0,
+        "false_cuts_edge": 1,
         "ood_caught": 18
       },
       {
         "threshold": 0.37,
         "false_cuts_in_domain": 0,
-        "false_cuts_edge": 0,
+        "false_cuts_edge": 1,
         "ood_caught": 19
       },
       {
         "threshold": 0.38,
         "false_cuts_in_domain": 0,
-        "false_cuts_edge": 0,
+        "false_cuts_edge": 2,
         "ood_caught": 19
       },
       {
         "threshold": 0.39,
         "false_cuts_in_domain": 0,
-        "false_cuts_edge": 2,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.4,
         "false_cuts_in_domain": 2,
-        "false_cuts_edge": 2,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.41,
         "false_cuts_in_domain": 2,
-        "false_cuts_edge": 2,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.42,
         "false_cuts_in_domain": 2,
-        "false_cuts_edge": 2,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.43,
-        "false_cuts_in_domain": 6,
-        "false_cuts_edge": 2,
+        "false_cuts_in_domain": 7,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.44,
-        "false_cuts_in_domain": 9,
-        "false_cuts_edge": 2,
+        "false_cuts_in_domain": 10,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.45,
-        "false_cuts_in_domain": 9,
-        "false_cuts_edge": 2,
+        "false_cuts_in_domain": 10,
+        "false_cuts_edge": 4,
         "ood_caught": 19
       },
       {
         "threshold": 0.46,
-        "false_cuts_in_domain": 10,
-        "false_cuts_edge": 3,
+        "false_cuts_in_domain": 11,
+        "false_cuts_edge": 5,
         "ood_caught": 19
       },
       {
         "threshold": 0.47,
-        "false_cuts_in_domain": 11,
-        "false_cuts_edge": 3,
+        "false_cuts_in_domain": 12,
+        "false_cuts_edge": 5,
         "ood_caught": 19
       },
       {
         "threshold": 0.48,
-        "false_cuts_in_domain": 12,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 13,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.49,
-        "false_cuts_in_domain": 12,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 14,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.5,
-        "false_cuts_in_domain": 14,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 16,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.51,
-        "false_cuts_in_domain": 17,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 19,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.52,
-        "false_cuts_in_domain": 18,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 20,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.53,
-        "false_cuts_in_domain": 19,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 21,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.54,
-        "false_cuts_in_domain": 19,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 21,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.55,
-        "false_cuts_in_domain": 20,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 22,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.56,
-        "false_cuts_in_domain": 20,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 22,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.57,
-        "false_cuts_in_domain": 20,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 22,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.58,
-        "false_cuts_in_domain": 21,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 23,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       },
       {
         "threshold": 0.59,
-        "false_cuts_in_domain": 22,
-        "false_cuts_edge": 4,
+        "false_cuts_in_domain": 24,
+        "false_cuts_edge": 6,
         "ood_caught": 19
       }
     ]
@@ -596,6 +591,7 @@
       0.3906,
       0.3946,
       0.4239,
+      0.4245,
       0.4255,
       0.4264,
       0.4294,
@@ -605,6 +601,7 @@
       0.4554,
       0.4659,
       0.4768,
+      0.4815,
       0.4909,
       0.4919,
       0.5019,
@@ -617,6 +614,8 @@
       0.5828
     ],
     "edge": [
+      0.3486,
+      0.3709,
       0.3804,
       0.3883,
       0.4539,

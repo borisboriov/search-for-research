@@ -26,7 +26,7 @@ def test_health_names_the_model_and_the_index_it_serves(backend: FakeBackend) ->
     # Число вузов считает API, а не вёрстка лендинга (SFR-5): в DOCS два вуза.
     assert body["institutions_count"] == 2
     assert body["index_version"].startswith("frida_clean-3p-")
-    assert body["score_threshold"] == pytest.approx(0.37)  # перекалибровано после бэкфилла
+    assert body["score_threshold"] == pytest.approx(0.32)  # перекалибровано в ревью SFR-5
     assert body["search_backend"] in {"faiss", "numpy"}
 
 
@@ -68,10 +68,11 @@ def test_below_threshold_is_false_above_the_cutoff() -> None:
 
 
 def test_confidence_is_weak_in_the_grey_zone() -> None:
-    """Серая зона: top-1 между «уверенных нет» (0.29) и «выдача обычная» (0.33).
-    Серая зона узкая: на полном корпусе посторонние запросы не поднимаются
-        выше 0.363, а самый слабый настоящий даёт 0.391, так что в зону
-        [0.37, 0.40) попадают ровно пограничные случаи."""
+    """Серая зона: top-1 между «уверенных совпадений нет» и «выдача обычная».
+
+    После перекалибровки ревью SFR-5 это [0.32, 0.40): туда попадают самые
+    слабые настоящие запросы (0.349 и 0.371) и единственный посторонний,
+    которого порог не поймал (0.363, киноведение)."""
     body = client(FakeBackend(top_score=0.38)).post("/api/match", json={"query": "кино"}).json()
     assert body["confidence"] == "weak"
     assert body["below_threshold"] is False
@@ -375,7 +376,7 @@ def test_thresholds_match_is_none_without_stamp(backend: FakeBackend) -> None:
 
 def test_thresholds_match_true_when_index_agrees_with_settings() -> None:
     stamped = FakeBackend()
-    stamped.meta.thresholds = {"none": 0.37, "weak": 0.40, "high": 0.47}
+    stamped.meta.thresholds = {"none": 0.32, "weak": 0.40, "high": 0.47}
     body = client(stamped).get("/api/health").json()
     assert body["thresholds_match"] is True
 
@@ -383,7 +384,7 @@ def test_thresholds_match_true_when_index_agrees_with_settings() -> None:
 def test_thresholds_mismatch_is_reported_and_logged(caplog: pytest.LogCaptureFixture) -> None:
     """Пороги живут в двух местах и могут разъехаться молча — ловим на старте."""
     stamped = FakeBackend()
-    stamped.meta.thresholds = {"none": 0.29, "weak": 0.33, "high": 0.44}  # шкала до бэкфилла
+    stamped.meta.thresholds = {"none": 0.37, "weak": 0.40, "high": 0.47}  # шкала до ревью SFR-5
     with caplog.at_level(logging.WARNING):
         body = client(stamped).get("/api/health").json()
     assert body["thresholds_match"] is False

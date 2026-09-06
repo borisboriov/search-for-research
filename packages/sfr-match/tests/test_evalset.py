@@ -11,12 +11,20 @@ from sfr_match.evalset import Query, eval_dir, load_judgments, load_queries, wri
 
 
 def test_shipped_golden_set_has_30_queries_in_the_required_mix() -> None:
+    """Состав golden set: 30 запросов, из них 24 in-domain и 6 edge.
+
+    В SPEC_SFR1 набор был 22/4/4, но четыре «посторонних» запроса были написаны
+    на корпусе двух вузов и на 12 вузах перестали быть посторонними — проверено
+    процедурой из `eval/ood_verification.md` (ревью SFR-5). Посторонние запросы
+    живут теперь только в `ood_queries.jsonl`: там каждый подтверждается до
+    включения, а в golden set такой проверки не было.
+    """
     queries = load_queries()
     assert len(queries) == 30
     counts = Counter(query.expect for query in queries)
-    assert counts["in-domain"] == 22
-    assert counts["edge"] == 4
-    assert counts["out-of-domain"] == 4
+    assert counts["in-domain"] == 24
+    assert counts["edge"] == 6
+    assert counts["out-of-domain"] == 0
 
 
 def test_shipped_golden_set_ids_are_unique_and_texts_non_trivial() -> None:
