@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import threading
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -36,11 +37,53 @@ def _is_retryable(exc: BaseException) -> bool:
     return isinstance(exc, RetryableStatusError | httpx.TransportError)
 
 
+REDACTED = "REDACTED"  # URL-safe: «***» ушло бы в текст как %2A%2A%2A
+_SECRET_PARAMS = ("api_key",)
+
+
+def _redact_url(url: httpx.URL) -> str:
+    """URL со скрытыми значениями секретных query-параметров."""
+    for name in _SECRET_PARAMS:
+        if name in url.params:
+            url = url.copy_set_param(name, REDACTED)
+    return str(url)
+
+
+class RateLimiter:
+    """Общий на несколько клиентов колпак «не чаще ``max_rps`` запросов в секунду».
+
+    Троттлинг внутри клиента считает только собственные запросы: шесть потоков
+    по 1.2 rps дают суммарно 7.2, и ни один из них об этом не знает. Ограничение
+    же в правилах проекта общее (<= ``openalex_max_rps``), поэтому его держит
+    один объект на все потоки.
+
+    Слот резервируется под блокировкой, а ждём уже вне её: иначе потоки
+    выстраивались бы в очередь на время сна и суммарный темп проседал бы.
+    """
+
+    def __init__(self, max_rps: float) -> None:
+        self._min_interval = 1.0 / max_rps if max_rps > 0 else 0.0
+        self._lock = threading.Lock()
+        self._next_at = 0.0
+
+    def acquire(self) -> None:
+        if not self._min_interval:
+            return
+        with self._lock:
+            now = time.monotonic()
+            start = max(now, self._next_at)
+            self._next_at = start + self._min_interval
+            wait = start - now
+        if wait > 0:
+            time.sleep(wait)
+
+
 class OpenAlexClient:
     """Synchronous OpenAlex client.
 
     - always sends ``mailto`` (polite pool) and ``api_key``, если он задан
-    - <= ``max_rps`` requests per second
+    - <= ``max_rps`` requests per second; a shared ``rate_limiter`` caps several
+      clients together (used by the multi-threaded cache warmer)
     - exponential-backoff retries on 429/5xx, honouring ``Retry-After``
     - disk cache of raw responses keyed by hash of URL+params (``refresh`` bypasses reads)
     """
@@ -57,6 +100,7 @@ class OpenAlexClient:
         http_client: httpx.Client | None = None,
         max_attempts: int = 5,
         backoff_max: float = 30.0,
+        rate_limiter: RateLimiter | None = None,
     ) -> None:
         if not mailto or "@" not in mailto:
             raise ValueError("OpenAlexClient requires a valid mailto (polite pool)")
@@ -66,6 +110,7 @@ class OpenAlexClient:
         self.cache_dir = cache_dir
         self.refresh = refresh
         self._min_interval = 1.0 / max_rps if max_rps > 0 else 0.0
+        self._rate_limiter = rate_limiter
         self._last_request_at = 0.0
         self._http = http_client or httpx.Client(timeout=30.0)
         self._max_attempts = max_attempts
@@ -114,10 +159,29 @@ class OpenAlexClient:
     # -- network -------------------------------------------------------------
 
     def _throttle(self) -> None:
+        if self._rate_limiter is not None:
+            self._rate_limiter.acquire()
         elapsed = time.monotonic() - self._last_request_at
         if elapsed < self._min_interval:
             time.sleep(self._min_interval - elapsed)
         self._last_request_at = time.monotonic()
+
+    @staticmethod
+    def _raise_for_status_redacted(response: httpx.Response) -> None:
+        """``raise_for_status`` без ключа в тексте ошибки.
+
+        httpx кладёт в сообщение полный URL, а ``api_key`` уходит query-параметром:
+        необработанное исключение печатает трейсбек, и ключ оседает в консоли и в
+        логах прогона. Значение затирается, имя параметра остаётся — по нему видно,
+        что запрос шёл с ключом.
+        """
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            message = str(exc).replace(str(response.request.url), _redact_url(response.request.url))
+            raise httpx.HTTPStatusError(
+                message, request=exc.request, response=exc.response
+            ) from None
 
     def _wait_strategy(self, retry_state: RetryCallState) -> float:
         exc = retry_state.outcome.exception() if retry_state.outcome else None
@@ -146,7 +210,7 @@ class OpenAlexClient:
                         except ValueError:
                             retry_after = None
                     raise RetryableStatusError(response.status_code, retry_after)
-                response.raise_for_status()
+                self._raise_for_status_redacted(response)
                 result: dict[str, Any] = response.json()
                 return result
         raise AssertionError("unreachable")  # pragma: no cover

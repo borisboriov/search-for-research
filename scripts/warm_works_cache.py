@@ -12,8 +12,12 @@
   а не ретраит: 429 здесь означает «кредиты кончились до полуночи UTC», и
   ретраи только жгут время. Прогресс не теряется — он в кэше на диске,
   повторный запуск продолжит с того же места.
-* **Темп.** Жёсткий лимит OpenAlex — 100 запросов в секунду; несколько
-  потоков по одному запросу в секунду держатся глубоко под ним.
+* **Темп.** Правило репозитория — не больше ``openalex_max_rps`` запросов в
+  секунду (10.0 в настройках), и это ограничение **общее**, а не на поток:
+  троттлинг внутри клиента видит только свои запросы, так что шесть потоков по
+  1.2 rps дают 7.2, а десять — уже 12, о чём ни один из них не знает. Поэтому
+  все потоки ходят через один ``RateLimiter``: ``--rps-per-worker`` остаётся
+  верхней границей для потока, общий колпак берётся из настроек.
 * **В БД скрипт не пишет ничего** и потому безопасен для параллельного чтения.
 """
 
@@ -30,7 +34,7 @@ from sqlalchemy import select
 from sfr_core.db import make_engine, session_scope
 from sfr_core.models import Author, Work
 from sfr_core.settings import get_settings
-from sfr_etl.client import OpenAlexClient, RetryableStatusError
+from sfr_etl.client import OpenAlexClient, RateLimiter, RetryableStatusError
 from sfr_etl.works import WORK_SELECT_FIELDS
 
 
@@ -67,7 +71,20 @@ def main() -> None:
         )
     ids = authors_needing_works(only_missing=not args.all)
     since_year = datetime.now(UTC).year - settings.works_since_years + 1
-    print(f"авторов к прогреву: {len(ids)} (~{2 * len(ids)} запросов)", flush=True)
+    limiter = RateLimiter(settings.openalex_max_rps)
+    requested_rps = args.workers * args.rps_per_worker
+    print(
+        f"авторов к прогреву: {len(ids)} (~{2 * len(ids)} запросов); темп "
+        f"{args.workers}x{args.rps_per_worker} = {requested_rps:.1f} rps, "
+        f"общий колпак {settings.openalex_max_rps:.1f} rps",
+        flush=True,
+    )
+    if requested_rps > settings.openalex_max_rps:
+        print(
+            f"ВНИМАНИЕ: запрошено {requested_rps:.1f} rps — выше общего колпака, "
+            f"фактический темп будет {settings.openalex_max_rps:.1f} rps.",
+            file=sys.stderr,
+        )
 
     local = threading.local()
     lock = threading.Lock()
@@ -82,6 +99,7 @@ def main() -> None:
                 api_key=settings.openalex_api_key,
                 base_url=settings.openalex_base_url,
                 max_rps=args.rps_per_worker,
+                rate_limiter=limiter,
                 cache_dir=settings.raw_cache_dir,
                 # 429 = кредиты кончились: ретраить бессмысленно, останавливаемся.
                 max_attempts=1,

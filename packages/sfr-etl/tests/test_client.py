@@ -1,11 +1,13 @@
 import json
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import httpx
 import pytest
 import respx
 
-from sfr_etl.client import OpenAlexClient, RetryableStatusError
+from sfr_etl.client import OpenAlexClient, RateLimiter, RetryableStatusError
 
 BASE = "https://api.openalex.org"
 
@@ -200,3 +202,40 @@ def test_client_without_key_sends_none(tmp_path: Path) -> None:
     )
     client.get("/works", {"filter": "x"})
     assert "api_key" not in captured[0]
+
+
+def test_api_key_is_redacted_in_error_text(tmp_path: Path) -> None:
+    """Ключ не должен утечь в трейсбек через текст httpx.HTTPStatusError (ревью SFR-5)."""
+    transport = httpx.MockTransport(lambda request: httpx.Response(404, json={}))
+    client = OpenAlexClient(
+        "dev@example.com",
+        api_key="secret-key",
+        cache_dir=tmp_path,
+        http_client=httpx.Client(transport=transport),
+    )
+    with pytest.raises(httpx.HTTPStatusError) as excinfo:
+        client.get("/works", {"filter": "x"})
+    assert "secret-key" not in str(excinfo.value)
+    assert "api_key=REDACTED" in str(excinfo.value)
+    # остальной URL — не секрет и остаётся, иначе ошибку нечем диагностировать
+    assert "/works?filter=x" in str(excinfo.value)
+    assert "mailto=" in str(excinfo.value)
+
+
+def test_shared_rate_limiter_caps_threads_together() -> None:
+    """Колпак общий: N потоков не складывают свой темп (ревью SFR-5, M5)."""
+    limiter = RateLimiter(max_rps=50.0)  # 20 мс между запросами
+    started = time.monotonic()
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(lambda _: limiter.acquire(), range(8)))
+    elapsed = time.monotonic() - started
+    # восемь слотов по 20 мс = 140 мс от первого до последнего, с запасом на планировщик
+    assert elapsed >= 0.12, f"колпак не сработал: {elapsed:.3f} c на 8 запросов"
+
+
+def test_rate_limiter_without_limit_does_not_sleep() -> None:
+    started = time.monotonic()
+    limiter = RateLimiter(max_rps=0)
+    for _ in range(100):
+        limiter.acquire()
+    assert time.monotonic() - started < 0.05
