@@ -88,11 +88,17 @@ make catalog-sfr5 && make index-sfr5 && make eval-sfr5
 областям OpenAlex (`sfr_etl/catalog.py`); дедупликация и детектор чужих склеек —
 `sfr_etl/dedup.py`, выборка на ручную проверку — `packages/sfr-match/eval/dedup_for_review.md`.
 
-⚠️ **`sfr etl works` ходит в сеть на каждого автора**, а у OpenAlex дневной
-бюджет запросов: анонимно $0,10/сутки (1 000 list-запросов), с бесплатным
-ключом — $1/сутки (10 000). Полный каталог требует ~11 000 запросов, то есть
-укладывается в 1–2 суток с ключом. Ключ — `OPENALEX_API_KEY` в `.env`;
-подробности — `docs/SFR5_REPORT.md` и `docs/DECISIONS.md`.
+⚠️ **Ингест работ идёт в два шага.** У OpenAlex дневная квота: анонимно
+$0,10/сутки (1 000 list-запросов), с бесплатным ключом — $1/сутки (10 000).
+Полный каталог стоит 10 014 запросов, то есть одну дневную квоту с ключом
+(`OPENALEX_API_KEY` в `.env`).
+
+```bash
+uv run python scripts/warm_works_cache.py   # сеть: греет кэш, ~23 мин, стоп на 429
+uv run sfr etl works --only-missing         # запись в БД по кэшу, без сети
+```
+
+Подробности — `docs/SFR5_REPORT.md` §3 и `docs/DECISIONS.md`.
 
 ### Сервис поиска (SFR-2)
 
