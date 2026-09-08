@@ -21,6 +21,10 @@ for path in data/indexes_sfr5/frida_clean/meta.json data/exports/cards_sfr5.json
     fi
 done
 
+# data/ в git не попадает, поэтому в свежем клоне на сервере его нет, а rsync
+# родительские каталоги не создаёт (поймано на первой боевой выкладке 08.09).
+ssh "$HOST" "mkdir -p '$REMOTE_DIR/data/indexes_sfr5' '$REMOTE_DIR/data/exports'"
+
 rsync -avc --delete data/indexes_sfr5/ "$HOST:$REMOTE_DIR/data/indexes_sfr5/"
 rsync -avc data/exports/cards_sfr5.jsonl "$HOST:$REMOTE_DIR/data/exports/cards_sfr5.jsonl"
 

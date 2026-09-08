@@ -54,7 +54,7 @@ docker exec sfr-proxy id                              # uid=10001(caddy), не r
 curl -s https://$SITE_ADDRESS/api/health || true      # 404 — так и должно быть (API закрыт)
 curl -s -o /dev/null -w '%{http_code}\n' https://$SITE_ADDRESS/            # 200, лендинг
 n=$(curl -s https://$SITE_ADDRESS/sitemap.xml | grep -c '/supervisor/')
-echo "sitemap: $n профилей"   # должно равняться profiles_count (535)
+echo "sitemap: $n профилей"   # должно равняться profiles_count (5 538)
 curl -s https://$SITE_ADDRESS/robots.txt | grep sitemap
 ```
 
@@ -100,7 +100,8 @@ make deploy-local-down
 - **Health**: `docker compose exec api curl -s localhost:8000/api/health` —
   модель, версия индекса, пороги, hit-rate кэша.
 - **Uptime**: crontab на сервере —
-  `*/5 * * * * ~/search-for-research/deploy/uptime-check.sh https://search-for-research.ru >> ~/uptime.log 2>&1`.
+  `*/5 * * * * /home/USER/search-for-research/deploy/uptime-check.sh https://search-for-research.ru >> /home/USER/uptime.log 2>&1`
+  (абсолютные пути: cron не наследует ни `~`, ни PATH оболочки).
   Внешний uptime-сервис — на Борисе.
 
 ## Rate limiting
