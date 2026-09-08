@@ -12,6 +12,11 @@
   API снаружи compose.
 
     uv run python scripts/bench_sfr4.py --out docs/sfr4_bench.json
+
+На бою тот же скрипт запускается с самого сервера против публичного адреса
+(там же, где docker — часть замеров идёт через `docker exec`):
+
+    python3 scripts/bench_sfr4.py --base-url https://DOMAIN --out sfr4_bench_prod.json
 """
 
 import argparse
@@ -23,6 +28,9 @@ from typing import Any
 
 import httpx
 
+# Адрес прокси компоновки: локальная репетиция по умолчанию, боевой — через
+# --base-url (замеры латентности всё равно идут мимо прокси, см. модульный
+# докстринг, но TTFB, лимитер и кэш меряются по реальному внешнему адресу).
 PROXY = "http://localhost:8080"
 
 QUERIES = [
@@ -196,13 +204,23 @@ def cold_start_s() -> float:
 
 
 def main() -> None:
+    global PROXY
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=Path("docs/sfr4_bench.json"))
+    parser.add_argument(
+        "--base-url",
+        default=PROXY,
+        help="адрес прокси компоновки (по умолчанию локальная репетиция)",
+    )
+    parser.add_argument("--stack", default=None, help="как назвать стенд в отчёте")
     args = parser.parse_args()
+
+    PROXY = args.base_url.rstrip("/")
 
     report: dict[str, Any] = {
         "measured_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-        "stack": "make deploy-local (proxy localhost:8080)",
+        "stack": args.stack or f"docker compose (proxy {PROXY})",
     }
 
     report["api_port_8000_closed_from_host"] = api_closed_from_host()
