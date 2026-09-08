@@ -1,0 +1,90 @@
+{
+  "measured_at": "2026-09-08 17:36:48",
+  "stack": "VPS (Ubuntu 24.04, 4 vCPU, 8 ГБ), боевая компоновка, прокси 443",
+  "api_port_8000_closed_from_host": true,
+  "rss_idle_mb": {
+    "sfr-proxy": 63.1,
+    "sfr-web": 114.4,
+    "sfr-api": 774.2
+  },
+  "supervisor_ttfb_cold_ms": 126.5,
+  "supervisor_ttfb_cached_ms": 8.4,
+  "landing_ttfb_ms": 10.4,
+  "match_seq": {
+    "n": 16,
+    "workers": 1,
+    "wall_s": 5.1,
+    "codes": {
+      "200": 16
+    },
+    "p50_ms": 312.7,
+    "p95_ms": 356.4,
+    "max_ms": 357.2
+  },
+  "match_conc4": {
+    "n": 20,
+    "workers": 4,
+    "wall_s": 6.1,
+    "codes": {
+      "200": 20
+    },
+    "p50_ms": 1167.5,
+    "p95_ms": 1448.5,
+    "max_ms": 1542.1
+  },
+  "match_burst20": {
+    "n": 20,
+    "workers": 20,
+    "wall_s": 2.1,
+    "codes": {
+      "200": 7,
+      "503": 13
+    },
+    "p50_ms": 1221.1,
+    "p95_ms": 2107.7,
+    "max_ms": 2107.7
+  },
+  "rss_after_burst_mb": {
+    "sfr-proxy": 63.1,
+    "sfr-web": 115.6,
+    "sfr-api": 789.5
+  },
+  "rss_before_burst_mb": {
+    "sfr-proxy": 63.1,
+    "sfr-web": 115.4,
+    "sfr-api": 789.0
+  },
+  "match_cache": {
+    "first_took_ms": 266.4,
+    "second_took_ms": 0.0,
+    "cache_hits": 13,
+    "cache_hit_rate": 0.203
+  },
+  "rate_limit_match": {
+    "codes": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      200,
+      429,
+      429
+    ],
+    "got_429": true,
+    "ok_before_429": 10
+  },
+  "rate_limit_pages_bots": {
+    "human_total": 125,
+    "human_429": 22,
+    "bot_codes": [
+      200
+    ],
+    "bot_passed": true
+  },
+  "api_cold_start_s": 15.5
+}
