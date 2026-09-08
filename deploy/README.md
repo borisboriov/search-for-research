@@ -30,7 +30,8 @@ cd search-for-research
 
 # 3. Окружение
 cd deploy && cp env.example .env
-# заполнить .env: SITE_ADDRESS, NEXT_PUBLIC_SITE_URL,
+# заполнить .env: SITE_ADDRESS (одно имя или несколько через запятую,
+#   значение в кавычках), NEXT_PUBLIC_SITE_URL (канонический адрес, один),
 # REVALIDATE_SECRET=$(openssl rand -hex 32), SFR_API_LOG_SALT=$(openssl rand -hex 16),
 # NEXT_PUBLIC_CLAIM_EMAIL (или оставить пустым — ссылка «Это вы?» скрыта)
 cd ..
@@ -39,23 +40,28 @@ cd ..
 #    (локально) deploy/sync-artifacts.sh user@host search-for-research
 
 # 5. Проверить DNS и запустить
-dig +short $SITE_ADDRESS   # должен вернуть IP этого сервера
+#    SITE_ADDRESS может содержать несколько имён через запятую (Caddy выпустит
+#    сертификат на каждое), поэтому в командах ниже используется канонический
+#    адрес из NEXT_PUBLIC_SITE_URL — одно имя, пригодное для curl и dig.
+source deploy/.env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}   # мы ещё в корне репо
+for name in $(echo "$SITE_ADDRESS" | tr ',' ' '); do dig +short "$name"; done
+# каждое имя должно вернуть IP этого сервера
 cd deploy && docker compose up -d --build
 # первый старт api качает веса FRIDA (~2 ГБ) в том hf-cache — единожды;
 # healthcheck api ждёт до 3 минут (start-period)
 
 # 6. Пост-деплойная ревалидация: сборка web шла без живого API, поэтому
 #    снапшоты лендинга и sitemap деградированы — обновить их:
-source .env
-curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$SITE_ADDRESS/api/revalidate
+source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
+curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
 
 # 7. Проверки
 docker exec sfr-proxy id                              # uid=10001(caddy), не root (SFR-4b)
-curl -s https://$SITE_ADDRESS/api/health || true      # 404 — так и должно быть (API закрыт)
-curl -s -o /dev/null -w '%{http_code}\n' https://$SITE_ADDRESS/            # 200, лендинг
-n=$(curl -s https://$SITE_ADDRESS/sitemap.xml | grep -c '/supervisor/')
+curl -s https://$DOMAIN/api/health || true      # 404 — так и должно быть (API закрыт)
+curl -s -o /dev/null -w '%{http_code}\n' https://$DOMAIN/            # 200, лендинг
+n=$(curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/')
 echo "sitemap: $n профилей"   # должно равняться profiles_count (5 538)
-curl -s https://$SITE_ADDRESS/robots.txt | grep sitemap
+curl -s https://$DOMAIN/robots.txt | grep sitemap
 ```
 
 ## Обновление
@@ -69,9 +75,9 @@ docker compose up -d --build        # пересборка только изме
 # --build здесь не только про наш код: пересборка подтягивает патчи базовых
 # образов и `apk upgrade` в прокси. Это единственный способ закрывать CVE
 # базы — CI их не видит (docs/SFR4b_REPORT.md).
-source .env
-curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$SITE_ADDRESS/api/revalidate
-curl -s https://$SITE_ADDRESS/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
+source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
+curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
+curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
 ```
 
 Выбранная схема сборки web: **сборка без живого API + обязательная
