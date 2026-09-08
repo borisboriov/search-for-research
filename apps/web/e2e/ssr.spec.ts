@@ -17,14 +17,17 @@ test("HTML профиля содержит имя, вуз, темы и мета�
 });
 
 test("sitemap.xml перечисляет все профили каталога", async ({ request }) => {
-  const [sitemap, health] = await Promise.all([
-    request.get("/sitemap.xml"),
-    request.get("http://127.0.0.1:8000/api/health"),
-  ]);
-  const xml = await sitemap.text();
-  const { profiles_count } = (await health.json()) as { profiles_count: number };
-  const urls = xml.match(/\/supervisor\//g) ?? [];
-  expect(urls.length).toBe(profiles_count);
+  // Размер каталога берём с лендинга, а не из API напрямую: у боевой
+  // компоновки API снаружи недоступен по дизайну (SFR-4), а лендинг
+  // рендерит то же число сервером из /api/health. Заодно проверяется, что
+  // витрина и sitemap говорят об одном каталоге.
+  const [sitemap, landing] = await Promise.all([request.get("/sitemap.xml"), request.get("/")]);
+  const html = await landing.text();
+  const stat = html.match(/>([\d\u00a0\s]+)<\/span><span[^>]*>научрук\S* в каталоге/);
+  expect(stat, "лендинг не показывает счётчик каталога — API отвечает?").not.toBeNull();
+  const profilesCount = Number(stat![1].replace(/[\s\u00a0]/g, ""));
+  const urls = (await sitemap.text()).match(/\/supervisor\//g) ?? [];
+  expect(urls.length).toBe(profilesCount);
 });
 
 test("robots.txt: каталог открыт, выдача и API закрыты", async ({ request }) => {
