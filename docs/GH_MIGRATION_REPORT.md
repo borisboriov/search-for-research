@@ -1,6 +1,6 @@
 # Отчёт: перенос задач в GitHub Issues + Projects
 
-**Дата:** 12.09.2026 · **Спека:** `SPEC_GH_MIGRATION.md` · **Сессия:** интерактивная, с двумя паузами на проверку Борисом.
+**Дата:** 12.09.2026 · **Спека:** `SPEC_GH_MIGRATION.md` (удалена 13.09, в истории git — коммит `4deca93`) · **Сессия:** интерактивная, с двумя паузами на проверку Борисом.
 
 Доска — **«SFR — задачи»**: https://github.com/users/borisboriov/projects/5
 Фильтры: [`label:human`](https://github.com/borisboriov/search-for-research/issues?q=is%3Aissue+is%3Aopen+label%3Ahuman) ·
