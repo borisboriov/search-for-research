@@ -27,10 +27,23 @@ export type Grade = "high" | "medium" | "low";
  * weak — серая зона (баннер, выдача остаётся), ok — обычная выдача. */
 export type Confidence = "none" | "weak" | "ok";
 
+/** «K публикаций по теме с <год>» — знаменатель строки «почему подошёл». */
+export interface WorksOnTopic {
+  count: number;
+  since_year: number | null;
+}
+
 export interface MatchResult extends SupervisorCard {
   score: number;
   rank: number;
   grade: Grade;
+  // Поля строки «совпало N из M» (P-18). Их даёт итерация ранжирования
+  // (SFR-7) — сейчас API их не отдаёт, поэтому они опциональные, а
+  // MatchEvidence скрыт. Фронт ничего из них не вычисляет сам: нет полей —
+  // нет блока (DESIGN_SYSTEM v2 §4, docs/DECISIONS.md 12.09).
+  matched_topics?: string[];
+  query_topics?: string[];
+  works_on_topic?: WorksOnTopic;
 }
 
 export interface MatchResponse {

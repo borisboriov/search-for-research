@@ -49,6 +49,19 @@ export function gradeLabel(grade: keyof typeof GRADE_LABELS): string {
   return GRADE_LABELS[grade];
 }
 
+/** Название последней работы в карточке обрезается ~64 знаками и раскрывается
+ * ссылкой «раскрыть» (P-15): живые английские заголовки OpenAlex вытягивали
+ * карточку в три строки мелкого текста (наблюдение 3 baseline 11.09).
+ * Режем по границе слова, чтобы не рвать слово посередине. */
+export const TITLE_LIMIT = 64;
+
+export function truncateTitle(title: string, limit: number = TITLE_LIMIT): string {
+  if (title.length <= limit) return title;
+  const head = title.slice(0, limit);
+  const space = head.lastIndexOf(" ");
+  return `${(space > limit * 0.6 ? head.slice(0, space) : head).trimEnd()}…`;
+}
+
 const INSTITUTION_SHORT: Record<string, string> = {
   "Московский физико-технический институт": "МФТИ",
   "Московский государственный университет": "МГУ",
@@ -58,6 +71,30 @@ const INSTITUTION_SHORT: Record<string, string> = {
 export function institutionShort(institution: string | null): string | null {
   if (!institution) return null;
   return INSTITUTION_SHORT[institution] ?? institution;
+}
+
+/** Дата сборки индекса из `/health` (`built_at`, ISO) для плашки P-08.
+ * Считаем в UTC, чтобы дата не «плыла» от часового пояса рендерящей машины;
+ * мусор на входе — null, плашка тогда показывается без даты. */
+export function formatIndexDate(builtAt: string | null | undefined): string | null {
+  if (!builtAt) return null;
+  const date = new Date(builtAt);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+/** Счётчик выдачи заголовком (DESIGN_SYSTEM v2 §3, S-09). «Вуз» → «Организация»:
+ * научрук может работать в НИИ, а в OpenAlex это такие же `institutions`
+ * (docs/DECISIONS.md 12.09). Число организаций считается по самой выдаче. */
+export function counterText(found: number, organisations: number): string {
+  const people = `${found} ${pluralize(found, "научрука", "научрука", "научруков")}`;
+  const orgs = `${organisations} ${pluralize(organisations, "организации", "организаций", "организаций")}`;
+  return `Нашли ${people} из ${orgs}`;
 }
 
 /** «МФТИ · профессор» — сегменты только из имеющихся данных (position пока null у всех). */

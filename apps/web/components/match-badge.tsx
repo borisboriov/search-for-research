@@ -29,7 +29,7 @@ export function MatchBadge({
     return (
       <span
         className={cn(
-          "rounded-badge bg-serendipity-soft px-2.5 py-1.5 text-[12px] font-semibold whitespace-nowrap text-serendipity",
+          "inline-flex rounded-badge bg-serendipity-soft px-2.5 py-1 text-[13px] font-medium whitespace-nowrap text-serendipity",
           className,
         )}
       >
@@ -44,7 +44,7 @@ export function MatchBadge({
           <span
             tabIndex={0}
             className={cn(
-              "cursor-default rounded-badge bg-accent-soft px-[11px] py-1.5 text-[13px] font-semibold whitespace-nowrap text-accent",
+              "inline-flex cursor-default rounded-badge bg-accent-soft px-2.5 py-1 text-[13px] font-medium whitespace-nowrap text-accent",
               className,
             )}
           >

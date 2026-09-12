@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/utils";
 
-/** Аватар-инициалы; serendipity — единственный случай тёплой палитры. */
+/** Аватар-инициалы (Literata 600 — правило 1 направления B: имена набирает
+ * сериф); serendipity — единственный случай тёплой палитры. */
 export function AvatarInitials({
   name,
   serendipity = false,
@@ -15,7 +16,7 @@ export function AvatarInitials({
     <span
       aria-hidden
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-semibold",
+        "flex shrink-0 items-center justify-center rounded-full font-display font-semibold",
         serendipity ? "bg-serendipity-soft text-serendipity" : "bg-accent-soft text-accent",
         className,
       )}
