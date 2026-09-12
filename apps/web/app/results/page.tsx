@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -11,13 +12,19 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SupervisorCardSkeleton, SupervisorResultCard } from "@/components/supervisor-card";
 import type { MatchResponse } from "@/lib/types";
-import { institutionShort, pluralize } from "@/lib/utils";
+import { counterText, institutionShort } from "@/lib/utils";
 
 type State =
   | { kind: "loading" }
   | { kind: "error" }
   | { kind: "invalid"; message: string }
   | { kind: "done"; response: MatchResponse };
+
+/** Предел ожидания /match (P-24): дольше скелетон не крутится — показываем
+ * состояние ошибки с кнопкой «Повторить». p50 запроса ≈130 мс, худший
+ * замеренный случай — секунды, так что десять секунд отсекают только зависшее
+ * соединение, а не медленный ответ. */
+export const MATCH_TIMEOUT_MS = 10_000;
 
 async function fetchMatch(text: string): Promise<State> {
   // Границы те же, что у бэкенда: ручной ?q=ab — подсказка про запрос,
@@ -29,6 +36,7 @@ async function fetchMatch(text: string): Promise<State> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: text, k: 10 }),
+      signal: AbortSignal.timeout(MATCH_TIMEOUT_MS),
     });
     if (response.status === 422) {
       const payload: unknown = await response.json().catch(() => null);
@@ -49,10 +57,6 @@ async function fetchMatch(text: string): Promise<State> {
   } catch {
     return { kind: "error" };
   }
-}
-
-function counterText(found: number, universities: number): string {
-  return `Найдено ${found} ${pluralize(found, "научрук", "научрука", "научруков")} · ${universities} ${pluralize(universities, "вуз", "вуза", "вузов")}`;
 }
 
 function ResultsContent() {
@@ -127,16 +131,18 @@ function ResultsForQuery({ query }: { query: string }) {
     }
     return filtered; // API уже отдаёт по убыванию score
   }, [results, filters]);
-  // Короткие имена + отсев null: иначе «2 вуза» при одном (REVIEW_SFR3 Low)
-  const universities = new Set(
+  // Короткие имена + отсев null: иначе «2 организации» при одной (REVIEW_SFR3 Low)
+  const organisations = new Set(
     visible.map((result) => institutionShort(result.institution)).filter(Boolean),
   ).size;
-  const counter = counterText(visible.length, universities);
+  const counter = counterText(visible.length, organisations);
 
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-[1312px] grow flex-col gap-3.5 px-5 pt-5 pb-10 sm:gap-5 sm:px-16 sm:pt-9 sm:pb-14">
+      {/* Колонка 920px по центру (S-08): на 1440 карточка во всю ширину
+          растягивала строку последней работы в одну линию мелкого текста. */}
+      <main className="mx-auto flex w-full max-w-[920px] grow flex-col gap-4 px-4 pt-5 pb-10 sm:gap-5 sm:pt-8 sm:pb-16">
         <h1 className="sr-only">Результаты подбора научных руководителей</h1>
         <QueryBar
           key={String(editingQuery)}
@@ -146,7 +152,7 @@ function ResultsForQuery({ query }: { query: string }) {
         />
 
         {state.kind === "loading" && (
-          <div aria-live="polite" className="flex flex-col gap-3.5">
+          <div aria-live="polite" className="flex flex-col gap-4">
             <p className="sr-only">Подбираем научруков…</p>
             {Array.from({ length: 5 }, (_, index) => (
               <SupervisorCardSkeleton key={index} />
@@ -168,20 +174,19 @@ function ResultsForQuery({ query }: { query: string }) {
           <>
             {/* Серая зона: баннер над выдачей, сама выдача остаётся (§0.9) */}
             {state.response.confidence === "weak" && <WeakBanner />}
-            <FiltersRow
-              filters={filters}
-              institutions={institutions}
-              counter={counter}
-              onChange={setFilters}
-            />
-            <FiltersSheetRow
-              filters={filters}
-              institutions={institutions}
-              counter={counter}
-              onChange={setFilters}
-            />
+            <FiltersRow filters={filters} institutions={institutions} onChange={setFilters} />
+            <FiltersSheetRow filters={filters} institutions={institutions} onChange={setFilters} />
+            {/* Счётчик — заголовком, под ним подпись о порядке выдачи (S-09) */}
+            <div className="flex flex-col gap-1 pt-1">
+              <h2 className="font-display text-[22px] leading-[1.2] font-semibold sm:text-[30px]">
+                {counter}
+              </h2>
+              <p className="text-[13.5px] text-fg-subtle">
+                Отсортировано по совпадению с запросом · темы и работы — по публикациям OpenAlex
+              </p>
+            </div>
             {/* Один reveal всего списка (fade + 8px, 200 мс) — других анимаций нет */}
-            <div key={state.response.index_version + query} className="animate-reveal flex flex-col gap-3.5">
+            <div key={state.response.index_version + query} className="animate-reveal flex flex-col gap-4">
               {visible.map((result) => (
                 <SupervisorResultCard key={result.author_id} result={result} query={query} />
               ))}
@@ -191,8 +196,11 @@ function ResultsForQuery({ query }: { query: string }) {
                 </p>
               )}
             </div>
-            <p className="flex flex-wrap justify-center gap-1.5 pt-2.5 text-center text-[12px] text-fg-subtle sm:text-[13px]">
+            <p className="flex flex-wrap justify-center gap-1.5 pt-2 text-center text-[13px] text-fg-subtle">
               Наукометрия — по данным открытого каталога OpenAlex.
+              <Link href="/#how-it-works" className="text-accent hover:text-accent-hover">
+                Как работает подбор
+              </Link>
             </p>
           </>
         )}

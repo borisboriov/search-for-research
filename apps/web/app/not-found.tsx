@@ -9,7 +9,7 @@ export default function NotFound() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto w-full max-w-[1312px] grow px-5 pt-5 pb-10 sm:px-16 sm:pt-9 sm:pb-14">
+      <main className="mx-auto w-full max-w-[920px] grow px-4 pt-5 pb-10 sm:pt-8 sm:pb-16">
         <Card className="flex flex-col items-center gap-[18px] rounded-search px-5 py-10 sm:px-12 sm:py-14">
           <span className="flex size-16 items-center justify-center rounded-full bg-accent-soft">
             <LogoMark className="size-[30px] text-fg-subtle" />

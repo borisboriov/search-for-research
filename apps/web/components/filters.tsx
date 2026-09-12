@@ -34,9 +34,9 @@ function Chip({
   return (
     <label
       className={cn(
-        "relative flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-3.5 text-[14px] font-medium whitespace-nowrap",
+        "relative flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[14px] whitespace-nowrap",
         active
-          ? "border-accent-border bg-accent-soft text-accent"
+          ? "border-accent-border bg-accent-soft font-medium text-accent"
           : "border-border bg-surface text-fg",
         className,
       )}
@@ -68,7 +68,7 @@ function FilterChips({
   return (
     <>
       <Chip
-        label={`Вуз: ${filters.institution || "все"}`}
+        label={`Организация: ${filters.institution || "все"}`}
         value={filters.institution}
         active={filters.institution !== ""}
         onChange={(institution) => onChange({ ...filters, institution })}
@@ -110,6 +110,7 @@ function SortChip({
       label={filters.sort === "score" ? "По совпадению" : "По h-index"}
       value={filters.sort}
       active
+      className="border-fg bg-fg font-medium text-bg [&_svg]:text-bg"
       onChange={(sort) => onChange({ ...filters, sort: sort as FilterState["sort"] })}
     >
       <option value="score">По совпадению</option>
@@ -118,49 +119,42 @@ function SortChip({
   );
 }
 
-/** Десктоп: чипы в строку над списком; счётчик и сортировка справа. */
+/** Десктоп: чипы в строку над списком, активная сортировка — справа.
+ * Счётчик с v2 живёт не здесь, а заголовком над списком (DESIGN_SYSTEM §3). */
 export function FiltersRow({
   filters,
   institutions,
-  counter,
   onChange,
 }: {
   filters: FilterState;
   institutions: string[];
-  counter: string;
   onChange: (filters: FilterState) => void;
 }) {
   return (
-    <div className="hidden items-center justify-between gap-4 sm:flex">
-      <div className="flex items-center gap-2.5">
+    <div className="hidden items-center justify-between gap-3 sm:flex">
+      <div className="flex flex-wrap items-center gap-2">
         <FilterChips filters={filters} institutions={institutions} onChange={onChange} />
       </div>
-      <div className="flex items-center gap-4">
-        <p className="text-[14px] text-fg-muted">{counter}</p>
-        <SortChip filters={filters} onChange={onChange} />
-      </div>
+      <SortChip filters={filters} onChange={onChange} />
     </div>
   );
 }
 
-/** Мобайл: счётчик + кнопка «Фильтры», открывающая Sheet. */
+/** Мобайл: кнопка «Фильтры», открывающая Sheet со всеми чипами. */
 export function FiltersSheetRow({
   filters,
   institutions,
-  counter,
   onChange,
 }: {
   filters: FilterState;
   institutions: string[];
-  counter: string;
   onChange: (filters: FilterState) => void;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex items-center justify-between gap-2.5 sm:hidden">
-      <p className="text-[13px] text-fg-muted">{counter}</p>
+    <div className="flex sm:hidden">
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger className="flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-surface px-3.5 text-[14px] font-medium">
+        <SheetTrigger className="flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-border bg-surface px-[18px] text-[15px] font-medium">
           <SlidersHorizontal className="size-4" aria-hidden strokeWidth={2} />
           Фильтры
         </SheetTrigger>

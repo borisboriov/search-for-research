@@ -30,9 +30,9 @@ export function QueryBar({
     );
   }
   return (
-    <div className="flex items-center gap-2.5 rounded-[12px] border border-border bg-surface px-3.5 py-3 sm:gap-3 sm:rounded-card sm:px-[18px] sm:py-4">
-      <Search className="size-5 shrink-0 text-fg-subtle" aria-hidden strokeWidth={2} />
-      <p className="grow truncate text-[14px] sm:text-[16px]">{query}</p>
+    <div className="flex items-center gap-2.5 rounded-card border border-border bg-surface px-3.5 py-2.5 sm:gap-3 sm:px-[18px] sm:py-3.5">
+      <Search className="size-[18px] shrink-0 text-fg-subtle" aria-hidden strokeWidth={2} />
+      <p className="grow truncate text-[15px] leading-[1.4]">{query}</p>
       <button
         type="button"
         onClick={() => setEditing(true)}
