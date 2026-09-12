@@ -8,7 +8,7 @@ import { affiliationLine } from "@/lib/utils";
 
 /** Шапка профиля: аватар, ФИО, вуз · должность, чипы тем; совпадение с
  * запросом — словесный грейд, клиентский островок (виден только при переходе
- * с результатов, `?score=&grade=`). Процента на профиле нет (решение 11.09), а с 13.09 — и в tooltip бейджа. */
+ * с результатов, `?score=&grade=`). Процента на профиле нет (решение 11.09), а с 12.09 — и в tooltip бейджа. */
 export function SupervisorHeader({ card }: { card: SupervisorCard }) {
   return (
     <Card className="flex flex-col gap-3.5 p-5 sm:flex-row sm:items-center sm:gap-6 sm:px-7 sm:py-6">
