@@ -10,8 +10,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SupervisorHeader } from "@/components/supervisor-header";
 import { Card } from "@/components/ui/card";
 import { WorksList } from "@/components/works-list";
-import { getSupervisor } from "@/lib/api";
-import { institutionShort } from "@/lib/utils";
+import { getHealth, getSupervisor } from "@/lib/api";
+import { formatIndexDate, institutionShort } from "@/lib/utils";
 
 // ISR, а не SSG: страницы рендерятся по запросу и кэшируются на час, поэтому
 // сборка не требует живого API, а каталог (меняется раз в семестр) не устаревает
@@ -66,6 +66,10 @@ export default async function SupervisorPage({ params }: PageProps) {
   if (!AUTHOR_ID.test(id)) notFound();
   const card = await getSupervisor(id);
   if (card === null) notFound();
+  // Дата для плашки P-08: сборка индекса из /health. Ошибку глотаем — без даты
+  // плашка остаётся, страница из-за неё падать не должна.
+  const health = await getHealth().catch(() => null);
+  const updatedAt = formatIndexDate(health?.built_at);
 
   // Мобильный порядок блоков (шапка → наукометрия → написать → чем занимается →
   // работы → «это вы?») против двух независимых колонок на десктопе: на мобайле
@@ -73,7 +77,7 @@ export default async function SupervisorPage({ params }: PageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto flex w-full max-w-[1312px] flex-col gap-4 px-5 pt-[18px] pb-10 sm:gap-6 sm:px-16 sm:pt-7 sm:pb-16">
+      <main className="mx-auto flex w-full max-w-[1312px] flex-col gap-4 px-4 pt-[18px] pb-10 sm:gap-6 sm:px-16 sm:pt-7 sm:pb-16">
         <BackToResults />
         <SupervisorHeader card={card} />
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_400px] lg:items-start lg:gap-6">
@@ -85,6 +89,12 @@ export default async function SupervisorPage({ params }: PageProps) {
                   ? `Ключевые темы по публикациям: ${card.topics.slice(0, 7).join("; ")}.`
                   : "Тем в открытых данных не нашлось — загляни в список работ ниже."}
               </p>
+              {/* Происхождение тем — внутри блока, а не в футере (P-09):
+                  снимает часть юридического риска дешевле, чем что-либо ещё. */}
+              <p className="text-[13px] leading-normal text-fg-subtle">
+                Темы посчитаны по публикациям в OpenAlex; научный руководитель их не
+                подтверждал
+              </p>
             </Card>
             <div className="order-4 lg:order-none">
               <WorksList card={card} />
@@ -92,7 +102,7 @@ export default async function SupervisorPage({ params }: PageProps) {
           </div>
           <div className="contents lg:flex lg:flex-col lg:gap-5">
             <div className="order-1 lg:order-none">
-              <MetricsCard card={card} />
+              <MetricsCard card={card} updatedAt={updatedAt} />
             </div>
             <div className="order-2 lg:order-none">
               <ContactCard card={card} />

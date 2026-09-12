@@ -17,7 +17,13 @@ const SAMPLE: MatchResult = {
   cited_by_count: 420,
   position: null,
   email: null,
-  top_works: [{ title: "Bayesian optimisation of alloy compositions", year: 2024 }],
+  top_works: [
+    {
+      title:
+        "Bayesian optimisation of alloy compositions under uncertainty: a benchmark for materials discovery",
+      year: 2024,
+    },
+  ],
   serendipity: false,
   score: 0.44,
   rank: 1,
@@ -43,6 +49,23 @@ export function StatesShowcase() {
           <MatchBadge score={0.38} grade="medium" />
           <MatchBadge score={0.31} grade="low" />
         </div>
+      </section>
+
+      <section className="flex flex-col gap-3.5">
+        <h2 className="text-[16px] font-semibold">
+          Карточка со строкой «почему подошёл» (P-18) — синтетический ответ: полей
+          matched_topics / query_topics / works_on_topic API ещё не отдаёт (SFR-7)
+        </h2>
+        <SupervisorResultCard
+          result={{
+            ...SAMPLE,
+            author_id: "A0000000003",
+            matched_topics: ["Байесовские методы", "Оптимизация", "Материаловедение"],
+            query_topics: ["Байесовские методы", "Оптимизация", "Материаловедение", "Сплавы"],
+            works_on_topic: { count: 14, since_year: 2021 },
+          }}
+          query="образец"
+        />
       </section>
 
       <section className="flex flex-col gap-3.5">
