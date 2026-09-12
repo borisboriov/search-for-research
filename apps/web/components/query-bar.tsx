@@ -39,8 +39,9 @@ export function QueryBar({
         className="flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-btn px-2 text-[14px] font-medium text-accent hover:text-accent-hover focus-visible:outline-2 focus-visible:outline-accent"
       >
         <Pencil className="size-4 sm:hidden" aria-hidden strokeWidth={2} />
+        {/* Один носитель подписи: на мобайле она sr-only при иконке, на десктопе
+            видима. Второй sr-only span скринридер читал дважды. */}
         <span className="sr-only sm:not-sr-only">Изменить запрос</span>
-        <span className="sr-only">Изменить запрос</span>
       </button>
     </div>
   );

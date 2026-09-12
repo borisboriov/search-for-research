@@ -14,6 +14,13 @@ describe("QueryBar", () => {
     expect(screen.getByText("графовые нейросети")).toBeInTheDocument();
   });
 
+  // REVIEW_SFR-6: дублированный sr-only span заставлял скринридер читать
+  // подпись кнопки дважды
+  it("подпись кнопки — ровно одна", () => {
+    render(<QueryBar query="графовые нейросети" onSubmitQuery={() => {}} />);
+    expect(screen.getAllByText("Изменить запрос")).toHaveLength(1);
+  });
+
   it("«Изменить запрос» разворачивает редактор с текстом запроса", async () => {
     const user = userEvent.setup();
     render(<QueryBar query="графовые нейросети" onSubmitQuery={() => {}} />);
