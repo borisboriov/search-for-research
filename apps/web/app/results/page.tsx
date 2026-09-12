@@ -26,7 +26,16 @@ type State =
  * соединение, а не медленный ответ. */
 export const MATCH_TIMEOUT_MS = 10_000;
 
-async function fetchMatch(text: string): Promise<State> {
+/** `AbortSignal.timeout` нет в Safari < 16.4 и в старых WebView. Вызов стоял
+ * внутри общего `try`, поэтому на таких движках `TypeError` ловился тем же
+ * `catch` и `/results` **всегда** показывала «Сервис недоступен» с вечной
+ * кнопкой «Повторить» (REVIEW_SFR-6 Low). Нет функции — работаем без предела
+ * ожидания: это хуже, чем с ним, но несравнимо лучше, чем страница-заглушка. */
+function timeoutSignal(ms: number): AbortSignal | undefined {
+  return typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(ms) : undefined;
+}
+
+export async function fetchMatch(text: string): Promise<State> {
   // Границы те же, что у бэкенда: ручной ?q=ab — подсказка про запрос,
   // а не поход в API и не ложное «Сервис недоступен» (REVIEW_SFR3 Medium).
   const invalid = validateQuery(text);
@@ -36,7 +45,7 @@ async function fetchMatch(text: string): Promise<State> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: text, k: 10 }),
-      signal: AbortSignal.timeout(MATCH_TIMEOUT_MS),
+      signal: timeoutSignal(MATCH_TIMEOUT_MS),
     });
     if (response.status === 422) {
       const payload: unknown = await response.json().catch(() => null);
