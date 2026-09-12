@@ -1,11 +1,13 @@
+import { PillLabel } from "@/components/pill-label";
 import { SearchBox } from "@/components/search-box";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SupervisorPreviewCard } from "@/components/supervisor-card";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getHealth, getSupervisor } from "@/lib/api";
 import { PREVIEW_AUTHOR_IDS } from "@/lib/preview";
-import { formatNumber, pluralize } from "@/lib/utils";
+import { cn, formatNumber, pluralize } from "@/lib/utils";
 import Link from "next/link";
 
 export const revalidate = 3600; // каталог меняется раз в семестр — час устаревания ничем не грозит
@@ -25,13 +27,15 @@ const STEPS = [
   },
 ] as const;
 
+// Цифры доверия — Literata 44px цветом `--fg`, не акцентом: правило 2
+// направления B (заливок акцентом две на экран, числа акцентом были третьей).
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="flex flex-col gap-1 sm:items-center sm:gap-1.5">
-      <span className="font-display text-[26px] font-semibold text-accent sm:text-[40px]">
+    <div className="flex flex-col items-center gap-2.5 text-center">
+      <span className="font-display text-[28px] leading-none font-semibold tracking-[-0.01em] text-fg sm:text-[44px]">
         {value}
       </span>
-      <span className="text-[12px] text-fg-muted sm:text-[15px]">{label}</span>
+      <span className="text-[13px] leading-snug text-fg-muted sm:text-[14px]">{label}</span>
     </div>
   );
 }
@@ -54,15 +58,13 @@ export default async function LandingPage() {
         {/* Hero */}
         <section
           id="search"
-          className="flex flex-col gap-[18px] px-5 pt-9 pb-8 sm:items-center sm:gap-6 sm:px-16 sm:pt-16 sm:pb-14"
+          className="flex flex-col items-center gap-[18px] px-4 pt-10 pb-10 sm:gap-6 sm:px-16 sm:pt-[88px] sm:pb-[72px]"
         >
-          <p className="self-start rounded-full bg-accent-soft px-3 py-1.5 text-[11px] font-medium tracking-[0.06em] text-accent uppercase sm:self-auto sm:px-3.5 sm:py-[7px] sm:text-[13px]">
-            Кросс-вузовый подбор научных руководителей
-          </p>
-          <h1 className="max-w-[820px] font-display text-[34px] leading-[1.15] font-semibold tracking-[-0.01em] sm:text-center sm:text-[54px] sm:leading-[1.12]">
-            Научный руководитель под твою тему — за минуту
+          <PillLabel>Кросс-вузовый подбор научных руководителей</PillLabel>
+          <h1 className="max-w-[1100px] text-center font-display text-[42px] leading-[1.04] font-medium tracking-[-0.015em] text-balance sm:text-[76px]">
+            Научный руководитель под твою тему — за&nbsp;минуту
           </h1>
-          <p className="max-w-[640px] text-[16px] leading-normal text-fg-muted sm:text-center sm:text-[19px]">
+          <p className="max-w-[640px] text-center text-[17px] leading-[1.5] text-fg-muted sm:text-[20px]">
             Опиши, что тебе интересно в науке, — и получи подборку научруков из разных вузов
             со степенью совпадения и честной наукометрией.
           </p>
@@ -75,19 +77,20 @@ export default async function LandingPage() {
         {preview.length > 0 && (
           <section
             aria-label="Пример подборки"
-            className="flex flex-col gap-3 px-5 pb-9 sm:gap-5 sm:px-16 sm:pb-[72px]"
+            className="flex flex-col items-center gap-4 bg-bg-muted px-4 py-12 sm:gap-6 sm:px-16 sm:py-20"
           >
-            <p className="text-[12px] font-medium tracking-[0.08em] text-fg-subtle uppercase sm:text-center sm:text-[13px]">
-              Так выглядит подборка
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-5">
+            <PillLabel>Так выглядит подборка</PillLabel>
+            <h2 className="max-w-[720px] text-center font-display text-[30px] leading-[1.15] font-semibold text-balance sm:text-[40px]">
+              Научруки из разных вузов — по&nbsp;твоему запросу
+            </h2>
+            <div className="grid w-full grid-cols-1 items-start gap-4 sm:grid-cols-3">
               {preview.map((card, index) => (
                 <div key={card.author_id} className={index === 2 ? "hidden sm:block" : undefined}>
                   <SupervisorPreviewCard card={card} />
                 </div>
               ))}
             </div>
-            <p className="text-[12px] text-fg-subtle sm:text-center sm:text-[13px]">
+            <p className="text-center text-[13px] text-fg-subtle">
               Наукометрия — по данным открытого каталога OpenAlex
             </p>
           </section>
@@ -96,26 +99,21 @@ export default async function LandingPage() {
         {/* Три шага */}
         <section
           id="how-it-works"
-          className="flex flex-col gap-4 bg-bg-muted px-5 py-10 sm:gap-9 sm:px-16 sm:py-[72px]"
+          className="flex flex-col items-center gap-4 px-4 py-12 sm:gap-6 sm:px-16 sm:py-20"
         >
-          <h2 className="font-display text-[28px] font-semibold sm:text-center sm:text-[36px]">
+          <PillLabel>Как это работает</PillLabel>
+          <h2 className="text-center font-display text-[30px] leading-[1.15] font-semibold sm:text-[40px]">
             Три шага до научрука
           </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-6">
-            {STEPS.map((step, index) => (
-              <Card key={step.title} className="flex gap-3.5 p-5 sm:flex-col sm:p-7">
-                <span
-                  aria-hidden
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-[15px] font-semibold text-white sm:size-9 sm:text-[16px]"
-                >
-                  {index + 1}
-                </span>
-                <span className="flex flex-col gap-1.5 sm:gap-3.5">
-                  <h3 className="text-[16px] font-semibold sm:text-[18px]">{step.title}</h3>
-                  <p className="text-[14px] leading-normal text-fg-muted sm:text-[15px] sm:leading-relaxed">
-                    {step.text}
-                  </p>
-                </span>
+          {/* Кружков «1 / 2 / 3» в v2 нет — порядок несёт сетка, а не третья
+              акцентная заливка (S-06, DESIGN_SYSTEM v2 §3). */}
+          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-3">
+            {STEPS.map((step) => (
+              <Card key={step.title} className="flex flex-col gap-2.5 p-5 sm:p-6">
+                <h3 className="text-[16px] font-semibold sm:text-[17px]">{step.title}</h3>
+                <p className="text-[14px] leading-[1.5] text-fg-muted sm:text-[15px]">
+                  {step.text}
+                </p>
               </Card>
             ))}
           </div>
@@ -124,7 +122,7 @@ export default async function LandingPage() {
         {/* Полоса цифр: живые числа из /api/health, ничего выдуманного */}
         <section
           aria-label="Сервис в цифрах"
-          className="grid grid-cols-3 gap-3 px-5 py-9 sm:flex sm:justify-center sm:gap-24 sm:px-16 sm:py-16"
+          className="grid grid-cols-1 gap-8 bg-bg-muted px-4 py-10 sm:grid-cols-3 sm:px-16 sm:py-14"
         >
           {health && (
             <Stat
@@ -142,22 +140,25 @@ export default async function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="flex flex-col gap-4 bg-accent-deep px-5 py-11 sm:items-center sm:gap-[22px] sm:px-16 sm:py-[72px]">
-          <h2 className="max-w-[700px] font-display text-[28px] leading-tight font-semibold text-white sm:text-center sm:text-[38px]">
-            Поиск научрука — 3–12 недель. Или минута.
+        <section className="flex flex-col items-center gap-4 bg-accent-deep px-4 py-12 sm:gap-5 sm:px-16 sm:py-20">
+          <h2 className="max-w-[720px] text-center font-display text-[30px] leading-[1.15] font-semibold text-balance text-white sm:text-[40px]">
+            Поиск научрука — <span className="whitespace-nowrap">3–12 недель.</span> Или минута.
           </h2>
-          <p className="max-w-[560px] text-[15px] leading-normal text-accent-deep-fg sm:text-center sm:text-[17px]">
+          <p className="max-w-[560px] text-center text-[15px] leading-[1.5] text-accent-deep-fg sm:text-[17px]">
             Не ограничивайся своей кафедрой — выбирай из сотен исследователей разных вузов.
           </p>
           <Link
             href="/#search"
-            className="rounded-btn bg-surface px-7 py-3.5 text-center text-[16px] font-semibold text-accent-deep hover:bg-accent-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className={cn(
+              buttonVariants({ variant: "inverse" }),
+              "focus-visible:outline-white max-sm:w-full",
+            )}
           >
             Попробовать бесплатно
           </Link>
         </section>
       </main>
-      <SiteFooter bordered={false} />
+      <SiteFooter />
     </>
   );
 }

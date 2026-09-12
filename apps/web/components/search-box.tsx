@@ -58,7 +58,7 @@ export function SearchBox({
   return (
     <form
       onSubmit={submit}
-      className="flex w-full flex-col gap-3.5 rounded-search border border-border bg-surface p-4 shadow-search sm:gap-4 sm:p-5"
+      className="flex w-full flex-col gap-3 rounded-search border border-border bg-surface p-3 sm:p-4"
     >
       <label className="sr-only" htmlFor="query">
         Описание научных интересов
@@ -82,18 +82,18 @@ export function SearchBox({
         }}
         aria-invalid={error !== null}
         aria-describedby={error ? "query-error" : undefined}
-        className="min-h-[88px]"
+        className="min-h-24 px-1.5 py-2 text-[16px] sm:text-[17px]"
       />
       {error && (
         <p id="query-error" role="alert" className="text-[14px] text-danger">
           {error}
         </p>
       )}
-      <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4")}>
-        <span className="text-[14px] text-fg-subtle">Бесплатно · без регистрации</span>
-        <Button type="submit">
+      <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3")}>
+        <span className="text-[13px] text-fg-subtle">Бесплатно · без регистрации</span>
+        <Button type="submit" className="max-sm:w-full">
           Подобрать научрука
-          <ArrowRight className="size-[18px]" aria-hidden strokeWidth={2} />
+          <ArrowRight className="size-4" aria-hidden strokeWidth={2} />
         </Button>
       </div>
     </form>
