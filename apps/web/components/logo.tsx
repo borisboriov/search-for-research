@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 
-/** Знак «Совпадение»: две окружности с закрашенной общей зоной (design/logo/sfr-mark.svg). */
+/** Знак «Совпадение»: две окружности с закрашенной общей зоной (design/logo/sfr-mark.svg).
+ * Форма в направлении B не менялась — только цвет (`text-accent`, #0F5F5C). */
 export function LogoMark({
   className,
   strokeWidth = 2.6,
@@ -24,18 +25,20 @@ export function LogoMark({
   );
 }
 
-/** Лок-ап: знак + словесная часть Spectral 500. mono — для футера (цвет текста). */
-export function Logo({ mono = false, compact = false }: { mono?: boolean; compact?: boolean }) {
+/** Лок-ап: знак + словесная часть Literata 500 (`font-display`, DESIGN_SYSTEM v2
+ * §1). mono — для футера (цвет текста). Знак в шапке — 26px, как в макете B;
+ * обводка чуть толще токена v1, иначе на 26px знак читается тоньше макета. */
+export function Logo({ mono = false }: { mono?: boolean }) {
   return (
     <span className="flex items-center gap-2.5">
       <LogoMark
-        className={cn(mono ? "size-[22px] text-fg" : "text-accent", compact ? "size-[30px]" : "size-8")}
-        strokeWidth={mono ? 2.8 : 2.6}
+        className={cn(mono ? "size-[18px] text-fg" : "size-[26px] text-accent")}
+        strokeWidth={mono ? 3.8 : 3.4}
       />
       <span
         className={cn(
           "font-display font-medium tracking-[-0.015em] text-fg",
-          mono ? "text-[16px]" : compact ? "text-[18px] sm:text-[21px]" : "text-[18px] sm:text-[22px]",
+          mono ? "text-[15px]" : "text-[18px] sm:text-[21px]",
         )}
       >
         Search for Research

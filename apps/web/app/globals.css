@@ -1,45 +1,46 @@
 @import "tailwindcss";
 
-/* Токены дизайн-системы v1 (design/DESIGN_SYSTEM.md §1) — источник истины.
+/* Токены дизайн-системы v2, направление B «Академичная свежесть»
+   (design/DESIGN_SYSTEM.md §1) — источник истины.
    Значения не менять здесь: правится дизайн-система, потом этот файл. */
 /* Шрифтовые токены ссылаются на переменные next/font (заданы классом на body),
    поэтому объявлены inline — обычный @theme разрешал бы их на :root, где
    переменных next/font ещё нет. */
 @theme inline {
-  --font-display: var(--font-spectral), Georgia, serif;
-  --font-sans: var(--font-golos), system-ui, sans-serif;
+  --font-display: var(--font-literata), Georgia, serif;
+  --font-sans: var(--font-plex), system-ui, sans-serif;
 }
 
 @theme {
-  --color-bg: #fbfaf7;
-  --color-bg-muted: #f2f1ec;
-  --color-surface: #ffffff;
-  --color-border: #e4e2db;
-  --color-fg: #1b2233;
-  --color-fg-muted: #5a6478;
-  --color-fg-subtle: #9aa1b0;
-  --color-accent: #3b52c9;
-  --color-accent-hover: #2a3da0;
-  --color-accent-soft: #eef1fc;
-  --color-accent-deep: #26307a;
-  --color-accent-deep-fg: #c4cbec;
-  --color-accent-border: #c4cbec;
-  --color-serendipity: #c46a2b;
-  --color-serendipity-soft: #fdf3ea;
+  --color-bg: #f7f4ec;
+  --color-bg-muted: #efebe0;
+  --color-surface: #fffdf9;
+  --color-border: #e1dccf;
+  --color-fg: #1a1f1e;
+  --color-fg-muted: #5b625f;
+  --color-fg-subtle: #98a09c;
+  --color-accent: #0f5f5c;
+  --color-accent-hover: #0b4a48;
+  --color-accent-soft: #e4efec;
+  --color-accent-deep: #0a3937;
+  --color-accent-deep-fg: #bfd6d2;
+  --color-accent-border: #bfd6d2;
+  --color-serendipity: #a8631f;
+  --color-serendipity-soft: #f8eedf;
   --color-danger: #b3261e;
 
-  --radius-btn: 10px;
-  --radius-card: 14px;
-  --radius-search: 16px;
-  --radius-badge: 8px;
-
-  --shadow-search: 0 8px 28px rgba(27, 34, 51, 0.06);
+  /* Радиусы v2: кнопки и поля 8, карточки и контейнер поиска 12, бейджи 6.
+     Теней в направлении B нет — токен --shadow-search удалён вместе с ними. */
+  --radius-btn: 8px;
+  --radius-card: 12px;
+  --radius-search: 12px;
+  --radius-badge: 6px;
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-fg);
-  font-family: var(--font-golos), system-ui, sans-serif;
+  font-family: var(--font-plex), system-ui, sans-serif;
 }
 
 /* Единственная анимация интерфейса: один reveal списка результатов
