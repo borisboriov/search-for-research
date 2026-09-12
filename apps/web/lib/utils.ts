@@ -86,6 +86,10 @@ export function formatIndexDate(builtAt: string | null | undefined): string | nu
  * научрук может работать в НИИ, а в OpenAlex это такие же `institutions`
  * (docs/DECISIONS.md 12.09). Число организаций считается по самой выдаче. */
 export function counterText(found: number, organisations: number): string {
+  // Счётчик считается по отфильтрованной выдаче, и при жёстком фильтре
+  // заголовок говорил «Нашли 0 научруков из 0 организаций» — формально верно,
+  // но читается как «сервис ничего не нашёл по запросу» (REVIEW_SFR-6).
+  if (found === 0) return "Под фильтры никто не попал";
   const people = `${found} ${pluralize(found, "научрука", "научрука", "научруков")}`;
   const orgs = `${organisations} ${pluralize(organisations, "организации", "организаций", "организаций")}`;
   return `Нашли ${people} из ${orgs}`;

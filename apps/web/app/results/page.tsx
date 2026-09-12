@@ -190,18 +190,23 @@ function ResultsForQuery({ query }: { query: string }) {
               <h2 className="font-display text-[22px] leading-[1.2] font-semibold sm:text-[30px]">
                 {counter}
               </h2>
-              <p className="text-[13.5px] text-fg-subtle">
-                Отсортировано по совпадению с запросом · темы и работы — по публикациям OpenAlex
-              </p>
+              {/* Подпись про порядок выдачи бессмысленна над пустым списком */}
+              {visible.length > 0 && (
+                <p className="text-[13.5px] text-fg-subtle">
+                  Отсортировано по совпадению с запросом · темы и работы — по публикациям OpenAlex
+                </p>
+              )}
             </div>
             {/* Один reveal всего списка (fade + 8px, 200 мс) — других анимаций нет */}
             <div key={state.response.index_version + query} className="animate-reveal flex flex-col gap-4">
               {visible.map((result) => (
                 <SupervisorResultCard key={result.author_id} result={result} query={query} />
               ))}
+              {/* Сам факт «никто не попал» теперь в заголовке — здесь остаётся
+                  только действие, чтобы не повторять одну мысль дважды. */}
               {visible.length === 0 && (
                 <p className="py-8 text-center text-[15px] text-fg-muted">
-                  Под выбранные фильтры никто не попал — ослабь их или сбрось.
+                  Ослабь фильтры или сбрось их.
                 </p>
               )}
             </div>
