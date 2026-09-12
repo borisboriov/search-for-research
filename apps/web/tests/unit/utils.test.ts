@@ -7,7 +7,6 @@ import {
   formatNumber,
   initials,
   institutionShort,
-  matchPercent,
   pluralize,
   truncateTitle,
 } from "@/lib/utils";
@@ -42,13 +41,6 @@ describe("pluralize", () => {
     [21, "вуз"],
   ])("%i → %s", (count, expected) => {
     expect(pluralize(count, "вуз", "вуза", "вузов")).toBe(expected);
-  });
-});
-
-describe("matchPercent", () => {
-  it("округляет косинусную близость до процента", () => {
-    expect(matchPercent(0.921)).toBe("92%");
-    expect(matchPercent(0.275)).toBe("28%");
   });
 });
 

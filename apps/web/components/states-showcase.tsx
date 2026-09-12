@@ -42,12 +42,12 @@ export function StatesShowcase() {
 
       <section className="flex flex-col gap-3.5">
         <h2 className="text-[16px] font-semibold">
-          Бейджи: три грейда (SPEC_SFR4 §0.9 — процент в tooltip)
+          Бейджи: три грейда (SPEC_SFR4 §0.9; процента нет нигде — решение 13.09)
         </h2>
         <div className="flex flex-wrap gap-3">
-          <MatchBadge score={0.44} grade="high" />
-          <MatchBadge score={0.38} grade="medium" />
-          <MatchBadge score={0.31} grade="low" />
+          <MatchBadge grade="high" />
+          <MatchBadge grade="medium" />
+          <MatchBadge grade="low" />
         </div>
       </section>
 

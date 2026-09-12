@@ -106,7 +106,6 @@ export function SupervisorResultCard({ result, query }: { result: MatchResult; q
             </h3>
           </div>
           <MatchBadge
-            score={result.score}
             grade={result.grade}
             serendipity={result.serendipity}
             className="self-start"

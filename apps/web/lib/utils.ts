@@ -31,12 +31,6 @@ export function pluralize(count: number, one: string, few: string, many: string)
   return many;
 }
 
-/** Косинусная близость 0..1 → «NN%». Округление, без перескалирования;
- * после SFR-4 живёт в tooltip бейджа и блоке «совпадение» профиля. */
-export function matchPercent(score: number): string {
-  return `${Math.round(score * 100)}%`;
-}
-
 /** Словесный грейд на бейдже (SPEC_SFR4 §0.9): границы шкалы задаёт API
  * (score_weak/score_high в /health), фронт только называет грейд словами. */
 export const GRADE_LABELS = {

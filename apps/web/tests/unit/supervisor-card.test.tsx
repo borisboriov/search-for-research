@@ -36,7 +36,7 @@ describe("SupervisorResultCard: обычное состояние", () => {
     expect(screen.getByText("Ivan Smirnov")).toBeInTheDocument();
     expect(screen.getByText("МФТИ")).toBeInTheDocument();
     expect(screen.getByText("h-index 13")).toBeInTheDocument();
-    // Грейд словами на бейдже; процент — только в tooltip (SPEC_SFR4 §0.9)
+    // Грейд словами на бейдже; процента нет нигде (SPEC_SFR4 §0.9, решение 13.09)
     expect(screen.getByText("высокое совпадение")).toBeInTheDocument();
     expect(screen.queryByText("43%")).not.toBeInTheDocument();
   });
