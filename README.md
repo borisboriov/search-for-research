@@ -123,7 +123,7 @@ apps/api/            # FastAPI-сервис поиска (SFR-2): /api/match, /a
 apps/web/            # заглушка под SFR-3 (Next.js)
 scripts/             # bench_api.py — замер ресурсов контейнера
 data/                # gitignored: raw-кэш API, SQLite, экспорты, индексы, прогоны eval
-docs/                # DECISIONS.md (ADR), SESSIONS.md, SFR<N>_REPORT.md, specs/, GITHUB_WORKFLOW.md
+docs/                # DECISIONS.md (ADR), SESSIONS.md, SFR<N>_REPORT.md, specs/; правила issues — CLAUDE.md
 ```
 
 Требования: Python 3.12+, [uv](https://docs.astral.sh/uv/).
