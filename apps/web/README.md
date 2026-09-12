@@ -1,11 +1,16 @@
-# apps/web — фронтенд Search for Research (SFR-3)
+# apps/web — фронтенд Search for Research (SFR-3, вид — SFR-6)
 
 Next.js (App Router) + TypeScript + Tailwind v4 + компоненты в стиле shadcn/ui.
 Три страницы поверх API `apps/api`: лендинг `/`, выдача `/results?q=…`,
 открытая страница НР `/supervisor/[id]` (SSR + ISR, sitemap по каталогу).
 
 Дизайн — источник истины: `design/DESIGN_HANDOFF.md`, `design/DESIGN_SYSTEM.md`
-(токены §1 лежат в `app/globals.css`), макеты `design/mockups/*`.
+**v2** (направление B «Академичная свежесть»; токены §1 лежат в
+`app/globals.css`, шрифты Literata + IBM Plex Sans — в `app/layout.tsx`).
+Макеты B — в родительской папке
+(`../../../02_research/2026-09_дизайн_референсы/directions_2026-09-12/`), в репо
+их не копируем; `design/mockups/*` — макеты v1, оставлены как история SFR-3 и
+источник раскладки для `/supervisor/:id`, которой в B не рисовалось.
 
 ## Команды (из корня репозитория)
 

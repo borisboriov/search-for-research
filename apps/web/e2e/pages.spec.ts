@@ -23,7 +23,9 @@ for (const [label, viewport] of [
 
     test(`результаты (${label})`, async ({ page }) => {
       await page.goto("/results?q=" + encodeURIComponent("машинное обучение для анализа текстов"));
-      await expect(page.getByText(/Найдено \d+/).filter({ visible: true }).first()).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByRole("heading", { name: /Нашли \d+ научрук/ })).toBeVisible({
+        timeout: 15_000,
+      });
       await screenshot(page, `results-${label}`);
     });
 
@@ -34,10 +36,14 @@ for (const [label, viewport] of [
     });
 
     test(`профиль НР (${label})`, async ({ page }) => {
-      await page.goto(`/supervisor/${KNOWN_AUTHOR_ID}?score=0.62`);
+      await page.goto(`/supervisor/${KNOWN_AUTHOR_ID}?score=0.62&grade=high`);
       await expect(page.getByRole("heading", { level: 1 })).toContainText(KNOWN_AUTHOR_NAME);
       await expect(page.getByText("Наукометрия")).toBeVisible();
-      await expect(page.getByText("62%")).toBeVisible(); // пришли «с результатов»
+      // Пришли «с результатов»: грейд словом, процента на профиле нет (решение 11.09)
+      await expect(page.getByText("высокое совпадение")).toBeVisible();
+      await expect(page.getByText("62%")).toHaveCount(0);
+      // Плашка происхождения данных над метриками (P-08): дата — из /health
+      await expect(page.getByRole("button", { name: /Данные: OpenAlex · обновлено/ })).toBeVisible();
       await screenshot(page, `supervisor-${label}`);
     });
 
@@ -56,10 +62,17 @@ for (const [label, viewport] of [
   });
 }
 
-test("профиль без ?score не показывает блок совпадения", async ({ page }) => {
+test("профиль без ?score и ?grade не показывает бейдж совпадения", async ({ page }) => {
   await page.goto(`/supervisor/${KNOWN_AUTHOR_ID}`);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(KNOWN_AUTHOR_NAME);
-  await expect(page.getByText("совпадение")).toHaveCount(0);
+  await expect(page.getByText(/совпадение/)).toHaveCount(0);
+});
+
+test("строка происхождения тем — внутри блока «Чем занимается» (P-09)", async ({ page }) => {
+  await page.goto(`/supervisor/${KNOWN_AUTHOR_ID}`);
+  await expect(
+    page.getByText("Темы посчитаны по публикациям в OpenAlex; научный руководитель их не подтверждал"),
+  ).toBeVisible();
 });
 
 test("битый id — 404-страница в стиле сервиса", async ({ page }) => {

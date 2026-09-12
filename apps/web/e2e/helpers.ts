@@ -9,7 +9,7 @@ export const KNOWN_AUTHOR_NAME = "Konstantin Vorontsov";
 
 export async function screenshot(page: Page, name: string): Promise<void> {
   // Скриншоты сверяются с макетами глазами — дождаться шрифтов обязательно,
-  // иначе Spectral/Golos на снимке подменяются фолбэком.
+  // иначе Literata/IBM Plex Sans на снимке подменяются фолбэком.
   await page.evaluate(() => document.fonts.ready);
   // Дождаться конца reveal-анимации списка, иначе карточки на снимке полупрозрачные.
   await page.evaluate(() =>

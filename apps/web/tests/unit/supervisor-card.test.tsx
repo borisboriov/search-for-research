@@ -1,11 +1,16 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import {
   SupervisorCardSkeleton,
+  SupervisorPreviewCard,
   SupervisorResultCard,
 } from "@/components/supervisor-card";
 import type { MatchResult } from "@/lib/types";
+
+const LONG_TITLE =
+  "RussianSuperGLUE: A Russian Language Understanding Evaluation Benchmark for Neural Models";
 
 const RESULT: MatchResult = {
   author_id: "A1",
@@ -13,7 +18,7 @@ const RESULT: MatchResult = {
   institution: "Московский физико-технический институт",
   h_index: 13,
   works_count: 88,
-  topics: ["NLP", "Mental Health via Writing", "Topic Modeling", "лишняя тема"],
+  topics: ["NLP", "Mental Health via Writing", "Topic Modeling", "лишняя тема", "пятая тема"],
   profile_text: "Ivan Smirnov — МФТИ.",
   cited_by_count: 700,
   position: null,
@@ -26,40 +31,84 @@ const RESULT: MatchResult = {
 };
 
 describe("SupervisorResultCard: обычное состояние", () => {
-  it("показывает имя, вуз, словесный грейд (не процент) и первые три темы", () => {
+  it("показывает имя, организацию, h-index и словесный грейд — без процента", () => {
     render(<SupervisorResultCard result={RESULT} query="nlp" />);
-    expect(screen.getAllByText("Ivan Smirnov").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("МФТИ")[0]).toBeInTheDocument();
+    expect(screen.getByText("Ivan Smirnov")).toBeInTheDocument();
+    expect(screen.getByText("МФТИ")).toBeInTheDocument();
+    expect(screen.getByText("h-index 13")).toBeInTheDocument();
     // Грейд словами на бейдже; процент — только в tooltip (SPEC_SFR4 §0.9)
-    expect(screen.getAllByText("высокое совпадение")[0]).toBeInTheDocument();
+    expect(screen.getByText("высокое совпадение")).toBeInTheDocument();
     expect(screen.queryByText("43%")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("NLP, Mental Health via Writing, Topic Modeling"),
-    ).toBeInTheDocument();
   });
-  it("ссылки ведут на профиль и передают score и запрос", () => {
+
+  it("темы — отдельными пилюлями, не более четырёх (P-06: текст пилюли не режем)", () => {
+    render(<SupervisorResultCard result={RESULT} query="nlp" />);
+    const pills = screen.getByRole("list", { name: "Ключевые темы" });
+    expect(pills.children).toHaveLength(4);
+    expect(screen.getByText("Mental Health via Writing")).toBeInTheDocument();
+    expect(screen.queryByText("пятая тема")).not.toBeInTheDocument();
+  });
+
+  it("ссылки ведут на профиль и передают score, грейд и запрос", () => {
     render(<SupervisorResultCard result={RESULT} query="анализ текстов" />);
     const links = screen.getAllByRole("link");
+    expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
       expect(link).toHaveAttribute(
         "href",
-        expect.stringContaining("/supervisor/A1?score=0.4321"),
+        expect.stringContaining("/supervisor/A1?score=0.4321&grade=high"),
       );
       expect(link.getAttribute("href")).toContain(encodeURIComponent("анализ текстов"));
     }
   });
+
+  it("должность не показывается, когда поля нет, и появляется, когда есть", () => {
+    const { unmount } = render(<SupervisorResultCard result={RESULT} query="nlp" />);
+    expect(screen.queryByText("профессор")).not.toBeInTheDocument();
+    unmount();
+    render(<SupervisorResultCard result={{ ...RESULT, position: "профессор" }} query="nlp" />);
+    expect(screen.getByText("профессор")).toBeInTheDocument();
+  });
+});
+
+describe("SupervisorResultCard: последняя работа (P-15)", () => {
+  it("короткое название показывается целиком, ссылки «раскрыть» нет", () => {
+    render(<SupervisorResultCard result={RESULT} query="nlp" />);
+    expect(screen.getByText(/Depression detection/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "раскрыть" })).not.toBeInTheDocument();
+  });
+
+  it("длинное — обрезается и раскрывается по клику", async () => {
+    const user = userEvent.setup();
+    render(
+      <SupervisorResultCard
+        result={{ ...RESULT, top_works: [{ title: LONG_TITLE, year: 2020 }] }}
+        query="nlp"
+      />,
+    );
+    expect(screen.queryByText(LONG_TITLE)).not.toBeInTheDocument();
+    expect(screen.getByText(/RussianSuperGLUE: A Russian Language Understanding Evaluation…/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "раскрыть" }));
+    expect(screen.getByText(LONG_TITLE)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "свернуть" })).toBeInTheDocument();
+  });
 });
 
 describe("SupervisorResultCard: serendipity", () => {
-  it("бейдж «неожиданный вариант» вместо процента и пояснение", () => {
-    render(
-      <SupervisorResultCard result={{ ...RESULT, serendipity: true }} query="nlp" />,
-    );
-    expect(screen.getAllByText("неожиданный вариант")[0]).toBeInTheDocument();
+  it("бейдж «неожиданный вариант» вместо грейда и строка «Почему в подборке»", () => {
+    render(<SupervisorResultCard result={{ ...RESULT, serendipity: true }} query="nlp" />);
+    expect(screen.getByText("неожиданный вариант")).toBeInTheDocument();
     expect(screen.queryByText("высокое совпадение")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Смежная область, которая может расширить тему"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Почему в подборке:")).toBeInTheDocument();
+  });
+});
+
+describe("SupervisorPreviewCard (компактный вариант лендинга)", () => {
+  it("без бейджа и без полосы совпадения — запроса нет, считать нечего", () => {
+    render(<SupervisorPreviewCard card={RESULT} />);
+    expect(screen.getByText("Ivan Smirnov")).toBeInTheDocument();
+    expect(screen.queryByText("высокое совпадение")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Совпало/)).not.toBeInTheDocument();
   });
 });
 
