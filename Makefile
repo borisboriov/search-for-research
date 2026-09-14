@@ -2,7 +2,7 @@
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
 	deploy-local deploy-local-down audit \
-	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5
+	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -257,3 +257,15 @@ deploy-local-down:
 # ---------------------------------------------------------------------------
 audit: unhide
 	uv run --group security python scripts/audit.py $(AUDIT_ARGS)
+
+# ---------------------------------------------------------------------------
+# Доска «SFR — задачи»: поля Status / Priority / Iteration — производные от
+# лейблов issues. Правила маппинга — в докстринге scripts/gh_board_sync.py и
+# в CLAUDE.md. Идемпотентно: повторный прогон ничего не меняет.
+# Нужен scope project у gh (gh auth refresh -s project).
+# ---------------------------------------------------------------------------
+board-sync: unhide
+	uv run python scripts/gh_board_sync.py
+
+board-sync-dry: unhide
+	uv run python scripts/gh_board_sync.py --dry-run
