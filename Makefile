@@ -2,7 +2,7 @@
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
 	deploy-local deploy-local-down audit \
-	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry
+	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -269,3 +269,8 @@ board-sync: unhide
 
 board-sync-dry: unhide
 	uv run python scripts/gh_board_sync.py --dry-run
+
+# Гигиена issues: лейблы, приоритеты, залежавшееся, кандидаты в дубли.
+# Ничего не чинит — печатает отчёт; правила таксономии — CLAUDE.md.
+issues-audit: unhide
+	uv run python scripts/gh_issues_audit.py $(AUDIT_ISSUES_ARGS)
