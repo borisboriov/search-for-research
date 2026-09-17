@@ -2,7 +2,8 @@
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
 	deploy-local deploy-local-down audit \
-	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit
+	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
+	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -198,6 +199,53 @@ eval-sfr5: unhide
 		--out data/eval/pool_sfr5.jsonl
 	uv run sfr-match pool --runs-dir $(SFR5_OOD_RUNS) --queries ood \
 		--index-root $(SFR5_INDEX_ROOT) --out data/eval/pool_ood_sfr5.jsonl
+
+# ---------------------------------------------------------------------------
+# SFR-5b: те же 12 вузов БЕЗ квоты — эксперимент для решения о расширении базы
+# НР (#90). Живёт в копии БД (data/sfr5b.db) и в своих путях: боевые data/sfr.db,
+# data/indexes_sfr5 и data/exports/*_sfr5.jsonl не трогаются. SFR_DB_URL стоит
+# перед каждой командой, которая ходит в БД: env перекрывает .env.
+# Ингест (authors без квоты, прогрев кэша работ, works --only-missing) сюда не
+# входит по той же причине, что и в SFR-5, — команды в docs/SFR5b_REPORT.md.
+# ---------------------------------------------------------------------------
+SFR5B_DB_URL := sqlite:///data/sfr5b.db
+SFR5B_PROFILES := data/exports/profiles_sfr5b.jsonl
+SFR5B_CARDS := data/exports/cards_sfr5b.jsonl
+SFR5B_INDEX_ROOT := data/indexes_sfr5b
+SFR5B_RUNS := data/eval/runs_sfr5b
+SFR5B_OOD_RUNS := data/eval/runs_ood_sfr5b
+SFR5B_EXT_RUNS := data/eval/runs_external_sfr5b
+# Свой файл выборки: дефолтный dedup_for_review.md ждёт проверки Бориса (#5).
+SFR5B_DEDUP_REVIEW := packages/sfr-match/eval/dedup_for_review_sfr5b.md
+
+catalog-sfr5b: unhide
+	SFR_DB_URL=$(SFR5B_DB_URL) uv run sfr etl backfill-mega
+	SFR_DB_URL=$(SFR5B_DB_URL) uv run sfr etl dedup --apply --review-out $(SFR5B_DEDUP_REVIEW)
+	SFR_DB_URL=$(SFR5B_DB_URL) uv run sfr etl build-profiles
+	$(MAKE) export-sfr5b
+
+export-sfr5b: unhide
+	SFR_DB_URL=$(SFR5B_DB_URL) uv run sfr export jsonl --out $(SFR5B_PROFILES)
+	SFR_DB_URL=$(SFR5B_DB_URL) uv run sfr export cards --out $(SFR5B_CARDS)
+
+# Без scripts/stamp_thresholds.py: он штампует пороги боевого индекса из
+# ApiSettings, а новому индексу пороги ставятся после калибровки —
+# `sfr-match stamp-thresholds --index-dir … --none … --weak … --high …`.
+index-sfr5b: unhide
+	uv run sfr-match index -m frida --clean --compose full \
+		--profiles $(SFR5B_PROFILES) --index-root $(SFR5B_INDEX_ROOT)
+
+eval-sfr5b: unhide
+	uv run sfr-match eval --models frida --clean --compose full \
+		--index-root $(SFR5B_INDEX_ROOT) --runs-dir $(SFR5B_RUNS)
+	uv run sfr-match eval --models frida --clean --compose full --queries ood \
+		--index-root $(SFR5B_INDEX_ROOT) --runs-dir $(SFR5B_OOD_RUNS)
+	uv run sfr-match eval --models frida --clean --compose full --queries external \
+		--index-root $(SFR5B_INDEX_ROOT) --runs-dir $(SFR5B_EXT_RUNS)
+	uv run sfr-match pool --runs-dir $(SFR5B_RUNS) --index-root $(SFR5B_INDEX_ROOT) \
+		--out data/eval/pool_sfr5b.jsonl
+	uv run sfr-match pool --runs-dir $(SFR5B_OOD_RUNS) --queries ood \
+		--index-root $(SFR5B_INDEX_ROOT) --out data/eval/pool_ood_sfr5b.jsonl
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.
