@@ -1,0 +1,2094 @@
+{
+ "date": "2026-09-17",
+ "mode": "anonymous",
+ "requests": 42,
+ "ru_total": 110721,
+ "ru_by_type": {
+  "facility": 62428,
+  "education": 61413,
+  "government": 15647,
+  "healthcare": 6112,
+  "company": 4767,
+  "nonprofit": 3106,
+  "other": 1604,
+  "archive": 790,
+  "funder": 184
+ },
+ "ru_groups_count": 200,
+ "ru_top_orgs": [
+  {
+   "id": "I19880235",
+   "name": "Lomonosov Moscow State University",
+   "count": 6491
+  },
+  {
+   "id": "I1313323035",
+   "name": "Russian Academy of Sciences",
+   "count": 5657
+  },
+  {
+   "id": "I2800235667",
+   "name": "Kurchatov Institute",
+   "count": 2830
+  },
+  {
+   "id": "I172901346",
+   "name": "St Petersburg University",
+   "count": 2415
+  },
+  {
+   "id": "I32699454",
+   "name": "Joint Institute for Nuclear Research",
+   "count": 2188
+  },
+  {
+   "id": "I4210117042",
+   "name": "Ministry of Health of the Russian Federation",
+   "count": 1656
+  },
+  {
+   "id": "I4210127387",
+   "name": "Siberian Branch of the Russian Academy of Sciences",
+   "count": 1581
+  },
+  {
+   "id": "I196355604",
+   "name": "National Research Tomsk State University",
+   "count": 1546
+  },
+  {
+   "id": "I118501908",
+   "name": "National Research University Higher School of Economics",
+   "count": 1422
+  },
+  {
+   "id": "I17877952",
+   "name": "Sechenov University",
+   "count": 1393
+  },
+  {
+   "id": "I21203515",
+   "name": "Kazan Federal University",
+   "count": 1166
+  },
+  {
+   "id": "I130823665",
+   "name": "Ural Federal University",
+   "count": 1159
+  },
+  {
+   "id": "I188973947",
+   "name": "Novosibirsk State University",
+   "count": 1093
+  },
+  {
+   "id": "I95568926",
+   "name": "Ioffe Institute",
+   "count": 1077
+  },
+  {
+   "id": "I118517470",
+   "name": "P.N. Lebedev Physical Institute of the Russian Academy of Sciences",
+   "count": 1042
+  },
+  {
+   "id": "I887846188",
+   "name": "National Research Nuclear University MEPhI",
+   "count": 1001
+  },
+  {
+   "id": "I153845743",
+   "name": "Moscow Institute of Physics and Technology",
+   "count": 968
+  },
+  {
+   "id": "I212220629",
+   "name": "Peter the Great St. Petersburg Polytechnic University",
+   "count": 960
+  },
+  {
+   "id": "I126527374",
+   "name": "Peoples' Friendship University of Russia",
+   "count": 944
+  },
+  {
+   "id": "I173089394",
+   "name": "ITMO University",
+   "count": 914
+  },
+  {
+   "id": "I4210130434",
+   "name": "Petersburg Nuclear Physics Institute",
+   "count": 848
+  },
+  {
+   "id": "I4210092861",
+   "name": "Institute of Catalysis and Petrochemistry",
+   "count": 812
+  },
+  {
+   "id": "I177537411",
+   "name": "Bauman Moscow State Technical University",
+   "count": 773
+  },
+  {
+   "id": "I337778094",
+   "name": "Pirogov Russian National Research Medical University",
+   "count": 758
+  },
+  {
+   "id": "I30849647",
+   "name": "Tomsk Polytechnic University",
+   "count": 749
+  },
+  {
+   "id": "I4210145583",
+   "name": "Bioengineering Center",
+   "count": 738
+  },
+  {
+   "id": "I137534880",
+   "name": "Southern Federal University",
+   "count": 733
+  },
+  {
+   "id": "I4843557",
+   "name": "Budker Institute of Nuclear Physics",
+   "count": 729
+  },
+  {
+   "id": "I4210088206",
+   "name": "N.D. Zelinsky Institute of Organic Chemistry",
+   "count": 693
+  },
+  {
+   "id": "I171241948",
+   "name": "Moscow Power Engineering Institute",
+   "count": 686
+  },
+  {
+   "id": "I4210105571",
+   "name": "Institute of Bioorganic Chemistry",
+   "count": 675
+  },
+  {
+   "id": "I79563041",
+   "name": "N. I. Lobachevsky State University of Nizhny Novgorod",
+   "count": 656
+  },
+  {
+   "id": "I4210102177",
+   "name": "Institute for Nuclear Research",
+   "count": 654
+  },
+  {
+   "id": "I4210094231",
+   "name": "Boreskov Institute of Catalysis",
+   "count": 646
+  },
+  {
+   "id": "I2802913842",
+   "name": "A. N. Nesmeyanov Institute of Organoelement Compounds",
+   "count": 639
+  },
+  {
+   "id": "I3129407955",
+   "name": "Institute for High Energy Physics",
+   "count": 614
+  },
+  {
+   "id": "I4210153510",
+   "name": "Prokhorov General Physics Institute",
+   "count": 611
+  },
+  {
+   "id": "I12003341",
+   "name": "National University of Science and Technology",
+   "count": 586
+  },
+  {
+   "id": "I45571689",
+   "name": "Moscow Aviation Institute",
+   "count": 582
+  },
+  {
+   "id": "I4210161229",
+   "name": "Institute of Applied Physics",
+   "count": 579
+  },
+  {
+   "id": "I4210116466",
+   "name": "Institute of Cytology and Genetics",
+   "count": 559
+  },
+  {
+   "id": "I64264942",
+   "name": "Federal Medical-Biological Agency",
+   "count": 557
+  },
+  {
+   "id": "I125989756",
+   "name": "Skolkovo Institute of Science and Technology",
+   "count": 550
+  },
+  {
+   "id": "I4210118280",
+   "name": "Institute of Problems of Chemical Physics",
+   "count": 548
+  },
+  {
+   "id": "I2801076587",
+   "name": "Semenov Institute of Chemical Physics",
+   "count": 544
+  },
+  {
+   "id": "I4210109586",
+   "name": "Moscow Institute of Thermal Technology",
+   "count": 541
+  },
+  {
+   "id": "I4210119369",
+   "name": "Ural Branch of the Russian Academy of Sciences",
+   "count": 537
+  },
+  {
+   "id": "I4210124601",
+   "name": "Department of Mathematical Sciences",
+   "count": 533
+  },
+  {
+   "id": "I4853710",
+   "name": "Siberian Federal University",
+   "count": 518
+  },
+  {
+   "id": "I4210121240",
+   "name": "Institute of Astronomy",
+   "count": 515
+  },
+  {
+   "id": "I4210104186",
+   "name": "Ufa Institute of Chemistry",
+   "count": 494
+  },
+  {
+   "id": "I4210085913",
+   "name": "Frumkin Institute of Physical Chemistry and Electrochemistry",
+   "count": 489
+  },
+  {
+   "id": "I4210102261",
+   "name": "M.N. Mikheev Institute of Metal Physics",
+   "count": 488
+  },
+  {
+   "id": "I4210124538",
+   "name": "Geological Institute",
+   "count": 472
+  },
+  {
+   "id": "I4210143490",
+   "name": "Computing Center",
+   "count": 463
+  },
+  {
+   "id": "I4210147235",
+   "name": "National Medical Research Center of Cardiology",
+   "count": 459
+  },
+  {
+   "id": "I4210135186",
+   "name": "MIREA - Russian Technological University",
+   "count": 453
+  },
+  {
+   "id": "I4210158550",
+   "name": "Joint Institute for High Temperatures",
+   "count": 445
+  },
+  {
+   "id": "I205220096",
+   "name": "Institute of Oceanology. PP Shirshov Russian Academy of Sciences",
+   "count": 425
+  },
+  {
+   "id": "I4210143294",
+   "name": "Nikolaev Institute of Inorganic Chemistry",
+   "count": 421
+  },
+  {
+   "id": "I4210115279",
+   "name": "Department of Physiological Sciences",
+   "count": 407
+  },
+  {
+   "id": "I4210152187",
+   "name": "Kotelnikov Institute of Radioengineering and Electronics of the Russian Academy of Sciences",
+   "count": 403
+  },
+  {
+   "id": "I137587207",
+   "name": "D. Mendeleyev University of Chemical Technology of Russia",
+   "count": 399
+  },
+  {
+   "id": "I100098275",
+   "name": "Engelhardt Institute of Molecular Biology",
+   "count": 396
+  },
+  {
+   "id": "I4210108652",
+   "name": "NS Kurnakova Institute of General and Inorganic Chemistry",
+   "count": 396
+  },
+  {
+   "id": "I125219893",
+   "name": "Saratov State University",
+   "count": 385
+  },
+  {
+   "id": "I4210149455",
+   "name": "Institute of Metallurgy",
+   "count": 383
+  },
+  {
+   "id": "I4210110862",
+   "name": "Department of Medical Sciences",
+   "count": 382
+  },
+  {
+   "id": "I4210120086",
+   "name": "Institute of Physics",
+   "count": 378
+  },
+  {
+   "id": "I107640659",
+   "name": "South Ural State University",
+   "count": 376
+  },
+  {
+   "id": "I19820366",
+   "name": "Chinese Academy of Sciences",
+   "count": 376
+  },
+  {
+   "id": "I4210149923",
+   "name": "Severtsov Institute of Ecology and Evolution",
+   "count": 375
+  },
+  {
+   "id": "I4210106238",
+   "name": "A.V. Topchiev Institute of Petrochemical Synthesis",
+   "count": 371
+  },
+  {
+   "id": "I4210118499",
+   "name": "Tomsk National Research Medical Center",
+   "count": 371
+  },
+  {
+   "id": "I4210131892",
+   "name": "Institute of Molecular Genetics",
+   "count": 370
+  },
+  {
+   "id": "I41518628",
+   "name": "Saint Petersburg State Electrotechnical University",
+   "count": 355
+  },
+  {
+   "id": "I4210116088",
+   "name": "Institute for Theoretical and Experimental Physics",
+   "count": 354
+  },
+  {
+   "id": "I2799540354",
+   "name": "First Pavlov State Medical University of St. Petersburg",
+   "count": 350
+  },
+  {
+   "id": "I211738395",
+   "name": "Financial University",
+   "count": 345
+  },
+  {
+   "id": "I91727514",
+   "name": "Novosibirsk State Technical University",
+   "count": 343
+  },
+  {
+   "id": "I2800895607",
+   "name": "Space Research Institute",
+   "count": 341
+  },
+  {
+   "id": "I71305448",
+   "name": "Voronezh State University",
+   "count": 339
+  },
+  {
+   "id": "I3124489027",
+   "name": "Samara National Research University",
+   "count": 338
+  },
+  {
+   "id": "I4210131217",
+   "name": "A.E. Arbuzov Institute of Organic and Physical Chemistry",
+   "count": 334
+  },
+  {
+   "id": "I3018698992",
+   "name": "Federal Almazov North-West Medical Research Centre",
+   "count": 328
+  },
+  {
+   "id": "I4210097717",
+   "name": "Don State Technical University",
+   "count": 327
+  },
+  {
+   "id": "I4210108300",
+   "name": "Russian Medical Academy of Continuous Professional Education",
+   "count": 325
+  },
+  {
+   "id": "I4210130856",
+   "name": "All-Russian Scientific Research Institute of Technical Physics",
+   "count": 321
+  },
+  {
+   "id": "I4210104940",
+   "name": "Institute of Cytology",
+   "count": 315
+  },
+  {
+   "id": "I204947315",
+   "name": "Far Eastern Federal University",
+   "count": 313
+  },
+  {
+   "id": "I4210088310",
+   "name": "Krasnoyarsk Scientific Center",
+   "count": 311
+  },
+  {
+   "id": "I4210138567",
+   "name": "Institute of Semiconductor Physics",
+   "count": 309
+  },
+  {
+   "id": "I4210149637",
+   "name": "Institute of Thermophysics",
+   "count": 303
+  },
+  {
+   "id": "I4210091979",
+   "name": "Institute of Chemical Biology and Fundamental Medicine",
+   "count": 298
+  },
+  {
+   "id": "I4210103842",
+   "name": "V.S. Sobolev Institute of Geology and Mineralogy",
+   "count": 292
+  },
+  {
+   "id": "I4210147035",
+   "name": "Institute of Biochemical Physics NM Emanuel",
+   "count": 283
+  },
+  {
+   "id": "I4210150971",
+   "name": "Institute of Molecular Biology and Biophysics",
+   "count": 283
+  },
+  {
+   "id": "I4210133425",
+   "name": "City Clinical Hospital",
+   "count": 280
+  },
+  {
+   "id": "I4210148470",
+   "name": "Far Eastern Branch of the Russian Academy of Sciences",
+   "count": 280
+  },
+  {
+   "id": "I2801160905",
+   "name": "Steklov Mathematical Institute",
+   "count": 277
+  },
+  {
+   "id": "I2801680271",
+   "name": "Zoological Institute",
+   "count": 276
+  },
+  {
+   "id": "I67311998",
+   "name": "European Organization for Nuclear Research",
+   "count": 275
+  },
+  {
+   "id": "I3018306103",
+   "name": "Institute of Geology of Ore Deposits Petrography Mineralogy and Geochemistry",
+   "count": 274
+  },
+  {
+   "id": "I4210160179",
+   "name": "V.I. Vernadsky Institute of Geochemistry and Analytical Chemistry",
+   "count": 274
+  },
+  {
+   "id": "I4210166099",
+   "name": "National Medical Research Center of Dentistry and Maxillofacial Surgery",
+   "count": 274
+  },
+  {
+   "id": "I4210105338",
+   "name": "Baikov Institute of Metallurgy and Materials Science",
+   "count": 273
+  },
+  {
+   "id": "I4210152616",
+   "name": "Schmidt Institute of Physics of the Earth",
+   "count": 273
+  },
+  {
+   "id": "I4210165038",
+   "name": "University of Chinese Academy of Sciences",
+   "count": 272
+  },
+  {
+   "id": "I1294671590",
+   "name": "Centre National de la Recherche Scientifique",
+   "count": 270
+  },
+  {
+   "id": "I241749",
+   "name": "University of Cambridge",
+   "count": 269
+  },
+  {
+   "id": "I4210086057",
+   "name": "Moscow State University of Civil Engineering",
+   "count": 269
+  },
+  {
+   "id": "I63966007",
+   "name": "Massachusetts Institute of Technology",
+   "count": 269
+  },
+  {
+   "id": "I4210163243",
+   "name": "Kola Science Centre",
+   "count": 265
+  },
+  {
+   "id": "I86427540",
+   "name": "Keldysh Institute of Applied Mathematics",
+   "count": 265
+  },
+  {
+   "id": "I2799922383",
+   "name": "Geophysical Survey",
+   "count": 260
+  },
+  {
+   "id": "I4210167168",
+   "name": "Department of Agricultural Sciences",
+   "count": 259
+  },
+  {
+   "id": "I4210091470",
+   "name": "Osipyan Institute of Solid State Physics RAS",
+   "count": 258
+  },
+  {
+   "id": "I4210134084",
+   "name": "Institute of Engineering Science",
+   "count": 255
+  },
+  {
+   "id": "I4210104350",
+   "name": "Institute of Organic Synthesis",
+   "count": 250
+  },
+  {
+   "id": "I4210120482",
+   "name": "Physico-Technical Institute",
+   "count": 248
+  },
+  {
+   "id": "I3018660459",
+   "name": "Saint Petersburg Mining University",
+   "count": 246
+  },
+  {
+   "id": "I103031861",
+   "name": "Plekhanov Russian University of Economics",
+   "count": 245
+  },
+  {
+   "id": "I4210132917",
+   "name": "A.V. Shubnikov Institute of Crystallography",
+   "count": 243
+  },
+  {
+   "id": "I54195498",
+   "name": "Kazan State Technological University",
+   "count": 243
+  },
+  {
+   "id": "I4210163714",
+   "name": "Department of Earth Sciences",
+   "count": 238
+  },
+  {
+   "id": "I4210150057",
+   "name": "Centre of Advanced Studies",
+   "count": 235
+  },
+  {
+   "id": "I4210093196",
+   "name": "Sirius University of Science and Technology",
+   "count": 234
+  },
+  {
+   "id": "I4210098151",
+   "name": "A.E. Favorsky Irkutsk Institute of Chemistry",
+   "count": 234
+  },
+  {
+   "id": "I4210148309",
+   "name": "Vavilov Institute of General Genetics",
+   "count": 234
+  },
+  {
+   "id": "I4210145347",
+   "name": "Federal Service for Surveillance on Consumer Rights Protection and Human Wellbeing",
+   "count": 232
+  },
+  {
+   "id": "I4210126689",
+   "name": "Research Centre for Medical Genetics",
+   "count": 229
+  },
+  {
+   "id": "I149643846",
+   "name": "Immanuel Kant Baltic Federal University",
+   "count": 226
+  },
+  {
+   "id": "I4210088122",
+   "name": "Institute of Theoretical and Experimental Biophysics",
+   "count": 225
+  },
+  {
+   "id": "I52135307",
+   "name": "Kemerovo State University",
+   "count": 225
+  },
+  {
+   "id": "I4210144344",
+   "name": "Federal Research Centre «Fundamentals of Biotechnology» of the Russian Academy of Sciences",
+   "count": 224
+  },
+  {
+   "id": "I4210094364",
+   "name": "Dubna State University",
+   "count": 222
+  },
+  {
+   "id": "I93251985",
+   "name": "Irkutsk State University",
+   "count": 222
+  },
+  {
+   "id": "I120938084",
+   "name": "Belgorod National Research University",
+   "count": 221
+  },
+  {
+   "id": "I4210091702",
+   "name": "Institute of Macromolecular Compounds",
+   "count": 219
+  },
+  {
+   "id": "I4210159010",
+   "name": "Research Center of Neurology",
+   "count": 218
+  },
+  {
+   "id": "I47410878",
+   "name": "Nizhny Novgorod State Pedagogical University",
+   "count": 218
+  },
+  {
+   "id": "I163234304",
+   "name": "Institute of Evolutionary Physiology and Biochemistry",
+   "count": 217
+  },
+  {
+   "id": "I4210096179",
+   "name": "Novosibirsk Institute of Organic Chemistry",
+   "count": 216
+  },
+  {
+   "id": "I196530094",
+   "name": "Siberian State Medical University",
+   "count": 212
+  },
+  {
+   "id": "I3020440027",
+   "name": "University of Tyumen",
+   "count": 211
+  },
+  {
+   "id": "I4210120969",
+   "name": "Institute of Theoretical and Applied Mechanics",
+   "count": 211
+  },
+  {
+   "id": "I4210116966",
+   "name": "Institute of Molecular and Cell Biology",
+   "count": 210
+  },
+  {
+   "id": "I4210151936",
+   "name": "North-Western State Medical University named after I.I. Mechnikov",
+   "count": 210
+  },
+  {
+   "id": "I24185976",
+   "name": "Sichuan University",
+   "count": 208
+  },
+  {
+   "id": "I4210151983",
+   "name": "Limnological Institute",
+   "count": 208
+  },
+  {
+   "id": "I4210086852",
+   "name": "Endocrinology Research Center",
+   "count": 207
+  },
+  {
+   "id": "I4210157430",
+   "name": "V. A. Trapeznikov Institute of Control Sciences",
+   "count": 207
+  },
+  {
+   "id": "I4210165542",
+   "name": "V.E. Zuev Institute of Atmospheric Optics",
+   "count": 207
+  },
+  {
+   "id": "I4210158654",
+   "name": "G. K. Skryabin Institute of Biochemistry and Physiology of Microorganisms",
+   "count": 206
+  },
+  {
+   "id": "I9115533",
+   "name": "Moscow Polytechnic University",
+   "count": 203
+  },
+  {
+   "id": "I98642627",
+   "name": "St. Petersburg State Technological Institute",
+   "count": 203
+  },
+  {
+   "id": "I4210152028",
+   "name": "Institute of Biomedical Chemistry",
+   "count": 202
+  },
+  {
+   "id": "I1285031044",
+   "name": "Institute of Strength Physics and Materials Science",
+   "count": 201
+  },
+  {
+   "id": "I4210101246",
+   "name": "Institute of Biomedical Problems",
+   "count": 201
+  },
+  {
+   "id": "I4210120806",
+   "name": "Pacific Institute of Bioorganic Chemistry. GB Elyakova Far Eastern Branch of the Russian Academy of Sciences",
+   "count": 201
+  },
+  {
+   "id": "I4210096862",
+   "name": "Sobolev Institute of Mathematics",
+   "count": 200
+  },
+  {
+   "id": "I4210144352",
+   "name": "State Research Center of the Russian Federation",
+   "count": 200
+  },
+  {
+   "id": "I4210093042",
+   "name": "Kazan Scientific Center",
+   "count": 197
+  },
+  {
+   "id": "I4210133056",
+   "name": "Timiryazev Institute of Plant Physiology",
+   "count": 197
+  },
+  {
+   "id": "I3123069486",
+   "name": "Perm National Research Polytechnic University",
+   "count": 196
+  },
+  {
+   "id": "I3123529209",
+   "name": "Samara State Technical University",
+   "count": 196
+  },
+  {
+   "id": "I4210087144",
+   "name": "Institute of Biology of Komi Scientific Centre",
+   "count": 196
+  },
+  {
+   "id": "I4210129564",
+   "name": "National Medical Research Center for Obstetrics, Gynecology and Perinatology named after Academician V.I.Kulakov of the Ministry of Healthcare of the Russian Federation",
+   "count": 196
+  },
+  {
+   "id": "I4210164220",
+   "name": "Russian Scientific Center of Surgery",
+   "count": 196
+  },
+  {
+   "id": "I100051649",
+   "name": "Privolzhsky Research Medical University",
+   "count": 193
+  },
+  {
+   "id": "I4210147092",
+   "name": "V.I. Il'ichev Pacific Oceanological Institute",
+   "count": 193
+  },
+  {
+   "id": "I117963711",
+   "name": "Kuban State University",
+   "count": 191
+  },
+  {
+   "id": "I105056648",
+   "name": "Perm State University",
+   "count": 190
+  },
+  {
+   "id": "I4210150607",
+   "name": "A.M. Obukhov Institute of Atmospheric Physics",
+   "count": 190
+  },
+  {
+   "id": "I116191961",
+   "name": "Northern (Arctic) Federal University",
+   "count": 189
+  },
+  {
+   "id": "I4210140902",
+   "name": "Volgograd State Technical University",
+   "count": 188
+  },
+  {
+   "id": "I2799845340",
+   "name": "Special Astrophysical Observatory",
+   "count": 187
+  },
+  {
+   "id": "I3129897247",
+   "name": "Russian New University",
+   "count": 187
+  },
+  {
+   "id": "I4210107303",
+   "name": "Institute of Spectroscopy",
+   "count": 184
+  },
+  {
+   "id": "I4210096605",
+   "name": "V. B. Sochava Institute of Geography",
+   "count": 183
+  },
+  {
+   "id": "I204490831",
+   "name": "National Research University of Electronic Technology",
+   "count": 182
+  },
+  {
+   "id": "I4210134318",
+   "name": "University of Technology",
+   "count": 182
+  },
+  {
+   "id": "I4210137637",
+   "name": "Bioinformatics Institute",
+   "count": 181
+  },
+  {
+   "id": "I2800546203",
+   "name": "Kazan State Technical University named after A. N. Tupolev",
+   "count": 180
+  },
+  {
+   "id": "I71267560",
+   "name": "University of Naples Federico II",
+   "count": 180
+  },
+  {
+   "id": "I7901131",
+   "name": "Ufa State Petroleum Technological University",
+   "count": 180
+  },
+  {
+   "id": "I4210093250",
+   "name": "Institute of Terrestrial Magnetism Ionosphere and Radio Wave Propagation",
+   "count": 179
+  },
+  {
+   "id": "I4210098718",
+   "name": "Institute of Solar-Terrestrial Physics",
+   "count": 179
+  },
+  {
+   "id": "I210043505",
+   "name": "North-Caucasus Federal University",
+   "count": 177
+  },
+  {
+   "id": "I4210117052",
+   "name": "Institute of Forest Science",
+   "count": 177
+  },
+  {
+   "id": "I4210144079",
+   "name": "Institute for Physics of Microstructures",
+   "count": 177
+  },
+  {
+   "id": "I4210156060",
+   "name": "Institute of Higher Nervous Activity and Neurophysiology",
+   "count": 177
+  },
+  {
+   "id": "I157338126",
+   "name": "Moscow State Pedagogical University",
+   "count": 176
+  },
+  {
+   "id": "I312958679",
+   "name": "National University of Science and Technology",
+   "count": 176
+  },
+  {
+   "id": "I4210127411",
+   "name": "Dmitry Rogachev National Research Center of Pediatric Hematology, Oncology and Immunology",
+   "count": 176
+  },
+  {
+   "id": "I205237279",
+   "name": "Nankai University",
+   "count": 175
+  },
+  {
+   "id": "I4210106118",
+   "name": "Institute of Petroleum Geology and Geophysics",
+   "count": 175
+  },
+  {
+   "id": "I4210136202",
+   "name": "A.V. Zhirmunsky National Scientific Center of Marine Biology Far Eastern Branch of the Russian Academy of Sciences",
+   "count": 175
+  },
+  {
+   "id": "I4210152247",
+   "name": "Karelian Research Centre",
+   "count": 175
+  },
+  {
+   "id": "I4210160292",
+   "name": "Institute of High Current Electronics",
+   "count": 175
+  }
+ ],
+ "ru_top_education": [
+  {
+   "id": "I19880235",
+   "name": "Lomonosov Moscow State University",
+   "count": 6491
+  },
+  {
+   "id": "I172901346",
+   "name": "St Petersburg University",
+   "count": 2415
+  },
+  {
+   "id": "I196355604",
+   "name": "National Research Tomsk State University",
+   "count": 1546
+  },
+  {
+   "id": "I118501908",
+   "name": "National Research University Higher School of Economics",
+   "count": 1422
+  },
+  {
+   "id": "I17877952",
+   "name": "Sechenov University",
+   "count": 1393
+  },
+  {
+   "id": "I21203515",
+   "name": "Kazan Federal University",
+   "count": 1166
+  },
+  {
+   "id": "I130823665",
+   "name": "Ural Federal University",
+   "count": 1159
+  },
+  {
+   "id": "I188973947",
+   "name": "Novosibirsk State University",
+   "count": 1093
+  },
+  {
+   "id": "I1313323035",
+   "name": "Russian Academy of Sciences",
+   "count": 1010
+  },
+  {
+   "id": "I887846188",
+   "name": "National Research Nuclear University MEPhI",
+   "count": 1001
+  },
+  {
+   "id": "I153845743",
+   "name": "Moscow Institute of Physics and Technology",
+   "count": 968
+  },
+  {
+   "id": "I212220629",
+   "name": "Peter the Great St. Petersburg Polytechnic University",
+   "count": 960
+  },
+  {
+   "id": "I126527374",
+   "name": "Peoples' Friendship University of Russia",
+   "count": 944
+  },
+  {
+   "id": "I173089394",
+   "name": "ITMO University",
+   "count": 914
+  },
+  {
+   "id": "I177537411",
+   "name": "Bauman Moscow State Technical University",
+   "count": 773
+  },
+  {
+   "id": "I337778094",
+   "name": "Pirogov Russian National Research Medical University",
+   "count": 758
+  },
+  {
+   "id": "I4210117042",
+   "name": "Ministry of Health of the Russian Federation",
+   "count": 752
+  },
+  {
+   "id": "I30849647",
+   "name": "Tomsk Polytechnic University",
+   "count": 749
+  },
+  {
+   "id": "I2800235667",
+   "name": "Kurchatov Institute",
+   "count": 740
+  },
+  {
+   "id": "I137534880",
+   "name": "Southern Federal University",
+   "count": 733
+  },
+  {
+   "id": "I171241948",
+   "name": "Moscow Power Engineering Institute",
+   "count": 686
+  },
+  {
+   "id": "I79563041",
+   "name": "N. I. Lobachevsky State University of Nizhny Novgorod",
+   "count": 656
+  },
+  {
+   "id": "I4210145583",
+   "name": "Bioengineering Center",
+   "count": 643
+  },
+  {
+   "id": "I4210092861",
+   "name": "Institute of Catalysis and Petrochemistry",
+   "count": 640
+  },
+  {
+   "id": "I12003341",
+   "name": "National University of Science and Technology",
+   "count": 586
+  },
+  {
+   "id": "I45571689",
+   "name": "Moscow Aviation Institute",
+   "count": 582
+  },
+  {
+   "id": "I125989756",
+   "name": "Skolkovo Institute of Science and Technology",
+   "count": 550
+  },
+  {
+   "id": "I32699454",
+   "name": "Joint Institute for Nuclear Research",
+   "count": 539
+  },
+  {
+   "id": "I4853710",
+   "name": "Siberian Federal University",
+   "count": 518
+  },
+  {
+   "id": "I4210124601",
+   "name": "Department of Mathematical Sciences",
+   "count": 456
+  },
+  {
+   "id": "I4210135186",
+   "name": "MIREA - Russian Technological University",
+   "count": 453
+  },
+  {
+   "id": "I4210127387",
+   "name": "Siberian Branch of the Russian Academy of Sciences",
+   "count": 415
+  },
+  {
+   "id": "I4210121240",
+   "name": "Institute of Astronomy",
+   "count": 400
+  },
+  {
+   "id": "I137587207",
+   "name": "D. Mendeleyev University of Chemical Technology of Russia",
+   "count": 399
+  },
+  {
+   "id": "I125219893",
+   "name": "Saratov State University",
+   "count": 385
+  },
+  {
+   "id": "I107640659",
+   "name": "South Ural State University",
+   "count": 376
+  },
+  {
+   "id": "I41518628",
+   "name": "Saint Petersburg State Electrotechnical University",
+   "count": 355
+  },
+  {
+   "id": "I4210116088",
+   "name": "Institute for Theoretical and Experimental Physics",
+   "count": 354
+  },
+  {
+   "id": "I19820366",
+   "name": "Chinese Academy of Sciences",
+   "count": 351
+  },
+  {
+   "id": "I2799540354",
+   "name": "First Pavlov State Medical University of St. Petersburg",
+   "count": 350
+  },
+  {
+   "id": "I211738395",
+   "name": "Financial University",
+   "count": 345
+  },
+  {
+   "id": "I91727514",
+   "name": "Novosibirsk State Technical University",
+   "count": 343
+  },
+  {
+   "id": "I71305448",
+   "name": "Voronezh State University",
+   "count": 339
+  },
+  {
+   "id": "I3124489027",
+   "name": "Samara National Research University",
+   "count": 338
+  },
+  {
+   "id": "I4210115279",
+   "name": "Department of Physiological Sciences",
+   "count": 335
+  },
+  {
+   "id": "I4210109586",
+   "name": "Moscow Institute of Thermal Technology",
+   "count": 332
+  },
+  {
+   "id": "I4210097717",
+   "name": "Don State Technical University",
+   "count": 327
+  },
+  {
+   "id": "I4843557",
+   "name": "Budker Institute of Nuclear Physics",
+   "count": 327
+  },
+  {
+   "id": "I4210108300",
+   "name": "Russian Medical Academy of Continuous Professional Education",
+   "count": 325
+  },
+  {
+   "id": "I204947315",
+   "name": "Far Eastern Federal University",
+   "count": 313
+  },
+  {
+   "id": "I4210110862",
+   "name": "Department of Medical Sciences",
+   "count": 306
+  },
+  {
+   "id": "I4210143490",
+   "name": "Computing Center",
+   "count": 298
+  },
+  {
+   "id": "I4210165038",
+   "name": "University of Chinese Academy of Sciences",
+   "count": 272
+  },
+  {
+   "id": "I241749",
+   "name": "University of Cambridge",
+   "count": 269
+  },
+  {
+   "id": "I4210086057",
+   "name": "Moscow State University of Civil Engineering",
+   "count": 269
+  },
+  {
+   "id": "I63966007",
+   "name": "Massachusetts Institute of Technology",
+   "count": 269
+  },
+  {
+   "id": "I1294671590",
+   "name": "Centre National de la Recherche Scientifique",
+   "count": 261
+  },
+  {
+   "id": "I4210149455",
+   "name": "Institute of Metallurgy",
+   "count": 250
+  },
+  {
+   "id": "I3018660459",
+   "name": "Saint Petersburg Mining University",
+   "count": 246
+  },
+  {
+   "id": "I103031861",
+   "name": "Plekhanov Russian University of Economics",
+   "count": 245
+  },
+  {
+   "id": "I54195498",
+   "name": "Kazan State Technological University",
+   "count": 243
+  },
+  {
+   "id": "I118517470",
+   "name": "P.N. Lebedev Physical Institute of the Russian Academy of Sciences",
+   "count": 238
+  },
+  {
+   "id": "I4210093196",
+   "name": "Sirius University of Science and Technology",
+   "count": 234
+  },
+  {
+   "id": "I149643846",
+   "name": "Immanuel Kant Baltic Federal University",
+   "count": 226
+  },
+  {
+   "id": "I52135307",
+   "name": "Kemerovo State University",
+   "count": 225
+  },
+  {
+   "id": "I4210130434",
+   "name": "Petersburg Nuclear Physics Institute",
+   "count": 224
+  },
+  {
+   "id": "I4210120086",
+   "name": "Institute of Physics",
+   "count": 223
+  },
+  {
+   "id": "I4210094364",
+   "name": "Dubna State University",
+   "count": 222
+  },
+  {
+   "id": "I93251985",
+   "name": "Irkutsk State University",
+   "count": 222
+  },
+  {
+   "id": "I120938084",
+   "name": "Belgorod National Research University",
+   "count": 221
+  },
+  {
+   "id": "I4210150971",
+   "name": "Institute of Molecular Biology and Biophysics",
+   "count": 219
+  },
+  {
+   "id": "I47410878",
+   "name": "Nizhny Novgorod State Pedagogical University",
+   "count": 218
+  },
+  {
+   "id": "I196530094",
+   "name": "Siberian State Medical University",
+   "count": 212
+  },
+  {
+   "id": "I3020440027",
+   "name": "University of Tyumen",
+   "count": 211
+  },
+  {
+   "id": "I4210151936",
+   "name": "North-Western State Medical University named after I.I. Mechnikov",
+   "count": 210
+  },
+  {
+   "id": "I24185976",
+   "name": "Sichuan University",
+   "count": 208
+  },
+  {
+   "id": "I9115533",
+   "name": "Moscow Polytechnic University",
+   "count": 203
+  },
+  {
+   "id": "I98642627",
+   "name": "St. Petersburg State Technological Institute",
+   "count": 203
+  },
+  {
+   "id": "I4210134084",
+   "name": "Institute of Engineering Science",
+   "count": 200
+  },
+  {
+   "id": "I4210167168",
+   "name": "Department of Agricultural Sciences",
+   "count": 197
+  },
+  {
+   "id": "I3123069486",
+   "name": "Perm National Research Polytechnic University",
+   "count": 196
+  },
+  {
+   "id": "I3123529209",
+   "name": "Samara State Technical University",
+   "count": 196
+  },
+  {
+   "id": "I100051649",
+   "name": "Privolzhsky Research Medical University",
+   "count": 193
+  },
+  {
+   "id": "I4210131892",
+   "name": "Institute of Molecular Genetics",
+   "count": 193
+  },
+  {
+   "id": "I117963711",
+   "name": "Kuban State University",
+   "count": 191
+  },
+  {
+   "id": "I105056648",
+   "name": "Perm State University",
+   "count": 190
+  },
+  {
+   "id": "I116191961",
+   "name": "Northern (Arctic) Federal University",
+   "count": 189
+  },
+  {
+   "id": "I4210140902",
+   "name": "Volgograd State Technical University",
+   "count": 188
+  },
+  {
+   "id": "I3129897247",
+   "name": "Russian New University",
+   "count": 187
+  },
+  {
+   "id": "I67311998",
+   "name": "European Organization for Nuclear Research",
+   "count": 187
+  },
+  {
+   "id": "I4210102177",
+   "name": "Institute for Nuclear Research",
+   "count": 185
+  },
+  {
+   "id": "I204490831",
+   "name": "National Research University of Electronic Technology",
+   "count": 182
+  },
+  {
+   "id": "I4210134318",
+   "name": "University of Technology",
+   "count": 182
+  },
+  {
+   "id": "I2800546203",
+   "name": "Kazan State Technical University named after A. N. Tupolev",
+   "count": 180
+  },
+  {
+   "id": "I4210163714",
+   "name": "Department of Earth Sciences",
+   "count": 180
+  },
+  {
+   "id": "I71267560",
+   "name": "University of Naples Federico II",
+   "count": 180
+  },
+  {
+   "id": "I7901131",
+   "name": "Ufa State Petroleum Technological University",
+   "count": 180
+  },
+  {
+   "id": "I4210119369",
+   "name": "Ural Branch of the Russian Academy of Sciences",
+   "count": 178
+  },
+  {
+   "id": "I210043505",
+   "name": "North-Caucasus Federal University",
+   "count": 177
+  },
+  {
+   "id": "I157338126",
+   "name": "Moscow State Pedagogical University",
+   "count": 176
+  },
+  {
+   "id": "I312958679",
+   "name": "National University of Science and Technology",
+   "count": 176
+  },
+  {
+   "id": "I205237279",
+   "name": "Nankai University",
+   "count": 175
+  },
+  {
+   "id": "I4210105571",
+   "name": "Institute of Bioorganic Chemistry",
+   "count": 173
+  },
+  {
+   "id": "I76130692",
+   "name": "Zhejiang University",
+   "count": 172
+  },
+  {
+   "id": "I64264942",
+   "name": "Federal Medical-Biological Agency",
+   "count": 169
+  },
+  {
+   "id": "I2801546011",
+   "name": "S. M. Kirov Military Medical Academy",
+   "count": 168
+  },
+  {
+   "id": "I74756048",
+   "name": "Saint Petersburg State Pediatric Medical University",
+   "count": 168
+  },
+  {
+   "id": "I186356647",
+   "name": "Kazan State Medical University",
+   "count": 166
+  },
+  {
+   "id": "I4210150146",
+   "name": "Moscow State University",
+   "count": 164
+  },
+  {
+   "id": "I111567634",
+   "name": "State University of Management",
+   "count": 161
+  },
+  {
+   "id": "I4210101320",
+   "name": "Herzen University",
+   "count": 160
+  },
+  {
+   "id": "I99065089",
+   "name": "Tsinghua University",
+   "count": 159
+  },
+  {
+   "id": "I131550537",
+   "name": "North-Eastern Federal University",
+   "count": 158
+  },
+  {
+   "id": "I4210166099",
+   "name": "National Medical Research Center of Dentistry and Maxillofacial Surgery",
+   "count": 158
+  },
+  {
+   "id": "I4210103175",
+   "name": "Voronezh State University of Forestry and Technologies",
+   "count": 157
+  },
+  {
+   "id": "I4210150057",
+   "name": "Centre of Advanced Studies",
+   "count": 157
+  },
+  {
+   "id": "I294094635",
+   "name": "National Research Mordovia State University",
+   "count": 156
+  },
+  {
+   "id": "I95568926",
+   "name": "Ioffe Institute",
+   "count": 156
+  },
+  {
+   "id": "I3276886",
+   "name": "Ivanovo State University of Chemistry and Technology",
+   "count": 155
+  },
+  {
+   "id": "I4210133425",
+   "name": "City Clinical Hospital",
+   "count": 155
+  },
+  {
+   "id": "I99205534",
+   "name": "Yaroslav-the-Wise Novgorod State University",
+   "count": 155
+  },
+  {
+   "id": "I126520041",
+   "name": "University of Science and Technology of China",
+   "count": 153
+  },
+  {
+   "id": "I20231570",
+   "name": "Peking University",
+   "count": 152
+  },
+  {
+   "id": "I119694697",
+   "name": "Gubkin Russian State University of Oil and Gas",
+   "count": 151
+  },
+  {
+   "id": "I4210127240",
+   "name": "Samara State Medical University",
+   "count": 151
+  },
+  {
+   "id": "I4210093938",
+   "name": "Ural State Medical University",
+   "count": 149
+  },
+  {
+   "id": "I155623535",
+   "name": "Volgograd State Medical University",
+   "count": 148
+  },
+  {
+   "id": "I123387679",
+   "name": "Uppsala University",
+   "count": 147
+  },
+  {
+   "id": "I4210120901",
+   "name": "Bashkir State Medical University",
+   "count": 147
+  },
+  {
+   "id": "I4210122217",
+   "name": "Irkutsk National Research Technical University",
+   "count": 146
+  },
+  {
+   "id": "I35440088",
+   "name": "ETH Zurich",
+   "count": 144
+  },
+  {
+   "id": "I184139950",
+   "name": "Moscow State Institute of International Relations",
+   "count": 142
+  },
+  {
+   "id": "I4210161229",
+   "name": "Institute of Applied Physics",
+   "count": 142
+  },
+  {
+   "id": "I183067930",
+   "name": "Shanghai Jiao Tong University",
+   "count": 141
+  },
+  {
+   "id": "I4210110898",
+   "name": "Moscow Technical University of Communication and Informatics",
+   "count": 141
+  },
+  {
+   "id": "I145597306",
+   "name": "Novosibirsk State Medical University",
+   "count": 139
+  },
+  {
+   "id": "I4210088638",
+   "name": "Higher Institute of Management",
+   "count": 137
+  },
+  {
+   "id": "I139660479",
+   "name": "Central South University",
+   "count": 135
+  },
+  {
+   "id": "I4210124538",
+   "name": "Geological Institute",
+   "count": 135
+  },
+  {
+   "id": "I4210088310",
+   "name": "Krasnoyarsk Scientific Center",
+   "count": 134
+  },
+  {
+   "id": "I4210116466",
+   "name": "Institute of Cytology and Genetics",
+   "count": 134
+  },
+  {
+   "id": "I4210138365",
+   "name": "Nizhny Novgorod State Technical University",
+   "count": 133
+  },
+  {
+   "id": "I4210158193",
+   "name": "Moscow State University of Psychology & Education",
+   "count": 133
+  },
+  {
+   "id": "I4210105813",
+   "name": "Tula University",
+   "count": 132
+  },
+  {
+   "id": "I4210090231",
+   "name": "Krasnoyarsk State Medical University",
+   "count": 131
+  },
+  {
+   "id": "I4210126948",
+   "name": "Memorial",
+   "count": 130
+  },
+  {
+   "id": "I56490300",
+   "name": "Siberian State Aerospace University",
+   "count": 129
+  },
+  {
+   "id": "I157773358",
+   "name": "Sun Yat-sen University",
+   "count": 127
+  },
+  {
+   "id": "I2801681975",
+   "name": "Moscow State Technological University",
+   "count": 126
+  },
+  {
+   "id": "I4210108259",
+   "name": "Polymer Research Institute",
+   "count": 126
+  },
+  {
+   "id": "I4210115403",
+   "name": "Military University",
+   "count": 126
+  },
+  {
+   "id": "I4068193",
+   "name": "University of Belgrade",
+   "count": 125
+  },
+  {
+   "id": "I180585399",
+   "name": "Dalian Institute of Chemical Physics",
+   "count": 124
+  },
+  {
+   "id": "I4210150587",
+   "name": "Institute of Mining",
+   "count": 124
+  },
+  {
+   "id": "I181171540",
+   "name": "Chuvash State University",
+   "count": 123
+  },
+  {
+   "id": "I2803070147",
+   "name": "Belgorod State Technological University",
+   "count": 123
+  },
+  {
+   "id": "I4210086649",
+   "name": "Planta",
+   "count": 123
+  },
+  {
+   "id": "I114376631",
+   "name": "Tomsk State University of Control Systems and Radio-Electronics",
+   "count": 122
+  },
+  {
+   "id": "I162868743",
+   "name": "Tianjin University",
+   "count": 122
+  },
+  {
+   "id": "I20119556",
+   "name": "Omsk State Technical University",
+   "count": 122
+  },
+  {
+   "id": "I4210104186",
+   "name": "Ufa Institute of Chemistry",
+   "count": 121
+  },
+  {
+   "id": "I3019350493",
+   "name": "Moscow State Agroengineering University named after V.P. Goryachkin",
+   "count": 119
+  },
+  {
+   "id": "I3020615197",
+   "name": "Institute of Service and Entrepreneurship of DGTU",
+   "count": 119
+  },
+  {
+   "id": "I38877650",
+   "name": "Zhengzhou University",
+   "count": 118
+  },
+  {
+   "id": "I4210148457",
+   "name": "Institute of Applied Physics",
+   "count": 118
+  },
+  {
+   "id": "I130438778",
+   "name": "Memorial University of Newfoundland",
+   "count": 116
+  },
+  {
+   "id": "I1327237609",
+   "name": "Ministry of Education of the People's Republic of China",
+   "count": 116
+  },
+  {
+   "id": "I4210128955",
+   "name": "Kazan State Power Engineering University",
+   "count": 116
+  },
+  {
+   "id": "I74801974",
+   "name": "The University of Tokyo",
+   "count": 116
+  },
+  {
+   "id": "I197524780",
+   "name": "Petrozavodsk State University",
+   "count": 115
+  },
+  {
+   "id": "I4210094231",
+   "name": "Boreskov Institute of Catalysis",
+   "count": 115
+  },
+  {
+   "id": "I47720641",
+   "name": "Huazhong University of Science and Technology",
+   "count": 115
+  },
+  {
+   "id": "I4210158550",
+   "name": "Joint Institute for High Temperatures",
+   "count": 114
+  },
+  {
+   "id": "I99464096",
+   "name": "KU Leuven",
+   "count": 114
+  },
+  {
+   "id": "I177697070",
+   "name": "Yuri Gagarin State Technical University of Saratov",
+   "count": 113
+  },
+  {
+   "id": "I198371094",
+   "name": "Yaroslavl State University",
+   "count": 113
+  },
+  {
+   "id": "I4210120228",
+   "name": "Department of Social Sciences",
+   "count": 113
+  },
+  {
+   "id": "I4210102261",
+   "name": "M.N. Mikheev Institute of Metal Physics",
+   "count": 112
+  },
+  {
+   "id": "I4210109043",
+   "name": "Vladimir State University",
+   "count": 112
+  },
+  {
+   "id": "I2801160905",
+   "name": "Steklov Mathematical Institute",
+   "count": 111
+  },
+  {
+   "id": "I4210153320",
+   "name": "Liberal Arts University",
+   "count": 111
+  },
+  {
+   "id": "I4210153510",
+   "name": "Prokhorov General Physics Institute",
+   "count": 111
+  },
+  {
+   "id": "I4210106771",
+   "name": "Voronezh State University of Engineering Technologies",
+   "count": 110
+  },
+  {
+   "id": "I55712492",
+   "name": "Zhejiang University of Technology",
+   "count": 110
+  },
+  {
+   "id": "I204983213",
+   "name": "Harbin Institute of Technology",
+   "count": 109
+  },
+  {
+   "id": "I134694890",
+   "name": "Russian University of Transport",
+   "count": 108
+  },
+  {
+   "id": "I16478408",
+   "name": "Rostov State Medical University",
+   "count": 108
+  },
+  {
+   "id": "I200296433",
+   "name": "Chinese Academy of Medical Sciences & Peking Union Medical College",
+   "count": 108
+  },
+  {
+   "id": "I4210119228",
+   "name": "Industrial University of Tyumen",
+   "count": 108
+  },
+  {
+   "id": "I180726961",
+   "name": "Shenzhen University",
+   "count": 107
+  },
+  {
+   "id": "I2799922383",
+   "name": "Geophysical Survey",
+   "count": 107
+  },
+  {
+   "id": "I120930651",
+   "name": "Ivanovo State University",
+   "count": 106
+  },
+  {
+   "id": "I4210104350",
+   "name": "Institute of Organic Synthesis",
+   "count": 106
+  },
+  {
+   "id": "I163137577",
+   "name": "Altai State University",
+   "count": 105
+  },
+  {
+   "id": "I4210091979",
+   "name": "Institute of Chemical Biology and Fundamental Medicine",
+   "count": 105
+  },
+  {
+   "id": "I4210118375",
+   "name": "Saratov State Medical University",
+   "count": 105
+  },
+  {
+   "id": "I4210116966",
+   "name": "Institute of Molecular and Cell Biology",
+   "count": 104
+  },
+  {
+   "id": "I4210161636",
+   "name": "Human Growth Foundation",
+   "count": 104
+  },
+  {
+   "id": "I114832834",
+   "name": "Tulane University",
+   "count": 103
+  },
+  {
+   "id": "I124055696",
+   "name": "University of Copenhagen",
+   "count": 103
+  }
+ ],
+ "ru_education_total": 61413,
+ "unis": {
+  "МГУ": {
+   "pool_now": 6491,
+   "w5_h3": 10641,
+   "w10_h3": 8499
+  },
+  "ВШЭ": {
+   "pool_now": 1422,
+   "w5_h3": 2525,
+   "w10_h3": 2109
+  },
+  "СПбГУ": {
+   "pool_now": 2415,
+   "w5_h3": 4046,
+   "w10_h3": 3309
+  },
+  "МФТИ": {
+   "pool_now": 968,
+   "w5_h3": 1592,
+   "w10_h3": 1267
+  },
+  "УрФУ": {
+   "pool_now": 1159,
+   "w5_h3": 2015,
+   "w10_h3": 1703
+  },
+  "НГУ": {
+   "pool_now": 1093,
+   "w5_h3": 1764,
+   "w10_h3": 1401
+  },
+  "ИТМО": {
+   "pool_now": 914,
+   "w5_h3": 1619,
+   "w10_h3": 1283
+  },
+  "МИФИ": {
+   "pool_now": 1001,
+   "w5_h3": 1766,
+   "w10_h3": 1412
+  },
+  "МГТУ": {
+   "pool_now": 773,
+   "w5_h3": 1538,
+   "w10_h3": 1255
+  },
+  "МИСИС": {
+   "pool_now": 586,
+   "w5_h3": 937,
+   "w10_h3": 736
+  },
+  "МАИ": {
+   "pool_now": 582,
+   "w5_h3": 1140,
+   "w10_h3": 941
+  },
+  "Иннополис": {
+   "pool_now": 84,
+   "w5_h3": 138,
+   "w10_h3": 108
+  }
+ },
+ "ru_total_w5_h3": 200329,
+ "ru_total_w10_h3": 164531,
+ "ratelimit_remaining_after": "968",
+ "note": "Перепись пулов OpenAlex для решения о расширении базы НР (#90). Собрано 17.09.2026 продуктовым тредом анонимно (без ключа, 42 list-запроса, 1 rps). Фильтр: last_known_institutions.country_code:RU + пороги эвристики НР works_count:>9, summary_stats.h_index:>4 (свежесть сервером не фильтруется — верхняя граница). group_by отдаёт не больше 200 групп. Ловушка: фильтр type:education проверяет любую аффилиацию автора, поэтому в ru_top_education попадают и НИИ.",
+ "thresholds": {
+  "base": "works_count:>9,summary_stats.h_index:>4",
+  "w5_h3": "works_count:>4,summary_stats.h_index:>2",
+  "w10_h3": "works_count:>9,summary_stats.h_index:>2"
+ }
+}
