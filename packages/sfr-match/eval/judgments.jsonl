@@ -1084,3 +1084,88 @@
 {"query_id": "q29", "author_id": "A5078254205", "grade": 2, "rationale": "пищевая промышленность, гидролиз белков, состав пищевых продуктов", "iteration": "sfr5-backfill"}
 {"query_id": "q29", "author_id": "A5080064513", "grade": 0, "rationale": "термоядерная плазма", "iteration": "sfr5-backfill"}
 {"query_id": "q30", "author_id": "A5020072191", "grade": 1, "rationale": "соцсети как объект, но политика и динамика мнений, а не маркетинг", "iteration": "sfr5-backfill"}
+{"query_id": "q01", "author_id": "A5012212950", "grade": 2, "rationale": "детекция депрессии и суицидальных эмоций в текстах соцсетей, deep learning — ровно тема", "iteration": "SFR-5b"}
+{"query_id": "q01", "author_id": "A5029380392", "grade": 2, "rationale": "«Feature Engineering for Depression Detection in Social Media», NLP — ровно тема", "iteration": "SFR-5b"}
+{"query_id": "q01", "author_id": "A5089112259", "grade": 1, "rationale": "NLP по текстам соцсетей, но про демографию, не про депрессию", "iteration": "SFR-5b"}
+{"query_id": "q01", "author_id": "A5100352794", "grade": 2, "rationale": "модель детекции депрессии в микроблогах по сентименту; профиль смешанный, но тема покрыта", "iteration": "SFR-5b"}
+{"query_id": "q02", "author_id": "A5002397716", "grade": 0, "rationale": "вычислительная фотография и ЭЭГ, медицинских изображений нет", "iteration": "SFR-5b"}
+{"query_id": "q02", "author_id": "A5101471017", "grade": 1, "rationale": "нейросети в цифровой голографии и микроскопии, анализ изображений клеток — смежно, не медицина", "iteration": "SFR-5b"}
+{"query_id": "q03", "author_id": "A5002724483", "grade": 2, "rationale": "эксперименты на коллайдере ВЭПП-2000, детектор СНД", "iteration": "SFR-5b"}
+{"query_id": "q03", "author_id": "A5067830021", "grade": 2, "rationale": "детекторы ILD и BM@N (NICA), физика частиц", "iteration": "SFR-5b"}
+{"query_id": "q04", "author_id": "A5019927506", "grade": 2, "rationale": "сверхпроводимость и беспорядок", "iteration": "SFR-5b"}
+{"query_id": "q04", "author_id": "A5041062340", "grade": 2, "rationale": "S/F/S-структуры, физика сверхпроводимости", "iteration": "SFR-5b"}
+{"query_id": "q04", "author_id": "A5064599758", "grade": 2, "rationale": "сверхпроводимость и беспорядок", "iteration": "SFR-5b"}
+{"query_id": "q04", "author_id": "A5087284937", "grade": 2, "rationale": "джозефсоновские мостики, сверхпроводимость", "iteration": "SFR-5b"}
+{"query_id": "q05", "author_id": "A5004945681", "grade": 2, "rationale": "параллельные алгоритмы, энциклопедия AlgoWiki — алгоритмы в научных вычислениях", "iteration": "SFR-5b"}
+{"query_id": "q06", "author_id": "A5000112921", "grade": 2, "rationale": "лазеры, самоинжекционная стабилизация на микрорезонаторах — экспериментальная оптика", "iteration": "SFR-5b"}
+{"query_id": "q06", "author_id": "A5108731634", "grade": 2, "rationale": "волоконные лазеры, управление лазерными системами — эксперимент", "iteration": "SFR-5b"}
+{"query_id": "q07", "author_id": "A5027535433", "grade": 2, "rationale": "машинное обучение для физики частиц: RL для ускорителя, реконструкция нейтронов в BM@N", "iteration": "SFR-5b"}
+{"query_id": "q07", "author_id": "A5029181198", "grade": 2, "rationale": "ML-оптимизация экспериментов и детекция аномалий в физике частиц", "iteration": "SFR-5b"}
+{"query_id": "q08", "author_id": "A5002542089", "grade": 0, "rationale": "нейролингвистика и афазия, не NLP", "iteration": "SFR-5b"}
+{"query_id": "q08", "author_id": "A5002957144", "grade": 1, "rationale": "NLP (hate speech, читабельность), но не русский язык и не GNN", "iteration": "SFR-5b"}
+{"query_id": "q08", "author_id": "A5083490320", "grade": 2, "rationale": "предобученные языковые модели для русского — NLP на русскоязычных данных", "iteration": "SFR-5b"}
+{"query_id": "q09", "author_id": "A5046709716", "grade": 2, "rationale": "квантовые вычисления, алгоритмы и симуляция", "iteration": "SFR-5b"}
+{"query_id": "q10", "author_id": "A5027535433", "grade": 2, "rationale": "ML для данных ускорителей и детекторов — data science в физике", "iteration": "SFR-5b"}
+{"query_id": "q10", "author_id": "A5029181198", "grade": 2, "rationale": "ML для экспериментальной физики, anomaly detection", "iteration": "SFR-5b"}
+{"query_id": "q10", "author_id": "A5069979785", "grade": 2, "rationale": "большие данные LHC, распределённые вычисления, кластеризация логов — data science в физике", "iteration": "SFR-5b"}
+{"query_id": "q11", "author_id": "A5013081744", "grade": 1, "rationale": "оптимизация расписаний на железной дороге — транспорт, но не маршруты доставки", "iteration": "SFR-5b"}
+{"query_id": "q11", "author_id": "A5051886862", "grade": 1, "rationale": "оптимизация производства и логистики, сборочные линии — смежно", "iteration": "SFR-5b"}
+{"query_id": "q11", "author_id": "A5107965221", "grade": 2, "rationale": "vehicle routing, маршрутизация с ограничениями — ровно тема", "iteration": "SFR-5b"}
+{"query_id": "q12", "author_id": "A5020808383", "grade": 2, "rationale": "математические модели экономических циклов — экономико-математическое моделирование", "iteration": "SFR-5b"}
+{"query_id": "q13", "author_id": "A5015131347", "grade": 2, "rationale": "кристаллические структуры, дифракция — ровно тема", "iteration": "SFR-5b"}
+{"query_id": "q13", "author_id": "A5042266382", "grade": 2, "rationale": "резонансная рентгеновская дифракция", "iteration": "SFR-5b"}
+{"query_id": "q14", "author_id": "A5111692775", "grade": 2, "rationale": "квантовая телепортация, запутанные состояния — квантовая информация", "iteration": "SFR-5b"}
+{"query_id": "q15", "author_id": "A5020876643", "grade": 2, "rationale": "поиск тёмной материи (DarkSide/Aria)", "iteration": "SFR-5b"}
+{"query_id": "q15", "author_id": "A5071164723", "grade": 2, "rationale": "SHiP — поиск скрытых частиц, тёмная материя в темах", "iteration": "SFR-5b"}
+{"query_id": "q15", "author_id": "A5071620748", "grade": 2, "rationale": "DEAP-3600 — прямой поиск тёмной материи", "iteration": "SFR-5b"}
+{"query_id": "q16", "author_id": "A5053176048", "grade": 2, "rationale": "мемристоры на парилене для нейроморфных вычислений", "iteration": "SFR-5b"}
+{"query_id": "q16", "author_id": "A5075899988", "grade": 2, "rationale": "нанокомпозитные мемристоры, аппаратные нейросети", "iteration": "SFR-5b"}
+{"query_id": "q16", "author_id": "A5083126736", "grade": 2, "rationale": "мемристорные нейроморфные системы", "iteration": "SFR-5b"}
+{"query_id": "q17", "author_id": "A5104387273", "grade": 2, "rationale": "реакторные нейтринные эксперименты", "iteration": "SFR-5b"}
+{"query_id": "q17", "author_id": "A5104688244", "grade": 2, "rationale": "двойной бета-распад 100Mo — ровно тема", "iteration": "SFR-5b"}
+{"query_id": "q18", "author_id": "A5002925638", "grade": 2, "rationale": "спин-орбитальные эффекты в графене, магнитные тонкие плёнки — спинтроника", "iteration": "SFR-5b"}
+{"query_id": "q19", "author_id": "A5015779508", "grade": 2, "rationale": "открытый вычислительный фреймворк Nektar++ и уравнения Фаддеева — физика и программирование", "iteration": "SFR-5b"}
+{"query_id": "q19", "author_id": "A5055391580", "grade": 0, "rationale": "гамма-телескоп TAIGA и крашение волокон — программирования нет", "iteration": "SFR-5b"}
+{"query_id": "q19", "author_id": "A5107892335", "grade": 1, "rationale": "проектирование ускорителей — расчёты есть, программирования как темы нет", "iteration": "SFR-5b"}
+{"query_id": "q19", "author_id": "A5110984172", "grade": 0, "rationale": "ядерные реакции на циклотроне, не стык с программированием", "iteration": "SFR-5b"}
+{"query_id": "q20", "author_id": "A5021543319", "grade": 2, "rationale": "теоретическая физика частиц, КХД", "iteration": "SFR-5b"}
+{"query_id": "q20", "author_id": "A5053219282", "grade": 2, "rationale": "PT-симметричная космология, квантовая гравитация — фундаментальная теория", "iteration": "SFR-5b"}
+{"query_id": "q21", "author_id": "A5020775138", "grade": 2, "rationale": "сплавы, диффузионная сварка, керамика — материалы в технике", "iteration": "SFR-5b"}
+{"query_id": "q21", "author_id": "A5050009688", "grade": 2, "rationale": "пьезокерамика и 3D-печать — новые материалы в технике", "iteration": "SFR-5b"}
+{"query_id": "q21", "author_id": "A5055391580", "grade": 1, "rationale": "смешанный профиль: астрофизика и волокна; материалы на периферии", "iteration": "SFR-5b"}
+{"query_id": "q21", "author_id": "A5062677587", "grade": 2, "rationale": "композиты SiC-TiB2-TiC, искровое спекание", "iteration": "SFR-5b"}
+{"query_id": "q21", "author_id": "A5078249510", "grade": 2, "rationale": "керамические нанокомпозиты с графеном, аддитивные технологии", "iteration": "SFR-5b"}
+{"query_id": "q22", "author_id": "A5014855755", "grade": 1, "rationale": "process mining и сети Петри — моделирование процессов, но бизнес/ПО, не «реальных процессов»", "iteration": "SFR-5b"}
+{"query_id": "q22", "author_id": "A5020808383", "grade": 2, "rationale": "математическое моделирование экономических циклов и демографии", "iteration": "SFR-5b"}
+{"query_id": "q22", "author_id": "A5064199838", "grade": 2, "rationale": "модели взаимодействия антикоррупционных структур, моделирование и оптимизация", "iteration": "SFR-5b"}
+{"query_id": "q23", "author_id": "A5020945978", "grade": 2, "rationale": "сверхпроводящий искусственный атом, фононный резонатор — железо квантовых компьютеров", "iteration": "SFR-5b"}
+{"query_id": "q23", "author_id": "A5046709716", "grade": 2, "rationale": "квантовые вычисления", "iteration": "SFR-5b"}
+{"query_id": "q23", "author_id": "A5065309599", "grade": 2, "rationale": "квантовые вычисления и универсальные наборы гейтов", "iteration": "SFR-5b"}
+{"query_id": "q23", "author_id": "A5080313215", "grade": 2, "rationale": "квантовые LDPC-коды — коррекция ошибок для квантовых компьютеров", "iteration": "SFR-5b"}
+{"query_id": "q24", "author_id": "A5002397716", "grade": 1, "rationale": "челленджи по обработке изображений (DL), но профиль про мозг и зрение", "iteration": "SFR-5b"}
+{"query_id": "q25", "author_id": "A5007376506", "grade": 1, "rationale": "квантовые магнетики, ЭПР — конденсированное состояние, не теория сверхпроводимости", "iteration": "SFR-5b"}
+{"query_id": "q25", "author_id": "A5014271194", "grade": 0, "rationale": "фотохимия, спектроскопия", "iteration": "SFR-5b"}
+{"query_id": "q25", "author_id": "A5015225689", "grade": 1, "rationale": "магноны и фононы в антиферромагнетиках — смежно", "iteration": "SFR-5b"}
+{"query_id": "q25", "author_id": "A5051814793", "grade": 0, "rationale": "проводящие полимеры, электрохимия", "iteration": "SFR-5b"}
+{"query_id": "q26", "author_id": "A5041310299", "grade": 2, "rationale": "3D-организация генома, предсказание контактов — биоинформатика", "iteration": "SFR-5b"}
+{"query_id": "q26", "author_id": "A5074067238", "grade": 2, "rationale": "генетические ассоциации, сборка генома — анализ геномных данных", "iteration": "SFR-5b"}
+{"query_id": "q26", "author_id": "A5086530184", "grade": 2, "rationale": "статистика ChIP-seq, суперкомпьютерная геномика", "iteration": "SFR-5b"}
+{"query_id": "q26", "author_id": "A5089107166", "grade": 2, "rationale": "хромосомные сборки геномов, популяционная геномика", "iteration": "SFR-5b"}
+{"query_id": "q27", "author_id": "A5080602467", "grade": 0, "rationale": "налоги и фискальная политика", "iteration": "SFR-5b"}
+{"query_id": "q27", "author_id": "A5103610055", "grade": 1, "rationale": "реформы в России, но 2000-х; политология, не история XIX века", "iteration": "SFR-5b"}
+{"query_id": "q28", "author_id": "A5008081257", "grade": 0, "rationale": "дифференциальные уравнения на графах; юридические темы в профиле — ошибка OpenAlex", "iteration": "SFR-5b"}
+{"query_id": "q28", "author_id": "A5046360176", "grade": 1, "rationale": "право цифровой трансформации, ИИ и интеллектуальная собственность — частное право рядом, но не договорное", "iteration": "SFR-5b"}
+{"query_id": "q28", "author_id": "A5054468920", "grade": 1, "rationale": "уголовное право и криминология — право, но не гражданское", "iteration": "SFR-5b"}
+{"query_id": "q28", "author_id": "A5057567991", "grade": 0, "rationale": "международные отношения, Балтика", "iteration": "SFR-5b"}
+{"query_id": "q29", "author_id": "A5042200208", "grade": 2, "rationale": "дрожжи для хлебопечения, ферментация — технология выпечки", "iteration": "SFR-5b"}
+{"query_id": "q29", "author_id": "A5101595440", "grade": 1, "rationale": "генетика пшеницы и ячменя — сырьё, не технология выпечки", "iteration": "SFR-5b"}
+{"query_id": "q30", "author_id": "A5045100844", "grade": 2, "rationale": "маркетинг, цифровой маркетинг и соцсети в темах (кафедра маркетинга МГУ)", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5075521585", "grade": 0, "rationale": "радиационная стойкость микросхем — не backend-разработка", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5020474806", "grade": 1, "rationale": "ИИ в играх, эволюционные алгоритмы — computer science, но не backend engineering", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5061817869", "grade": 0, "rationale": "полупроводниковые материалы", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5046200978", "grade": 0, "rationale": "рентгеновская дифракция, материалы", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5052899628", "grade": 0, "rationale": "композиты, материалы", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5111604731", "grade": 1, "rationale": "эксперимент по генерации программных компонентов (software engineering) в смешанном профиле с полупроводниками", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5067118675", "grade": 0, "rationale": "нелинейно-оптические материалы", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5071907096", "grade": 0, "rationale": "тонкие магнитные плёнки", "iteration": "SFR-5b"}
+{"query_id": "e01", "author_id": "A5057838397", "grade": 0, "rationale": "детекторы на NICA", "iteration": "SFR-5b"}
