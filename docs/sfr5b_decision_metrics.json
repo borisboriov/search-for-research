@@ -1,0 +1,1267 @@
+{
+  "corpus": {
+    "before": 5538,
+    "after": 12119,
+    "aliases": 50
+  },
+  "index_version": {
+    "before": "frida_clean-5538p-ea7e3c07",
+    "after": "frida_clean-12119p-99460725"
+  },
+  "sets": {
+    "golden_in_domain_24": {
+      "n_queries": 24,
+      "success_at_1": {
+        "before": 0.75,
+        "after": 0.792
+      },
+      "success_at_5": {
+        "before": 0.917,
+        "after": 1.0
+      },
+      "coverage_gain": {
+        "queries_with_new_in_top5": 1.0,
+        "queries_with_new_grade2_in_top5": 0.958,
+        "queries_top1_new": 0.542
+      },
+      "displacement": {
+        "old_grade2_left_top5": 29,
+        "queries_with_displaced_grade2": 17,
+        "entrants_new_grade2": 44,
+        "entrants_new_grade_le1": 13,
+        "entrants_old": 0
+      },
+      "unjudged_pairs_in_top5_after": 0
+    },
+    "golden_same_22": {
+      "n_queries": 22,
+      "success_at_1": {
+        "before": 0.773,
+        "after": 0.818
+      },
+      "success_at_5": {
+        "before": 0.909,
+        "after": 1.0
+      },
+      "coverage_gain": {
+        "queries_with_new_in_top5": 1.0,
+        "queries_with_new_grade2_in_top5": 0.955,
+        "queries_top1_new": 0.545
+      },
+      "displacement": {
+        "old_grade2_left_top5": 27,
+        "queries_with_displaced_grade2": 15,
+        "entrants_new_grade2": 42,
+        "entrants_new_grade_le1": 12,
+        "entrants_old": 0
+      },
+      "unjudged_pairs_in_top5_after": 0
+    },
+    "golden_edge": {
+      "n_queries": 6,
+      "success_at_1": {
+        "before": 0.5,
+        "after": 0.5
+      },
+      "success_at_5": {
+        "before": 0.833,
+        "after": 0.667
+      },
+      "coverage_gain": {
+        "queries_with_new_in_top5": 1.0,
+        "queries_with_new_grade2_in_top5": 0.333,
+        "queries_top1_new": 0.333
+      },
+      "displacement": {
+        "old_grade2_left_top5": 10,
+        "queries_with_displaced_grade2": 4,
+        "entrants_new_grade2": 8,
+        "entrants_new_grade_le1": 11,
+        "entrants_old": 0
+      },
+      "unjudged_pairs_in_top5_after": 0
+    },
+    "external": {
+      "n_queries": 1,
+      "success_at_1": {
+        "before": 0.0,
+        "after": 0.0
+      },
+      "success_at_5": {
+        "before": 0.0,
+        "after": 0.0
+      },
+      "coverage_gain": {
+        "queries_with_new_in_top5": 1.0,
+        "queries_with_new_grade2_in_top5": 0.0,
+        "queries_top1_new": 1.0
+      },
+      "displacement": {
+        "old_grade2_left_top5": 0,
+        "queries_with_displaced_grade2": 0,
+        "entrants_new_grade2": 0,
+        "entrants_new_grade_le1": 4,
+        "entrants_old": 0
+      },
+      "unjudged_pairs_in_top5_after": 0
+    },
+    "headline_golden24_plus_external": {
+      "n_queries": 25,
+      "success_at_1": {
+        "before": 0.72,
+        "after": 0.76
+      },
+      "success_at_5": {
+        "before": 0.88,
+        "after": 0.96
+      },
+      "coverage_gain": {
+        "queries_with_new_in_top5": 1.0,
+        "queries_with_new_grade2_in_top5": 0.92,
+        "queries_top1_new": 0.56
+      },
+      "displacement": {
+        "old_grade2_left_top5": 29,
+        "queries_with_displaced_grade2": 17,
+        "entrants_new_grade2": 44,
+        "entrants_new_grade_le1": 17,
+        "entrants_old": 0
+      },
+      "unjudged_pairs_in_top5_after": 0
+    }
+  },
+  "institutions": {
+    "before": {
+      "distinct_in_top10_union": 12,
+      "top5_by_institution": {
+        "Высшая школа экономики": {
+          "n": 26,
+          "share": 0.173
+        },
+        "Национальный исследовательский ядерный университет МИФИ": {
+          "n": 21,
+          "share": 0.14
+        },
+        "Московский физико-технический институт": {
+          "n": 16,
+          "share": 0.107
+        },
+        "Московский государственный технический университет имени Н. Э. Баумана": {
+          "n": 14,
+          "share": 0.093
+        },
+        "Санкт-Петербургский государственный университет": {
+          "n": 12,
+          "share": 0.08
+        },
+        "Московский авиационный институт": {
+          "n": 12,
+          "share": 0.08
+        },
+        "Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики": {
+          "n": 11,
+          "share": 0.073
+        },
+        "Московский государственный университет": {
+          "n": 11,
+          "share": 0.073
+        },
+        "Новосибирский государственный университет": {
+          "n": 11,
+          "share": 0.073
+        },
+        "Уральский федеральный университет": {
+          "n": 9,
+          "share": 0.06
+        },
+        "Национальный исследовательский технологический университет МИСиС": {
+          "n": 5,
+          "share": 0.033
+        },
+        "Автономная некоммерческая организация высшего образования Университет Иннополис": {
+          "n": 2,
+          "share": 0.013
+        }
+      },
+      "top5_max_share": 0.173
+    },
+    "after": {
+      "distinct_in_top10_union": 12,
+      "top5_by_institution": {
+        "Московский государственный университет": {
+          "n": 33,
+          "share": 0.22
+        },
+        "Высшая школа экономики": {
+          "n": 30,
+          "share": 0.2
+        },
+        "Санкт-Петербургский государственный университет": {
+          "n": 18,
+          "share": 0.12
+        },
+        "Национальный исследовательский ядерный университет МИФИ": {
+          "n": 18,
+          "share": 0.12
+        },
+        "Московский государственный технический университет имени Н. Э. Баумана": {
+          "n": 11,
+          "share": 0.073
+        },
+        "Московский физико-технический институт": {
+          "n": 10,
+          "share": 0.067
+        },
+        "Московский авиационный институт": {
+          "n": 10,
+          "share": 0.067
+        },
+        "Новосибирский государственный университет": {
+          "n": 9,
+          "share": 0.06
+        },
+        "Уральский федеральный университет": {
+          "n": 5,
+          "share": 0.033
+        },
+        "Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики": {
+          "n": 4,
+          "share": 0.027
+        },
+        "Автономная некоммерческая организация высшего образования Университет Иннополис": {
+          "n": 1,
+          "share": 0.007
+        },
+        "Национальный исследовательский технологический университет МИСиС": {
+          "n": 1,
+          "share": 0.007
+        }
+      },
+      "top5_max_share": 0.22
+    }
+  },
+  "scale_shift": {
+    "golden_in_domain_median_top1": {
+      "before": 0.4713,
+      "after": 0.4919
+    },
+    "golden_edge_median_top1": {
+      "before": 0.3843,
+      "after": 0.3938
+    },
+    "ood_median_top1": {
+      "before": 0.1582,
+      "after": 0.1653
+    },
+    "ood_max_top1": {
+      "before": 0.362774,
+      "after": 0.371191
+    }
+  },
+  "judgments_via_alias": 0,
+  "per_query": {
+    "golden": [
+      {
+        "id": "q01",
+        "expect": "in-domain",
+        "top1_before": 0.582782,
+        "top1_after": 0.602868,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 3,
+        "top1_is_new": true,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 3,
+          "new_grade_le1": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5070267730",
+          "A5007086495",
+          "A5031192722",
+          "A5038667261",
+          "A5052465844"
+        ],
+        "top5_after": [
+          "A5012212950",
+          "A5070267730",
+          "A5100352794",
+          "A5089112259",
+          "A5029380392"
+        ]
+      },
+      {
+        "id": "q02",
+        "expect": "in-domain",
+        "top1_before": 0.544334,
+        "top1_after": 0.544334,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 0,
+        "top1_is_new": false,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade_le1": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5006995291",
+          "A5017151529",
+          "A5064801935",
+          "A5017328847",
+          "A5029567858"
+        ],
+        "top5_after": [
+          "A5006995291",
+          "A5101471017",
+          "A5002397716",
+          "A5017151529",
+          "A5064801935"
+        ]
+      },
+      {
+        "id": "q03",
+        "expect": "in-domain",
+        "top1_before": 0.434217,
+        "top1_after": 0.442733,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": true,
+        "displaced_grade2": 2,
+        "entrants": {
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5100670875",
+          "A5039966405",
+          "A5114377115",
+          "A5107963115",
+          "A5102786081"
+        ],
+        "top5_after": [
+          "A5067830021",
+          "A5100670875",
+          "A5039966405",
+          "A5002724483",
+          "A5114377115"
+        ]
+      },
+      {
+        "id": "q04",
+        "expect": "in-domain",
+        "top1_before": 0.512141,
+        "top1_after": 0.517439,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 4,
+        "top1_is_new": true,
+        "displaced_grade2": 3,
+        "entrants": {
+          "new_grade2": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5026267619",
+          "A5044414277",
+          "A5038973865",
+          "A5087372080",
+          "A5105975394"
+        ],
+        "top5_after": [
+          "A5041062340",
+          "A5019927506",
+          "A5064599758",
+          "A5026267619",
+          "A5087284937"
+        ]
+      },
+      {
+        "id": "q05",
+        "expect": "in-domain",
+        "top1_before": 0.434552,
+        "top1_after": 0.434552,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": false,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5020887835",
+          "A5029567858",
+          "A5062232142",
+          "A5040349655",
+          "A5110627797"
+        ],
+        "top5_after": [
+          "A5020887835",
+          "A5004945681",
+          "A5029567858",
+          "A5062232142",
+          "A5040349655"
+        ]
+      },
+      {
+        "id": "q06",
+        "expect": "in-domain",
+        "top1_before": 0.491932,
+        "top1_after": 0.491932,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": false,
+        "displaced_grade2": 2,
+        "entrants": {
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5037879194",
+          "A5013488476",
+          "A5011303108",
+          "A5050862190",
+          "A5016758266"
+        ],
+        "top5_after": [
+          "A5037879194",
+          "A5000112921",
+          "A5108731634",
+          "A5013488476",
+          "A5011303108"
+        ]
+      },
+      {
+        "id": "q07",
+        "expect": "in-domain",
+        "top1_before": 0.578272,
+        "top1_after": 0.578272,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": false,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": false,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5112651411",
+          "A5107839879",
+          "A5083103730",
+          "A5107174121",
+          "A5107902822"
+        ],
+        "top5_after": [
+          "A5112651411",
+          "A5029181198",
+          "A5027535433",
+          "A5107839879",
+          "A5083103730"
+        ]
+      },
+      {
+        "id": "q08",
+        "expect": "in-domain",
+        "top1_before": 0.508974,
+        "top1_after": 0.527473,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 3,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": true,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 1,
+          "new_grade_le1": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5001784131",
+          "A5000934507",
+          "A5018958751",
+          "A5058806392",
+          "A5101711419"
+        ],
+        "top5_after": [
+          "A5083490320",
+          "A5001784131",
+          "A5000934507",
+          "A5002957144",
+          "A5002542089"
+        ]
+      },
+      {
+        "id": "q09",
+        "expect": "in-domain",
+        "top1_before": 0.5019,
+        "top1_after": 0.5019,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": false,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5111760858",
+          "A5033682739",
+          "A5062570459",
+          "A5048702317",
+          "A5078641429"
+        ],
+        "top5_after": [
+          "A5111760858",
+          "A5033682739",
+          "A5046709716",
+          "A5062570459",
+          "A5048702317"
+        ]
+      },
+      {
+        "id": "q10",
+        "expect": "in-domain",
+        "top1_before": 0.4659,
+        "top1_after": 0.517484,
+        "s1_before": false,
+        "s1_after": true,
+        "s5_before": false,
+        "s5_after": true,
+        "new_in_top5": 3,
+        "new_grade2_in_top5": 3,
+        "top1_is_new": true,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 3
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5112651411",
+          "A5103568609",
+          "A5030454460",
+          "A5075534567",
+          "A5084513745"
+        ],
+        "top5_after": [
+          "A5069979785",
+          "A5029181198",
+          "A5112651411",
+          "A5027535433",
+          "A5103568609"
+        ]
+      },
+      {
+        "id": "q11",
+        "expect": "in-domain",
+        "top1_before": 0.490875,
+        "top1_after": 0.491822,
+        "s1_before": false,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 3,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": true,
+        "displaced_grade2": 3,
+        "entrants": {
+          "new_grade2": 1,
+          "new_grade_le1": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5086469184",
+          "A5075059819",
+          "A5035328594",
+          "A5112269203",
+          "A5035075324"
+        ],
+        "top5_after": [
+          "A5107965221",
+          "A5086469184",
+          "A5075059819",
+          "A5013081744",
+          "A5051886862"
+        ]
+      },
+      {
+        "id": "q12",
+        "expect": "in-domain",
+        "top1_before": 0.455418,
+        "top1_after": 0.455418,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": false,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5102975236",
+          "A5044023963",
+          "A5062482400",
+          "A5044270430",
+          "A5064585831"
+        ],
+        "top5_after": [
+          "A5102975236",
+          "A5044023963",
+          "A5062482400",
+          "A5020808383",
+          "A5044270430"
+        ]
+      },
+      {
+        "id": "q13",
+        "expect": "in-domain",
+        "top1_before": 0.506389,
+        "top1_after": 0.506389,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": false,
+        "displaced_grade2": 2,
+        "entrants": {
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5103634262",
+          "A5053351584",
+          "A5064597433",
+          "A5020727581",
+          "A5048402137"
+        ],
+        "top5_after": [
+          "A5103634262",
+          "A5015131347",
+          "A5053351584",
+          "A5042266382",
+          "A5064597433"
+        ]
+      },
+      {
+        "id": "q14",
+        "expect": "in-domain",
+        "top1_before": 0.43966,
+        "top1_after": 0.44999,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": true,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5017383854",
+          "A5012166541",
+          "A5017633244",
+          "A5103199431",
+          "A5007384660"
+        ],
+        "top5_after": [
+          "A5111692775",
+          "A5017383854",
+          "A5012166541",
+          "A5017633244",
+          "A5103199431"
+        ]
+      },
+      {
+        "id": "q15",
+        "expect": "in-domain",
+        "top1_before": 0.39059,
+        "top1_after": 0.4419,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 3,
+        "new_grade2_in_top5": 3,
+        "top1_is_new": true,
+        "displaced_grade2": 2,
+        "entrants": {
+          "new_grade2": 3
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5069514467",
+          "A5039966405",
+          "A5032951968",
+          "A5107980327",
+          "A5024187788"
+        ],
+        "top5_after": [
+          "A5020876643",
+          "A5071620748",
+          "A5069514467",
+          "A5039966405",
+          "A5071164723"
+        ]
+      },
+      {
+        "id": "q16",
+        "expect": "in-domain",
+        "top1_before": 0.429406,
+        "top1_after": 0.491379,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 3,
+        "new_grade2_in_top5": 3,
+        "top1_is_new": true,
+        "displaced_grade2": 2,
+        "entrants": {
+          "new_grade2": 3
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5101578748",
+          "A5034121563",
+          "A5091785597",
+          "A5061341300",
+          "A5056817341"
+        ],
+        "top5_after": [
+          "A5083126736",
+          "A5075899988",
+          "A5101578748",
+          "A5053176048",
+          "A5034121563"
+        ]
+      },
+      {
+        "id": "q17",
+        "expect": "in-domain",
+        "top1_before": 0.476796,
+        "top1_after": 0.496064,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": true,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5059653984",
+          "A5107886204",
+          "A5000525652",
+          "A5070029333",
+          "A5009133662"
+        ],
+        "top5_after": [
+          "A5104688244",
+          "A5059653984",
+          "A5107886204",
+          "A5000525652",
+          "A5104387273"
+        ]
+      },
+      {
+        "id": "q18",
+        "expect": "in-domain",
+        "top1_before": 0.522355,
+        "top1_after": 0.522355,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": false,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5020446476",
+          "A5014414850",
+          "A5028599598",
+          "A5026920104",
+          "A5070044388"
+        ],
+        "top5_after": [
+          "A5020446476",
+          "A5014414850",
+          "A5002925638",
+          "A5028599598",
+          "A5026920104"
+        ]
+      },
+      {
+        "id": "q19",
+        "expect": "in-domain",
+        "top1_before": 0.42554,
+        "top1_after": 0.451772,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": true,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade_le1": 3,
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5063523050",
+          "A5085935136",
+          "A5032107945",
+          "A5030454460",
+          "A5087415130"
+        ],
+        "top5_after": [
+          "A5107892335",
+          "A5063523050",
+          "A5055391580",
+          "A5015779508",
+          "A5110984172"
+        ]
+      },
+      {
+        "id": "q20",
+        "expect": "in-domain",
+        "top1_before": 0.394592,
+        "top1_after": 0.394592,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": false,
+        "displaced_grade2": 2,
+        "entrants": {
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5084788036",
+          "A5105710473",
+          "A5003003630",
+          "A5083296409",
+          "A5018181061"
+        ],
+        "top5_after": [
+          "A5084788036",
+          "A5105710473",
+          "A5021543319",
+          "A5053219282",
+          "A5003003630"
+        ]
+      },
+      {
+        "id": "q21",
+        "expect": "in-domain",
+        "top1_before": 0.423904,
+        "top1_after": 0.443801,
+        "s1_before": true,
+        "s1_after": false,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 5,
+        "new_grade2_in_top5": 4,
+        "top1_is_new": true,
+        "displaced_grade2": 3,
+        "entrants": {
+          "new_grade_le1": 1,
+          "new_grade2": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5050234205",
+          "A5017448390",
+          "A5087662164",
+          "A5084061415",
+          "A5025897376"
+        ],
+        "top5_after": [
+          "A5055391580",
+          "A5050009688",
+          "A5062677587",
+          "A5078249510",
+          "A5020775138"
+        ]
+      },
+      {
+        "id": "q22",
+        "expect": "in-domain",
+        "top1_before": 0.426392,
+        "top1_after": 0.426392,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 3,
+        "new_grade2_in_top5": 2,
+        "top1_is_new": false,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade_le1": 1,
+          "new_grade2": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5044023963",
+          "A5102975236",
+          "A5035493078",
+          "A5038792420",
+          "A5047370658"
+        ],
+        "top5_after": [
+          "A5044023963",
+          "A5014855755",
+          "A5020808383",
+          "A5102975236",
+          "A5064199838"
+        ]
+      },
+      {
+        "id": "q29",
+        "expect": "in-domain",
+        "top1_before": 0.424507,
+        "top1_after": 0.424507,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": false,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade2": 1,
+          "new_grade_le1": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5006576648",
+          "A5033640300",
+          "A5080064513",
+          "A5078254205",
+          "A5032194897"
+        ],
+        "top5_after": [
+          "A5006576648",
+          "A5042200208",
+          "A5101595440",
+          "A5033640300",
+          "A5080064513"
+        ]
+      },
+      {
+        "id": "q30",
+        "expect": "in-domain",
+        "top1_before": 0.481491,
+        "top1_after": 0.522749,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 1,
+        "top1_is_new": true,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade2": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5006757486",
+          "A5011298864",
+          "A5020072191",
+          "A5110589505",
+          "A5003350728"
+        ],
+        "top5_after": [
+          "A5045100844",
+          "A5006757486",
+          "A5011298864",
+          "A5020072191",
+          "A5110589505"
+        ]
+      },
+      {
+        "id": "q23",
+        "expect": "edge",
+        "top1_before": 0.453921,
+        "top1_after": 0.466762,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 4,
+        "top1_is_new": true,
+        "displaced_grade2": 4,
+        "entrants": {
+          "new_grade2": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5095070139",
+          "A5033682739",
+          "A5025096043",
+          "A5078641429",
+          "A5111760858"
+        ],
+        "top5_after": [
+          "A5046709716",
+          "A5095070139",
+          "A5065309599",
+          "A5020945978",
+          "A5080313215"
+        ]
+      },
+      {
+        "id": "q24",
+        "expect": "edge",
+        "top1_before": 0.380373,
+        "top1_after": 0.380373,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 1,
+        "new_grade2_in_top5": 0,
+        "top1_is_new": false,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade_le1": 1
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5056413709",
+          "A5062232142",
+          "A5072673405",
+          "A5110627797",
+          "A5011297003"
+        ],
+        "top5_after": [
+          "A5056413709",
+          "A5062232142",
+          "A5072673405",
+          "A5002397716",
+          "A5110627797"
+        ]
+      },
+      {
+        "id": "q25",
+        "expect": "edge",
+        "top1_before": 0.388323,
+        "top1_after": 0.407213,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": true,
+        "s5_after": false,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 0,
+        "top1_is_new": true,
+        "displaced_grade2": 1,
+        "entrants": {
+          "new_grade_le1": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5069750047",
+          "A5036186489",
+          "A5089465154",
+          "A5064613329",
+          "A5001985637"
+        ],
+        "top5_after": [
+          "A5007376506",
+          "A5015225689",
+          "A5051814793",
+          "A5014271194",
+          "A5069750047"
+        ]
+      },
+      {
+        "id": "q26",
+        "expect": "edge",
+        "top1_before": 0.476413,
+        "top1_after": 0.476413,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 4,
+        "top1_is_new": false,
+        "displaced_grade2": 4,
+        "entrants": {
+          "new_grade2": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5031476631",
+          "A5028424487",
+          "A5047407238",
+          "A5075293015",
+          "A5047990689"
+        ],
+        "top5_after": [
+          "A5031476631",
+          "A5089107166",
+          "A5041310299",
+          "A5074067238",
+          "A5086530184"
+        ]
+      },
+      {
+        "id": "q27",
+        "expect": "edge",
+        "top1_before": 0.348556,
+        "top1_after": 0.348556,
+        "s1_before": true,
+        "s1_after": true,
+        "s5_before": true,
+        "s5_after": true,
+        "new_in_top5": 2,
+        "new_grade2_in_top5": 0,
+        "top1_is_new": false,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade_le1": 2
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5024623698",
+          "A5013206562",
+          "A5017432552",
+          "A5021338684",
+          "A5048342677"
+        ],
+        "top5_after": [
+          "A5024623698",
+          "A5013206562",
+          "A5080602467",
+          "A5103610055",
+          "A5017432552"
+        ]
+      },
+      {
+        "id": "q28",
+        "expect": "edge",
+        "top1_before": 0.370858,
+        "top1_after": 0.370858,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": false,
+        "s5_after": false,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 0,
+        "top1_is_new": false,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade_le1": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5021089109",
+          "A5005068608",
+          "A5013860920",
+          "A5018310469",
+          "A5067237593"
+        ],
+        "top5_after": [
+          "A5021089109",
+          "A5054468920",
+          "A5046360176",
+          "A5057567991",
+          "A5008081257"
+        ]
+      }
+    ],
+    "external": [
+      {
+        "id": "e01",
+        "expect": "out-of-domain",
+        "top1_before": 0.351051,
+        "top1_after": 0.377553,
+        "s1_before": false,
+        "s1_after": false,
+        "s5_before": false,
+        "s5_after": false,
+        "new_in_top5": 4,
+        "new_grade2_in_top5": 0,
+        "top1_is_new": true,
+        "displaced_grade2": 0,
+        "entrants": {
+          "new_grade_le1": 4
+        },
+        "unjudged_in_top5_after": 0,
+        "top5_before": [
+          "A5075521585",
+          "A5020474806",
+          "A5061817869",
+          "A5046200978",
+          "A5052899628"
+        ],
+        "top5_after": [
+          "A5111604731",
+          "A5067118675",
+          "A5075521585",
+          "A5071907096",
+          "A5057838397"
+        ]
+      }
+    ]
+  }
+}
