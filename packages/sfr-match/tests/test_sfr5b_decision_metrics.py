@@ -135,7 +135,9 @@ def test_coverage_displacement_and_aliases(dm) -> None:  # type: ignore[no-untyp
     # q29: было top-1 OLD2 (grade 1) — промах; стало NEW2 с оценкой 2, найденной
     # через склеенный DUP, — попадание.
     assert g24["success_at_1"] == {"before": 0.5, "after": 1.0}
-    assert payload["judgments_via_alias"] >= 1
+    # Ровно одна пара (q29, NEW2) нашлась через склейку — сколько бы раз grade()
+    # ни звался для неё в пределах запроса.
+    assert payload["judgments_via_alias"] == 1
     assert g24["unjudged_pairs_in_top5_after"] == 0
 
     # Набор «те же 22» исключает q29.

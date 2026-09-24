@@ -121,3 +121,84 @@
 - **Запрос:** Свепроводимость и купперовские пары, хочу занматься теорией
 - **НР:** M. A. Prosnikov — Advanced Condensed Matter Physics; Physics of Superconductivity and Magnetism; Multiferroics and related materials; Perovskite Materials and Applications
 - **Обоснование:** магноны и фононы в антиферромагнетиках — смежно
+
+## Решающие пары — проверить в первую очередь (добавлено по ревью 24.09)
+
+Случайная выборка выше не содержит ни одной пары, которая двигает заголовочные цифры отчёта (Success@5 90,9 → 100 %, Success@1 +1 запрос, потеря на edge). Без этих 11 пар проверка #94 не закрывает рекомендацию §11. Шкала та же: **2** — прямое совпадение, **1** — смежно, **0** — нерелевантно.
+
+## Р1. `q07` × `A5027535433` — grade **2**
+
+- **Почему решающая:** Success@5 0 → 1: один из двух новых, закрывших провал SFR-5
+- **Запрос:** Интересен deep learning для физики частиц, хочу применять нейросети к данным с детекторов
+- **НР:** F. Ratnikov — ; Particle physics theoretical and experimental studies; Quantum Chromodynamics and Particle Interactions; High-Energy Particle Collisions Research; Neutrino Physics Research
+- **Обоснование:** машинное обучение для физики частиц: RL для ускорителя, реконструкция нейтронов в BM@N
+
+## Р2. `q07` × `A5029181198` — grade **2**
+
+- **Почему решающая:** Success@5 0 → 1: второй из них
+- **Запрос:** Интересен deep learning для физики частиц, хочу применять нейросети к данным с детекторов
+- **НР:** Denis Derkach — ; Particle physics theoretical and experimental studies; Quantum Chromodynamics and Particle Interactions; High-Energy Particle Collisions Research; Solar and Space Plasma Dynamics
+- **Обоснование:** ML-оптимизация экспериментов и детекция аномалий в физике частиц
+
+## Р3. `q10` × `A5027535433` — grade **2**
+
+- **Почему решающая:** Success@1 и Success@5 0 → 1
+- **Запрос:** Хочу делать data science в физике: анализ больших данных с экспериментов, Python, ML-пайплайны
+- **НР:** F. Ratnikov — ; Particle physics theoretical and experimental studies; Quantum Chromodynamics and Particle Interactions; High-Energy Particle Collisions Research; Neutrino Physics Research
+- **Обоснование:** ML для данных ускорителей и детекторов — data science в физике
+
+## Р4. `q10` × `A5029181198` — grade **2**
+
+- **Почему решающая:** Success@5 0 → 1
+- **Запрос:** Хочу делать data science в физике: анализ больших данных с экспериментов, Python, ML-пайплайны
+- **НР:** Denis Derkach — ; Particle physics theoretical and experimental studies; Quantum Chromodynamics and Particle Interactions; High-Energy Particle Collisions Research; Solar and Space Plasma Dynamics
+- **Обоснование:** ML для экспериментальной физики, anomaly detection
+
+## Р5. `q10` × `A5069979785` — grade **2**
+
+- **Почему решающая:** Success@5 0 → 1
+- **Запрос:** Хочу делать data science в физике: анализ больших данных с экспериментов, Python, ML-пайплайны
+- **НР:** Maria Grigorieva — ; Distributed and Parallel Computing Systems; Scientific Computing and Data Management; Advanced Data Storage Technologies; Software System Performance and Reliability
+- **Обоснование:** большие данные LHC, распределённые вычисления, кластеризация логов — data science в физике
+
+## Р6. `q11` × `A5107965221` — grade **2**
+
+- **Почему решающая:** Success@1 0 → 1: новый топ-1
+- **Запрос:** Интересует оптимизация маршрутов доставки и алгоритмы для логистики
+- **НР:** P. A. Chentsov — ; Optimization and Packing Problems; Advanced Manufacturing and Logistics Optimization; Vehicle Routing Optimization Methods; Scheduling and Optimization Algorithms
+- **Обоснование:** vehicle routing, маршрутизация с ограничениями — ровно тема
+
+## Р7. `q21` × `A5055391580` — grade **1**
+
+- **Почему решающая:** Success@1 1 → 0: новый топ-1 с оценкой 1 вытеснил старый с оценкой 2
+- **Запрос:** Хочу заниматься новыми материалами и их применением в технике
+- **НР:** В. А. Платонов — ; Material Properties and Applications; Astrophysics and Cosmic Phenomena; Liquid Crystal Research Advancements; Dark Matter and Cosmic Phenomena
+- **Обоснование:** смешанный профиль: астрофизика и волокна; материалы на периферии
+
+## Р8. `q25` × `A5007376506` — grade **1**
+
+- **Почему решающая:** edge: один из четырёх новых, вытеснивших единственное попадание (Success@5 1 → 0)
+- **Запрос:** Свепроводимость и купперовские пары, хочу занматься теорией
+- **НР:** Tatiana S. Yankova — ; Electron Spin Resonance Studies; Photochemistry and Electron Transfer Studies; Advanced Condensed Matter Physics; Physics of Superconductivity and Magnetism
+- **Обоснование:** квантовые магнетики, ЭПР — конденсированное состояние, не теория сверхпроводимости
+
+## Р9. `q25` × `A5014271194` — grade **0**
+
+- **Почему решающая:** edge, то же
+- **Запрос:** Свепроводимость и купперовские пары, хочу занматься теорией
+- **НР:** Ekaterina M. Zubanova — ; Electron Spin Resonance Studies; Photochemistry and Electron Transfer Studies; Free Radicals and Antioxidants; Lanthanide and Transition Metal Complexes
+- **Обоснование:** фотохимия, спектроскопия
+
+## Р10. `q25` × `A5015225689` — grade **1**
+
+- **Почему решающая:** edge, то же
+- **Запрос:** Свепроводимость и купперовские пары, хочу занматься теорией
+- **НР:** M. A. Prosnikov — ; Advanced Condensed Matter Physics; Physics of Superconductivity and Magnetism; Multiferroics and related materials; Perovskite Materials and Applications
+- **Обоснование:** магноны и фононы в антиферромагнетиках — смежно
+
+## Р11. `q25` × `A5051814793` — grade **0**
+
+- **Почему решающая:** edge, то же
+- **Запрос:** Свепроводимость и купперовские пары, хочу занматься теорией
+- **НР:** Julia V. Novoselova — ; Conducting polymers and applications; Supercapacitor Materials and Fabrication; Electrochemical Analysis and Applications; Porphyrin and Phthalocyanine Chemistry
+- **Обоснование:** проводящие полимеры, электрохимия

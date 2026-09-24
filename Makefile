@@ -26,7 +26,7 @@ format: unhide
 
 typecheck: unhide
 	uv run mypy packages/sfr-core/src/sfr_core packages/sfr-etl/src/sfr_etl \
-		packages/sfr-match/src/sfr_match apps/api/src/sfr_api
+		packages/sfr-match/src/sfr_match apps/api/src/sfr_api scripts
 
 test: unhide
 	uv run pytest -m "not integration and not slow"

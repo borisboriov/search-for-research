@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import json
 import sqlite3
+import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -105,7 +106,14 @@ class Grader:
     def __init__(self, judgments: dict[tuple[str, str], Judgment], aliases: Aliases) -> None:
         self._judgments = judgments
         self._aliases = aliases
-        self.alias_hits = 0  # пар, где оценка нашлась только через склеенный id
+        # Пары (запрос, автор), где оценка нашлась только через склеенный id.
+        # Множество, а не счётчик: grade() зовётся для одного автора несколько
+        # раз за запрос, и счётчик вызовов завышал бы цифру (находка ревью).
+        self._alias_pairs: set[tuple[str, str]] = set()
+
+    @property
+    def alias_hits(self) -> int:
+        return len(self._alias_pairs)
 
     def grade(self, query_id: str, author_id: str) -> int | None:
         direct = self._judgments.get((query_id, author_id))
@@ -117,7 +125,7 @@ class Grader:
             if (query_id, other) in self._judgments
         ]
         if via_alias:
-            self.alias_hits += 1
+            self._alias_pairs.add((query_id, author_id))
             return max(via_alias)
         return None
 
@@ -396,6 +404,17 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("docs/sfr5b_decision_metrics.json"))
     args = parser.parse_args()
 
+    if args.db.exists():
+        aliases = load_aliases_from_db(args.db)
+    else:
+        # Без карты склеек «старый/новый» делится неверно: дубль старого профиля
+        # выглядит новым человеком. Молчать нельзя — это портит displacement.
+        print(
+            f"ВНИМАНИЕ: {args.db} не найдена — метрики считаются БЕЗ учёта склеек, "
+            "старые профили, склеенные в новые id, будут учтены как новые.",
+            file=sys.stderr,
+        )
+        aliases = Aliases()
     payload = decision_metrics(
         golden=load_queries(query_set_path("golden")),
         external=load_queries(query_set_path("external")),
@@ -409,7 +428,7 @@ def main() -> None:
         judgments=load_judgments(),
         old=load_catalogue(args.profiles_before),
         new=load_catalogue(args.profiles_after),
-        aliases=load_aliases_from_db(args.db) if args.db.exists() else Aliases(),
+        aliases=aliases,
     )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

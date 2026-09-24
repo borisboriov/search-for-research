@@ -110,7 +110,8 @@ def in_container_load(workers: int, n: int) -> dict[str, Any]:
             str(n),
         ]
     )
-    return json.loads(out.splitlines()[-1])
+    payload: dict[str, Any] = json.loads(out.splitlines()[-1])
+    return payload
 
 
 def containers_memory_mb() -> dict[str, float]:
