@@ -182,11 +182,19 @@ def pool(
     queries_set: Annotated[
         str, typer.Option("--queries", help="Query set: golden | ood | external")
     ] = "golden",
+    blind: Annotated[
+        bool,
+        typer.Option("--blind", help="Без поля judged: пул для слепого пересуда"),
+    ] = False,
 ) -> None:
     """Emit the judging pool: unique (query, author) pairs sorted by author id.
 
     Sorted by author — not by score — so the judge cannot tell which model
     produced a pair (SPEC_SFR1 §5.2).
+
+    ``--blind`` убирает и последний след прежней разметки — поле ``judged``:
+    судья, который пересуживает уже оценённые пары, не должен видеть, какие из
+    них кто-то смотрел (рубрика, п. 5). Пул без него — полный пересуд.
     """
     try:
         runs = load_runs(runs_dir)
@@ -198,9 +206,12 @@ def pool(
         raise _fail(f"нет ни одного индекса в {index_root}")
     docs = {str(doc["id"]): doc for doc in load_docs(docs_dir)}
     pairs = build_pool(runs, depth=depth)
-    existing = load_judgments() if (eval_dir() / "judgments.jsonl").exists() else {}
-    records = [
-        {
+    existing = {} if blind or not (eval_dir() / "judgments.jsonl").exists() else load_judgments()
+    records: list[dict[str, object]] = []
+    for query_id, author_id in pairs:
+        if query_id not in queries or author_id not in docs:
+            continue
+        record: dict[str, object] = {
             "query_id": query_id,
             "author_id": author_id,
             "query": queries[query_id].text,
@@ -208,12 +219,14 @@ def pool(
             "name": docs[author_id]["name"],
             "topics": docs[author_id]["topics"],
             "profile_text": docs[author_id]["profile_text"],
-            "judged": (query_id, author_id) in existing,
         }
-        for query_id, author_id in pairs
-        if query_id in queries and author_id in docs
-    ]
+        if not blind:
+            record["judged"] = (query_id, author_id) in existing
+        records.append(record)
     write_jsonl(out, records)
+    if blind:
+        typer.secho(f"слепой пул: {len(records)} пар → {out}", fg=typer.colors.GREEN)
+        return
     todo = sum(1 for record in records if not record["judged"])
     typer.secho(f"пул: {len(records)} пар, неоценённых {todo} → {out}", fg=typer.colors.GREEN)
 
@@ -233,6 +246,10 @@ def review_sample(
         str,
         typer.Option("--iteration", help="Брать только оценки этой итерации (поле iteration)"),
     ] = "",
+    judgments_path: Annotated[
+        Path | None,
+        typer.Option("--judgments", help="Файл оценок; по умолчанию накопленный judgments.jsonl"),
+    ] = None,
 ) -> None:
     """Write a random sample of judgments for a human re-check.
 
@@ -241,12 +258,13 @@ def review_sample(
 
     ``--iteration`` ограничивает выборку новой партией оценок: судейский пул
     растёт от итерации к итерации, и без фильтра 20 случайных пар оказываются
-    в основном теми, что человек уже проверял.
+    в основном теми, что человек уже проверял. ``--judgments`` берёт оценки не
+    из накопленного файла, а из отдельного (пересуд живёт своим файлом).
     """
     try:
         runs = load_runs(runs_dir)
         queries = load_queries(query_set_path(queries_set))
-        judgments = load_judgments()
+        judgments = load_judgments(judgments_path)
     except (FileNotFoundError, ValueError) as exc:
         raise _fail(str(exc)) from exc
     docs_dir = next((d for d in sorted(index_root.iterdir()) if (d / "docs.json").exists()), None)

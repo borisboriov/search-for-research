@@ -1,0 +1,130 @@
+"""CLI: слепой судейский пул и выборка по отдельному файлу оценок.
+
+Оба флага появились в сессии выкладки SFR-5c: пересуд топ-5 делает субагент
+`sfr-judge`, и ему нельзя показывать ни прежние оценки, ни даже их наличие
+(`JUDGE_RUBRIC.md`, п. 5), а выборка на проверку человеком собирается по файлу
+этого пересуда, а не по накопленному `judgments.jsonl`.
+"""
+
+import json
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from sfr_match.cli import app
+from sfr_match.evalset import Judgment, Query, load_queries, query_set_path, write_jsonl
+from sfr_match.evaluate import run_queries, save_run
+from sfr_match.index import build_index, index_path
+from sfr_match.models import resolve_model
+from sfr_match.profiles import ProfileRecord
+from sfr_match.search import DenseBackend
+
+runner = CliRunner()
+
+
+def _scene(tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type) -> tuple[Path, Path]:
+    """Индекс и прогон по первым трём запросам golden set — как на боевых путях."""
+    spec = resolve_model("e5-base")
+    index_root = tmp_path / "indexes"
+    out_dir = index_path(spec, clean=False, root=index_root)
+    build_index(profiles, spec, clean=False, out_dir=out_dir, embedder=fake_embedder(spec))
+    backend = DenseBackend(out_dir, spec, embedder=fake_embedder(spec))
+    run = run_queries(backend, load_queries(query_set_path("golden"))[:3], k=5)
+    runs_dir = tmp_path / "runs"
+    save_run(run, runs_dir)
+    return index_root, runs_dir
+
+
+def test_pool_blind_hides_that_a_pair_was_ever_judged(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    index_root, runs_dir = _scene(tmp_path, profiles, fake_embedder)
+    out = tmp_path / "pool.jsonl"
+    result = runner.invoke(
+        app,
+        [
+            "pool",
+            "--runs-dir",
+            str(runs_dir),
+            "--index-root",
+            str(index_root),
+            "--out",
+            str(out),
+            "--blind",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    records = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines() if line]
+    assert records, "пул не должен быть пустым"
+    assert all("judged" not in record for record in records), (
+        "следа прежней разметки быть не должно"
+    )
+    assert set(records[0]) == {
+        "query_id",
+        "author_id",
+        "query",
+        "expect",
+        "name",
+        "topics",
+        "profile_text",
+    }
+    ids = [(r["query_id"], r["author_id"]) for r in records]
+    assert ids == sorted(ids), "порядок — по (запрос, автор), а не по score"
+    assert len(ids) == len(set(ids)), "пара встречается один раз"
+    assert "слепой пул" in result.output
+
+
+def test_pool_without_blind_still_marks_judged_pairs(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    index_root, runs_dir = _scene(tmp_path, profiles, fake_embedder)
+    out = tmp_path / "pool.jsonl"
+    result = runner.invoke(
+        app,
+        ["pool", "--runs-dir", str(runs_dir), "--index-root", str(index_root), "--out", str(out)],
+    )
+    assert result.exit_code == 0, result.output
+    records = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines() if line]
+    assert all("judged" in record for record in records)
+
+
+def test_review_sample_reads_the_judgments_file_it_is_given(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type
+) -> None:
+    index_root, runs_dir = _scene(tmp_path, profiles, fake_embedder)
+    queries: list[Query] = load_queries(query_set_path("golden"))[:1]
+    judgments = tmp_path / "judgments_deploy.jsonl"
+    write_jsonl(
+        judgments,
+        [
+            Judgment(
+                query_id=queries[0].id,
+                author_id="A1",
+                grade=2,
+                rationale="выдуманная пара для теста",
+                iteration="test",
+                judge="fable (sfr-judge)",
+            ).model_dump()
+        ],
+    )
+    out = tmp_path / "review.md"
+    result = runner.invoke(
+        app,
+        [
+            "review-sample",
+            "--n",
+            "5",
+            "--runs-dir",
+            str(runs_dir),
+            "--index-root",
+            str(index_root),
+            "--judgments",
+            str(judgments),
+            "--out",
+            str(out),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    text = out.read_text(encoding="utf-8")
+    assert "выдуманная пара для теста" in text, "обоснования берутся из указанного файла"
+    assert text.count("## ") == 1, "в файле оценок одна пара — в выборке тоже одна"
