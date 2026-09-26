@@ -7,7 +7,7 @@ from typing import Annotated
 
 import structlog
 import typer
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Author, Institution
@@ -20,12 +20,14 @@ from sfr_etl.catalog import (
 )
 from sfr_etl.client import OpenAlexClient
 from sfr_etl.dedup import (
+    UnmergeError,
     apply_merges,
     detect_suspect_merges,
     find_splits,
     recompute_merged_aggregates,
     render_dedup_review,
     suspect_examples,
+    unmerge_author,
 )
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
@@ -295,7 +297,7 @@ def etl_backfill_mega() -> None:
 def etl_dedup(
     apply: Annotated[
         bool, typer.Option("--apply/--dry-run", help="Записать склейки в БД или только показать")
-    ] = True,
+    ] = False,
     review_out: Annotated[
         Path, typer.Option(help="Куда положить выборку на ручную проверку")
     ] = Path("packages/sfr-match/eval/dedup_for_review.md"),
@@ -304,14 +306,16 @@ def etl_dedup(
     """Склеить расщеплённые профили и отметить подозрительные (SPEC_SFR5 §3).
 
     Склейка необратима в пределах БД (работы переезжают на канонического автора),
-    поэтому по умолчанию сначала стоит посмотреть `--dry-run`.
+    поэтому по умолчанию — `--dry-run` (#10); запись — только с явным `--apply`.
+    Цели Makefile `catalog-*` передают `--apply` сами.
     """
     settings = _load_settings()
     upgrade_to_head(settings.sfr_db_url)
     engine = make_engine(settings.sfr_db_url)
     started = time.monotonic()
     with session_scope(engine) as session:
-        merges, namesakes = find_splits(session)
+        findings = find_splits(session)
+        merges, namesakes = findings.merges, findings.namesakes
         merge_stats = {"groups": 0, "duplicates": 0, "works_moved": 0, "works_dropped": 0}
         aggregate_stats = {"canonical": 0, "changed": 0}
         if apply:
@@ -323,8 +327,15 @@ def etl_dedup(
             suspect_stats = detect_suspect_merges(session)
             suspects = suspect_examples(session, limit=max(examples, 20))
         else:
-            suspect_stats = {"checked": 0, "suspect": 0}
-            suspects = []
+            # Флаги suspect_merge не пересчитываются без --apply, но уже лежат в БД
+            # с прошлого прогона — показываем их, а не «0 из 0».
+            suspect_stats = {
+                "checked": 0,
+                "suspect": session.execute(
+                    select(func.count()).select_from(Author).where(Author.suspect_merge.is_(True))
+                ).scalar_one(),
+            }
+            suspects = suspect_examples(session, limit=max(examples, 20))
         review_out.parent.mkdir(parents=True, exist_ok=True)
         review_out.write_text(
             render_dedup_review(
@@ -333,18 +344,74 @@ def etl_dedup(
                 suspects,
                 n_suspects=suspect_stats["suspect"],
                 n_examples=examples,
+                review=findings.review,
+                near_duplicates=findings.near_duplicates,
             ),
             encoding="utf-8",
         )
     _record_run_stats(settings, "etl dedup", time.monotonic() - started)
     typer.echo(
-        f"Склеек: {len(merges)} (дублей {merge_stats['duplicates']}, "
+        f"{'Склеено' if apply else 'Склеек (dry-run, БД не тронута)'}: {len(merges)} "
+        f"(дублей {merge_stats['duplicates']}, "
         f"работ перенесено {merge_stats['works_moved']}, дублей работ снято "
-        f"{merge_stats['works_dropped']}); тёзок без сигнала: {len(namesakes)}; "
-        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']}; "
+        f"{merge_stats['works_dropped']}); требуют решения человека: {len(findings.review)}; "
+        f"похоже, один человек: {len(findings.near_duplicates)}; "
+        f"тёзок без сигнала: {len(namesakes)}; "
+        f"подозрительных профилей: {suspect_stats['suspect']}"
+        + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
+        + "; "
         f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']} "
         f"→ {review_out}"
     )
+
+
+@etl_app.command("unmerge")
+def etl_unmerge(
+    author_ids: Annotated[
+        list[str], typer.Argument(help="OpenAlex-id дублей, которых расклеить (A5…)")
+    ],
+    apply: Annotated[
+        bool, typer.Option("--apply/--dry-run", help="Записать в БД или только показать план")
+    ] = False,
+) -> None:
+    """Развести ошибочно склеенный дубль и канонического автора (#108).
+
+    Работы обоих восстанавливаются из дискового кэша OpenAlex (сеть — только
+    если работ дубля в кэше нет), счётчики и темы — из ``raw``. Профили обоих
+    удаляются: после — ``sfr etl build-profiles``. По умолчанию ``--dry-run``.
+    """
+    settings = _load_settings()
+    upgrade_to_head(settings.sfr_db_url)
+    client = _make_client(settings, refresh=False)
+    engine = make_engine(settings.sfr_db_url)
+    started = time.monotonic()
+    failed = False
+    with session_scope(engine) as session:
+        for author_id in author_ids:
+            try:
+                stats = unmerge_author(session, client, author_id, settings, dry_run=not apply)
+            except UnmergeError as exc:
+                typer.secho(f"  ✗ {exc}", fg=typer.colors.RED, err=True)
+                failed = True
+                continue
+            if stats["status"] == "not_merged":
+                typer.echo(f"  – {author_id}: не склеен, нечего делать")
+                continue
+            works = stats.get("works_after")
+            typer.echo(
+                f"  {'✓' if apply else '·'} {author_id} ← {stats['canonical']}: "
+                f"работ у канонического было {stats['works_on_canonical_before']}, "
+                f"works_count по OpenAlex {stats['raw_works_count']}"
+                + (f", восстановлено работ {works}" if works else " (dry-run)")
+            )
+    _record_run_stats(settings, "etl unmerge", time.monotonic() - started, client)
+    typer.echo(
+        f"{'Применено' if apply else 'План (dry-run, БД не тронута)'} "
+        f"[network={client.n_network_requests}, cache_hits={client.n_cache_hits}]"
+        + ("; после --apply запусти `sfr etl build-profiles`" if apply else "")
+    )
+    if failed:
+        raise typer.Exit(code=1)
 
 
 @etl_app.command("build-profiles")
