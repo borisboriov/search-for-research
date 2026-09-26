@@ -1,0 +1,135 @@
+{"query_id": "q17", "author_id": "A5000525652", "grade": 2, "rationale": "GERDA: четыре работы по безнейтринному 2β-распаду Ge-76", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5000934507", "grade": 0, "rationale": "Психолингвистика: движения глаз, согласование в русском; NLP/GNN нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5001784131", "grade": 1, "rationale": "NLP на русском (mGPT, парафразеры, MMTEB); GNN нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5001985637", "grade": 0, "rationale": "Пылевая плазма, 2D коллоиды; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5002542089", "grade": 0, "rationale": "Афазия, нейролингвистика русского; NLP/GNN нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5002724483", "grade": 2, "rationale": "Измерения e+e− на VEPP-2000 с детектором SND, три работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5002957144", "grade": 1, "rationale": "NLP (hate speech, упрощение текста), но не русский, GNN нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5003350728", "grade": 1, "rationale": "Количественный маркетинг: поиск по click-stream, цифровые товары; SMM нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5006757486", "grade": 1, "rationale": "IMC — маркетинговые коммуникации в МСП; соцсетей нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5007086495", "grade": 1, "rationale": "Одна работа: детекция депрессии KNN; остальное ЭЭГ, ветряки", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5007376506", "grade": 0, "rationale": "Квантовые магнетики, нейтроны, ЭПР; сверхпроводимости и теории нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q14", "author_id": "A5007384660", "grade": 1, "rationale": "Экспериментальный QKD: сети, спутник; теории каналов нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q17", "author_id": "A5009133662", "grade": 0, "rationale": "Belle: распады B-мезонов; нейтринных работ нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5011298864", "grade": 1, "rationale": "Маркетинг B2B, рыночная ориентация; SMM и бренда нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5011816761", "grade": 0, "rationale": "Молекулярные магнетики Cu–нитроксил; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q14", "author_id": "A5012166541", "grade": 1, "rationale": "Модели и finite-key анализ QKD; ёмкости каналов нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5012212950", "grade": 2, "rationale": "Депрессия/суицид в соцсетях трансформерами, пять работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5013081744", "grade": 1, "rationale": "Оптимизация ж/д грузопотока, расписаний; маршрутов доставки нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5014271194", "grade": 0, "rationale": "Фотохимия комплексов Cu, DFT; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5015225689", "grade": 0, "rationale": "Магнон-фононы, экситоны 2D; сверхпроводимости и теории нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5015779508", "grade": 2, "rationale": "Nektar++ (spectral/hp), численные уравнения Фаддеева — физика+код", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q14", "author_id": "A5017383854", "grade": 2, "rationale": "Ёмкость бесконечномерных квантовых каналов, запутанность — точно тема", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5017448390", "grade": 2, "rationale": "Наноструктурные износостойкие покрытия режущего инструмента, пять работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q14", "author_id": "A5017633244", "grade": 1, "rationale": "Эксперименты по телепортации/запутанности; теории каналов нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5018958751", "grade": 0, "rationale": "Геостатистика, ГИС, R; NLP нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5019927506", "grade": 2, "rationale": "Беспорядок и устойчивая сверхпроводимость, две работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5020072191", "grade": 0, "rationale": "Соцсети: политика, журналистика; маркетинга и брендов нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5020775138", "grade": 2, "rationale": "Композиты Al-матрицы, пористая керамика, сварка TiNi для техники", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5020876643", "grade": 2, "rationale": "DarkSide-50: поиск ТМ, Aria; три работы (коллаборация)", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5020945978", "grade": 2, "rationale": "Сверхпроводящие кубиты/кутриты, квантовый симулятор, quantum learning", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5022906506", "grade": 1, "rationale": "Депрессия на русском YouTube — качественный анализ, не ML", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5024187788", "grade": 2, "rationale": "NA64: поиск тёмных фотонов, ALP, ТМ — три работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5025096043", "grade": 2, "rationale": "Двухкубитные гейты на флаксониумах, кутриты — три работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5025897376", "grade": 2, "rationale": "3D-печать керамокомпозитов, SiAlON-фрезы, SLM — применение в технике", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5026267619", "grade": 1, "rationale": "Одна работа по FeSe-сверхпроводникам, основное — квантовый магнетизм", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5027535433", "grade": 2, "rationale": "ML-реконструкция нейтронов BM@N, RL для ускорителя, LHCb", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5027535433", "grade": 2, "rationale": "ML для BM@N и ускорителя, анализ LHCb — data science в физике", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5029059211", "grade": 0, "rationale": "FeSi, MnSi, Pd/Pt: магнетизм, электронная структура; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5029181198", "grade": 1, "rationale": "Одна работа ML-дизайн детекторов; остальное общий ML (аномалии)", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5029181198", "grade": 1, "rationale": "ML-дизайн экспериментов, общий ML-аномалии; анализа данных экспериментов нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5029380392", "grade": 2, "rationale": "Feature engineering для детекции депрессии в соцсетях; NLP русских текстов", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5030454460", "grade": 1, "rationale": "SciPy, PyTorch + QMC-симуляции; данных экспериментов нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5030454460", "grade": 2, "rationale": "SciPy, PyTorch и Monte-Carlo фермионов — физика и программирование", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5030795507", "grade": 1, "rationale": "Потребительское поведение, СТМ vs бренды; SMM нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5031192722", "grade": 1, "rationale": "Депрессия/эмоции по аудио-видео, не тексты и не соцсети", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5031290021", "grade": 0, "rationale": "Перовскитные нанокристаллы, спиновая физика; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5032107945", "grade": 1, "rationale": "Эрозия вольфрама, эксперимент; одна работа — 2D численное моделирование", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5032951968", "grade": 1, "rationale": "GAMMA-400 — телескоп для поиска ТМ, но работы о приборе", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5033682739", "grade": 2, "rationale": "Кудиты, сверхпроводящие кубиты, телепортация — квантовые вычисления, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5034121563", "grade": 2, "rationale": "Мемристивные спайковые сети, органические мемристоры, перцептрон, 5 работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5035075324", "grade": 1, "rationale": "Равновесное распределение трафика в сетях, не маршрутизация доставки", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5035328594", "grade": 1, "rationale": "Обобщённая задача коммивояжёра, маршруты для АЭС и ЧПУ; объект иной", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5036186489", "grade": 2, "rationale": "Теория джозефсоновских контактов, ток-фазовое соотношение — теория сверхпроводимости", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5038667261", "grade": 0, "rationale": "Клиническая психотерапия, ПТСР; ни ML, ни текстов", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5038973865", "grade": 1, "rationale": "Одна работа о нематической сверхпроводимости, остальное — 2D электронные системы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5039966405", "grade": 1, "rationale": "LUX, XENON10, COHERENT — эксперименты не на коллайдере", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5039966405", "grade": 2, "rationale": "Прямой поиск ТМ: LUX, XENON10, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5041062340", "grade": 1, "rationale": "Две работы о сверхпроводимости (S/F/S, беспорядок), две — SPICE-модели", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5044414277", "grade": 1, "rationale": "Три работы о сверхпроводящих материалах 2002–2010, последняя — нейросети для метеорологии", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5045100844", "grade": 1, "rationale": "Позиционирование и идентичность бренда, потребители в интернете; соцсетей нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5046709716", "grade": 2, "rationale": "Ускорение квантовых компьютеров, квантовая симуляция — теория КВ, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5050009688", "grade": 2, "rationale": "3D-печать пьезокерамики, титанат бария, холодное спекание — материалы и применение", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5050234205", "grade": 1, "rationale": "Половина профиля — 3D-печать пьезокерамики, ZnO; половина — детектор RED-100", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5051814793", "grade": 0, "rationale": "Проводящие полимеры, суперконденсаторы; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5051886862", "grade": 1, "rationale": "Календарное планирование, сборочные линии; маршрутизации нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5052465844", "grade": 1, "rationale": "Распознавание эмоций по аудио-видео; ни текстов, ни депрессии", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5053176048", "grade": 2, "rationale": "Париленовые мемристоры, кроссбары, синапсы со STDP, 5 работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5055391580", "grade": 0, "rationale": "Телескоп TAIGA и полимерная химия; вычислительной части нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5055391580", "grade": 1, "rationale": "Полимеры: арамидные волокна, ПВХ-сенсор нитросоединений; половина — TAIGA", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5056817341", "grade": 1, "rationale": "Две работы о мемристивных нейроморфных системах, остальное — нейроинженерия", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5058806392", "grade": 0, "rationale": "Нейролингвистика, афазия; ни NLP, ни графовых сетей", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q17", "author_id": "A5059653984", "grade": 2, "rationale": "GERDA 0νββ (2 работы), SAGE, стерильные нейтрино", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5061341300", "grade": 0, "rationale": "Мембранные белки, родопсины, липиды; мемристоров нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5061589446", "grade": 2, "rationale": "Мемристоры второго порядка для синапсов, 2 свежие работы из 4", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5062677587", "grade": 2, "rationale": "SPS-керамика SiC-TiB2-TiC, нитрид кремния, режущий инструмент — материалы для техники", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5063523050", "grade": 0, "rationale": "Лабораторная плазма, УМЗ алюминий — эксперимент, программирования нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5064599758", "grade": 2, "rationale": "Коррелированный беспорядок и сверхпроводимость, 2 работы из 3", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5064613329", "grade": 0, "rationale": "Термодинамика перовскитов и оксидов; сверхпроводимости нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5065309599", "grade": 2, "rationale": "Универсальные наборы квантовых вентилей, алгебры Клиффорда, 3 работы из 4", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5067830021", "grade": 2, "rationale": "Детекторы ILD и CALICE для коллайдера, BM@N на NICA", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5069514467", "grade": 1, "rationale": "GAMMA-400 — телескоп для поиска ТМ, но работы о приборе", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5069750047", "grade": 1, "rationale": "Одна экспериментальная работа по YBCO, остальное — сегнетоэлектрики KTP; не теория", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5069979785", "grade": 2, "rationale": "Кластеризация логов и big data в ATLAS/ФВЭ, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q17", "author_id": "A5070029333", "grade": 0, "rationale": "Только ALICE (Pb–Pb); нейтрино нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5070267730", "grade": 2, "rationale": "Детекция депрессии по соцсетям, 3 работы, NLP на русском", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5071164723", "grade": 1, "rationale": "SHiP (скрытые частицы) — одна работа; остальное трековые детекторы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5071620748", "grade": 2, "rationale": "DEAP-3600: прямой поиск ТМ, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5075059819", "grade": 1, "rationale": "Оптимизация траектории инструмента ЧПУ (маршрутизация), не логистика", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5075534567", "grade": 0, "rationale": "DANSS, T2K, мюонный томограф; ни ML, ни data science", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5075899988", "grade": 2, "rationale": "Нейросети на кроссбарах нанокомпозитных мемристоров, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5078249510", "grade": 2, "rationale": "Покрытия и нанокомпозиты для режущих инструментов, 7 работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5078641429", "grade": 1, "rationale": "Обзор QML и поляритонные кубиты; ядро — квантовая оптика", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5080313215", "grade": 2, "rationale": "Квантовые LDPC-коды, верификация квантовых схем, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5083103730", "grade": 2, "rationale": "Adversarial-рекалибровка калориметра, дрейф сенсоров; LHCb", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5083126736", "grade": 2, "rationale": "Париленовые мемристоры и нейроморфные системы, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5083490320", "grade": 1, "rationale": "Русские LM и бенчмарки — NLP полностью, GNN нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5084061415", "grade": 1, "rationale": "ВТСП-электромашины для авиации: применение есть, материаловедения нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5084513745", "grade": 0, "rationale": "Логистика, GPT-4 в школе, GNN для онкологии; физики нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5085935136", "grade": 0, "rationale": "Экспериментальная лазерная плазма, Z-пинч; программирования нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5086295663", "grade": 2, "rationale": "Селективное лазерное плавление стекла и WC-Co, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5086469184", "grade": 1, "rationale": "Метаэвристики для оптимального управления, не маршрутизация", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5087284937", "grade": 2, "rationale": "Джозефсоновские мостики, сверхпроводящие спиновые клапаны, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5087372080", "grade": 2, "rationale": "Критические токи, гидриды, термодинамика сверхпроводников, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5087415130", "grade": 0, "rationale": "Эрозия материалов термояда 1970–90-х, склейка с медициной", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5087662164", "grade": 1, "rationale": "Магнетизм интеркалированных дихалькогенидов; одна прикладная (AM-магниты)", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5089112259", "grade": 1, "rationale": "ML-анализ текстов соцсетей по демографии; депрессии нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5089465154", "grade": 0, "rationale": "ВЗП в NbS3 и ТГц-лазеры; сверхпроводимости и теории нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5091785597", "grade": 2, "rationale": "Мемристивные спайковые сети, STDP, нейрогибридные чипы, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5095070139", "grade": 2, "rationale": "Квантовый отжиг D-Wave, QUBO, квантовые микросервисы, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q01", "author_id": "A5100352794", "grade": 2, "rationale": "Детекция депрессии в микроблогах, 2 работы; профиль разнородный", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5100670875", "grade": 1, "rationale": "CalcHEP и теория ТМ; CMS — мегаколлаборация", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5101578748", "grade": 2, "rationale": "Париленовые мемристивные синапсы для нейроморфных систем, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q08", "author_id": "A5101711419", "grade": 0, "rationale": "Геохимия, Horovod, одна GNN по fMRI; NLP нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5102786081", "grade": 1, "rationale": "SHiP, ATLAS, SPD — коллаборационные; личное — тонкие плёнки", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q14", "author_id": "A5103199431", "grade": 1, "rationale": "Квантовая связь QSDC, маршрутизация фотонов; не теория каналов", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5103568609", "grade": 1, "rationale": "Анализ данных BM@N и STAR, без ML/DS", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q17", "author_id": "A5104387273", "grade": 1, "rationale": "Реакторные нейтрино, Double Chooz, 5 работ; 0νββ нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q17", "author_id": "A5104688244", "grade": 2, "rationale": "Двойной бета-распад 100Mo, изотопы для GERDA, 4 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5105975394", "grade": 2, "rationale": "Теория MgB2, джозефсоновские переходы, эффект близости, 5 работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5107174121", "grade": 0, "rationale": "ATLAS-мегаколлаборации и доплеровские датчики; нейросетей нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5107839879", "grade": 1, "rationale": "ML для дрейфа сенсоров, PINN, QKD; детекторов в работах нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q17", "author_id": "A5107886204", "grade": 2, "rationale": "GERDA: безнейтринный двойной бета-распад Ge76, 3 работы", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5107892335", "grade": 0, "rationale": "Проектирование ускорителей и фотопушек; программирование не показано", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5107902822", "grade": 1, "rationale": "Детекторы KEDR, GEM и анализ экспериментов; нейросетей нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5107963115", "grade": 1, "rationale": "ALICE и PHENIX — мегаколлаборации; личное — нанотрубки", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5107965221", "grade": 2, "rationale": "Маршрутизация с ограничениями, динамическое программирование; объект — ЧПУ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q15", "author_id": "A5107980327", "grade": 1, "rationale": "Одна работа по лёгкой ТМ (NA64); остальное — онкология, глаукома", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5110589505", "grade": 1, "rationale": "Тематическое моделирование соцмедиа, hate speech; маркетинга нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q19", "author_id": "A5110984172", "grade": 0, "rationale": "Ядерные реакции, расчёт сечений; программирование не показано", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q14", "author_id": "A5111692775", "grade": 2, "rationale": "Запутанные W-состояния, телепортация EPR-пар, 5 работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q23", "author_id": "A5111760858", "grade": 2, "rationale": "Джозефсоновские кубиты, декогеренция, двухкубитные гейты, 5 работ", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q11", "author_id": "A5112269203", "grade": 1, "rationale": "Надёжность цепей поставок, запасы; маршрутизации нет", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q07", "author_id": "A5112651411", "grade": 1, "rationale": "DL для геномики и change-point; физика частиц только LHCb", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q10", "author_id": "A5112651411", "grade": 1, "rationale": "ML-работы по геномике и change-point; физика только LHCb", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
+{"query_id": "q03", "author_id": "A5114377115", "grade": 1, "rationale": "ATLAS-мегаколлаборация; личное — феноменология light-by-light", "iteration": "SFR-5c-rejudge", "judge": "fable (sfr-judge)"}
