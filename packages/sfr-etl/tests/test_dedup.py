@@ -19,6 +19,7 @@ from sfr_etl.dedup import (
     STATUS_FORBIDDEN_BUT_MERGED,
     STATUS_MERGED_BY_HUMAN,
     STATUS_NOT_IN_CATALOGUE,
+    DecisionsFileMissing,
     DedupDecision,
     MergeGroup,
     UnmergeError,
@@ -27,6 +28,7 @@ from sfr_etl.dedup import (
     find_splits,
     first_names_conflict,
     is_abbreviation_pair,
+    load_decisions_or_fail,
     load_dedup_decisions,
     name_key,
     normalize_orcid,
@@ -775,6 +777,33 @@ def test_review_file_has_human_decisions_section(engine: Engine) -> None:
     assert "**different**" in review and "#108" in review
     assert "Борис, 2026-09-26" in review
     assert "Пусто — ни одна запрещённая пара не склеена." in review
+
+
+def test_default_decisions_path_is_repo_anchored() -> None:
+    """Путь по умолчанию не зависит от рабочей директории (ревью SFR-5c)."""
+    assert DEFAULT_DECISIONS_PATH.is_absolute()
+    assert DEFAULT_DECISIONS_PATH.exists()
+    assert DEFAULT_DECISIONS_PATH.parts[-3:] == ("sfr-match", "eval", "dedup_decisions.jsonl")
+
+
+def test_apply_without_decisions_file_stops(tmp_path: Path) -> None:
+    """``--apply`` без файла решений — отказ: склейка необратима, откат ходит в сеть."""
+    missing = tmp_path / "нет-такого.jsonl"
+    with pytest.raises(DecisionsFileMissing) as exc:
+        load_decisions_or_fail(missing, apply=True)
+    assert str(missing) in str(exc.value)
+
+
+def test_dry_run_without_decisions_file_goes_on(tmp_path: Path) -> None:
+    """``--dry-run`` без файла работает по одним правилам: ничего не записывается."""
+    assert load_decisions_or_fail(tmp_path / "нет-такого.jsonl", apply=False) == []
+
+
+def test_empty_decisions_file_is_a_valid_state(tmp_path: Path) -> None:
+    """Пустой файл — «человек ещё ничего не решал», а не ошибка."""
+    empty = tmp_path / "dedup_decisions.jsonl"
+    empty.write_text("", encoding="utf-8")
+    assert load_decisions_or_fail(empty, apply=True) == []
 
 
 def test_load_decisions_reads_the_project_file() -> None:

@@ -23,11 +23,12 @@ from sfr_etl.dedup import (
     DEFAULT_DECISIONS_PATH,
     STATUS_FORBIDDEN_BUT_MERGED,
     STATUS_NOT_IN_CATALOGUE,
+    DecisionsFileMissing,
     UnmergeError,
     apply_merges,
     detect_suspect_merges,
     find_splits,
-    load_dedup_decisions,
+    load_decisions_or_fail,
     recompute_merged_aggregates,
     render_dedup_review,
     suspect_examples,
@@ -317,23 +318,29 @@ def etl_dedup(
     Цели Makefile `catalog-*` передают `--apply` сами.
 
     Решения человека о склейках читаются из ``--decisions``: ``different``
-    запрещает пару навсегда, ``same`` склеивает поверх блокеров. Файла нет —
-    предупреждение в stderr и работа по одним правилам.
+    запрещает пару навсегда, ``same`` склеивает поверх блокеров. Путь по
+    умолчанию отсчитывается от корня репозитория. Файла нет: при ``--apply`` —
+    остановка с ошибкой (склейка необратима, а запреты человека не прочитаны),
+    при ``--dry-run`` — предупреждение в stderr и работа по одним правилам.
     """
-    settings = _load_settings()
-    upgrade_to_head(settings.sfr_db_url)
-    engine = make_engine(settings.sfr_db_url)
-    started = time.monotonic()
-    if decisions.exists():
-        human_decisions = load_dedup_decisions(decisions)
-    else:
-        human_decisions = []
+    # Проверка — до миграций и до открытия БД: остановиться нужно раньше, чем
+    # прогон успел что-то сделать (ревью SFR-5c).
+    try:
+        human_decisions = load_decisions_or_fail(decisions, apply=apply)
+    except DecisionsFileMissing as exc:
+        typer.secho(f"ОШИБКА: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from exc
+    if not decisions.exists():
         typer.secho(
             f"ВНИМАНИЕ: {decisions} не найден — решения человека о склейках не учтены; "
             "пары, уже разобранные руками, снова попадут в review",
             fg=typer.colors.YELLOW,
             err=True,
         )
+    settings = _load_settings()
+    upgrade_to_head(settings.sfr_db_url)
+    engine = make_engine(settings.sfr_db_url)
+    started = time.monotonic()
     with session_scope(engine) as session:
         findings = find_splits(session, decisions=human_decisions)
         merges, namesakes = findings.merges, findings.namesakes

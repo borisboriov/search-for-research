@@ -224,7 +224,13 @@ def first_names_conflict(left: str, right: str) -> bool:
 
 
 DECISION_VERDICTS = ("same", "different")
-DEFAULT_DECISIONS_PATH = Path("packages/sfr-match/eval/dedup_decisions.jsonl")
+# Путь считается от корня репозитория, а не от текущей директории: `sfr etl dedup`
+# запускают и не из корня, а относительный путь молча превращал бы отсутствующий
+# файл решений в «решений нет» (находка ревью SFR-5c). packages/sfr-etl/src/sfr_etl
+# → четыре уровня вверх; рабочая копия у нас editable, установка в site-packages
+# не предусмотрена.
+REPO_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_DECISIONS_PATH = REPO_ROOT / "packages" / "sfr-match" / "eval" / "dedup_decisions.jsonl"
 # Статусы решений человека для отчёта. «Запрещено, но склеено» — инвариант:
 # на правильной базе таких строк не бывает, и это самая быстрая проверка того,
 # что сессия стартовала не с той БД (§4.2 SPEC_SFR5c).
@@ -556,6 +562,30 @@ def _blocker(left: Author, right: Author) -> str | None:
     if first_names_conflict(left.display_name, right.display_name):
         return "разные имена"
     return None
+
+
+class DecisionsFileMissing(RuntimeError):
+    """``--apply`` без файла решений человека: останавливаемся, а не склеиваем.
+
+    Склейка необратима в пределах БД, а откат (``sfr etl unmerge``) ходит в сеть
+    и тратит квоту OpenAlex. Пустой список решений при этом — законное состояние
+    (на свежем корпусе решений ещё нет), поэтому падаем только на **отсутствии
+    файла**: это опечатка в ``--decisions`` или запуск не из корня, а не ответ
+    «человек ничего не решал» (находка ревью SFR-5c, Medium 3).
+    """
+
+
+def load_decisions_or_fail(path: Path, *, apply: bool) -> list[DedupDecision]:
+    """Решения человека для прогона: при ``--apply`` отсутствие файла — ошибка."""
+    if path.exists():
+        return load_dedup_decisions(path)
+    if apply:
+        raise DecisionsFileMissing(
+            f"{path} не найден, а --apply склеивает необратимо: запрещённые человеком "
+            "пары были бы склеены (откат — sfr etl unmerge, он ходит в сеть). "
+            "Проверь --decisions и рабочую директорию или запусти с --dry-run."
+        )
+    return []
 
 
 def find_splits(
