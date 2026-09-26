@@ -2629,23 +2629,23 @@
             "golden_in_domain_24": {
               "n_queries": 24,
               "success_at_1": {
-                "before": 0.5,
-                "after": 0.625
+                "before": 0.708,
+                "after": 0.75
               },
               "success_at_5": {
-                "before": 0.792,
-                "after": 0.917
+                "before": 0.958,
+                "after": 0.958
               },
               "coverage_gain": {
                 "queries_with_new_in_top5": 0.917,
-                "queries_with_new_grade2_in_top5": 0.792,
+                "queries_with_new_grade2_in_top5": 0.833,
                 "queries_top1_new": 0.5
               },
               "displacement": {
-                "old_grade2_left_top5": 15,
-                "queries_with_displaced_grade2": 11,
-                "entrants_new_grade2": 27,
-                "entrants_new_grade_le1": 22,
+                "old_grade2_left_top5": 19,
+                "queries_with_displaced_grade2": 13,
+                "entrants_new_grade2": 32,
+                "entrants_new_grade_le1": 17,
                 "entrants_old": 0
               },
               "unjudged_pairs_in_top5_after": 0
@@ -2653,23 +2653,23 @@
             "golden_same_22": {
               "n_queries": 22,
               "success_at_1": {
-                "before": 0.545,
-                "after": 0.682
+                "before": 0.773,
+                "after": 0.818
               },
               "success_at_5": {
-                "before": 0.818,
-                "after": 0.955
+                "before": 1.0,
+                "after": 1.0
               },
               "coverage_gain": {
                 "queries_with_new_in_top5": 0.909,
-                "queries_with_new_grade2_in_top5": 0.818,
+                "queries_with_new_grade2_in_top5": 0.864,
                 "queries_top1_new": 0.545
               },
               "displacement": {
-                "old_grade2_left_top5": 14,
-                "queries_with_displaced_grade2": 10,
-                "entrants_new_grade2": 26,
-                "entrants_new_grade_le1": 20,
+                "old_grade2_left_top5": 18,
+                "queries_with_displaced_grade2": 12,
+                "entrants_new_grade2": 31,
+                "entrants_new_grade_le1": 15,
                 "entrants_old": 0
               },
               "unjudged_pairs_in_top5_after": 0
@@ -2690,7 +2690,7 @@
                 "queries_top1_new": 0.167
               },
               "displacement": {
-                "old_grade2_left_top5": 6,
+                "old_grade2_left_top5": 7,
                 "queries_with_displaced_grade2": 3,
                 "entrants_new_grade2": 6,
                 "entrants_new_grade_le1": 8,
@@ -2725,23 +2725,23 @@
             "headline_golden24_plus_external": {
               "n_queries": 25,
               "success_at_1": {
-                "before": 0.48,
-                "after": 0.6
+                "before": 0.68,
+                "after": 0.72
               },
               "success_at_5": {
-                "before": 0.76,
-                "after": 0.88
+                "before": 0.92,
+                "after": 0.92
               },
               "coverage_gain": {
                 "queries_with_new_in_top5": 0.92,
-                "queries_with_new_grade2_in_top5": 0.76,
+                "queries_with_new_grade2_in_top5": 0.8,
                 "queries_top1_new": 0.52
               },
               "displacement": {
-                "old_grade2_left_top5": 15,
-                "queries_with_displaced_grade2": 11,
-                "entrants_new_grade2": 27,
-                "entrants_new_grade_le1": 26,
+                "old_grade2_left_top5": 19,
+                "queries_with_displaced_grade2": 13,
+                "entrants_new_grade2": 32,
+                "entrants_new_grade_le1": 21,
                 "entrants_old": 0
               },
               "unjudged_pairs_in_top5_after": 0
@@ -2948,9 +2948,9 @@
                 "expect": "in-domain",
                 "top1_before": 0.434217,
                 "top1_after": 0.442733,
-                "s1_before": false,
+                "s1_before": true,
                 "s1_after": true,
-                "s5_before": false,
+                "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
                 "new_grade2_in_top5": 2,
@@ -2980,17 +2980,17 @@
                 "expect": "in-domain",
                 "top1_before": 0.512141,
                 "top1_after": 0.517439,
-                "s1_before": false,
-                "s1_after": false,
+                "s1_before": true,
+                "s1_after": true,
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 4,
-                "new_grade2_in_top5": 2,
+                "new_grade2_in_top5": 3,
                 "top1_is_new": true,
-                "displaced_grade2": 2,
+                "displaced_grade2": 3,
                 "entrants": {
-                  "new_grade_le1": 2,
-                  "new_grade2": 2
+                  "new_grade2": 3,
+                  "new_grade_le1": 1
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -3083,12 +3083,11 @@
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
-                "new_grade2_in_top5": 1,
+                "new_grade2_in_top5": 2,
                 "top1_is_new": false,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade_le1": 1,
-                  "new_grade2": 1
+                  "new_grade2": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -3111,16 +3110,17 @@
                 "expect": "in-domain",
                 "top1_before": 0.508974,
                 "top1_after": 0.527473,
-                "s1_before": false,
-                "s1_after": false,
-                "s5_before": false,
-                "s5_after": false,
+                "s1_before": true,
+                "s1_after": true,
+                "s5_before": true,
+                "s5_after": true,
                 "new_in_top5": 3,
-                "new_grade2_in_top5": 0,
+                "new_grade2_in_top5": 1,
                 "top1_is_new": true,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade_le1": 3
+                  "new_grade2": 1,
+                  "new_grade_le1": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -3174,16 +3174,15 @@
                 "top1_before": 0.4659,
                 "top1_after": 0.472241,
                 "s1_before": false,
-                "s1_after": false,
-                "s5_before": false,
+                "s1_after": true,
+                "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
-                "new_grade2_in_top5": 1,
+                "new_grade2_in_top5": 2,
                 "top1_is_new": true,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade_le1": 1,
-                  "new_grade2": 1
+                  "new_grade2": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -3208,12 +3207,12 @@
                 "top1_after": 0.491822,
                 "s1_before": false,
                 "s1_after": true,
-                "s5_before": false,
+                "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 3,
                 "new_grade2_in_top5": 1,
                 "top1_is_new": true,
-                "displaced_grade2": 0,
+                "displaced_grade2": 1,
                 "entrants": {
                   "new_grade2": 1,
                   "new_grade_le1": 2
@@ -3334,7 +3333,7 @@
                 "expect": "in-domain",
                 "top1_before": 0.39059,
                 "top1_after": 0.404124,
-                "s1_before": false,
+                "s1_before": true,
                 "s1_after": true,
                 "s5_before": true,
                 "s5_after": true,
@@ -3373,7 +3372,7 @@
                 "new_in_top5": 2,
                 "new_grade2_in_top5": 2,
                 "top1_is_new": true,
-                "displaced_grade2": 0,
+                "displaced_grade2": 1,
                 "entrants": {
                   "new_grade2": 2
                 },
@@ -3403,12 +3402,11 @@
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
-                "new_grade2_in_top5": 1,
+                "new_grade2_in_top5": 2,
                 "top1_is_new": true,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade2": 1,
-                  "new_grade_le1": 1
+                  "new_grade2": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -3528,14 +3526,14 @@
                 "expect": "in-domain",
                 "top1_before": 0.423904,
                 "top1_after": 0.443801,
-                "s1_before": false,
+                "s1_before": true,
                 "s1_after": false,
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 4,
                 "new_grade2_in_top5": 3,
                 "top1_is_new": true,
-                "displaced_grade2": 2,
+                "displaced_grade2": 3,
                 "entrants": {
                   "new_grade_le1": 1,
                   "new_grade2": 3
@@ -3666,7 +3664,7 @@
                 "new_in_top5": 2,
                 "new_grade2_in_top5": 2,
                 "top1_is_new": false,
-                "displaced_grade2": 1,
+                "displaced_grade2": 2,
                 "entrants": {
                   "new_grade2": 2
                 },
@@ -3897,23 +3895,23 @@
             "golden_in_domain_24": {
               "n_queries": 24,
               "success_at_1": {
-                "before": 0.5,
-                "after": 0.667
+                "before": 0.708,
+                "after": 0.75
               },
               "success_at_5": {
-                "before": 0.792,
-                "after": 0.917
+                "before": 0.958,
+                "after": 0.958
               },
               "coverage_gain": {
                 "queries_with_new_in_top5": 1.0,
-                "queries_with_new_grade2_in_top5": 0.875,
+                "queries_with_new_grade2_in_top5": 0.917,
                 "queries_top1_new": 0.542
               },
               "displacement": {
-                "old_grade2_left_top5": 18,
-                "queries_with_displaced_grade2": 13,
-                "entrants_new_grade2": 37,
-                "entrants_new_grade_le1": 20,
+                "old_grade2_left_top5": 25,
+                "queries_with_displaced_grade2": 15,
+                "entrants_new_grade2": 42,
+                "entrants_new_grade_le1": 15,
                 "entrants_old": 0
               },
               "unjudged_pairs_in_top5_after": 0
@@ -3921,23 +3919,23 @@
             "golden_same_22": {
               "n_queries": 22,
               "success_at_1": {
-                "before": 0.545,
-                "after": 0.727
+                "before": 0.773,
+                "after": 0.818
               },
               "success_at_5": {
-                "before": 0.818,
-                "after": 0.955
+                "before": 1.0,
+                "after": 1.0
               },
               "coverage_gain": {
                 "queries_with_new_in_top5": 1.0,
-                "queries_with_new_grade2_in_top5": 0.909,
+                "queries_with_new_grade2_in_top5": 0.955,
                 "queries_top1_new": 0.545
               },
               "displacement": {
-                "old_grade2_left_top5": 17,
-                "queries_with_displaced_grade2": 12,
-                "entrants_new_grade2": 36,
-                "entrants_new_grade_le1": 18,
+                "old_grade2_left_top5": 24,
+                "queries_with_displaced_grade2": 14,
+                "entrants_new_grade2": 41,
+                "entrants_new_grade_le1": 13,
                 "entrants_old": 0
               },
               "unjudged_pairs_in_top5_after": 0
@@ -3958,7 +3956,7 @@
                 "queries_top1_new": 0.333
               },
               "displacement": {
-                "old_grade2_left_top5": 9,
+                "old_grade2_left_top5": 10,
                 "queries_with_displaced_grade2": 4,
                 "entrants_new_grade2": 8,
                 "entrants_new_grade_le1": 11,
@@ -3993,23 +3991,23 @@
             "headline_golden24_plus_external": {
               "n_queries": 25,
               "success_at_1": {
-                "before": 0.48,
-                "after": 0.64
+                "before": 0.68,
+                "after": 0.72
               },
               "success_at_5": {
-                "before": 0.76,
-                "after": 0.88
+                "before": 0.92,
+                "after": 0.92
               },
               "coverage_gain": {
                 "queries_with_new_in_top5": 1.0,
-                "queries_with_new_grade2_in_top5": 0.84,
+                "queries_with_new_grade2_in_top5": 0.88,
                 "queries_top1_new": 0.56
               },
               "displacement": {
-                "old_grade2_left_top5": 18,
-                "queries_with_displaced_grade2": 13,
-                "entrants_new_grade2": 37,
-                "entrants_new_grade_le1": 24,
+                "old_grade2_left_top5": 25,
+                "queries_with_displaced_grade2": 15,
+                "entrants_new_grade2": 42,
+                "entrants_new_grade_le1": 19,
                 "entrants_old": 0
               },
               "unjudged_pairs_in_top5_after": 0
@@ -4216,9 +4214,9 @@
                 "expect": "in-domain",
                 "top1_before": 0.434217,
                 "top1_after": 0.442733,
-                "s1_before": false,
+                "s1_before": true,
                 "s1_after": true,
-                "s5_before": false,
+                "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
                 "new_grade2_in_top5": 2,
@@ -4248,17 +4246,16 @@
                 "expect": "in-domain",
                 "top1_before": 0.512141,
                 "top1_after": 0.517439,
-                "s1_before": false,
-                "s1_after": false,
+                "s1_before": true,
+                "s1_after": true,
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 4,
-                "new_grade2_in_top5": 3,
+                "new_grade2_in_top5": 4,
                 "top1_is_new": true,
-                "displaced_grade2": 2,
+                "displaced_grade2": 3,
                 "entrants": {
-                  "new_grade_le1": 1,
-                  "new_grade2": 3
+                  "new_grade2": 4
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -4350,12 +4347,11 @@
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
-                "new_grade2_in_top5": 1,
+                "new_grade2_in_top5": 2,
                 "top1_is_new": false,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade_le1": 1,
-                  "new_grade2": 1
+                  "new_grade2": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -4378,16 +4374,17 @@
                 "expect": "in-domain",
                 "top1_before": 0.508974,
                 "top1_after": 0.527473,
-                "s1_before": false,
-                "s1_after": false,
-                "s5_before": false,
-                "s5_after": false,
+                "s1_before": true,
+                "s1_after": true,
+                "s5_before": true,
+                "s5_after": true,
                 "new_in_top5": 3,
-                "new_grade2_in_top5": 0,
+                "new_grade2_in_top5": 1,
                 "top1_is_new": true,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade_le1": 3
+                  "new_grade2": 1,
+                  "new_grade_le1": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -4444,15 +4441,14 @@
                 "top1_after": 0.517484,
                 "s1_before": false,
                 "s1_after": true,
-                "s5_before": false,
+                "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 3,
-                "new_grade2_in_top5": 2,
+                "new_grade2_in_top5": 3,
                 "top1_is_new": true,
-                "displaced_grade2": 0,
+                "displaced_grade2": 1,
                 "entrants": {
-                  "new_grade2": 2,
-                  "new_grade_le1": 1
+                  "new_grade2": 3
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -4477,12 +4473,12 @@
                 "top1_after": 0.491822,
                 "s1_before": false,
                 "s1_after": true,
-                "s5_before": false,
+                "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 3,
                 "new_grade2_in_top5": 1,
                 "top1_is_new": true,
-                "displaced_grade2": 0,
+                "displaced_grade2": 1,
                 "entrants": {
                   "new_grade2": 1,
                   "new_grade_le1": 2
@@ -4604,14 +4600,14 @@
                 "expect": "in-domain",
                 "top1_before": 0.39059,
                 "top1_after": 0.4419,
-                "s1_before": false,
+                "s1_before": true,
                 "s1_after": true,
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 3,
                 "new_grade2_in_top5": 2,
                 "top1_is_new": true,
-                "displaced_grade2": 1,
+                "displaced_grade2": 2,
                 "entrants": {
                   "new_grade2": 2,
                   "new_grade_le1": 1
@@ -4644,7 +4640,7 @@
                 "new_in_top5": 3,
                 "new_grade2_in_top5": 3,
                 "top1_is_new": true,
-                "displaced_grade2": 1,
+                "displaced_grade2": 2,
                 "entrants": {
                   "new_grade2": 3
                 },
@@ -4674,12 +4670,11 @@
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 2,
-                "new_grade2_in_top5": 1,
+                "new_grade2_in_top5": 2,
                 "top1_is_new": true,
                 "displaced_grade2": 0,
                 "entrants": {
-                  "new_grade2": 1,
-                  "new_grade_le1": 1
+                  "new_grade2": 2
                 },
                 "unjudged_in_top5_after": 0,
                 "top5_before": [
@@ -4799,14 +4794,14 @@
                 "expect": "in-domain",
                 "top1_before": 0.423904,
                 "top1_after": 0.443801,
-                "s1_before": false,
+                "s1_before": true,
                 "s1_after": false,
                 "s5_before": true,
                 "s5_after": true,
                 "new_in_top5": 5,
                 "new_grade2_in_top5": 4,
                 "top1_is_new": true,
-                "displaced_grade2": 2,
+                "displaced_grade2": 4,
                 "entrants": {
                   "new_grade_le1": 1,
                   "new_grade2": 4
@@ -4937,7 +4932,7 @@
                 "new_in_top5": 4,
                 "new_grade2_in_top5": 4,
                 "top1_is_new": true,
-                "displaced_grade2": 3,
+                "displaced_grade2": 4,
                 "entrants": {
                   "new_grade2": 4
                 },
@@ -5158,7 +5153,7 @@
     }
   },
   "rejudge": {
-    "path": "packages/sfr-match/eval/judgments_rejudge_sfr5c.jsonl",
+    "path": "packages/sfr-match/eval/judgments_rejudge_sfr5c_v2.jsonl",
     "pairs": 135,
     "disagreements": [
       {
@@ -5167,7 +5162,7 @@
         "grade_before": 1,
         "grade_after": 2,
         "rationale_before": "одна статья 2013 г. о детекции депрессии в микроблогах в разнородном профиле (ветроэнергетика, LiDAR) — смежно; снижено с 2 при проверке Борисом 26.09 (#94)",
-        "rationale_after": "Детекция депрессии в микроблогах, 2 работы; профиль разнородный",
+        "rationale_after": "Детекция депрессии в микроблогах по сентименту, 2 работы",
         "iteration_before": "SFR-5b",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5177,18 +5172,8 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "физика частиц и эксперименты на коллайдере",
-        "rationale_after": "LUX, XENON10, COHERENT — эксперименты не на коллайдере",
+        "rationale_after": "подземные детекторы LUX/XENON, не коллайдер",
         "iteration_before": "sfr5",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q03",
-        "author_id": "A5100670875",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "CMS, Хиггс, particle-flow реконструкция — прямое совпадение",
-        "rationale_after": "CalcHEP и теория ТМ; CMS — мегаколлаборация",
-        "iteration_before": "",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5197,7 +5182,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "детекторы частиц и физика высоких энергий",
-        "rationale_after": "SHiP, ATLAS, SPD — коллаборационные; личное — тонкие плёнки",
+        "rationale_after": "Только коллаборационные ATLAS/SHiP/SPD; личные работы — тонкие плёнки",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5207,28 +5192,8 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "столкновения высоких энергий, физика частиц",
-        "rationale_after": "ALICE и PHENIX — мегаколлаборации; личное — нанотрубки",
+        "rationale_after": "Только коллаборационные ALICE/PHENIX; личная работа — катализ",
         "iteration_before": "sfr5-backfill",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q03",
-        "author_id": "A5114377115",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "физика частиц и детекторы на коллайдере",
-        "rationale_after": "ATLAS-мегаколлаборация; личное — феноменология light-by-light",
-        "iteration_before": "sfr5-backfill",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q04",
-        "author_id": "A5026267619",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "Iron-based superconductors, монокристаллы FeSe, низкоразмерный магнетизм",
-        "rationale_after": "Одна работа по FeSe-сверхпроводникам, основное — квантовый магнетизм",
-        "iteration_before": "",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5237,7 +5202,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "магнетизм и электронная структура FeSi, MnSi, Pd; сверхпроводимости нет",
-        "rationale_after": "FeSi, MnSi, Pd/Pt: магнетизм, электронная структура; сверхпроводимости нет",
+        "rationale_after": "FeSi, магнитная восприимчивость Pd/Pt; сверхпроводимости нет",
         "iteration_before": "SFR-5c",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5247,28 +5212,18 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "сверхпроводимость и квантовый транспорт",
-        "rationale_after": "Одна работа о нематической сверхпроводимости, остальное — 2D электронные системы",
+        "rationale_after": "одна работа о нематической сверхпроводимости, остальное 2D-электроны",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
         "query_id": "q04",
-        "author_id": "A5041062340",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "S/F/S-структуры, физика сверхпроводимости",
-        "rationale_after": "Две работы о сверхпроводимости (S/F/S, беспорядок), две — SPICE-модели",
-        "iteration_before": "SFR-5b",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q07",
-        "author_id": "A5029181198",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "ML-оптимизация экспериментов и детекция аномалий в физике частиц",
-        "rationale_after": "Одна работа ML-дизайн детекторов; остальное общий ML (аномалии)",
-        "iteration_before": "SFR-5b",
+        "author_id": "A5044414277",
+        "grade_before": 1,
+        "grade_after": 2,
+        "rationale_before": "сверхпроводимость есть, но профиль делит её с метеорологией и гидродинамикой",
+        "rationale_after": "MT-YBCO, MgB2 сверхпроводящие материалы, 3 работы",
+        "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5277,17 +5232,17 @@
         "grade_before": 1,
         "grade_after": 2,
         "rationale_before": "физика частиц; глубокого обучения в темах профиля не видно",
-        "rationale_after": "Adversarial-рекалибровка калориметра, дрейф сенсоров; LHCb",
+        "rationale_after": "Adversarial-рекалибровка калориметра, дрейф сенсоров, LHCb",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
         "query_id": "q07",
-        "author_id": "A5107174121",
+        "author_id": "A5107839879",
         "grade_before": 1,
-        "grade_after": 0,
-        "rationale_before": "физика частиц и КХД; ML как специализация не заявлен",
-        "rationale_after": "ATLAS-мегаколлаборации и доплеровские датчики; нейросетей нет",
+        "grade_after": 2,
+        "rationale_before": "физика частиц; связь с нейросетями по темам не подтверждается",
+        "rationale_after": "ML для дрейфа сенсоров, PINN, ML для QKD",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5297,18 +5252,8 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "лингвистика и NLP-техники, но графовых нейросетей нет",
-        "rationale_after": "Психолингвистика: движения глаз, согласование в русском; NLP/GNN нет",
+        "rationale_after": "психолингвистика, айтрекинг-корпуса; NLP/GNN нет",
         "iteration_before": "sfr5",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q08",
-        "author_id": "A5001784131",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "NLP, тематическое моделирование, атрибуция авторства — русскоязычные данные",
-        "rationale_after": "NLP на русском (mGPT, парафразеры, MMTEB); GNN нет",
-        "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5317,28 +5262,28 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "нейролингвистика и развитие речи — язык есть, NLP-методов нет",
-        "rationale_after": "Нейролингвистика, афазия; ни NLP, ни графовых сетей",
+        "rationale_after": "нейролингвистика, афазия; NLP и GNN нет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
         "query_id": "q08",
-        "author_id": "A5083490320",
-        "grade_before": 2,
+        "author_id": "A5101711419",
+        "grade_before": 0,
         "grade_after": 1,
-        "rationale_before": "предобученные языковые модели для русского — NLP на русскоязычных данных",
-        "rationale_after": "Русские LM и бенчмарки — NLP полностью, GNN нет",
-        "iteration_before": "SFR-5b",
+        "rationale_before": "геохимия и геостатистика почв",
+        "rationale_after": "Одна GNN-работа по fMRI; NLP и русского нет",
+        "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
         "query_id": "q10",
-        "author_id": "A5029181198",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "ML для экспериментальной физики, anomaly detection",
-        "rationale_after": "ML-дизайн экспериментов, общий ML-аномалии; анализа данных экспериментов нет",
-        "iteration_before": "SFR-5b",
+        "author_id": "A5030454460",
+        "grade_before": 1,
+        "grade_after": 2,
+        "rationale_before": "вычислительная физика многих тел; data science как специализация не заявлен",
+        "rationale_after": "SciPy, PyTorch 2 и вычислительная физика; не данные экспериментов",
+        "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5347,7 +5292,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "эксперименты физики частиц — данные есть, ML-пайплайнов в темах нет",
-        "rationale_after": "DANSS, T2K, мюонный томограф; ни ML, ни data science",
+        "rationale_after": "DANSS, T2K, мюонная томография; data science нет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5357,7 +5302,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "физика частиц; анализ данных как тема не выделен",
-        "rationale_after": "Логистика, GPT-4 в школе, GNN для онкологии; физики нет",
+        "rationale_after": "Логистика, GPT-4 оценка эссе, GNN для онкологии; физики нет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5367,18 +5312,8 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "планирование перевозок и управление трафиком — оптимизация маршрутов",
-        "rationale_after": "Равновесное распределение трафика в сетях, не маршрутизация доставки",
+        "rationale_after": "равновесное распределение трафика, не маршрутизация доставки",
         "iteration_before": "sfr5-backfill",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q11",
-        "author_id": "A5035328594",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "маршрутизация транспорта и логистическая оптимизация",
-        "rationale_after": "Обобщённая задача коммивояжёра, маршруты для АЭС и ЧПУ; объект иной",
-        "iteration_before": "sfr5",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5387,7 +5322,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "раскрой, маршрутизация транспорта, производственная логистика",
-        "rationale_after": "Оптимизация траектории инструмента ЧПУ (маршрутизация), не логистика",
+        "rationale_after": "оптимизация траектории инструмента ЧПУ, не маршруты доставки",
         "iteration_before": "sfr5",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5407,7 +5342,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "квантовая информация и криптография, квантовые вычисления",
-        "rationale_after": "Экспериментальный QKD: сети, спутник; теории каналов нет",
+        "rationale_after": "экспериментальный QKD; ёмкость каналов и запутанность не предмет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5417,7 +5352,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "квантовая информация и криптография — теория квантовых каналов",
-        "rationale_after": "Модели и finite-key анализ QKD; ёмкости каналов нет",
+        "rationale_after": "CV-QKD, twin-field QKD; теория каналов не предмет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5427,7 +5362,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "квантовая телепортация с полным белловским измерением, квантовая криптография",
-        "rationale_after": "Эксперименты по телепортации/запутанности; теории каналов нет",
+        "rationale_after": "эксперименты по телепортации/квантовому ластику; теория каналов не предмет",
         "iteration_before": "",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5437,28 +5372,8 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "квантовая информация и защищённая прямая квантовая связь",
-        "rationale_after": "Квантовая связь QSDC, маршрутизация фотонов; не теория каналов",
+        "rationale_after": "QSDC и однофотонная маршрутизация; ёмкости каналов, запутанности нет",
         "iteration_before": "",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q15",
-        "author_id": "A5032951968",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "астрофизика и тёмная материя",
-        "rationale_after": "GAMMA-400 — телескоп для поиска ТМ, но работы о приборе",
-        "iteration_before": "sfr5-backfill",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q15",
-        "author_id": "A5069514467",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "астрофизика, тёмная материя, гамма-всплески",
-        "rationale_after": "GAMMA-400 — телескоп для поиска ТМ, но работы о приборе",
-        "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5467,18 +5382,8 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "SHiP — поиск скрытых частиц, тёмная материя в темах",
-        "rationale_after": "SHiP (скрытые частицы) — одна работа; остальное трековые детекторы",
+        "rationale_after": "одна работа SHiP о скрытых частицах, остальное детекторы",
         "iteration_before": "SFR-5b",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q16",
-        "author_id": "A5056817341",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "нейрогибридные мемристивные чипы и нейроморфные сети — прямое совпадение",
-        "rationale_after": "Две работы о мемристивных нейроморфных системах, остальное — нейроинженерия",
-        "iteration_before": "",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5487,7 +5392,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "физика частиц и КХД; нейтринной специализации в темах нет",
-        "rationale_after": "Belle: распады B-мезонов; нейтринных работ нет",
+        "rationale_after": "B-физика Belle; нейтрино и 0νββ нет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5497,18 +5402,8 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "столкновения высоких энергий; нейтрино в темах не выделено",
-        "rationale_after": "Только ALICE (Pb–Pb); нейтрино нет",
+        "rationale_after": "ALICE, тяжёлые ионы; нейтрино нет",
         "iteration_before": "sfr5-backfill",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q17",
-        "author_id": "A5104387273",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "реакторные нейтринные эксперименты",
-        "rationale_after": "Реакторные нейтрино, Double Chooz, 5 работ; 0νββ нет",
-        "iteration_before": "SFR-5b",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5517,7 +5412,7 @@
         "grade_before": 1,
         "grade_after": 2,
         "rationale_before": "физика частиц и детекторы; нейтринной темы в профиле нет",
-        "rationale_after": "GERDA: безнейтринный двойной бета-распад Ge76, 3 работы",
+        "rationale_after": "GERDA: безнейтринный двойной бета-распад 76Ge, 3 работы",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5527,7 +5422,7 @@
         "grade_before": 0,
         "grade_after": 1,
         "rationale_before": "материалы для термоядерного синтеза; вычислительной составляющей в темах нет",
-        "rationale_after": "Эрозия вольфрама, эксперимент; одна работа — 2D численное моделирование",
+        "rationale_after": "эрозия вольфрама; одна работа — 2D численное моделирование",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5537,27 +5432,27 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "проектирование ускорителей — расчёты есть, программирования как темы нет",
-        "rationale_after": "Проектирование ускорителей и фотопушек; программирование не показано",
+        "rationale_after": "Проектирование ускорителей и фотопушек; программирования в тексте нет",
+        "iteration_before": "SFR-5b",
+        "judge_after": "fable (sfr-judge)"
+      },
+      {
+        "query_id": "q19",
+        "author_id": "A5110984172",
+        "grade_before": 0,
+        "grade_after": 1,
+        "rationale_before": "ядерные реакции на циклотроне, не стык с программированием",
+        "rationale_after": "Расчёт сечений и спектров ядер отдачи; программирование косвенно",
         "iteration_before": "SFR-5b",
         "judge_after": "fable (sfr-judge)"
       },
       {
         "query_id": "q21",
-        "author_id": "A5050234205",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "люминесцентные и керамические материалы, свойства материалов",
-        "rationale_after": "Половина профиля — 3D-печать пьезокерамики, ZnO; половина — детектор RED-100",
-        "iteration_before": "sfr5-backfill",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q23",
-        "author_id": "A5078641429",
-        "grade_before": 2,
-        "grade_after": 1,
-        "rationale_before": "квантовая оптика и квантовая информация",
-        "rationale_after": "Обзор QML и поляритонные кубиты; ядро — квантовая оптика",
+        "author_id": "A5084061415",
+        "grade_before": 1,
+        "grade_after": 2,
+        "rationale_before": "сверхпроводящие материалы, но в приложении к электромашинам",
+        "rationale_after": "ВТСП электрические машины для самолётов, 4 работы",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5567,7 +5462,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "квантовые жидкости и гелий — теория конденсированного состояния, но не куперовские пары",
-        "rationale_after": "Пылевая плазма, 2D коллоиды; сверхпроводимости нет",
+        "rationale_after": "комплексная плазма, 2D кристаллы; сверхпроводимости нет",
         "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5577,7 +5472,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "квантовые магнетики, ЭПР — конденсированное состояние, не теория сверхпроводимости",
-        "rationale_after": "Квантовые магнетики, нейтроны, ЭПР; сверхпроводимости и теории нет",
+        "rationale_after": "квантовые магнетики, ЭПР; сверхпроводимости в работах нет",
         "iteration_before": "SFR-5b",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5587,7 +5482,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "молекулярные магнетики Cu(II)-нитроксилы, спиновые переходы — магнетизм, не сверхпроводимость",
-        "rationale_after": "Молекулярные магнетики Cu–нитроксил; сверхпроводимости нет",
+        "rationale_after": "молекулярные магнетики Cu(II)-нитроксиды; сверхпроводимости нет",
         "iteration_before": "SFR-5c",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5597,7 +5492,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "магноны и фононы в антиферромагнетиках — смежно",
-        "rationale_after": "Магнон-фононы, экситоны 2D; сверхпроводимости и теории нет",
+        "rationale_after": "магноны, экситоны в 2D; сверхпроводимости в работах нет",
         "iteration_before": "SFR-5b",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5607,7 +5502,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "спиновая физика перовскитных нанокристаллов, экситоны — смежно, эксперимент, сверхпроводимости нет",
-        "rationale_after": "Перовскитные нанокристаллы, спиновая физика; сверхпроводимости нет",
+        "rationale_after": "перовскитные нанокристаллы, спины; сверхпроводимости нет",
         "iteration_before": "SFR-5c",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5617,7 +5512,7 @@
         "grade_before": 1,
         "grade_after": 0,
         "rationale_before": "сверхпроводимость соседствует с лазерной спектроскопией и терагерцем; теории куперовских пар нет",
-        "rationale_after": "ВЗП в NbS3 и ТГц-лазеры; сверхпроводимости и теории нет",
+        "rationale_after": "Волны зарядовой плотности NbS3, ТГц лазеры; сверхпроводимости нет",
         "iteration_before": "sfr5",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5627,7 +5522,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "поведение потребителей, цифровые платформы и цифровой маркетинг",
-        "rationale_after": "Количественный маркетинг: поиск по click-stream, цифровые товары; SMM нет",
+        "rationale_after": "количественный маркетинг: поиск, цифровые товары; соцсетей нет",
         "iteration_before": "sfr5",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5637,7 +5532,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "маркетинговые стратегии, бренд-потребление, соцсети",
-        "rationale_after": "IMC — маркетинговые коммуникации в МСП; соцсетей нет",
+        "rationale_after": "интегрированные маркетинговые коммуникации, МСП; соцсети не предмет",
         "iteration_before": "sfr5",
         "judge_after": "fable (sfr-judge)"
       },
@@ -5647,18 +5542,8 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "цифровой маркетинг и соцсети",
-        "rationale_after": "Маркетинг B2B, рыночная ориентация; SMM и бренда нет",
+        "rationale_after": "рыночная ориентация, B2B-отношения; соцсети не предмет",
         "iteration_before": "sfr5",
-        "judge_after": "fable (sfr-judge)"
-      },
-      {
-        "query_id": "q30",
-        "author_id": "A5020072191",
-        "grade_before": 1,
-        "grade_after": 0,
-        "rationale_before": "соцсети как объект, но политика и динамика мнений, а не маркетинг",
-        "rationale_after": "Соцсети: политика, журналистика; маркетинга и брендов нет",
-        "iteration_before": "sfr5-backfill",
         "judge_after": "fable (sfr-judge)"
       },
       {
@@ -5667,7 +5552,7 @@
         "grade_before": 2,
         "grade_after": 1,
         "rationale_before": "маркетинг, цифровой маркетинг и соцсети в темах (кафедра маркетинга МГУ)",
-        "rationale_after": "Позиционирование и идентичность бренда, потребители в интернете; соцсетей нет",
+        "rationale_after": "позиционирование бренда, поведение в интернете; SMM нет",
         "iteration_before": "SFR-5b",
         "judge_after": "fable (sfr-judge)"
       }

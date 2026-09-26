@@ -267,7 +267,9 @@ SFR5C_OOD_RUNS := data/eval/runs_ood_sfr5c
 SFR5C_EXT_RUNS := data/eval/runs_external_sfr5c
 SFR5C_DEDUP_REVIEW := packages/sfr-match/eval/dedup_for_review_sfr5c.md
 # Решения человека о склейках (§4 SPEC_SFR5c): актив в git, как judgments.jsonl.
-SFR5C_DEDUP_DECISIONS := packages/sfr-match/eval/dedup_decisions.jsonl
+# Абсолютный путь: цель может быть вызвана из подкаталога, а отсутствие файла
+# решений под --apply теперь ошибка, а не предупреждение (ревью SFR-5c).
+SFR5C_DEDUP_DECISIONS := $(CURDIR)/packages/sfr-match/eval/dedup_decisions.jsonl
 
 # --examples 10000 вместо 10: файл читает Борис целиком, а не как примеры.
 catalog-sfr5c: unhide
@@ -310,6 +312,7 @@ eval-sfr5c: unhide
 # чтобы поправка #94 попала в обе правые колонки.
 metrics-sfr5c: unhide
 	uv run python scripts/sfr5c_three_points.py
+	uv run python scripts/sfr5c_rejudge_classes.py
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.
