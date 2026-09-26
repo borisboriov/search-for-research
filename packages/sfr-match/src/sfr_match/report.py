@@ -1,5 +1,6 @@
 """Aggregate eval runs + judgments into docs/SFR1_REPORT.md."""
 
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -221,7 +222,12 @@ def sample_for_review(
     n: int = 20,
     seed: int = 20260829,
 ) -> str:
-    """`eval/judgments_for_review.md` — a random sample for a human to re-check."""
+    """`eval/judgments_for_review.md` — a random sample for a human to re-check.
+
+    Кроме тем OpenAlex к каждой паре печатаются названия работ из ``profile_text``:
+    оценка ставится по работам, а темы OpenAlex считаются по массе публикаций и
+    ML у физика из коллаборации не показывают (#107, проверка SFR-5b Борисом).
+    """
     import random
 
     rng = random.Random(seed)
@@ -241,12 +247,22 @@ def sample_for_review(
         profile = profiles.get(author_id, {})
         topics = "; ".join(list(profile.get("topics") or [])[:4])
         grade = judgment.grade if judgment else "?"
+        works = profile_works(str(profile.get("profile_text") or ""))
         lines += [
             f"## {i}. `{query_id}` × `{author_id}` — grade **{grade}**",
             "",
             f"- **Запрос:** {query.text if query else '?'}",
-            f"- **НР:** {profile.get('name', '?')} — {topics}",
+            f"- **НР:** {profile.get('name', '?')} — {profile.get('institution') or ''}; {topics}",
+            f"- **Работы из профиля (по ним ставится оценка):** {'; '.join(works) or '—'}",
             f"- **Обоснование:** {judgment.rationale if judgment else '—'}",
             "",
         ]
     return "\n".join(lines)
+
+
+_WORK_RE = re.compile(r"«([^»]+)» \((\d{4})\)")
+
+
+def profile_works(profile_text: str, limit: int = 8) -> list[str]:
+    """Названия работ с годами из ``profile_text`` («…» (2024)), в порядке профиля."""
+    return [f"«{title}» ({year})" for title, year in _WORK_RE.findall(profile_text)[:limit]]

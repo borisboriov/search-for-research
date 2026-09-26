@@ -4,7 +4,13 @@ from pathlib import Path
 
 from sfr_match.evalset import Judgment, Query
 from sfr_match.evaluate import QueryRun, Run
-from sfr_match.report import compute_metrics, read_notes, render_report, sample_for_review
+from sfr_match.report import (
+    compute_metrics,
+    profile_works,
+    read_notes,
+    render_report,
+    sample_for_review,
+)
 
 QUERIES = [
     Query(id="q1", text="сверхпроводимость", expect="in-domain"),
@@ -97,8 +103,15 @@ def test_review_sample_is_deterministic_and_human_readable() -> None:
         "A2": {"name": "Второй", "topics": ["Magnetism"]},
         "A3": {"name": "Третий", "topics": ["NLP"]},
     }
+    profiles["A1"]["profile_text"] = (
+        "Первый — МФТИ. «Superconductivity in disordered films» (2022). "
+        "«Josephson junctions» (2019)."
+    )
     first = sample_for_review(pool, QUERIES, JUDGMENTS, profiles, n=3)
     second = sample_for_review(pool, QUERIES, JUDGMENTS, profiles, n=3)
     assert first == second
     assert first.count("## ") == 3
     assert "прямое совпадение" in first or "смежное" in first
+    # Работы из профиля печатаются рядом с темами — по ним и ставится оценка (#107).
+    assert "«Superconductivity in disordered films» (2022); «Josephson junctions» (2019)" in first
+    assert profile_works("без работ") == []
