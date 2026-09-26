@@ -38,16 +38,18 @@ Valery/Vladislav, Корянов Vsevolod/Victor, Иноуэ Akihisa/Atsuo — �
 его работы связаны цепочкой общих подобластей, а не разорваны надвое.
 """
 
+import json
 import re
 from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import structlog
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
-from sfr_core.models import Author, AuthorTopic, SupervisorProfile, Work
+from sfr_core.models import Author, AuthorTopic, Institution, SupervisorProfile, Work
 from sfr_etl.ingest import upsert_author
 from sfr_etl.works import ingest_works_for_author
 
@@ -218,6 +220,108 @@ def first_names_conflict(left: str, right: str) -> bool:
     return _levenshtein(fa, fb) >= FIRST_NAME_CONFLICT_DISTANCE
 
 
+DECISION_VERDICTS = ("same", "different")
+DEFAULT_DECISIONS_PATH = Path("packages/sfr-match/eval/dedup_decisions.jsonl")
+# Статусы решений человека для отчёта. «Запрещено, но склеено» — инвариант:
+# на правильной базе таких строк не бывает, и это самая быстрая проверка того,
+# что сессия стартовала не с той БД (§4.2 SPEC_SFR5c).
+STATUS_MERGED_BY_HUMAN = "склейка по решению человека"
+STATUS_ALREADY_MERGED = "уже склеено в БД"
+STATUS_BAN_ACTIVE = "запрет действует"
+STATUS_FORBIDDEN_BUT_MERGED = "ЗАПРЕЩЕНО, НО СКЛЕЕНО"
+STATUS_NOT_IN_CATALOGUE = "id не в каталоге — строка не применялась"
+
+
+@dataclass(frozen=True)
+class DedupDecision:
+    """Решение человека об одной паре профилей (§4 SPEC_SFR5c).
+
+    Решения о склейках принимают люди, а не правила: ``different`` — запрет
+    склейки по любому сигналу, ``same`` — склейка поверх блокеров (разные ORCID,
+    разные имена). Без этого файла те же пары возвращаются в review при каждой
+    пересборке каталога, а вердикт человека живёт только в комментарии к issue.
+    """
+
+    ids: tuple[str, str]
+    verdict: str
+    by: str
+    date: str
+    source: str
+    note: str = ""
+
+    @property
+    def key(self) -> frozenset[str]:
+        return frozenset(self.ids)
+
+    @property
+    def pair(self) -> str:
+        return " ↔ ".join(self.ids)
+
+
+def load_dedup_decisions(path: Path = DEFAULT_DECISIONS_PATH) -> list[DedupDecision]:
+    """Прочитать файл решений; кривая строка — ошибка, а не молчаливый пропуск.
+
+    Файл правит человек руками, поэтому единственная защита от опечатки —
+    громкий отказ: пропущенная строка означала бы потерянное решение, а
+    угаданная — решение, которого никто не принимал.
+    """
+    decisions: list[DedupDecision] = []
+    seen: dict[frozenset[str], DedupDecision] = {}
+    with path.open(encoding="utf-8") as handle:
+        for lineno, line in enumerate(handle, start=1):
+            line = line.strip()
+            if not line:
+                continue
+            where = f"{path}:{lineno}"
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{where}: не JSON ({exc})") from exc
+            if not isinstance(record, dict):
+                raise ValueError(f"{where}: ожидался объект JSON")
+            ids = record.get("ids")
+            if not isinstance(ids, list) or len(ids) != 2 or len(set(map(str, ids))) != 2:
+                raise ValueError(f"{where}: ids — два разных OpenAlex-id, получено {ids!r}")
+            verdict = str(record.get("verdict") or "")
+            if verdict not in DECISION_VERDICTS:
+                raise ValueError(
+                    f"{where}: verdict {verdict!r}, ожидается " + " | ".join(DECISION_VERDICTS)
+                )
+            missing = [f for f in ("by", "date", "source") if not str(record.get(f) or "").strip()]
+            if missing:
+                raise ValueError(
+                    f"{where}: без полей {', '.join(missing)} решение неотличимо от догадки агента"
+                )
+            decision = DedupDecision(
+                ids=(str(ids[0]), str(ids[1])),
+                verdict=verdict,
+                by=str(record["by"]),
+                date=str(record["date"]),
+                source=str(record["source"]),
+                note=str(record.get("note") or ""),
+            )
+            earlier = seen.get(decision.key)
+            if earlier is not None:
+                raise ValueError(
+                    f"{where}: пара {decision.pair} уже решена выше "
+                    f"({earlier.verdict}); две строки об одной паре — какая из них верна, "
+                    "знает только человек"
+                )
+            seen[decision.key] = decision
+            decisions.append(decision)
+    return decisions
+
+
+@dataclass
+class DecisionOutcome:
+    """Что случилось с одним решением человека на этой БД — для отчёта."""
+
+    decision: DedupDecision
+    status: str
+    names: list[str] = field(default_factory=list)
+    institutions: list[str] = field(default_factory=list)
+
+
 @dataclass
 class MergeGroup:
     """Один человек: канонический автор и его дубли."""
@@ -244,6 +348,16 @@ class DedupFindings:
     namesakes: list[MergeGroup] = field(default_factory=list)
     review: list[MergeGroup] = field(default_factory=list)
     near_duplicates: list[MergeGroup] = field(default_factory=list)
+    decisions: list[DecisionOutcome] = field(default_factory=list)
+
+    @property
+    def forbidden_but_merged(self) -> list[DecisionOutcome]:
+        """Пары с вердиктом ``different``, которые в этой БД уже склеены.
+
+        Инвариант: на правильной базе список пуст. Не пуст — либо БД собрана до
+        решения человека (``sfr5b.db`` с Лукинскими), либо склейку вернули.
+        """
+        return [o for o in self.decisions if o.status == STATUS_FORBIDDEN_BUT_MERGED]
 
     def __iter__(self) -> Iterator[list[MergeGroup]]:
         """Обратная совместимость: ``merges, namesakes = find_splits(session)``."""
@@ -282,17 +396,28 @@ def _catalogue_authors(session: Session) -> list[Author]:
     )
 
 
-def recovered_signal(canonical: Author, duplicate: Author) -> str:
+def recovered_signal(
+    canonical: Author,
+    duplicate: Author,
+    decided: dict[frozenset[str], DedupDecision] | None = None,
+) -> str:
     """Восстановить признак, по которому пара была склеена.
 
     Нужно для файла ручной проверки: строка «склеено ранее» не говорит человеку
     ничего, а именно ради его глаз файл и существует. Восстанавливаем из ``raw`` —
     исходных записей OpenAlex, которые склейка не трогает.
 
+    Решение человека проверяется первым: старая склейка Jorstad (два ORCID у
+    одного человека) иначе печаталась бы как «признак не восстановить», хотя
+    признак известен — вердикт из файла решений.
+
     Признак «общая работа» после склейки невосстановим: работы дубля физически
     переехали на канонического автора. Такая пара так и помечается — честнее,
     чем подставить правдоподобный сигнал.
     """
+    decision = (decided or {}).get(frozenset((canonical.openalex_id, duplicate.openalex_id)))
+    if decision is not None and decision.verdict == "same":
+        return f"human ({decision.source})"
     canonical_orcid = normalize_orcid((canonical.raw or {}).get("orcid") or canonical.orcid)
     duplicate_orcid = normalize_orcid((duplicate.raw or {}).get("orcid") or duplicate.orcid)
     if canonical_orcid and canonical_orcid == duplicate_orcid:
@@ -303,7 +428,9 @@ def recovered_signal(canonical: Author, duplicate: Author) -> str:
     return "склеено ранее (признак не восстановить — работы уже перенесены)"
 
 
-def applied_merges(session: Session) -> list[MergeGroup]:
+def applied_merges(
+    session: Session, decided: dict[frozenset[str], DedupDecision] | None = None
+) -> list[MergeGroup]:
     """Склейки, уже записанные в БД, — чтобы повторный прогон был идемпотентен.
 
     Без этого второй ``sfr etl dedup --apply`` отчитался бы «склеек 0»: дубли
@@ -320,7 +447,7 @@ def applied_merges(session: Session) -> list[MergeGroup]:
             group = MergeGroup(
                 canonical=canonical.openalex_id,
                 duplicates=[],
-                signal=recovered_signal(canonical, duplicate),
+                signal=recovered_signal(canonical, duplicate, decided),
                 names=[canonical.display_name],
                 institutions=[_institution_name(canonical)],
             )
@@ -329,6 +456,77 @@ def applied_merges(session: Session) -> list[MergeGroup]:
         group.names.append(duplicate.display_name)
         group.institutions.append(_institution_name(duplicate))
     return sorted(groups.values(), key=lambda g: g.canonical)
+
+
+def merge_roots(session: Session) -> dict[str, str]:
+    """``openalex_id`` → id канонического автора по цепочке ``merged_into_id``.
+
+    Смотрит **все** строки ``authors``, а не каталог: пара, запрещённая человеком,
+    интересна ровно тогда, когда один из её профилей уже стал дублём и из
+    каталога выбыл.
+    """
+    rows = session.execute(select(Author.id, Author.openalex_id, Author.merged_into_id)).all()
+    by_db_id = {row[0]: (row[1], row[2]) for row in rows}
+    roots: dict[str, str] = {}
+    for db_id, (openalex_id, _) in by_db_id.items():
+        seen: set[int] = set()
+        current = db_id
+        while (parent := by_db_id[current][1]) is not None and parent in by_db_id:
+            if parent in seen:  # pragma: no cover — цикла в merged_into_id быть не может
+                break
+            seen.add(parent)
+            current = parent
+        roots[openalex_id] = by_db_id[current][0]
+    return roots
+
+
+def decision_outcomes(
+    session: Session, decisions: Sequence[DedupDecision]
+) -> list[DecisionOutcome]:
+    """Что каждое решение человека даёт на этой БД — включая инвариант §4.2.
+
+    Решения не исчезают молча: строка, чьих id нет в каталоге, помечается как
+    неприменённая, а запрещённая пара, которая всё-таки склеена, — как нарушение
+    инварианта.
+    """
+    roots = merge_roots(session)
+    known = {
+        row[0]: (row[1], row[2])
+        for row in session.execute(
+            select(Author.openalex_id, Author.display_name, Author.is_supervisor_candidate)
+        ).all()
+    }
+    institutions = {
+        row[0]: row[1]
+        for row in session.execute(
+            select(Author.openalex_id, Author.last_known_institution_id)
+        ).all()
+    }
+    names_by_institution = {
+        row[0]: (row[1] or row[2])
+        for row in session.execute(
+            select(Institution.id, Institution.name_ru, Institution.name_en)
+        ).all()
+    }
+    outcomes: list[DecisionOutcome] = []
+    for decision in decisions:
+        left, right = decision.ids
+        names = [known[i][0] for i in decision.ids if i in known]
+        orgs = [names_by_institution.get(institutions[i], "—") for i in decision.ids if i in known]
+        if left not in roots or right not in roots:
+            status = STATUS_NOT_IN_CATALOGUE
+        elif roots[left] == roots[right]:
+            status = (
+                STATUS_ALREADY_MERGED if decision.verdict == "same" else STATUS_FORBIDDEN_BUT_MERGED
+            )
+        elif not all(known[i][1] for i in decision.ids):
+            status = STATUS_NOT_IN_CATALOGUE
+        else:
+            status = STATUS_MERGED_BY_HUMAN if decision.verdict == "same" else STATUS_BAN_ACTIVE
+        outcomes.append(
+            DecisionOutcome(decision=decision, status=status, names=names, institutions=orgs)
+        )
+    return outcomes
 
 
 def _group(by_db_id: dict[int, Author], ids: Sequence[int], signal: str) -> MergeGroup:
@@ -362,12 +560,20 @@ def find_splits(
     *,
     abbrev_topic_overlap: int = ABBREV_TOPIC_OVERLAP,
     near_duplicate_topic_overlap: int = NEAR_DUPLICATE_TOPIC_OVERLAP,
+    decisions: Sequence[DedupDecision] = (),
 ) -> DedupFindings:
     """Группы для склейки, тёзки без сигнала, пары на решение человека.
 
     Уже применённые склейки входят в ``merges`` с сигналом «склеено ранее».
     Распаковка ``merges, namesakes = find_splits(session)`` по-прежнему
     работает; полный результат — поля :class:`DedupFindings`.
+
+    ``decisions`` — вердикты человека (§4 SPEC_SFR5c). ``same`` склеивает пару
+    поверх блокеров; ``different`` запрещает ей оказаться в одной группе **по
+    любому сигналу, в том числе транзитивно** через третий профиль, и убирает
+    её из всех списков «на решение человека»: решение уже принято. Запрещённая
+    пара перехватывается там, где сигнал находится, а не фильтруется потом —
+    иначе Лукинские снова уехали бы в review как «общая работа при разных ORCID».
     """
     authors = _catalogue_authors(session)
     by_db_id = {a.id: a for a in authors}
@@ -375,6 +581,24 @@ def find_splits(
     signals: dict[int, str] = {}
     review: list[MergeGroup] = []
     reviewed: set[tuple[int, int]] = set()
+
+    decided = {d.key: d for d in decisions}
+    by_openalex = {a.openalex_id: a.id for a in authors}
+    same_pairs: dict[frozenset[int], DedupDecision] = {}
+    forbidden: dict[frozenset[int], DedupDecision] = {}
+    for decision in decisions:
+        left, right = (by_openalex.get(i) for i in decision.ids)
+        if left is None or right is None:
+            continue  # id не в каталоге — decision_outcomes скажет об этом отдельно
+        target = same_pairs if decision.verdict == "same" else forbidden
+        target[frozenset((left, right))] = decision
+    decided_db_keys = set(same_pairs) | set(forbidden)
+
+    # Решение человека «это один человек» — до всех сигналов: оно действует
+    # независимо от того, нашёл ли детектор хоть один признак.
+    for forced_pair in same_pairs:
+        left, right = sorted(forced_pair)
+        union.union(left, right)
 
     def send_to_review(left: int, right: int, reason: str) -> None:
         key = (min(left, right), max(left, right))
@@ -391,8 +615,29 @@ def find_splits(
         if orcid:
             by_orcid.setdefault(orcid, []).append(author.id)
     for ids in by_orcid.values():
+        banned_here = [
+            forbidden[frozenset((a, b))]
+            for i, a in enumerate(ids)
+            for b in ids[i + 1 :]
+            if frozenset((a, b)) in forbidden
+        ]
+        if banned_here:
+            # Человек сказал, что два профиля с одним ORCID — разные люди: для
+            # этой группы ORCID скомпрометирован (тот же класс ошибки источника,
+            # что Краева/Кожин), и склеивать внутри неё автоматически нечего.
+            # Пара из двух — просто пропуск: решение уже принято и стоит в своём
+            # разделе; группа из трёх и больше уходит человеку целиком, потому что
+            # какой из профилей чей, знает только он.
+            if len(ids) > 2:
+                sources = ", ".join(dict.fromkeys(d.source for d in banned_here))
+                review.append(
+                    _group(by_db_id, ids, f"запрет человека ({sources}) + один ORCID на группу")
+                )
+            continue
         anchor = ids[0]
         for other in ids[1:]:
+            if frozenset((anchor, other)) in same_pairs:
+                continue  # склеено решением человека, правилам решать нечего
             anchor_author, other_author = by_db_id[anchor], by_db_id[other]
             if same_surname(
                 anchor_author.display_name, other_author.display_name
@@ -436,6 +681,8 @@ def find_splits(
             continue
         for i, left in enumerate(ids):
             for right in ids[i + 1 :]:
+                if frozenset((left, right)) in decided_db_keys:
+                    continue  # решено человеком: ни в склейки, ни в review, ни в «похоже»
                 overlap = len(top_topics.get(left, set()) & top_topics.get(right, set()))
                 abbreviation = is_abbreviation_pair(by_db_id[left], by_db_id[right])
                 signal: str | None = None
@@ -476,6 +723,8 @@ def find_splits(
             names=[by_db_id[i].display_name for i in ordered],
             institutions=[_institution_name(by_db_id[i]) for i in ordered],
         )
+        if len(ids) == 2 and frozenset(ids) in decided_db_keys:
+            continue  # решено человеком — пара стоит в разделе «Решено человеком»
         member_ids = {group.canonical, *group.duplicates}
         listed = any({c, *d} <= member_ids for c, d in near_ids | review_ids)
         if len(member_ids) == 2 and listed:
@@ -486,16 +735,34 @@ def find_splits(
     for root, members in union.groups().items():
         if len(members) < 2:
             continue
-        merges.append(_group(by_db_id, members, signals.get(root, "orcid")))
+        pairs = [frozenset((a, b)) for i, a in enumerate(members) for b in members[i + 1 :]]
+        banned = [forbidden[key] for key in pairs if key in forbidden]
+        human = next((same_pairs[key] for key in pairs if key in same_pairs), None)
+        if banned:
+            # Прямой запрет перехвачен выше, значит пара сошлась через третий
+            # профиль. Склеивать часть группы нельзя — какую именно, знает только
+            # человек, — поэтому вся группа уходит ему.
+            sources = ", ".join(dict.fromkeys(d.source for d in banned))
+            reason = f"запрет человека ({sources}) + третий профиль"
+            if human is not None:
+                reason = (
+                    f"конфликт решений: запрет ({sources}) и склейка "
+                    f"({human.source}) в одной группе"
+                )
+            review.append(_group(by_db_id, members, reason))
+            continue
+        signal = f"human ({human.source})" if human is not None else signals.get(root, "orcid")
+        merges.append(_group(by_db_id, members, signal))
     merges.sort(key=lambda g: g.canonical)
     namesakes.sort(key=lambda g: g.canonical)
     review.sort(key=lambda g: g.canonical)
     near.sort(key=lambda g: g.canonical)
     return DedupFindings(
-        merges=applied_merges(session) + merges,
+        merges=applied_merges(session, decided) + merges,
         namesakes=namesakes,
         review=review,
         near_duplicates=near,
+        decisions=decision_outcomes(session, decisions),
     )
 
 
@@ -903,6 +1170,7 @@ def render_dedup_review(
     n_examples: int = 10,
     review: Sequence[MergeGroup] = (),
     near_duplicates: Sequence[MergeGroup] = (),
+    decisions: Sequence[DecisionOutcome] = (),
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
@@ -915,13 +1183,15 @@ def render_dedup_review(
     """
     n_suspects = len(suspects) if n_suspects is None else n_suspects
     lines = [
-        "# Дедупликация каталога (SFR-5) — выборка на ручную проверку",
+        "# Дедупликация каталога — выборка на ручную проверку",
         "",
-        "Готовит агент, читает человек. Ниже три раздела: что склеено "
-        "автоматически, кого решено **не** склеивать, и профили с подозрением "
-        "на чужую склейку OpenAlex.",
+        "Готовит агент, читает человек. Разделы: что склеено автоматически; что "
+        "уже решено человеком (файл решений) и инвариант по нему; что требует его "
+        "решения сейчас; кого решено **не** склеивать; профили с подозрением на "
+        "чужую склейку OpenAlex.",
         "",
-        f"Склеек: **{len(merges)}**; требуют решения человека: **{len(review)}**; "
+        f"Склеек: **{len(merges)}**; решено человеком: **{len(decisions)}**; "
+        f"требуют решения человека: **{len(review)}**; "
         f"похоже, один человек, но сигнала не хватило: **{len(near_duplicates)}**; "
         f"групп тёзок без сигнала: **{len(namesakes)}**; "
         f"профилей с флагом `suspect_merge`: **{n_suspects}**.",
@@ -940,6 +1210,48 @@ def render_dedup_review(
             f"{'; '.join(dict.fromkeys(group.institutions))} | "
             f"{', '.join(f'`{d}`' for d in group.duplicates)} | {group.signal} |"
         )
+    forbidden_but_merged = [o for o in decisions if o.status == STATUS_FORBIDDEN_BUT_MERGED]
+    lines += [
+        "",
+        f"## Решено человеком — {len(decisions)}",
+        "",
+        "Вердикты из `packages/sfr-match/eval/dedup_decisions.jsonl`. `different` — "
+        "пара не склеивается ни по какому сигналу, в том числе транзитивно через "
+        "третий профиль, и не появляется ни в одном списке ниже: решение уже "
+        "принято. `same` — склеивается поверх блокеров (разные ORCID, разные "
+        "имена). Новый вердикт — строкой в тот же файл.",
+        "",
+        "| Пара | Вердикт | Имена | Вуз | Кто, когда | Источник | Что сделано | Примечание |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for outcome in decisions:
+        d = outcome.decision
+        ids = ", ".join(f"`{i}`" for i in d.ids)
+        lines.append(
+            f"| {ids} | **{d.verdict}** | {'; '.join(dict.fromkeys(outcome.names)) or '—'} | "
+            f"{'; '.join(dict.fromkeys(outcome.institutions)) or '—'} | {d.by}, {d.date} | "
+            f"{d.source} | {outcome.status} | {d.note} |"
+        )
+    lines += [
+        "",
+        f"### Инвариант «запрещено, но склеено» — {len(forbidden_but_merged)}",
+        "",
+        "Пары с вердиктом `different`, которые в этой БД **уже склеены** "
+        "(`merged_into_id`). На правильной базе список пуст; непустой означает, что "
+        "БД собрана до решения человека (так в `data/sfr5b.db` с Лукинскими) — "
+        "расклейка `sfr etl unmerge`.",
+        "",
+    ]
+    if forbidden_but_merged:
+        lines += ["| Пара | Имена | Источник решения |", "|---|---|---|"]
+        for outcome in forbidden_but_merged:
+            ids = ", ".join(f"`{i}`" for i in outcome.decision.ids)
+            lines.append(
+                f"| {ids} | {'; '.join(dict.fromkeys(outcome.names)) or '—'} | "
+                f"{outcome.decision.source} |"
+            )
+    else:
+        lines.append("Пусто — ни одна запрещённая пара не склеена.")
     lines += [
         "",
         f"## Требуют решения человека — {_first(n_examples, len(review))}",

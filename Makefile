@@ -3,7 +3,8 @@
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
 	deploy-local deploy-local-down audit \
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
-	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b
+	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
+	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -246,6 +247,69 @@ eval-sfr5b: unhide
 		--out data/eval/pool_sfr5b.jsonl
 	uv run sfr-match pool --runs-dir $(SFR5B_OOD_RUNS) --queries ood \
 		--index-root $(SFR5B_INDEX_ROOT) --out data/eval/pool_ood_sfr5b.jsonl
+
+# ---------------------------------------------------------------------------
+# SFR-5c: те же 12 вузов с ПОТОЛКОМ на вуз (МГУ 1 800, СПбГУ 1 200, остальные
+# без квоты) — шаг 1 дорожки данных по решению #90 (issue #98). Изоляция та же,
+# что в SFR-5b: своя копия БД (data/sfr5c.db), свои пути, боевые data/sfr.db,
+# data/indexes_sfr5 и data/exports/*_sfr5.jsonl не трогаются. SFR_DB_URL стоит
+# перед каждой командой, которая ходит в БД: env перекрывает .env, но не
+# переживает границу команды.
+# Ингест (authors с потолком, works --only-missing) сюда не входит по той же
+# причине, что в SFR-5/5b, — команды в docs/SFR5c_REPORT.md.
+# ---------------------------------------------------------------------------
+SFR5C_DB_URL := sqlite:///data/sfr5c.db
+SFR5C_PROFILES := data/exports/profiles_sfr5c.jsonl
+SFR5C_CARDS := data/exports/cards_sfr5c.jsonl
+SFR5C_INDEX_ROOT := data/indexes_sfr5c
+SFR5C_RUNS := data/eval/runs_sfr5c
+SFR5C_OOD_RUNS := data/eval/runs_ood_sfr5c
+SFR5C_EXT_RUNS := data/eval/runs_external_sfr5c
+SFR5C_DEDUP_REVIEW := packages/sfr-match/eval/dedup_for_review_sfr5c.md
+# Решения человека о склейках (§4 SPEC_SFR5c): актив в git, как judgments.jsonl.
+SFR5C_DEDUP_DECISIONS := packages/sfr-match/eval/dedup_decisions.jsonl
+
+# --examples 10000 вместо 10: файл читает Борис целиком, а не как примеры.
+catalog-sfr5c: unhide
+	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr etl backfill-mega
+	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr etl dedup --apply \
+		--decisions $(SFR5C_DEDUP_DECISIONS) --review-out $(SFR5C_DEDUP_REVIEW) --examples 10000
+	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr etl build-profiles
+	$(MAKE) export-sfr5c
+
+export-sfr5c: unhide
+	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr export jsonl --out $(SFR5C_PROFILES)
+	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr export cards --out $(SFR5C_CARDS)
+
+# Без scripts/stamp_thresholds.py: он штампует боевые пороги из ApiSettings, а
+# новому индексу пороги ставятся после калибровки —
+# `sfr-match stamp-thresholds --index-dir … --none … --weak … --high …`.
+# Запускать только вне харнесса (docs/DECISIONS.md 18.09):
+#   nohup sh -c 'make index-sfr5c && touch data/eval/index_sfr5c.done' \
+#       > data/eval/index_sfr5c.log 2>&1 & disown
+index-sfr5c: unhide
+	uv run sfr-match index -m frida --clean --compose full \
+		--profiles $(SFR5C_PROFILES) --index-root $(SFR5C_INDEX_ROOT)
+
+eval-sfr5c: unhide
+	uv run sfr-match eval --models frida --clean --compose full \
+		--index-root $(SFR5C_INDEX_ROOT) --runs-dir $(SFR5C_RUNS)
+	uv run sfr-match eval --models frida --clean --compose full --queries ood \
+		--index-root $(SFR5C_INDEX_ROOT) --runs-dir $(SFR5C_OOD_RUNS)
+	uv run sfr-match eval --models frida --clean --compose full --queries external \
+		--index-root $(SFR5C_INDEX_ROOT) --runs-dir $(SFR5C_EXT_RUNS)
+	uv run sfr-match pool --runs-dir $(SFR5C_RUNS) --index-root $(SFR5C_INDEX_ROOT) \
+		--out data/eval/pool_sfr5c.jsonl
+	uv run sfr-match pool --runs-dir $(SFR5C_OOD_RUNS) --queries ood \
+		--index-root $(SFR5C_INDEX_ROOT) --out data/eval/pool_ood_sfr5c.jsonl
+	uv run sfr-match pool --runs-dir $(SFR5C_EXT_RUNS) --queries external \
+		--index-root $(SFR5C_INDEX_ROOT) --out data/eval/pool_external_sfr5c.jsonl
+
+# Таблица трёх точек 5 538 / потолок / 12 119 (§6.5 спеки). Склейки точки
+# 12 119 пересчитываются заново из sfr5b.db — не берутся из старого JSON,
+# чтобы поправка #94 попала в обе правые колонки.
+metrics-sfr5c: unhide
+	uv run python scripts/sfr5c_three_points.py
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.
