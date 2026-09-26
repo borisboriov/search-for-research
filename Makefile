@@ -326,6 +326,14 @@ eval-sfr5c: unhide
 # Таблица трёх точек 5 538 / потолок / 12 119 (§6.5 спеки). Склейки точки
 # 12 119 пересчитываются заново из sfr5b.db — не берутся из старого JSON,
 # чтобы поправка #94 попала в обе правые колонки.
+# ВНИМАНИЕ: цель считает **текущий** каталог. Точка «потолок» в §4 и §6 отчёта —
+# измерение 9 010 профилей, оно пересобрано при выкладке; чтобы получить ровно
+# те числа, нужны архивные пути (проверено — JSON совпадает байт в байт):
+#   uv run python scripts/analyze_sfr5.py --runs-dir data/eval/runs_sfr5c_9010 \
+#     --ood-runs-dir data/eval/runs_ood_sfr5c_9010 \
+#     --profiles data/exports/profiles_sfr5c_9010.jsonl --out docs/sfr5c_metrics.json
+#   uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
+#     --cap-db data/backups/sfr5c_2026-09-26_before_decisions.db
 metrics-sfr5c: unhide
 	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_RUNS) \
 		--ood-runs-dir $(SFR5C_OOD_RUNS) --profiles $(SFR5C_PROFILES) \

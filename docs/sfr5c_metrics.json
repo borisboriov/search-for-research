@@ -233,6 +233,15 @@
       }
     ]
   },
+  "threshold_hints": {
+    "in_domain_min": 0.3946,
+    "weak": 0.4,
+    "lucky_n": 19,
+    "lucky_median": 0.4918,
+    "high": 0.49,
+    "all_in_domain_median": 0.4864,
+    "high_by_all_in_domain": 0.48
+  },
   "stratum_share_top5": {
     "full": 150,
     "meta": 0,
