@@ -20,10 +20,15 @@ from sfr_etl.catalog import (
 )
 from sfr_etl.client import OpenAlexClient
 from sfr_etl.dedup import (
+    DEFAULT_DECISIONS_PATH,
+    STATUS_FORBIDDEN_BUT_MERGED,
+    STATUS_NOT_IN_CATALOGUE,
+    DecisionsFileMissing,
     UnmergeError,
     apply_merges,
     detect_suspect_merges,
     find_splits,
+    load_decisions_or_fail,
     recompute_merged_aggregates,
     render_dedup_review,
     suspect_examples,
@@ -302,19 +307,42 @@ def etl_dedup(
         Path, typer.Option(help="Куда положить выборку на ручную проверку")
     ] = Path("packages/sfr-match/eval/dedup_for_review.md"),
     examples: Annotated[int, typer.Option(help="Сколько примеров каждого вида в файл")] = 10,
+    decisions: Annotated[
+        Path, typer.Option(help="Файл решений человека о склейках (§4 SPEC_SFR5c)")
+    ] = DEFAULT_DECISIONS_PATH,
 ) -> None:
     """Склеить расщеплённые профили и отметить подозрительные (SPEC_SFR5 §3).
 
     Склейка необратима в пределах БД (работы переезжают на канонического автора),
     поэтому по умолчанию — `--dry-run` (#10); запись — только с явным `--apply`.
     Цели Makefile `catalog-*` передают `--apply` сами.
+
+    Решения человека о склейках читаются из ``--decisions``: ``different``
+    запрещает пару навсегда, ``same`` склеивает поверх блокеров. Путь по
+    умолчанию отсчитывается от корня репозитория. Файла нет: при ``--apply`` —
+    остановка с ошибкой (склейка необратима, а запреты человека не прочитаны),
+    при ``--dry-run`` — предупреждение в stderr и работа по одним правилам.
     """
+    # Проверка — до миграций и до открытия БД: остановиться нужно раньше, чем
+    # прогон успел что-то сделать (ревью SFR-5c).
+    try:
+        human_decisions = load_decisions_or_fail(decisions, apply=apply)
+    except DecisionsFileMissing as exc:
+        typer.secho(f"ОШИБКА: {exc}", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2) from exc
+    if not decisions.exists():
+        typer.secho(
+            f"ВНИМАНИЕ: {decisions} не найден — решения человека о склейках не учтены; "
+            "пары, уже разобранные руками, снова попадут в review",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
     settings = _load_settings()
     upgrade_to_head(settings.sfr_db_url)
     engine = make_engine(settings.sfr_db_url)
     started = time.monotonic()
     with session_scope(engine) as session:
-        findings = find_splits(session)
+        findings = find_splits(session, decisions=human_decisions)
         merges, namesakes = findings.merges, findings.namesakes
         merge_stats = {"groups": 0, "duplicates": 0, "works_moved": 0, "works_dropped": 0}
         aggregate_stats = {"canonical": 0, "changed": 0}
@@ -346,10 +374,22 @@ def etl_dedup(
                 n_examples=examples,
                 review=findings.review,
                 near_duplicates=findings.near_duplicates,
+                decisions=findings.decisions,
             ),
             encoding="utf-8",
         )
+        violations = findings.forbidden_but_merged
+        ignored = sum(1 for o in findings.decisions if o.status == STATUS_NOT_IN_CATALOGUE)
     _record_run_stats(settings, "etl dedup", time.monotonic() - started)
+    # Инвариант печатается до сводки: непустой список значит «не та БД», и это
+    # надо увидеть, а не выискивать в строке со счётчиками (§4.2 SPEC_SFR5c).
+    for outcome in violations:
+        typer.secho(
+            f"  ✗ {STATUS_FORBIDDEN_BUT_MERGED}: {outcome.decision.pair} "
+            f"({outcome.decision.source}) — расклеить `sfr etl unmerge`",
+            fg=typer.colors.RED,
+            err=True,
+        )
     typer.echo(
         f"{'Склеено' if apply else 'Склеек (dry-run, БД не тронута)'}: {len(merges)} "
         f"(дублей {merge_stats['duplicates']}, "
@@ -360,7 +400,9 @@ def etl_dedup(
         f"подозрительных профилей: {suspect_stats['suspect']}"
         + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
         + "; "
-        f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']} "
+        f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']}; "
+        f"решений человека: {len(findings.decisions)} (не в каталоге {ignored}, "
+        f"запрещено-но-склеено {len(violations)}) "
         f"→ {review_out}"
     )
 
@@ -410,6 +452,15 @@ def etl_unmerge(
         f"[network={client.n_network_requests}, cache_hits={client.n_cache_hits}]"
         + ("; после --apply запусти `sfr etl build-profiles`" if apply else "")
     )
+    # Расклейка руками — это решение человека; без строки в файле решений те же
+    # правила склеят пару обратно при следующей пересборке каталога (§4.1).
+    if not failed:
+        typer.echo(f"Внести вердикт в {DEFAULT_DECISIONS_PATH} строкой (правит человек, не агент):")
+        for author_id in author_ids:
+            typer.echo(
+                f'  {{"ids": ["<канонический>", "{author_id}"], "verdict": "different", '
+                f'"by": "<кто>", "date": "<ГГГГ-ММ-ДД>", "source": "<#issue>", "note": "<почему>"}}'
+            )
     if failed:
         raise typer.Exit(code=1)
 

@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 from sqlalchemy import Engine, delete, select
+from sqlalchemy.orm import Session
 from test_ingest import INSTITUTION_RECORD, author_record
 from test_works import work_record
 
@@ -12,6 +13,14 @@ from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Author, AuthorTopic, Work
 from sfr_core.settings import Settings
 from sfr_etl.dedup import (
+    DEFAULT_DECISIONS_PATH,
+    STATUS_ALREADY_MERGED,
+    STATUS_BAN_ACTIVE,
+    STATUS_FORBIDDEN_BUT_MERGED,
+    STATUS_MERGED_BY_HUMAN,
+    STATUS_NOT_IN_CATALOGUE,
+    DecisionsFileMissing,
+    DedupDecision,
     MergeGroup,
     UnmergeError,
     apply_merges,
@@ -19,6 +28,8 @@ from sfr_etl.dedup import (
     find_splits,
     first_names_conflict,
     is_abbreviation_pair,
+    load_decisions_or_fail,
+    load_dedup_decisions,
     name_key,
     normalize_orcid,
     recompute_merged_aggregates,
@@ -568,3 +579,297 @@ def test_review_file_lists_conflicts_and_near_duplicates() -> None:
     assert "разные ORCID" in text and "Lukinskiy" in text
     assert "## Похоже, один человек, но сигнала не хватило — все 1" in text
     assert "Ryzhikov" in text
+
+
+# ---------------------------------------------------------------------------
+# Решения человека о склейках (§4 SPEC_SFR5c): файл dedup_decisions.jsonl.
+# Оракулы — те же живые пары, что в правилах #111: Jorstad (два ORCID у одного
+# человека, склеить) и Лукинские (общая работа при разных ORCID, не склеивать).
+# ---------------------------------------------------------------------------
+
+
+def decision(
+    ids: tuple[str, str], verdict: str, source: str = "#93", note: str = "тест"
+) -> DedupDecision:
+    return DedupDecision(
+        ids=ids, verdict=verdict, by="Борис", date="2026-09-26", source=source, note=note
+    )
+
+
+def _jorstad(session: Session) -> None:
+    """Один человек с двумя ORCID — правила его не склеят, решение человека склеит."""
+    inst = upsert_institution(session, INSTITUTION_RECORD)
+    upsert_author(
+        session,
+        record("A1", "Svetlana G. Jorstad", "https://orcid.org/0000-0001-6158-1708", 300),
+        inst.id,
+        SETTINGS,
+    )
+    upsert_author(
+        session,
+        record("A2", "S. G. Jorstad", "https://orcid.org/0000-0002-4179-2919", 120),
+        inst.id,
+        SETTINGS,
+    )
+
+
+def _lukinskiy(session: Session) -> None:
+    inst = upsert_institution(session, INSTITUTION_RECORD)
+    father = upsert_author(
+        session,
+        record("A1", "Valery Lukinskiy", "https://orcid.org/0000-0002-2497-8826", 85),
+        inst.id,
+        SETTINGS,
+    )
+    son = upsert_author(
+        session,
+        record("A2", "Vladislav Lukinskiy", "https://orcid.org/0009-0004-4716-3090", 41),
+        inst.id,
+        SETTINGS,
+    )
+    upsert_work(session, topical_work("W1", "Logistics"), father.id, since_year=2022)
+    upsert_work(session, topical_work("W1", "Logistics"), son.id, since_year=2022)
+
+
+def test_decision_same_merges_over_two_orcids(engine: Engine) -> None:
+    """Jorstad: два разных ORCID блокируют правила, вердикт `same` — склеивает."""
+    with session_scope(engine) as session:
+        _jorstad(session)
+    with session_scope(engine) as session:
+        assert find_splits(session).merges == [], "без решения — правила не склеивают"
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "same")])
+        assert [g.signal for g in findings.merges] == ["human (#93)"]
+        assert findings.merges[0].canonical == "A1", "канонический — тот, у кого больше работ"
+        assert findings.review == [], "решённая пара человеку больше не показывается"
+        assert [o.status for o in findings.decisions] == [STATUS_MERGED_BY_HUMAN]
+
+
+def test_decision_different_keeps_lukinskiy_apart_and_out_of_review(engine: Engine) -> None:
+    """Лукинские: сигнал есть, но человек сказал «разные» — ни склейки, ни review."""
+    with session_scope(engine) as session:
+        _lukinskiy(session)
+    with session_scope(engine) as session:
+        assert len(find_splits(session).review) == 1, "без решения пара висит в review"
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "different", "#108")])
+        assert findings.merges == []
+        assert findings.review == [], "решение принято — в «требуют решения» пары нет"
+        assert findings.near_duplicates == []
+        assert findings.namesakes == []
+        assert [o.status for o in findings.decisions] == [STATUS_BAN_ACTIVE]
+
+
+def test_decision_different_blocks_whole_group_transitively(engine: Engine) -> None:
+    """Запрещённая пара не сходится и через третий профиль — вся группа к человеку.
+
+    Живой сценарий: третья запись отца («V. Lukinskiy», инициалы, без ORCID)
+    делит работы и с отцом, и с сыном — они соавторы. Правила соединили бы всех
+    трёх в одну группу, а человек сказал, что двое из них — разные люди.
+    """
+    with session_scope(engine) as session:
+        _lukinskiy(session)
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        third = upsert_author(session, record("A3", "V. Lukinskiy", None, 60), inst.id, SETTINGS)
+        upsert_work(session, topical_work("W1", "Logistics"), third.id, since_year=2022)
+    with session_scope(engine) as session:
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "different", "#108")])
+        assert findings.merges == [], "склейка целой группы запрещена"
+        assert len(findings.review) == 1
+        assert findings.review[0].signal == "запрет человека (#108) + третий профиль"
+        assert sorted([findings.review[0].canonical, *findings.review[0].duplicates]) == [
+            "A1",
+            "A2",
+            "A3",
+        ]
+
+
+def test_decision_different_disarms_the_whole_orcid_bucket(engine: Engine) -> None:
+    """Один ORCID на трёх, двое из которых — разные люди: склеивать внутри нечего."""
+    orcid = "https://orcid.org/0000-0003-0495-6694"
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        upsert_author(session, record("A1", "A. Yu. Kraeva", orcid, 40), inst.id, SETTINGS)
+        upsert_author(session, record("A2", "M. A. Kozhin", orcid, 20), inst.id, SETTINGS)
+        upsert_author(session, record("A3", "Anna Kraeva", orcid, 30), inst.id, SETTINGS)
+    with session_scope(engine) as session:
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "different")])
+        assert findings.merges == [], "часть скомпрометированной группы тоже не склеиваем"
+        assert findings.review[0].signal == "запрет человека (#93) + один ORCID на группу"
+
+
+def test_decision_conflict_in_one_group_is_reported_not_swallowed(engine: Engine) -> None:
+    """`same` и `different` в одной группе — противоречие, а не тихий выбор одного."""
+    with session_scope(engine) as session:
+        _lukinskiy(session)
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        third = upsert_author(session, record("A3", "V. Lukinskiy", None, 60), inst.id, SETTINGS)
+        upsert_work(session, topical_work("W1", "Logistics"), third.id, since_year=2022)
+    with session_scope(engine) as session:
+        findings = find_splits(
+            session,
+            decisions=[
+                decision(("A1", "A3"), "same", "#93"),
+                decision(("A1", "A2"), "different", "#108"),
+            ],
+        )
+        assert findings.merges == []
+        assert findings.review[0].signal == (
+            "конфликт решений: запрет (#108) и склейка (#93) в одной группе"
+        )
+
+
+def test_decision_with_unknown_id_is_ignored_and_counted(engine: Engine) -> None:
+    with session_scope(engine) as session:
+        _lukinskiy(session)
+    with session_scope(engine) as session:
+        findings = find_splits(session, decisions=[decision(("A1", "A999"), "different", "#108")])
+        assert len(findings.review) == 1, "чужая строка правил не меняет"
+        assert [o.status for o in findings.decisions] == [STATUS_NOT_IN_CATALOGUE]
+
+
+def test_forbidden_but_merged_is_the_invariant_check(engine: Engine) -> None:
+    """Инвариант: запрещённая пара, уже склеенная в БД, — это «не та база»."""
+    with session_scope(engine) as session:
+        _lukinskiy(session)
+    with session_scope(engine) as session:
+        # склеиваем «как в sfr5b.db» — до решения человека
+        apply_merges(session, [MergeGroup(canonical="A1", duplicates=["A2"], signal="работа")])
+    with session_scope(engine) as session:
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "different", "#108")])
+        assert [o.status for o in findings.forbidden_but_merged] == [STATUS_FORBIDDEN_BUT_MERGED]
+        review = render_dedup_review(
+            findings.merges,
+            findings.namesakes,
+            [],
+            review=findings.review,
+            near_duplicates=findings.near_duplicates,
+            decisions=findings.decisions,
+        )
+        assert "Инвариант «запрещено, но склеено» — 1" in review
+        assert "Пусто — ни одна запрещённая пара не склеена." not in review
+
+
+def test_applied_merge_recovers_human_signal(engine: Engine) -> None:
+    """Старая склейка по решению человека печатается как `human (#93)`, а не «не восстановить»."""
+    with session_scope(engine) as session:
+        _jorstad(session)
+    with session_scope(engine) as session:
+        apply_merges(session, [MergeGroup(canonical="A1", duplicates=["A2"], signal="human (#93)")])
+    with session_scope(engine) as session:
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "same")])
+        assert [g.signal for g in findings.merges] == ["human (#93)"]
+        assert [o.status for o in findings.decisions] == [STATUS_ALREADY_MERGED]
+
+
+def test_review_file_has_human_decisions_section(engine: Engine) -> None:
+    with session_scope(engine) as session:
+        _lukinskiy(session)
+    with session_scope(engine) as session:
+        findings = find_splits(session, decisions=[decision(("A1", "A2"), "different", "#108")])
+        review = render_dedup_review(
+            findings.merges,
+            findings.namesakes,
+            [],
+            review=findings.review,
+            near_duplicates=findings.near_duplicates,
+            decisions=findings.decisions,
+        )
+    assert "## Решено человеком — 1" in review
+    assert "**different**" in review and "#108" in review
+    assert "Борис, 2026-09-26" in review
+    assert "Пусто — ни одна запрещённая пара не склеена." in review
+
+
+def test_default_decisions_path_is_repo_anchored() -> None:
+    """Путь по умолчанию не зависит от рабочей директории (ревью SFR-5c)."""
+    assert DEFAULT_DECISIONS_PATH.is_absolute()
+    assert DEFAULT_DECISIONS_PATH.exists()
+    assert DEFAULT_DECISIONS_PATH.parts[-3:] == ("sfr-match", "eval", "dedup_decisions.jsonl")
+
+
+def test_apply_without_decisions_file_stops(tmp_path: Path) -> None:
+    """``--apply`` без файла решений — отказ: склейка необратима, откат ходит в сеть."""
+    missing = tmp_path / "нет-такого.jsonl"
+    with pytest.raises(DecisionsFileMissing) as exc:
+        load_decisions_or_fail(missing, apply=True)
+    assert str(missing) in str(exc.value)
+
+
+def test_dry_run_without_decisions_file_goes_on(tmp_path: Path) -> None:
+    """``--dry-run`` без файла работает по одним правилам: ничего не записывается."""
+    assert load_decisions_or_fail(tmp_path / "нет-такого.jsonl", apply=False) == []
+
+
+def test_empty_decisions_file_is_a_valid_state(tmp_path: Path) -> None:
+    """Пустой файл — «человек ещё ничего не решал», а не ошибка."""
+    empty = tmp_path / "dedup_decisions.jsonl"
+    empty.write_text("", encoding="utf-8")
+    assert load_decisions_or_fail(empty, apply=True) == []
+
+
+def test_load_decisions_reads_the_project_file() -> None:
+    """Файл в репозитории — актив, а не пример: он обязан читаться как есть."""
+    decisions = load_dedup_decisions(DEFAULT_DECISIONS_PATH)
+    assert len(decisions) >= 4
+    by_key = {d.key: d for d in decisions}
+    assert by_key[frozenset(("A5028750791", "A5114375175"))].verdict == "same"  # Jorstad
+    assert by_key[frozenset(("A5112269203", "A5073953503"))].verdict == "different"  # Лукинские
+    assert all(d.by and d.date and d.source for d in decisions)
+
+
+@pytest.mark.parametrize(
+    ("line", "message"),
+    [
+        (
+            '{"ids": ["A1"], "verdict": "same", "by": "б", "date": "д", "source": "#1"}',
+            "два разных",
+        ),
+        (
+            '{"ids": ["A1", "A1"], "verdict": "same", "by": "б", "date": "д", "source": "#1"}',
+            "два разных",
+        ),
+        (
+            '{"ids": ["A1", "A2"], "verdict": "maybe", "by": "б", "date": "д", "source": "#1"}',
+            "verdict",
+        ),
+        ('{"ids": ["A1", "A2"], "verdict": "same", "by": "б", "date": "д"}', "source"),
+        ("{не json", "не JSON"),
+    ],
+)
+def test_load_decisions_rejects_broken_lines(tmp_path: Path, line: str, message: str) -> None:
+    path = tmp_path / "decisions.jsonl"
+    path.write_text(line + "\n", encoding="utf-8")
+    with pytest.raises(ValueError, match=message):
+        load_dedup_decisions(path)
+
+
+def test_load_decisions_rejects_two_verdicts_for_one_pair(tmp_path: Path) -> None:
+    path = tmp_path / "decisions.jsonl"
+    path.write_text(
+        '{"ids": ["A1", "A2"], "verdict": "same", "by": "б", "date": "д", "source": "#1"}\n'
+        '{"ids": ["A2", "A1"], "verdict": "different", "by": "б", "date": "д", "source": "#2"}\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="уже решена выше"):
+        load_dedup_decisions(path)
+
+
+def test_review_file_puts_worst_suspects_first(engine: Engine) -> None:
+    """Топ-20 по меньшей группе — приоритет для человека, полный список — справочник."""
+    suspects = [
+        {
+            "author_id": f"A{i:03d}",
+            "name": f"Автор {i}",
+            "institution": "МФТИ",
+            "n_works": 30,
+            "cluster_sizes": [20, i],  # меньшая группа растёт с номером
+            "topics": ["тема"],
+        }
+        for i in range(1, 26)
+    ]
+    text = render_dedup_review([], [], suspects, n_suspects=len(suspects), n_examples=10000)
+    assert "### Топ-20 по размеру меньшей тематической группы" in text
+    head = text.split("### Полный список")[0]
+    # Первым в топе — профиль с самой большой меньшей группой (25), а не A001.
+    assert head.index("`A025`") < head.index("`A006`")
+    assert "`A001`" not in head, "пять самых слабых в топ-20 не попадают"
+    assert "`A001`" in text, "полный список всё равно печатается"
