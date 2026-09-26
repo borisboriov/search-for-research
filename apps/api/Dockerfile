@@ -57,7 +57,7 @@ RUN useradd --system --create-home --uid 10001 app \
 USER app
 
 ENV PATH="/app/.venv/bin:$PATH" \
-    SFR_API_INDEX_ROOT=/app/data/indexes_sfr5
+    SFR_API_INDEX_ROOT=/app/data/indexes_sfr5c
 
 EXPOSE 8000
 HEALTHCHECK --interval=5s --timeout=3s --start-period=180s --retries=40 \
