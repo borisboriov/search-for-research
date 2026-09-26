@@ -1087,7 +1087,7 @@
 {"query_id": "q01", "author_id": "A5012212950", "grade": 2, "rationale": "детекция депрессии и суицидальных эмоций в текстах соцсетей, deep learning — ровно тема", "iteration": "SFR-5b"}
 {"query_id": "q01", "author_id": "A5029380392", "grade": 2, "rationale": "«Feature Engineering for Depression Detection in Social Media», NLP — ровно тема", "iteration": "SFR-5b"}
 {"query_id": "q01", "author_id": "A5089112259", "grade": 1, "rationale": "NLP по текстам соцсетей, но про демографию, не про депрессию", "iteration": "SFR-5b"}
-{"query_id": "q01", "author_id": "A5100352794", "grade": 2, "rationale": "модель детекции депрессии в микроблогах по сентименту; профиль смешанный, но тема покрыта", "iteration": "SFR-5b"}
+{"query_id": "q01", "author_id": "A5100352794", "grade": 1, "rationale": "одна статья 2013 г. о детекции депрессии в микроблогах в разнородном профиле (ветроэнергетика, LiDAR) — смежно; снижено с 2 при проверке Борисом 26.09 (#94)", "iteration": "SFR-5b"}
 {"query_id": "q02", "author_id": "A5002397716", "grade": 0, "rationale": "вычислительная фотография и ЭЭГ, медицинских изображений нет", "iteration": "SFR-5b"}
 {"query_id": "q02", "author_id": "A5101471017", "grade": 1, "rationale": "нейросети в цифровой голографии и микроскопии, анализ изображений клеток — смежно, не медицина", "iteration": "SFR-5b"}
 {"query_id": "q03", "author_id": "A5002724483", "grade": 2, "rationale": "эксперименты на коллайдере ВЭПП-2000, детектор СНД", "iteration": "SFR-5b"}

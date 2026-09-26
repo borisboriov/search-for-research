@@ -27,8 +27,8 @@
       "displacement": {
         "old_grade2_left_top5": 29,
         "queries_with_displaced_grade2": 17,
-        "entrants_new_grade2": 44,
-        "entrants_new_grade_le1": 13,
+        "entrants_new_grade2": 43,
+        "entrants_new_grade_le1": 14,
         "entrants_old": 0
       },
       "unjudged_pairs_in_top5_after": 0
@@ -51,8 +51,8 @@
       "displacement": {
         "old_grade2_left_top5": 27,
         "queries_with_displaced_grade2": 15,
-        "entrants_new_grade2": 42,
-        "entrants_new_grade_le1": 12,
+        "entrants_new_grade2": 41,
+        "entrants_new_grade_le1": 13,
         "entrants_old": 0
       },
       "unjudged_pairs_in_top5_after": 0
@@ -123,8 +123,8 @@
       "displacement": {
         "old_grade2_left_top5": 29,
         "queries_with_displaced_grade2": 17,
-        "entrants_new_grade2": 44,
-        "entrants_new_grade_le1": 17,
+        "entrants_new_grade2": 43,
+        "entrants_new_grade_le1": 18,
         "entrants_old": 0
       },
       "unjudged_pairs_in_top5_after": 0
@@ -271,12 +271,12 @@
         "s5_before": true,
         "s5_after": true,
         "new_in_top5": 4,
-        "new_grade2_in_top5": 3,
+        "new_grade2_in_top5": 2,
         "top1_is_new": true,
         "displaced_grade2": 0,
         "entrants": {
-          "new_grade2": 3,
-          "new_grade_le1": 1
+          "new_grade2": 2,
+          "new_grade_le1": 2
         },
         "unjudged_in_top5_after": 0,
         "top5_before": [
