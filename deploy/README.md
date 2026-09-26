@@ -65,7 +65,7 @@ docker exec sfr-proxy id                              # uid=10001(caddy), не r
 curl -s https://$DOMAIN/api/health || true      # 404 — так и должно быть (API закрыт)
 curl -s -o /dev/null -w '%{http_code}\n' https://$DOMAIN/            # 200, лендинг
 n=$(curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/')
-echo "sitemap: $n профилей"   # должно равняться profiles_count (5 538)
+echo "sitemap: $n профилей"   # должно равняться profiles_count (9 002)
 curl -s https://$DOMAIN/robots.txt | grep sitemap
 ```
 
@@ -84,6 +84,17 @@ source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
 curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
 curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
 ```
+
+### Смена индекса (переезд на новый каталог)
+
+`sync-artifacts.sh` кладёт индекс в каталог, названный в скрипте, и удаляет в
+нём лишнее (`rsync --delete`), но **старый каталог другого имени на сервере
+остаётся**: после переезда `data/indexes_sfr5` → `data/indexes_sfr5c` (26.09) на
+VPS лежат оба, это ~150 МБ впустую. Убирать — **после** того, как новый индекс
+проверен на бою (`/api/health` отдаёт новый `index_version` и
+`thresholds_match: true`): `rm -rf ~/search-for-research/data/indexes_sfr5`.
+Раньше — не надо: это единственный способ откатиться, вернув три пути в
+`ApiSettings`, `docker-compose.yml` и `sync-artifacts.sh`.
 
 Выбранная схема сборки web: **сборка без живого API + обязательная
 пост-деплойная ревалидация** (`/` и `/sitemap.xml`). Альтернатива — строить

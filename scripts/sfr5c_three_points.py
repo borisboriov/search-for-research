@@ -365,6 +365,10 @@ def main() -> None:
         help="Пересуженные решающие пары; нет файла — только вариант «как есть»",
     )
     parser.add_argument("--out", type=Path, default=Path("docs/sfr5c_decision_metrics.json"))
+    # Точка «потолок» пересобрана при выкладке (#98): 9 010 → 9 002. Её пути —
+    # аргументы, чтобы §4 и §6 отчёта воспроизводились по архивным `*_9010`.
+    parser.add_argument("--cap-suffix", default="sfr5c", help="Суффикс артефактов точки «потолок»")
+    parser.add_argument("--cap-db", type=Path, default=None, help="По умолчанию data/<суффикс>.db")
     args = parser.parse_args()
 
     eval_dir = Path("data/eval")
@@ -377,14 +381,15 @@ def main() -> None:
         db=None,  # база: склейки применяются к новому каталогу, не к ней
         index_root=Path("data/indexes_sfr5"),
     )
+    cap_suffix = args.cap_suffix
     cap = _point(
         args.cap_name,
-        runs=eval_dir / "runs_sfr5c",
-        ood_runs=eval_dir / "runs_ood_sfr5c",
-        ext_runs=eval_dir / "runs_external_sfr5c",
-        profiles=Path("data/exports/profiles_sfr5c.jsonl"),
-        db=Path("data/sfr5c.db"),
-        index_root=Path("data/indexes_sfr5c"),
+        runs=eval_dir / f"runs_{cap_suffix}",
+        ood_runs=eval_dir / f"runs_ood_{cap_suffix}",
+        ext_runs=eval_dir / f"runs_external_{cap_suffix}",
+        profiles=Path(f"data/exports/profiles_{cap_suffix}.jsonl"),
+        db=args.cap_db if args.cap_db is not None else Path(f"data/{cap_suffix}.db"),
+        index_root=Path(f"data/indexes_{cap_suffix}"),
     )
     full = _point(
         args.full_name,

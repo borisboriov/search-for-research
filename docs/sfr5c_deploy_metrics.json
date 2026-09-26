@@ -1,0 +1,1533 @@
+{
+  "index_version": "frida_clean-9002p-35e591d4",
+  "n_profiles": 9002,
+  "judgments": {
+    "blind": {
+      "path": "packages/sfr-match/eval/judgments_deploy_sfr5c.jsonl",
+      "pairs": 150,
+      "grades": {
+        "0": 17,
+        "1": 47,
+        "2": 86
+      },
+      "judges": {
+        "fable (sfr-judge)": 150
+      }
+    },
+    "accumulated": {
+      "path": "packages/sfr-match/eval/judgments.jsonl"
+    }
+  },
+  "sets": {
+    "golden_in_domain_24": {
+      "blind": {
+        "n": 24,
+        "success_at_1": 0.667,
+        "success_at_5": 0.875,
+        "unjudged_pairs": 0,
+        "per_query": [
+          {
+            "id": "q01",
+            "s1": true,
+            "s5": true,
+            "top1": 0.602868,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q02",
+            "s1": true,
+            "s5": true,
+            "top1": 0.544334,
+            "grades": [
+              2,
+              1,
+              1,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q03",
+            "s1": true,
+            "s5": true,
+            "top1": 0.442733,
+            "grades": [
+              2,
+              2,
+              1,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q04",
+            "s1": true,
+            "s5": true,
+            "top1": 0.517439,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q05",
+            "s1": false,
+            "s5": true,
+            "top1": 0.434552,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q06",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491932,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q07",
+            "s1": false,
+            "s5": true,
+            "top1": 0.578272,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q08",
+            "s1": false,
+            "s5": false,
+            "top1": 0.527473,
+            "grades": [
+              1,
+              1,
+              0,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q09",
+            "s1": true,
+            "s5": true,
+            "top1": 0.5019,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q10",
+            "s1": true,
+            "s5": true,
+            "top1": 0.472241,
+            "grades": [
+              2,
+              1,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q11",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491822,
+            "grades": [
+              2,
+              1,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q12",
+            "s1": false,
+            "s5": true,
+            "top1": 0.455418,
+            "grades": [
+              1,
+              1,
+              0,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q13",
+            "s1": true,
+            "s5": true,
+            "top1": 0.506389,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q14",
+            "s1": true,
+            "s5": true,
+            "top1": 0.44999,
+            "grades": [
+              2,
+              2,
+              1,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q15",
+            "s1": true,
+            "s5": true,
+            "top1": 0.404124,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q16",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491379,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q17",
+            "s1": true,
+            "s5": true,
+            "top1": 0.477033,
+            "grades": [
+              2,
+              2,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q18",
+            "s1": true,
+            "s5": true,
+            "top1": 0.522355,
+            "grades": [
+              2,
+              2,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q19",
+            "s1": false,
+            "s5": true,
+            "top1": 0.451772,
+            "grades": [
+              1,
+              1,
+              1,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q20",
+            "s1": true,
+            "s5": true,
+            "top1": 0.394592,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q21",
+            "s1": false,
+            "s5": true,
+            "top1": 0.443801,
+            "grades": [
+              1,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q22",
+            "s1": true,
+            "s5": true,
+            "top1": 0.426392,
+            "grades": [
+              2,
+              1,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q29",
+            "s1": false,
+            "s5": false,
+            "top1": 0.424507,
+            "grades": [
+              0,
+              1,
+              0,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q30",
+            "s1": false,
+            "s5": false,
+            "top1": 0.481491,
+            "grades": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "unjudged": 0
+          }
+        ]
+      },
+      "accumulated": {
+        "n": 24,
+        "success_at_1": 0.75,
+        "success_at_5": 1.0,
+        "unjudged_pairs": 1,
+        "per_query": [
+          {
+            "id": "q01",
+            "s1": true,
+            "s5": true,
+            "top1": 0.602868,
+            "grades": [
+              2,
+              2,
+              1,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q02",
+            "s1": true,
+            "s5": true,
+            "top1": 0.544334,
+            "grades": [
+              2,
+              1,
+              0,
+              2,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q03",
+            "s1": true,
+            "s5": true,
+            "top1": 0.442733,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q04",
+            "s1": true,
+            "s5": true,
+            "top1": 0.517439,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q05",
+            "s1": false,
+            "s5": true,
+            "top1": 0.434552,
+            "grades": [
+              1,
+              2,
+              1,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q06",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491932,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q07",
+            "s1": false,
+            "s5": true,
+            "top1": 0.578272,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q08",
+            "s1": true,
+            "s5": true,
+            "top1": 0.527473,
+            "grades": [
+              2,
+              2,
+              1,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q09",
+            "s1": true,
+            "s5": true,
+            "top1": 0.5019,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q10",
+            "s1": true,
+            "s5": true,
+            "top1": 0.472241,
+            "grades": [
+              2,
+              1,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q11",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491822,
+            "grades": [
+              2,
+              1,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q12",
+            "s1": true,
+            "s5": true,
+            "top1": 0.455418,
+            "grades": [
+              2,
+              2,
+              0,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q13",
+            "s1": true,
+            "s5": true,
+            "top1": 0.506389,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q14",
+            "s1": true,
+            "s5": true,
+            "top1": 0.44999,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q15",
+            "s1": true,
+            "s5": true,
+            "top1": 0.404124,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q16",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491379,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q17",
+            "s1": false,
+            "s5": true,
+            "top1": 0.477033,
+            "grades": [
+              1,
+              2,
+              2,
+              2,
+              0
+            ],
+            "unjudged": 1
+          },
+          {
+            "id": "q18",
+            "s1": true,
+            "s5": true,
+            "top1": 0.522355,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q19",
+            "s1": false,
+            "s5": true,
+            "top1": 0.451772,
+            "grades": [
+              1,
+              0,
+              0,
+              2,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q20",
+            "s1": true,
+            "s5": true,
+            "top1": 0.394592,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q21",
+            "s1": false,
+            "s5": true,
+            "top1": 0.443801,
+            "grades": [
+              1,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q22",
+            "s1": true,
+            "s5": true,
+            "top1": 0.426392,
+            "grades": [
+              2,
+              1,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q29",
+            "s1": false,
+            "s5": true,
+            "top1": 0.424507,
+            "grades": [
+              0,
+              2,
+              1,
+              2,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q30",
+            "s1": true,
+            "s5": true,
+            "top1": 0.481491,
+            "grades": [
+              2,
+              2,
+              1,
+              1,
+              1
+            ],
+            "unjudged": 0
+          }
+        ]
+      }
+    },
+    "golden_same_22": {
+      "blind": {
+        "n": 22,
+        "success_at_1": 0.727,
+        "success_at_5": 0.955,
+        "unjudged_pairs": 0,
+        "per_query": [
+          {
+            "id": "q01",
+            "s1": true,
+            "s5": true,
+            "top1": 0.602868,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q02",
+            "s1": true,
+            "s5": true,
+            "top1": 0.544334,
+            "grades": [
+              2,
+              1,
+              1,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q03",
+            "s1": true,
+            "s5": true,
+            "top1": 0.442733,
+            "grades": [
+              2,
+              2,
+              1,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q04",
+            "s1": true,
+            "s5": true,
+            "top1": 0.517439,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q05",
+            "s1": false,
+            "s5": true,
+            "top1": 0.434552,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q06",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491932,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q07",
+            "s1": false,
+            "s5": true,
+            "top1": 0.578272,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q08",
+            "s1": false,
+            "s5": false,
+            "top1": 0.527473,
+            "grades": [
+              1,
+              1,
+              0,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q09",
+            "s1": true,
+            "s5": true,
+            "top1": 0.5019,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q10",
+            "s1": true,
+            "s5": true,
+            "top1": 0.472241,
+            "grades": [
+              2,
+              1,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q11",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491822,
+            "grades": [
+              2,
+              1,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q12",
+            "s1": false,
+            "s5": true,
+            "top1": 0.455418,
+            "grades": [
+              1,
+              1,
+              0,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q13",
+            "s1": true,
+            "s5": true,
+            "top1": 0.506389,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q14",
+            "s1": true,
+            "s5": true,
+            "top1": 0.44999,
+            "grades": [
+              2,
+              2,
+              1,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q15",
+            "s1": true,
+            "s5": true,
+            "top1": 0.404124,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q16",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491379,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q17",
+            "s1": true,
+            "s5": true,
+            "top1": 0.477033,
+            "grades": [
+              2,
+              2,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q18",
+            "s1": true,
+            "s5": true,
+            "top1": 0.522355,
+            "grades": [
+              2,
+              2,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q19",
+            "s1": false,
+            "s5": true,
+            "top1": 0.451772,
+            "grades": [
+              1,
+              1,
+              1,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q20",
+            "s1": true,
+            "s5": true,
+            "top1": 0.394592,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q21",
+            "s1": false,
+            "s5": true,
+            "top1": 0.443801,
+            "grades": [
+              1,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q22",
+            "s1": true,
+            "s5": true,
+            "top1": 0.426392,
+            "grades": [
+              2,
+              1,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          }
+        ]
+      },
+      "accumulated": {
+        "n": 22,
+        "success_at_1": 0.773,
+        "success_at_5": 1.0,
+        "unjudged_pairs": 1,
+        "per_query": [
+          {
+            "id": "q01",
+            "s1": true,
+            "s5": true,
+            "top1": 0.602868,
+            "grades": [
+              2,
+              2,
+              1,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q02",
+            "s1": true,
+            "s5": true,
+            "top1": 0.544334,
+            "grades": [
+              2,
+              1,
+              0,
+              2,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q03",
+            "s1": true,
+            "s5": true,
+            "top1": 0.442733,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q04",
+            "s1": true,
+            "s5": true,
+            "top1": 0.517439,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q05",
+            "s1": false,
+            "s5": true,
+            "top1": 0.434552,
+            "grades": [
+              1,
+              2,
+              1,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q06",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491932,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q07",
+            "s1": false,
+            "s5": true,
+            "top1": 0.578272,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q08",
+            "s1": true,
+            "s5": true,
+            "top1": 0.527473,
+            "grades": [
+              2,
+              2,
+              1,
+              1,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q09",
+            "s1": true,
+            "s5": true,
+            "top1": 0.5019,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q10",
+            "s1": true,
+            "s5": true,
+            "top1": 0.472241,
+            "grades": [
+              2,
+              1,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q11",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491822,
+            "grades": [
+              2,
+              1,
+              2,
+              1,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q12",
+            "s1": true,
+            "s5": true,
+            "top1": 0.455418,
+            "grades": [
+              2,
+              2,
+              0,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q13",
+            "s1": true,
+            "s5": true,
+            "top1": 0.506389,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q14",
+            "s1": true,
+            "s5": true,
+            "top1": 0.44999,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q15",
+            "s1": true,
+            "s5": true,
+            "top1": 0.404124,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              1
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q16",
+            "s1": true,
+            "s5": true,
+            "top1": 0.491379,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q17",
+            "s1": false,
+            "s5": true,
+            "top1": 0.477033,
+            "grades": [
+              1,
+              2,
+              2,
+              2,
+              0
+            ],
+            "unjudged": 1
+          },
+          {
+            "id": "q18",
+            "s1": true,
+            "s5": true,
+            "top1": 0.522355,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q19",
+            "s1": false,
+            "s5": true,
+            "top1": 0.451772,
+            "grades": [
+              1,
+              0,
+              0,
+              2,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q20",
+            "s1": true,
+            "s5": true,
+            "top1": 0.394592,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q21",
+            "s1": false,
+            "s5": true,
+            "top1": 0.443801,
+            "grades": [
+              1,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q22",
+            "s1": true,
+            "s5": true,
+            "top1": 0.426392,
+            "grades": [
+              2,
+              1,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          }
+        ]
+      }
+    },
+    "golden_edge": {
+      "blind": {
+        "n": 6,
+        "success_at_1": 0.5,
+        "success_at_5": 0.833,
+        "unjudged_pairs": 0,
+        "per_query": [
+          {
+            "id": "q23",
+            "s1": true,
+            "s5": true,
+            "top1": 0.453921,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q24",
+            "s1": false,
+            "s5": true,
+            "top1": 0.380373,
+            "grades": [
+              1,
+              2,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q25",
+            "s1": false,
+            "s5": true,
+            "top1": 0.390458,
+            "grades": [
+              1,
+              1,
+              0,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q26",
+            "s1": true,
+            "s5": true,
+            "top1": 0.476413,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q27",
+            "s1": true,
+            "s5": true,
+            "top1": 0.348556,
+            "grades": [
+              2,
+              0,
+              0,
+              0,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q28",
+            "s1": false,
+            "s5": false,
+            "top1": 0.370858,
+            "grades": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "unjudged": 0
+          }
+        ]
+      },
+      "accumulated": {
+        "n": 6,
+        "success_at_1": 0.5,
+        "success_at_5": 0.833,
+        "unjudged_pairs": 0,
+        "per_query": [
+          {
+            "id": "q23",
+            "s1": true,
+            "s5": true,
+            "top1": 0.453921,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q24",
+            "s1": false,
+            "s5": true,
+            "top1": 0.380373,
+            "grades": [
+              1,
+              1,
+              2,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q25",
+            "s1": false,
+            "s5": true,
+            "top1": 0.390458,
+            "grades": [
+              1,
+              1,
+              1,
+              1,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q26",
+            "s1": true,
+            "s5": true,
+            "top1": 0.476413,
+            "grades": [
+              2,
+              2,
+              2,
+              2,
+              2
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q27",
+            "s1": true,
+            "s5": true,
+            "top1": 0.348556,
+            "grades": [
+              2,
+              0,
+              1,
+              0,
+              0
+            ],
+            "unjudged": 0
+          },
+          {
+            "id": "q28",
+            "s1": false,
+            "s5": false,
+            "top1": 0.370858,
+            "grades": [
+              1,
+              0,
+              1,
+              0,
+              0
+            ],
+            "unjudged": 0
+          }
+        ]
+      }
+    }
+  }
+}

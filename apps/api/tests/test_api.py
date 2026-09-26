@@ -26,7 +26,7 @@ def test_health_names_the_model_and_the_index_it_serves(backend: FakeBackend) ->
     # Число вузов считает API, а не вёрстка лендинга (SFR-5): в DOCS два вуза.
     assert body["institutions_count"] == 2
     assert body["index_version"].startswith("frida_clean-3p-")
-    assert body["score_threshold"] == pytest.approx(0.32)  # перекалибровано в ревью SFR-5
+    assert body["score_threshold"] == pytest.approx(0.33)  # перекалибровано при выкладке SFR-5c
     assert body["search_backend"] in {"faiss", "numpy"}
 
 
@@ -70,9 +70,9 @@ def test_below_threshold_is_false_above_the_cutoff() -> None:
 def test_confidence_is_weak_in_the_grey_zone() -> None:
     """Серая зона: top-1 между «уверенных совпадений нет» и «выдача обычная».
 
-    После перекалибровки ревью SFR-5 это [0.32, 0.40): туда попадают самые
+    После перекалибровки выкладки SFR-5c это [0.33, 0.40): туда попадают самые
     слабые настоящие запросы (0.349 и 0.371) и единственный посторонний,
-    которого порог не поймал (0.363, киноведение)."""
+    которого порог не поймал (0.366, киноведение)."""
     body = client(FakeBackend(top_score=0.38)).post("/api/match", json={"query": "кино"}).json()
     assert body["confidence"] == "weak"
     assert body["below_threshold"] is False
@@ -85,8 +85,8 @@ def test_confidence_is_ok_above_the_weak_threshold() -> None:
 
 
 def test_grades_follow_the_settings_boundaries() -> None:
-    """0.48, 0.47, 0.46 → high (>= 0.47), high, medium; границы включительно."""
-    body = client(FakeBackend(top_score=0.48)).post("/api/match", json={"query": "нейтрино"}).json()
+    """0.50, 0.49, 0.48 → high (>= 0.49), high, medium; границы включительно."""
+    body = client(FakeBackend(top_score=0.50)).post("/api/match", json={"query": "нейтрино"}).json()
     assert [r["grade"] for r in body["results"]] == ["high", "high", "medium"]
 
 
@@ -104,7 +104,7 @@ def test_grade_boundaries_come_from_settings() -> None:
 def test_health_exposes_the_grade_boundaries() -> None:
     body = client(FakeBackend()).get("/api/health").json()
     assert body["score_weak"] == pytest.approx(0.40)
-    assert body["score_high"] == pytest.approx(0.47)
+    assert body["score_high"] == pytest.approx(0.49)
 
 
 # --- SFR-4 §2: кэш ответов /match и логи запросов ------------------------------------
@@ -376,7 +376,7 @@ def test_thresholds_match_is_none_without_stamp(backend: FakeBackend) -> None:
 
 def test_thresholds_match_true_when_index_agrees_with_settings() -> None:
     stamped = FakeBackend()
-    stamped.meta.thresholds = {"none": 0.32, "weak": 0.40, "high": 0.47}
+    stamped.meta.thresholds = {"none": 0.33, "weak": 0.40, "high": 0.49}
     body = client(stamped).get("/api/health").json()
     assert body["thresholds_match"] is True
 
@@ -384,7 +384,7 @@ def test_thresholds_match_true_when_index_agrees_with_settings() -> None:
 def test_thresholds_mismatch_is_reported_and_logged(caplog: pytest.LogCaptureFixture) -> None:
     """Пороги живут в двух местах и могут разъехаться молча — ловим на старте."""
     stamped = FakeBackend()
-    stamped.meta.thresholds = {"none": 0.37, "weak": 0.40, "high": 0.47}  # шкала до ревью SFR-5
+    stamped.meta.thresholds = {"none": 0.32, "weak": 0.40, "high": 0.47}  # шкала индекса SFR-5
     with caplog.at_level(logging.WARNING):
         body = client(stamped).get("/api/health").json()
     assert body["thresholds_match"] is False

@@ -8,7 +8,9 @@
 
 import argparse
 import json
+import math
 from pathlib import Path
+from statistics import median
 from typing import Any
 
 from sfr_match.calibrate import calibrate, grid, recommend, top1_scores
@@ -62,6 +64,43 @@ def quality(run: Any, queries: list[Any], judgments: dict[tuple[str, str], Any])
     }
 
 
+def threshold_hints(
+    run: Any, queries: list[Any], quality_rows: list[dict[str, Any]]
+) -> dict[str, Any]:
+    """`weak` и `high` по рецепту SFR-5: из распределения top-1, не калибровка.
+
+    * **`weak`** — минимум top-1 по in-domain, вверх по сетке 0.01: баннер
+      «совпадения слабые» получают ровно самые слабые из живых попаданий.
+    * **`high`** — медиана top-1 по **удачным** in-domain запросам, вниз по
+      сетке. «Удачный» = ``Success@1 = 1``: top-1 действительно релевантен, и
+      только тогда его score — пример «хорошего совпадения». Рецепт
+      восстановлен по числам SFR-5 (0.4791 → 0.47) и SFR-5b (0.4961 → 0.49);
+      §5 SFR-5c посчитал медиану по всем 24 (0.4864 → 0.48) — там все 24
+      проходили Success@5, и «удачные» прочитались как S@5.
+
+    Рядом печатается медиана по всем in-domain: расхождение рецептов стоило
+    шага сетки, и увидеть его надо в цифрах, а не в прозе.
+    """
+    by_id = {row["id"]: row for row in quality_rows}
+    in_domain = [q for q in queries if q.expect == "in-domain"]
+    scores = [run.top_score(q.id) for q in in_domain]
+    scores = [s for s in scores if s is not None]
+    lucky = [
+        run.top_score(q.id)
+        for q in in_domain
+        if by_id.get(q.id, {}).get("s1") and run.top_score(q.id) is not None
+    ]
+    return {
+        "in_domain_min": round(min(scores), 4),
+        "weak": math.ceil(min(scores) * 100) / 100,
+        "lucky_n": len(lucky),
+        "lucky_median": None if not lucky else round(median(lucky), 4),
+        "high": None if not lucky else math.floor(median(lucky) * 100) / 100,
+        "all_in_domain_median": round(median(scores), 4),
+        "high_by_all_in_domain": math.floor(median(scores) * 100) / 100,
+    }
+
+
 def stratum_share(
     run: Any, queries: list[Any], mapping: dict[str, str], depth: int
 ) -> dict[str, Any]:
@@ -90,6 +129,7 @@ def main() -> None:
     ood_queries = load_queries(query_set_path("ood"))
     judgments = load_judgments()
     mapping = strata(args.profiles)
+    quality_payload = quality(run, queries, judgments)
 
     in_domain = top1_scores(run, queries, {"in-domain"})
     edge = top1_scores(run, queries, {"edge"})
@@ -104,7 +144,8 @@ def main() -> None:
             "full": sum(1 for v in mapping.values() if v == "full"),
             "meta": sum(1 for v in mapping.values() if v == "meta"),
         },
-        "quality": quality(run, queries, judgments),
+        "quality": quality_payload,
+        "threshold_hints": threshold_hints(run, queries, quality_payload["per_query"]),
         "stratum_share_top5": stratum_share(run, queries, mapping, depth=5),
         "stratum_share_top1": stratum_share(run, queries, mapping, depth=1),
         "calibration": {
@@ -124,6 +165,7 @@ def main() -> None:
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     compact = {k: v for k, v in payload.items() if k not in {"calibration", "ood_per_query"}}
+    compact.pop("top1_scores", None)
     compact["quality"] = {k: v for k, v in payload["quality"].items() if k != "per_query"}
     compact["recommended_none"] = payload["calibration"]["recommended"]
     print(json.dumps(compact, ensure_ascii=False, indent=2))

@@ -10,7 +10,7 @@ from sfr_match.index import resolve_index_dir
 class ApiSettings(BaseSettings):
     """Read from ``SFR_API_*`` environment variables (and ``.env``).
 
-    The index is *not* built here: it is produced offline by ``make index-sfr5``
+    The index is *not* built here: it is produced offline by ``make index-sfr5c``
     and mounted read-only. The service only needs to know which directory to open.
     """
 
@@ -22,44 +22,46 @@ class ApiSettings(BaseSettings):
     )
 
     # Which index to serve. index_dir, when set, wins over the model/clean/compose triple.
-    # SFR-5: боевой индекс — каталог 12 вузов (`make index-sfr5`); индекс SFR-2
-    # остаётся на диске для воспроизводимости SFR-2 и включается через env.
-    index_root: Path = Path("data/indexes_sfr5")
+    # SFR-5c (выкладка 26.09): боевой индекс — каталог 12 вузов с потолком на вуз
+    # (`make index-sfr5c`, 9 002 профиля). Индексы SFR-2, SFR-5 и SFR-5b остаются
+    # на диске для воспроизводимости своих отчётов и включаются через env.
+    index_root: Path = Path("data/indexes_sfr5c")
     model: str = "frida"
     clean: bool = True
     compose: str = "full"
     index_dir: Path | None = None
 
     # "We found nobody confident enough" — a warning, not a refusal (SFR-1, NEXT.md).
-    # Откалибровано на полном корпусе (frida_clean-5538p-ea7e3c07, у всех
-    # 5 538 профилей есть работы) после того, как ревью SFR-5 нашло четыре
-    # запроса golden set с устаревшей меткой out-of-domain: они не участвовали
-    # в калибровке, и «чистый зазор» между распределениями оказался их
-    # артефактом. С ними распределения перекрываются: самый высокий посторонний
-    # даёт 0.363 (o34, киноведение — в §6 отчёта помечен спорным), самый слабый
-    # настоящий — 0.349 (q27, история России). Безопасных порогов выше 0.348
-    # нет, плато максимального покрытия — [0.283…0.348], 0.32 — его середина:
-    # ловит 18 из 19 посторонних, не режет ни одного настоящего запроса.
-    # Единственный пропущенный (0.363) попадает в серую зону и получает баннер.
-    # Порог принадлежит паре модель×индекс.
-    score_threshold: float = 0.32
+    # Откалибровано на боевом корпусе (frida_clean-9002p-35e591d4, у всех
+    # 9 002 профилей есть работы). Распределения посторонних и настоящих
+    # перекрываются, как и на всех прошлых индексах: самый высокий посторонний
+    # даёт 0.366 (o34, киноведение — спорный случай с SFR-5), самый слабый
+    # настоящий — 0.349 (q27, история России, edge). Безопасных порогов выше
+    # 0.348 нет, плато максимального покрытия — [0.31…0.34], 0.33 — его
+    # середина: ловит 18 из 19 посторонних, не режет ни одного настоящего
+    # запроса. Тот же порог даёт калибровка на 17 посторонних (без o13/o15).
+    # Единственный пропущенный (0.366) попадает в серую зону и получает баннер.
+    # Порог принадлежит паре модель×индекс: §13 docs/SFR5c_REPORT.md.
+    score_threshold: float = 0.33
 
     # Серая зона (SPEC_SFR4 §0.9): top-1 в [score_threshold, score_weak)
     # показывает выдачу с баннером «совпадения слабые». 0.40 стоит чуть выше
-    # минимума настоящих запросов (in-domain 0.391, edge 0.349), то есть
+    # минимума настоящих запросов (in-domain 0.395, edge 0.349), то есть
     # предупреждение получают ровно самые слабые из живых попаданий — и вместе
     # с ними единственный посторонний, которого порог не поймал.
     score_weak: float = 0.40
     # Словесные грейды карточек — та же шкала: >= score_high «высокое совпадение»,
-    # [score_weak, score_high) «среднее», ниже — «слабое». 0.47 — медиана top-1
-    # по удачным запросам golden set (0.4791 на сетке 0.01 вниз); величина
-    # выведена из распределения, а не откалибрована (набора «высоких»
-    # совпадений для калибровки не существует).
-    score_high: float = 0.47
+    # [score_weak, score_high) «среднее», ниже — «слабое». 0.49 — медиана top-1
+    # по удачным запросам golden set, то есть по тем, у кого top-1 действительно
+    # релевантен (0.4916 на сетке 0.01 вниз; на 5 538 было 0.4791 → 0.47).
+    # Величина выведена из распределения, а не откалибрована: набора «высоких»
+    # совпадений для калибровки не существует. Рецепт — в коде,
+    # `threshold_hints` в scripts/analyze_sfr5.py.
+    score_high: float = 0.49
 
     # Card enrichment (citations, top works) built offline by `sfr export cards`.
     # Optional: a missing file degrades to empty card fields (tests, bare index).
-    cards_path: Path | None = Path("data/exports/cards_sfr5.jsonl")
+    cards_path: Path | None = Path("data/exports/cards_sfr5c.jsonl")
 
     # Catalogue listing (sitemap, landing preview): page size cap.
     list_default_limit: int = 100

@@ -1,4 +1,5 @@
-# Local run of the API on the SFR-5 catalogue (12 вузов). The index is built offline and mounted read-only;
+# Local run of the API on the SFR-5c catalogue (12 вузов с потолком на вуз).
+# The index is built offline and mounted read-only;
 # the model is downloaded once into the HF cache volume (or bind-mounted from the
 # host with SFR_HF_CACHE=$HOME/.cache/huggingface, which is what the bench does).
 services:
@@ -12,17 +13,17 @@ services:
       - "${SFR_API_PORT:-8000}:8000"
     environment:
       SFR_API_MODEL: ${SFR_API_MODEL:-frida}
-      SFR_API_INDEX_ROOT: /app/data/indexes_sfr5
+      SFR_API_INDEX_ROOT: /app/data/indexes_sfr5c
       # Порог не задаём: значение по умолчанию живёт в settings.py (откалибровано
-      # в SFR-5), и дублировать его здесь значит однажды забыть обновить одно из двух.
+      # при выкладке SFR-5c), дублировать его здесь — однажды забыть одно из двух.
       # auto = faiss on Linux (this container), numpy on macOS
       SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
-      # Card enrichment (SFR-3): optional, built offline by `make export-sfr5`.
-      SFR_API_CARDS_PATH: /app/data/exports/cards_sfr5.jsonl
+      # Card enrichment (SFR-3): optional, built offline by `make export-sfr5c`.
+      SFR_API_CARDS_PATH: /app/data/exports/cards_sfr5c.jsonl
       HF_HOME: /models
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
     volumes:
-      - ./data/indexes_sfr5:/app/data/indexes_sfr5:ro
+      - ./data/indexes_sfr5c:/app/data/indexes_sfr5c:ro
       - ./data/exports:/app/data/exports:ro
       - ${SFR_HF_CACHE:-hf-cache}:/models
 

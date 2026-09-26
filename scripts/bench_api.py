@@ -240,7 +240,7 @@ def start_uvicorn(model: str) -> "subprocess.Popen[bytes]":
     env = {
         **os.environ,
         "SFR_API_MODEL": model,
-        "SFR_API_INDEX_ROOT": os.environ.get("SFR_API_INDEX_ROOT", "data/indexes_sfr5"),
+        "SFR_API_INDEX_ROOT": os.environ.get("SFR_API_INDEX_ROOT", "data/indexes_sfr5c"),
     }
     return subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "sfr_api.main:app", "--factory", "--port", "8000"],
