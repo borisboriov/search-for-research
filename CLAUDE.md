@@ -136,6 +136,12 @@ make board-sync       # применить
 (завести задачу, триаж, дайджест «что на мне», закрытие итерации) — команда **`/issues`**
 (`.claude/commands/issues.md`); правила таксономии остаются здесь, команда на них ссылается.
 
+**Конфигурация Claude Code — в git** (с 26.09.2026): `.claude/settings.json` (режим `auto`, allow/deny,
+Stop-хук `.claude/hooks/review-reminder.sh`), субагенты `.claude/agents/` (`sfr-reviewer` — независимое
+ревью итерации, `sfr-judge` — слепое судейство пар по рубрике `packages/sfr-match/eval/JUDGE_RUBRIC.md`),
+команды `.claude/commands/` (`/issues`, `/review-iteration`). Личное — только `.claude/settings.local.json`
+(исключён через `.claude/.gitignore`).
+
 ## Что это за проект
 
 Search For Research — сервис кросс-вузового подбора научных руководителей: студент вводит описание интересов → получает 5–10 релевантных НР (embedding-поиск по их публикациям).

@@ -1,0 +1,40 @@
+{
+  "$schema": "https://code.claude.com/schemas/settings.schema.json",
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "defaultMode": "auto",
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Bash(git push *)",
+      "Bash(sudo *)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(git reset --hard *)"
+    ],
+    "allow": [
+      "Bash(uv *)",
+      "Bash(make *)",
+      "Bash(pytest *)",
+      "Bash(python *)",
+      "Bash(git *)",
+      "Bash(curl https://api.openalex.org*)",
+      "WebFetch(domain:api.openalex.org)",
+      "WebFetch(domain:docs.openalex.org)",
+      "WebSearch"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/review-reminder.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
