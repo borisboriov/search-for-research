@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import Engine, select
+from sqlalchemy import Engine, delete, select
 from test_ingest import INSTITUTION_RECORD, author_record
 from test_works import work_record
 
@@ -12,15 +12,20 @@ from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Author, AuthorTopic, Work
 from sfr_core.settings import Settings
 from sfr_etl.dedup import (
+    MergeGroup,
+    UnmergeError,
     apply_merges,
     detect_suspect_merges,
     find_splits,
+    first_names_conflict,
     is_abbreviation_pair,
     name_key,
     normalize_orcid,
     recompute_merged_aggregates,
     render_dedup_review,
+    same_surname,
     suspect_examples,
+    unmerge_author,
 )
 from sfr_etl.ingest import upsert_author, upsert_institution
 from sfr_etl.works import ingest_works, upsert_work
@@ -326,3 +331,238 @@ def test_ingest_works_only_missing_skips_authors_that_have_works(engine: Engine)
         client = CountingWorksClient()
         ingest_works(session, client, since_years=5, per_author=5)  # type: ignore[arg-type]
     assert len(client.calls) == 4, "без флага ходим за обоими — прежнее поведение"
+
+
+# --- ORCID в обе стороны и конфликты имён (26.09, #96, #108, #109) -------------
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ("Т. В. Андреева", "Tatyana V. Andreeva", True),  # кириллица ↔ латиница
+        ("Galina Vershubskaya", "Galina Vershubsky", True),  # -aya ↔ -y
+        ("E. P. Kharitonova", "Elena P. Haritonova", True),  # kh ↔ h
+        ("Svetlana G. Jorstad", "S. G. Jorstad", True),
+        ("A. Yu. Kraeva", "M. A. Kozhin", False),  # один ORCID у разных людей
+        ("A. P. Zhevlakov", "V. Zherebchevskii", False),
+    ],
+)
+def test_same_surname_survives_transliteration(left: str, right: str, expected: bool) -> None:
+    assert same_surname(left, right) is expected
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ("Valery Lukinskiy", "Vladislav Lukinskiy", True),
+        ("Vsevolod V. Koryanov", "Victor V. Koryanov", True),
+        ("Akihisa Inoue", "Atsuo Inoue", True),
+        ("Alexander Karpov", "Aleksandr Karpov", False),  # транслитерация — не конфликт
+        ("Yury Ivanov", "Yuri Ivanov", False),
+        ("Nataliya Petrova", "Natalia Petrova", False),
+        ("Andrey Popov", "Андрей Попов", False),
+        ("Alexey Smirnov", "Aleksei Smirnov", False),
+        ("V. V. Koryanov", "Vsevolod V. Koryanov", False),  # инициал ни с чем не спорит
+    ],
+)
+def test_first_names_conflict_oracle(left: str, right: str, expected: bool) -> None:
+    assert first_names_conflict(left, right) is expected
+
+
+def test_same_orcid_with_different_surnames_goes_to_review(engine: Engine) -> None:
+    """Один ORCID у «Kraeva» и «Kozhin» — ошибка OpenAlex, а не один человек."""
+    orcid = "https://orcid.org/0000-0003-0495-6694"
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        upsert_author(session, record("A1", "A. Yu. Kraeva", orcid, 40), inst.id, SETTINGS)
+        upsert_author(session, record("A2", "M. A. Kozhin", orcid, 20), inst.id, SETTINGS)
+    with session_scope(engine) as session:
+        findings = find_splits(session)
+        assert findings.merges == []
+        assert [g.signal for g in findings.review] == ["один ORCID, разные фамилии или имена"]
+        assert sorted([findings.review[0].canonical, *findings.review[0].duplicates]) == [
+            "A1",
+            "A2",
+        ]
+
+
+def test_same_orcid_transliterated_surname_still_merges(engine: Engine) -> None:
+    orcid = "https://orcid.org/0000-0003-0000-0001"
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        upsert_author(session, record("A1", "Т. В. Андреева", orcid, 40), inst.id, SETTINGS)
+        upsert_author(session, record("A2", "Tatyana V. Andreeva", orcid, 20), inst.id, SETTINGS)
+    with session_scope(engine) as session:
+        findings = find_splits(session)
+        assert [g.signal for g in findings.merges] == ["orcid"]
+        assert findings.review == []
+
+
+def test_common_work_with_different_orcids_goes_to_review(engine: Engine) -> None:
+    """Лукинские: одна фамилия, одна буква имени, общая работа — но два ORCID."""
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        father = upsert_author(
+            session,
+            record("A1", "Valery Lukinskiy", "https://orcid.org/0000-0002-2497-8826", 85),
+            inst.id,
+            SETTINGS,
+        )
+        son = upsert_author(
+            session,
+            record("A2", "Vladislav Lukinskiy", "https://orcid.org/0009-0004-4716-3090", 41),
+            inst.id,
+            SETTINGS,
+        )
+        upsert_work(session, topical_work("W1", "Logistics"), father.id, since_year=2022)
+        upsert_work(session, topical_work("W1", "Logistics"), son.id, since_year=2022)
+    with session_scope(engine) as session:
+        findings = find_splits(session)
+        assert findings.merges == []
+        assert [g.signal for g in findings.review] == ["name+institution+work, но разные ORCID"]
+        assert findings.namesakes == [], "пара в review, среди тёзок не дублируется"
+
+
+def test_common_work_with_different_full_names_goes_to_review(engine: Engine) -> None:
+    """Без ORCID разные развёрнутые имена тоже блокируют склейку по общей работе."""
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        left = upsert_author(
+            session, record("A1", "Vsevolod V. Koryanov", None, 82), inst.id, SETTINGS
+        )
+        right = upsert_author(
+            session, record("A2", "Victor V. Koryanov", None, 47), inst.id, SETTINGS
+        )
+        upsert_work(session, topical_work("W1", "Spacecraft"), left.id, since_year=2022)
+        upsert_work(session, topical_work("W1", "Spacecraft"), right.id, since_year=2022)
+    with session_scope(engine) as session:
+        findings = find_splits(session)
+        assert findings.merges == []
+        assert [g.signal for g in findings.review] == ["name+institution+work, но разные имена"]
+
+
+def test_near_duplicates_are_listed_apart_from_namesakes(engine: Engine) -> None:
+    """«Ilya A. Ryzhikov» и «I. A. Ryzhikov» с одной общей темой — не тёзки, а кандидаты."""
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        full = upsert_author(session, record("A1", "Ilya A. Ryzhikov", None, 30), inst.id, SETTINGS)
+        short = upsert_author(session, record("A2", "I. A. Ryzhikov", None, 12), inst.id, SETTINGS)
+        namesake_a = upsert_author(
+            session, record("A3", "Anton Chernyavskiy", None, 30), inst.id, SETTINGS
+        )
+        namesake_b = upsert_author(
+            session, record("A4", "Andrey Chernyavskiy", None, 20), inst.id, SETTINGS
+        )
+        for author, names in (
+            (full, ["Optics", "Lasers", "Plasma"]),
+            (short, ["Optics", "Chemistry", "Biology"]),
+            (namesake_a, ["Sociology"]),
+            (namesake_b, ["Economics"]),
+        ):
+            session.execute(delete(AuthorTopic).where(AuthorTopic.author_id == author.id))
+            for score, name in enumerate(names, start=1):
+                session.add(AuthorTopic(author_id=author.id, topic_name=name, score=float(score)))
+    with session_scope(engine) as session:
+        findings = find_splits(session)
+        assert findings.merges == []
+        assert [sorted([g.canonical, *g.duplicates]) for g in findings.near_duplicates] == [
+            ["A1", "A2"]
+        ]
+        assert "общих тем 1" in findings.near_duplicates[0].signal
+        assert [sorted([g.canonical, *g.duplicates]) for g in findings.namesakes] == [["A3", "A4"]]
+
+
+class PerAuthorWorksClient:
+    """Кэш работ: отдаёт работы по author-id из фильтра запроса."""
+
+    def __init__(self, works: dict[str, list[dict[str, Any]]]) -> None:
+        self.works = works
+        self.calls = 0
+
+    def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        self.calls += 1
+        author = (params or {}).get("filter", "").split("authorships.author.id:")[1].split(",")[0]
+        return {"results": self.works.get(author, [])}
+
+
+def test_unmerge_restores_both_authors_from_cache(engine: Engine) -> None:
+    orcid = "https://orcid.org/0000-0002-1825-0097"
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        big = upsert_author(session, record("A1", "T. Aushev", orcid, 900), inst.id, SETTINGS)
+        small = upsert_author(session, record("A2", "Timofey Aushev", orcid, 80), inst.id, SETTINGS)
+        upsert_work(session, topical_work("W1", "Nuclear Physics"), big.id, since_year=2022)
+        upsert_work(session, topical_work("W2", "Nuclear Physics"), small.id, since_year=2022)
+    with session_scope(engine) as session:
+        apply_merges(session, find_splits(session).merges)
+    client = PerAuthorWorksClient(
+        {
+            "A1": [topical_work("W1", "Nuclear Physics")],
+            "A2": [topical_work("W2", "Nuclear Physics"), topical_work("W3", "Nuclear Physics")],
+        }
+    )
+    with session_scope(engine) as session:
+        plan = unmerge_author(session, client, "A2", SETTINGS, dry_run=True)
+        assert plan["status"] == "planned" and plan["works_on_canonical_before"] == 2
+        assert client.calls == 0, "dry-run ничего не качает"
+    with session_scope(engine) as session:
+        duplicate = session.execute(select(Author).where(Author.openalex_id == "A2")).scalar_one()
+        assert duplicate.merged_into_id is not None, "dry-run ничего не меняет"
+    with session_scope(engine) as session:
+        stats = unmerge_author(session, client, "A2", SETTINGS, dry_run=False)
+        assert stats["works_after"] == {"A1": 1, "A2": 2}
+    with session_scope(engine) as session:
+        canonical = session.execute(select(Author).where(Author.openalex_id == "A1")).scalar_one()
+        duplicate = session.execute(select(Author).where(Author.openalex_id == "A2")).scalar_one()
+        assert duplicate.merged_into_id is None
+        assert duplicate.is_supervisor_candidate is True
+        assert canonical.works_count == 900 and duplicate.works_count == 80, "агрегаты из raw"
+        assert {w.openalex_id for w in canonical.works} == {"W1"}
+        assert {w.openalex_id for w in duplicate.works} == {"W2", "W3"}
+        # идемпотентность: повторный вызов — no-op
+        again = unmerge_author(session, client, "A2", SETTINGS, dry_run=False)
+        assert again["status"] == "not_merged"
+
+
+def test_unmerge_refuses_when_canonical_has_other_duplicates(engine: Engine) -> None:
+    orcid = "https://orcid.org/0000-0002-1825-0097"
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        for short_id, name, works in (
+            ("A1", "T. Aushev", 900),
+            ("A2", "Timofey Aushev", 80),
+            ("A3", "T. A. Aushev", 10),
+        ):
+            upsert_author(session, record(short_id, name, orcid, works), inst.id, SETTINGS)
+    with session_scope(engine) as session:
+        apply_merges(session, find_splits(session).merges)
+    with session_scope(engine) as session, pytest.raises(UnmergeError, match="другие дубли"):
+        unmerge_author(session, PerAuthorWorksClient({}), "A2", SETTINGS, dry_run=False)
+
+
+def test_review_file_lists_conflicts_and_near_duplicates() -> None:
+    review = [
+        MergeGroup(
+            "A1",
+            ["A2"],
+            "name+institution+work, но разные ORCID",
+            ["Valery Lukinskiy", "Vladislav Lukinskiy"],
+            ["ВШЭ"],
+        )
+    ]
+    near = [
+        MergeGroup(
+            "A3",
+            ["A4"],
+            "полное имя ↔ инициалы, один вуз, общих тем 1",
+            ["Ilya A. Ryzhikov", "I. A. Ryzhikov"],
+            ["МГТУ"],
+        )
+    ]
+    text = render_dedup_review(
+        [], [], [], n_suspects=0, n_examples=10, review=review, near_duplicates=near
+    )
+    assert "## Требуют решения человека — все 1" in text
+    assert "разные ORCID" in text and "Lukinskiy" in text
+    assert "## Похоже, один человек, но сигнала не хватило — все 1" in text
+    assert "Ryzhikov" in text

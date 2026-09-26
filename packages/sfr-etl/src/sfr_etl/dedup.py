@@ -17,6 +17,18 @@ author-сущностями («В. В. Иванов» ×3, «T. Aushev» с 984 
 тот случай, где живут тёзки. Они выписываются в отчёт как кандидаты на ручной
 разбор — знать о них полезно, автоматически трогать нельзя.
 
+**ORCID — сигнал в обе стороны** (26.09, #96/#108). Проверка каталога без
+квоты показала два класса ошибок: OpenAlex приклеивает один ORCID к чужому
+профилю (Краева/Кожин, Жевлаков/Жеребчевский), а соавторы-родственники с одной
+буквой имени склеивались по общей работе при **разных** ORCID (Лукинские
+Valery/Vladislav, Корянов Vsevolod/Victor, Иноуэ Akihisa/Atsuo — все три в
+боевом каталоге с SFR-5). Поэтому: один ORCID склеивает только при совпадении
+фамилий; два разных ORCID запрещают склейку по любому сигналу; два разных
+развёрнутых имени — тоже запрет. Такие пары уходят в отдельный список отчёта
+«требуют решения человека». Сравнение имён терпимо к транслитерации
+(«Андреева» = «Andreeva», «Vershubskaya» = «Vershubsky», «Alexander» =
+«Aleksandr»), иначе настоящие склейки уезжали бы в review.
+
 **Чужая склейка** — обратная беда: OpenAlex положил в один профиль работы двух
 людей (NLP-специалист с «Т-клетками мышей», химик с нейтринным экспериментом).
 Расклеивать автоматически нечем — работы придётся делить между людьми, которых
@@ -27,7 +39,7 @@ author-сущностями («В. В. Иванов» ×3, «T. Aushev» с 984 
 """
 
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -36,6 +48,8 @@ from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, selectinload
 
 from sfr_core.models import Author, AuthorTopic, SupervisorProfile, Work
+from sfr_etl.ingest import upsert_author
+from sfr_etl.works import ingest_works_for_author
 
 log = structlog.get_logger(__name__)
 
@@ -82,6 +96,9 @@ def name_key(display_name: str) -> str:
 # Сколько тем из топ-5 должно совпасть, чтобы «И. Фамилия» и «Иван Фамилия»
 # из одного вуза считались одним человеком.
 ABBREV_TOPIC_OVERLAP = 3
+# С какого пересечения тем такая пара попадает хотя бы в список «похоже, один
+# человек» для ручного разбора (#109): ниже — обычные тёзки.
+NEAR_DUPLICATE_TOPIC_OVERLAP = 1
 
 
 def _spelled_out(display_name: str) -> bool:
@@ -106,6 +123,97 @@ def is_abbreviation_pair(left: Author, right: Author) -> bool:
     return _spelled_out(left.display_name) != _spelled_out(right.display_name)
 
 
+_TRANSLIT = {
+    "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "е": "e", "ё": "e", "ж": "zh", "з": "z",
+    "и": "i", "й": "i", "к": "k", "л": "l", "м": "m", "н": "n", "о": "o", "п": "p", "р": "r",
+    "с": "s", "т": "t", "у": "u", "ф": "f", "х": "h", "ц": "ts", "ч": "ch", "ш": "sh",
+    "щ": "shch", "ъ": "", "ы": "y", "ь": "", "э": "e", "ю": "yu", "я": "ya",
+}  # fmt: skip
+
+
+def fold_name(part: str) -> str:
+    """Свести написание имени или фамилии к форме, терпимой к транслитерации.
+
+    Кириллица → латиница; затем сглаживаются разночтения латинских систем
+    («kh»/«h», «x»/«ks», «y»/«i», «j»/«i», «w»/«v»). Это не лингвистика, а
+    минимум, при котором «Андреева» = «Andreeva», «Yury» = «Yuri»,
+    «Alexander» ≈ «Aleksandr». Цель — не склеить лишнего, а не отправлять
+    настоящие склейки в review из-за буквы.
+    """
+    text = "".join(_TRANSLIT.get(ch, ch) for ch in part.lower())
+    for src, dst in (("kh", "h"), ("ph", "f"), ("x", "ks"), ("ck", "k"), ("w", "v"), ("j", "i")):
+        text = text.replace(src, dst)
+    text = text.replace("y", "i")
+    while "ii" in text:
+        text = text.replace("ii", "i")
+    return text
+
+
+def surname_key(display_name: str) -> str:
+    """Фамилия без окончаний рода и склонения: «Vershubskaya» и «Vershubsky» — одно."""
+    surname = name_key(display_name).split("|", 1)[0]
+    folded = fold_name(surname)
+    for suffix in ("skaia", "skaya", "ski", "sk"):
+        if folded.endswith(suffix):
+            return folded[: -len(suffix)] + "sk"
+    if folded.endswith("aia") or folded.endswith("aya"):
+        folded = folded[:-3]
+    elif folded.endswith("a") and len(folded) > 4:
+        folded = folded[:-1]
+    return folded
+
+
+def same_surname(left: str, right: str) -> bool:
+    return bool(surname_key(left)) and surname_key(left) == surname_key(right)
+
+
+def full_first_name(display_name: str) -> str | None:
+    """Развёрнутое (не инициал) первое имя, если оно записано; иначе None."""
+    cleaned = _INITIALS_RE.sub(" ", display_name).lower()
+    parts = [p for p in cleaned.split() if p]
+    if len(parts) < 2:
+        return None
+    surname_at = next(
+        (i for i in range(len(parts) - 1, -1, -1) if len(parts[i]) > 1), len(parts) - 1
+    )
+    for i, part in enumerate(parts):
+        if i != surname_at and len(part) > 1:
+            return part
+    return None
+
+
+def _levenshtein(a: str, b: str) -> int:
+    previous = list(range(len(b) + 1))
+    for i, ca in enumerate(a, start=1):
+        current = [i]
+        for j, cb in enumerate(b, start=1):
+            current.append(min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (ca != cb)))
+        previous = current
+    return previous[-1]
+
+
+# Расстояние между свёрнутыми именами, начиная с которого это разные имена,
+# а не разные транслитерации: «aleksander»/«aleksandr» — 1, «mihail»/«michael» — 3.
+FIRST_NAME_CONFLICT_DISTANCE = 3
+
+
+def first_names_conflict(left: str, right: str) -> bool:
+    """Оба имени развёрнуты и это разные имена (Valery/Vladislav, Akihisa/Atsuo).
+
+    Инициалы не спорят ни с чем: «V. V. Koryanov» против «Vsevolod V. Koryanov»
+    конфликта не даёт. Транслитерации одного имени (Yury/Yuri, Nataliya/Natalia,
+    Alexander/Aleksandr) тоже не конфликт — сравниваются свёрнутые формы с
+    допуском в две правки.
+    """
+    a, b = full_first_name(left), full_first_name(right)
+    if not a or not b:
+        return False
+    fa, fb = fold_name(a), fold_name(b)
+    if fa == fb or fa.startswith(fb) or fb.startswith(fa):
+        return False
+    return _levenshtein(fa, fb) >= FIRST_NAME_CONFLICT_DISTANCE
+
+
 @dataclass
 class MergeGroup:
     """Один человек: канонический автор и его дубли."""
@@ -115,6 +223,27 @@ class MergeGroup:
     signal: str
     names: list[str] = field(default_factory=list)
     institutions: list[str] = field(default_factory=list)
+
+
+@dataclass
+class DedupFindings:
+    """Результат поиска дублей: что склеить, что оставить, что отдать человеку.
+
+    ``merges`` — склеить автоматически (плюс уже применённые); ``namesakes`` —
+    одно имя и вуз без сигнала (не трогать); ``review`` — сигнал есть, но его
+    блокирует конфликт ORCID или имён, решает человек; ``near_duplicates`` —
+    похоже, один человек (полное имя ↔ инициалы, один вуз), но общих тем
+    меньше порога — тоже человеку, отдельным списком (#109).
+    """
+
+    merges: list[MergeGroup] = field(default_factory=list)
+    namesakes: list[MergeGroup] = field(default_factory=list)
+    review: list[MergeGroup] = field(default_factory=list)
+    near_duplicates: list[MergeGroup] = field(default_factory=list)
+
+    def __iter__(self) -> Iterator[list[MergeGroup]]:
+        """Обратная совместимость: ``merges, namesakes = find_splits(session)``."""
+        return iter((self.merges, self.namesakes))
 
 
 class _Union:
@@ -198,26 +327,76 @@ def applied_merges(session: Session) -> list[MergeGroup]:
     return sorted(groups.values(), key=lambda g: g.canonical)
 
 
-def find_splits(session: Session) -> tuple[list[MergeGroup], list[MergeGroup]]:
-    """Группы для склейки и отдельно — тёзки без третьего сигнала (не склеивать).
+def _group(by_db_id: dict[int, Author], ids: Sequence[int], signal: str) -> MergeGroup:
+    ordered = sorted(ids, key=lambda i: (-(by_db_id[i].works_count or 0), by_db_id[i].openalex_id))
+    return MergeGroup(
+        canonical=by_db_id[ordered[0]].openalex_id,
+        duplicates=[by_db_id[i].openalex_id for i in ordered[1:]],
+        signal=signal,
+        names=[by_db_id[i].display_name for i in ordered],
+        institutions=[_institution_name(by_db_id[i]) for i in ordered],
+    )
 
-    Возвращает ``(merges, namesakes)``; уже применённые склейки входят в первый
-    список с сигналом «склеено ранее».
+
+def _blocker(left: Author, right: Author) -> str | None:
+    """Почему пару нельзя склеить автоматически, даже если сигнал есть.
+
+    Два разных непустых ORCID — два человека, что бы ни говорили имя и общая
+    работа (Лукинские, Корянов, Иноуэ). Два разных развёрнутых имени — тоже
+    (Valery/Vladislav); инициалы и транслитерации конфликта не дают.
+    """
+    left_orcid, right_orcid = normalize_orcid(left.orcid), normalize_orcid(right.orcid)
+    if left_orcid and right_orcid and left_orcid != right_orcid:
+        return "разные ORCID"
+    if first_names_conflict(left.display_name, right.display_name):
+        return "разные имена"
+    return None
+
+
+def find_splits(
+    session: Session,
+    *,
+    abbrev_topic_overlap: int = ABBREV_TOPIC_OVERLAP,
+    near_duplicate_topic_overlap: int = NEAR_DUPLICATE_TOPIC_OVERLAP,
+) -> DedupFindings:
+    """Группы для склейки, тёзки без сигнала, пары на решение человека.
+
+    Уже применённые склейки входят в ``merges`` с сигналом «склеено ранее».
+    Распаковка ``merges, namesakes = find_splits(session)`` по-прежнему
+    работает; полный результат — поля :class:`DedupFindings`.
     """
     authors = _catalogue_authors(session)
     by_db_id = {a.id: a for a in authors}
     union = _Union(by_db_id)
     signals: dict[int, str] = {}
+    review: list[MergeGroup] = []
+    reviewed: set[tuple[int, int]] = set()
 
+    def send_to_review(left: int, right: int, reason: str) -> None:
+        key = (min(left, right), max(left, right))
+        if key not in reviewed:
+            reviewed.add(key)
+            review.append(_group(by_db_id, [left, right], reason))
+
+    # ORCID: склеивает только при совпадении фамилий — OpenAlex приклеивает ORCID
+    # к чужим профилям, и одинаковый идентификатор у «Kraeva» и «Kozhin» — это
+    # ошибка источника, а не один человек.
     by_orcid: dict[str, list[int]] = {}
     for author in authors:
         orcid = normalize_orcid(author.orcid)
         if orcid:
             by_orcid.setdefault(orcid, []).append(author.id)
     for ids in by_orcid.values():
+        anchor = ids[0]
         for other in ids[1:]:
-            union.union(ids[0], other)
-            signals[union.find(ids[0])] = "orcid"
+            anchor_author, other_author = by_db_id[anchor], by_db_id[other]
+            if same_surname(
+                anchor_author.display_name, other_author.display_name
+            ) and not first_names_conflict(anchor_author.display_name, other_author.display_name):
+                union.union(anchor, other)
+                signals[union.find(anchor)] = "orcid"
+            else:
+                send_to_review(anchor, other, "один ORCID, разные фамилии или имена")
 
     # Имя + вуз — только как рамка поиска; решает наличие общей работы.
     by_name: dict[tuple[str, int | None], list[int]] = {}
@@ -247,58 +426,73 @@ def find_splits(session: Session) -> tuple[list[MergeGroup], list[MergeGroup]]:
                 ).scalars()
             )
 
+    near: list[MergeGroup] = []
     for ids in by_name.values():
         if len(ids) < 2:
             continue
         for i, left in enumerate(ids):
             for right in ids[i + 1 :]:
+                overlap = len(top_topics.get(left, set()) & top_topics.get(right, set()))
+                abbreviation = is_abbreviation_pair(by_db_id[left], by_db_id[right])
+                signal: str | None = None
                 if shared.get(left, set()) & shared.get(right, set()):
-                    union.union(left, right)
-                    signals.setdefault(union.find(left), "name+institution+work")
-                elif (
-                    is_abbreviation_pair(by_db_id[left], by_db_id[right])
-                    and len(top_topics.get(left, set()) & top_topics.get(right, set()))
-                    >= ABBREV_TOPIC_OVERLAP
-                ):
-                    union.union(left, right)
-                    signals.setdefault(union.find(left), "abbrev+institution+topics")
+                    signal = "name+institution+work"
+                elif abbreviation and overlap >= abbrev_topic_overlap:
+                    signal = "abbrev+institution+topics"
+                if signal is None:
+                    if abbreviation and overlap >= near_duplicate_topic_overlap:
+                        near.append(
+                            _group(
+                                by_db_id,
+                                [left, right],
+                                f"полное имя ↔ инициалы, один вуз, общих тем {overlap}",
+                            )
+                        )
+                    continue
+                blocker = _blocker(by_db_id[left], by_db_id[right])
+                if blocker is not None:
+                    send_to_review(left, right, f"{signal}, но {blocker}")
+                    continue
+                union.union(left, right)
+                signals.setdefault(union.find(left), signal)
 
     # Тёзки: одно имя и один вуз, но ни одного сигнала о личности. Автоматически
     # не трогаем — только в отчёт, на глаза человеку.
+    near_ids = {(g.canonical, tuple(g.duplicates)) for g in near}
+    review_ids = {(g.canonical, tuple(g.duplicates)) for g in review}
     namesakes: list[MergeGroup] = []
     for ids in by_name.values():
         if len(ids) < 2 or len({union.find(i) for i in ids}) == 1:
             continue
         ordered = sorted(ids, key=lambda i: by_db_id[i].openalex_id)
-        namesakes.append(
-            MergeGroup(
-                canonical=by_db_id[ordered[0]].openalex_id,
-                duplicates=[by_db_id[i].openalex_id for i in ordered[1:]],
-                signal="одно имя и вуз, общих работ и ORCID нет — не склеиваем",
-                names=[by_db_id[i].display_name for i in ordered],
-                institutions=[_institution_name(by_db_id[i]) for i in ordered],
-            )
+        group = MergeGroup(
+            canonical=by_db_id[ordered[0]].openalex_id,
+            duplicates=[by_db_id[i].openalex_id for i in ordered[1:]],
+            signal="одно имя и вуз, общих работ и ORCID нет — не склеиваем",
+            names=[by_db_id[i].display_name for i in ordered],
+            institutions=[_institution_name(by_db_id[i]) for i in ordered],
         )
+        member_ids = {group.canonical, *group.duplicates}
+        listed = any({c, *d} <= member_ids for c, d in near_ids | review_ids)
+        if len(member_ids) == 2 and listed:
+            continue  # пара уже стоит в более информативном списке
+        namesakes.append(group)
 
     merges: list[MergeGroup] = []
     for root, members in union.groups().items():
         if len(members) < 2:
             continue
-        ordered = sorted(
-            members, key=lambda i: (-(by_db_id[i].works_count or 0), by_db_id[i].openalex_id)
-        )
-        merges.append(
-            MergeGroup(
-                canonical=by_db_id[ordered[0]].openalex_id,
-                duplicates=[by_db_id[i].openalex_id for i in ordered[1:]],
-                signal=signals.get(root, "orcid"),
-                names=[by_db_id[i].display_name for i in ordered],
-                institutions=[_institution_name(by_db_id[i]) for i in ordered],
-            )
-        )
+        merges.append(_group(by_db_id, members, signals.get(root, "orcid")))
     merges.sort(key=lambda g: g.canonical)
     namesakes.sort(key=lambda g: g.canonical)
-    return applied_merges(session) + merges, namesakes
+    review.sort(key=lambda g: g.canonical)
+    near.sort(key=lambda g: g.canonical)
+    return DedupFindings(
+        merges=applied_merges(session) + merges,
+        namesakes=namesakes,
+        review=review,
+        near_duplicates=near,
+    )
 
 
 def _institution_name(author: Author) -> str:
@@ -495,6 +689,102 @@ def recompute_merged_aggregates(session: Session, *, dry_run: bool = False) -> d
     return stats
 
 
+class UnmergeError(ValueError):
+    """Расклейка невозможна или небезопасна; текст — для человека в CLI."""
+
+
+def unmerge_author(
+    session: Session,
+    client: Any,
+    duplicate_openalex_id: str,
+    settings: Any,
+    *,
+    dry_run: bool = True,
+    current_year: int | None = None,
+) -> dict[str, Any]:
+    """Развести ошибочно склеенный дубль и его канонического автора.
+
+    Склейка необратима в пределах БД: работы дубля физически переехали на
+    канонического, счётчики сложены. Поэтому расклейка — не откат, а
+    **восстановление обоих из источников**: агрегаты и темы — из ``raw``
+    (``upsert_author``), работы — заново из дискового кэша OpenAlex
+    (``ingest_works_for_author``; если работ дубля в кэше нет — два сетевых
+    запроса, число печатается). Профили обоих удаляются — их пересоберёт
+    ``sfr etl build-profiles``; флаг ``suspect_merge`` сбрасывается до
+    следующего ``dedup``.
+
+    Отказывается работать, если у канонического есть **другие** дубли: их
+    перенесённые работы при переингесте канонического потерялись бы. Такие
+    группы разбираются вручную. Идемпотентна: неcклеенный id — no-op.
+    """
+    duplicate = session.execute(
+        select(Author).where(Author.openalex_id == duplicate_openalex_id)
+    ).scalar_one_or_none()
+    if duplicate is None:
+        raise UnmergeError(f"{duplicate_openalex_id}: автора нет в БД")
+    if duplicate.merged_into_id is None:
+        return {"duplicate": duplicate_openalex_id, "status": "not_merged", "changed": False}
+    canonical = session.get(Author, duplicate.merged_into_id)
+    if canonical is None:  # pragma: no cover — FK гарантирует наличие
+        raise UnmergeError(f"{duplicate_openalex_id}: канонический автор не найден")
+    siblings = [
+        a.openalex_id
+        for a in session.execute(
+            select(Author).where(Author.merged_into_id == canonical.id, Author.id != duplicate.id)
+        ).scalars()
+    ]
+    if siblings:
+        raise UnmergeError(
+            f"{duplicate_openalex_id}: у канонического {canonical.openalex_id} есть другие "
+            f"дубли {siblings} — переингест потерял бы их работы; разбирать вручную"
+        )
+    if duplicate.raw is None or canonical.raw is None:
+        raise UnmergeError(f"{duplicate_openalex_id}: нет raw-записи, восстановить не из чего")
+
+    works_before = session.execute(select(Work.id).where(Work.author_id == canonical.id)).all()
+    stats: dict[str, Any] = {
+        "duplicate": duplicate_openalex_id,
+        "canonical": canonical.openalex_id,
+        "status": "planned" if dry_run else "unmerged",
+        "changed": not dry_run,
+        "works_on_canonical_before": len(works_before),
+        "raw_works_count": {
+            canonical.openalex_id: int((canonical.raw or {}).get("works_count") or 0),
+            duplicate.openalex_id: int((duplicate.raw or {}).get("works_count") or 0),
+        },
+    }
+    if dry_run:
+        return stats
+
+    for author in (canonical, duplicate):
+        session.execute(delete(Work).where(Work.author_id == author.id))
+        session.execute(delete(SupervisorProfile).where(SupervisorProfile.author_id == author.id))
+    duplicate.merged_into_id = None
+    session.flush()
+    restored: dict[str, int] = {}
+    for author in (canonical, duplicate):
+        # upsert_author восстанавливает счётчики, ORCID, темы и флаг кандидата
+        # из нетронутой записи OpenAlex; вуз остаётся прежним.
+        raw, institution_id = author.raw, author.last_known_institution_id
+        if raw is None or institution_id is None:  # pragma: no cover — проверено выше
+            raise UnmergeError(f"{author.openalex_id}: нет raw или вуза")
+        upsert_author(session, raw, institution_id, settings, current_year=current_year)
+        author.suspect_merge = False
+        result = ingest_works_for_author(
+            session,
+            client,
+            author,
+            since_years=settings.works_since_years,
+            per_author=settings.works_per_author,
+            current_year=current_year,
+        )
+        restored[author.openalex_id] = result["saved"]
+    session.flush()
+    stats["works_after"] = restored
+    log.info("dedup_unmerged", **{k: v for k, v in stats.items() if k != "raw_works_count"})
+    return stats
+
+
 def topic_subfields(session: Session) -> dict[str, str]:
     """Карта «тема → подобласть» из сырых записей авторов.
 
@@ -596,6 +886,10 @@ def suspect_examples(session: Session, limit: int = 20) -> list[dict[str, Any]]:
     return out
 
 
+def _first(n_examples: int, total: int) -> str:
+    return f"все {total}" if n_examples >= total else f"первые {n_examples} из {total}"
+
+
 def render_dedup_review(
     merges: Sequence[MergeGroup],
     namesakes: Sequence[MergeGroup],
@@ -603,6 +897,8 @@ def render_dedup_review(
     *,
     n_suspects: int | None = None,
     n_examples: int = 10,
+    review: Sequence[MergeGroup] = (),
+    near_duplicates: Sequence[MergeGroup] = (),
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
@@ -621,10 +917,12 @@ def render_dedup_review(
         "автоматически, кого решено **не** склеивать, и профили с подозрением "
         "на чужую склейку OpenAlex.",
         "",
-        f"Склеек: **{len(merges)}**; групп тёзок без сигнала: **{len(namesakes)}**; "
+        f"Склеек: **{len(merges)}**; требуют решения человека: **{len(review)}**; "
+        f"похоже, один человек, но сигнала не хватило: **{len(near_duplicates)}**; "
+        f"групп тёзок без сигнала: **{len(namesakes)}**; "
         f"профилей с флагом `suspect_merge`: **{n_suspects}**.",
         "",
-        f"## Склеено автоматически — первые {n_examples}",
+        f"## Склеено автоматически — {_first(n_examples, len(merges))}",
         "",
         "«Канонический» — тот, у кого больше работ; на него перенесены работы, "
         "темы и счётчики остальных.",
@@ -640,7 +938,43 @@ def render_dedup_review(
         )
     lines += [
         "",
-        f"## Не склеено: тёзки — первые {n_examples}",
+        f"## Требуют решения человека — {_first(n_examples, len(review))}",
+        "",
+        "Сигнал склейки есть (ORCID, общая работа или инициалы + темы), но его "
+        "блокирует конфликт: один ORCID при разных фамилиях (ошибка OpenAlex), "
+        "два разных ORCID или два разных развёрнутых имени. Автоматически не "
+        "склеиваем; вердикт — комментарием в issue, склейка руками через "
+        "`sfr etl dedup` после правки данных или расклейка `sfr etl unmerge`.",
+        "",
+        "| Авторы | Имена | Вуз | Причина |",
+        "|---|---|---|---|",
+    ]
+    for group in list(review)[:n_examples]:
+        ids = ", ".join(f"`{i}`" for i in [group.canonical, *group.duplicates])
+        lines.append(
+            f"| {ids} | {'; '.join(dict.fromkeys(group.names))} | "
+            f"{'; '.join(dict.fromkeys(group.institutions))} | {group.signal} |"
+        )
+    lines += [
+        "",
+        f"## Похоже, один человек, но сигнала не хватило — "
+        f"{_first(n_examples, len(near_duplicates))}",
+        "",
+        "Полное имя ↔ инициалы, один вуз, общих тем меньше порога склейки. "
+        "Не склеиваем автоматически; список для человека (#109).",
+        "",
+        "| Авторы | Имена | Вуз | Что совпало |",
+        "|---|---|---|---|",
+    ]
+    for group in list(near_duplicates)[:n_examples]:
+        ids = ", ".join(f"`{i}`" for i in [group.canonical, *group.duplicates])
+        lines.append(
+            f"| {ids} | {'; '.join(dict.fromkeys(group.names))} | "
+            f"{'; '.join(dict.fromkeys(group.institutions))} | {group.signal} |"
+        )
+    lines += [
+        "",
+        f"## Не склеено: тёзки — {_first(n_examples, len(namesakes))}",
         "",
         "Одинаковое имя и вуз, но ни ORCID, ни общей работы. Склеить их "
         "автоматически — риск объединить двух разных людей; оставить как есть — "
@@ -657,7 +991,7 @@ def render_dedup_review(
         )
     lines += [
         "",
-        f"## Подозрение на чужую склейку — первые {n_examples} из {n_suspects}",
+        f"## Подозрение на чужую склейку — {_first(n_examples, n_suspects)}",
         "",
         "Работы профиля распадаются на две тематические группы без общей "
         "подобласти. Расклейка не делается: делить работы между людьми, которых "
