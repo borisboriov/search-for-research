@@ -5,7 +5,7 @@
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
-	metrics-deploy-sfr5c review-deploy-sfr5c
+	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -339,6 +339,14 @@ metrics-deploy-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5C_RUNS)/frida_clean.json \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--out docs/sfr5c_deploy_metrics.json
+
+# Слепой пул топ-5 golden set (24 in-domain + 6 edge = 150 пар) на пересуд
+# субагентом `sfr-judge`: без поля judged, в порядке author_id. Оценки — в
+# packages/sfr-match/eval/judgments_deploy_sfr5c.jsonl, накопленный
+# judgments.jsonl не трогается (docs/DECISIONS.md 26.09, канонический судья).
+pool-deploy-sfr5c: unhide
+	uv run sfr-match pool --runs-dir $(SFR5C_RUNS) --index-root $(SFR5C_INDEX_ROOT) \
+		--depth 5 --blind --out data/eval/pool_deploy_sfr5c.jsonl
 
 # Двадцать пар слепого пересуда на проверку человеку — отдельным файлом, чтобы
 # не затереть выборку §7 (её читал Борис по #112).
