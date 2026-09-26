@@ -134,12 +134,12 @@ eval-sfr2: unhide
 # сервис больше не читает, — регенерация «по документации» ничего не меняла.
 export-cards: export-sfr5
 
-# Локальный API сервит боевой индекс SFR-5 (12 вузов); переопределяется
-# переменной окружения SFR_API_INDEX_ROOT — например, на data/indexes_sfr2,
-# чтобы поднять API на корпусе SFR-2.
+# Локальный API сервит боевой индекс SFR-5c (12 вузов с потолком на вуз);
+# переопределяется переменной окружения SFR_API_INDEX_ROOT — например, на
+# data/indexes_sfr2, чтобы поднять API на корпусе SFR-2.
 api: unhide
-	SFR_API_INDEX_ROOT=$${SFR_API_INDEX_ROOT:-data/indexes_sfr5} \
-	SFR_API_CARDS_PATH=$${SFR_API_CARDS_PATH:-data/exports/cards_sfr5.jsonl} \
+	SFR_API_INDEX_ROOT=$${SFR_API_INDEX_ROOT:-data/indexes_sfr5c} \
+	SFR_API_CARDS_PATH=$${SFR_API_CARDS_PATH:-data/exports/cards_sfr5c.jsonl} \
 		uv run uvicorn sfr_api.main:app --factory --host 127.0.0.1 --port 8000 \
 		--limit-concurrency 8
 
@@ -159,7 +159,10 @@ bench: unhide
 	uv run python scripts/bench_api.py --out docs/sfr2_resources.json
 
 # ---------------------------------------------------------------------------
-# SFR-5: каталог 12 вузов, стратифицированный отбор, дедупликация, свой индекс.
+# SFR-5: каталог 12 вузов квотой — **замороженная** итерация. С выкладки SFR-5c
+# (26.09) боевой каталог живёт в `data/sfr.db` с потолком на вуз, а `*_sfr5`
+# остаются артефактами измерения SFR-5/5b/5c: `catalog-sfr5`, `export-sfr5` и
+# `index-sfr5` перезапишут их каталогом 9 002 — запускать только осознанно.
 # Индекс SFR-2 (data/indexes_sfr2) не трогается: на нём стоит воспроизводимость
 # SFR-2 (`make eval-sfr2`).
 # ---------------------------------------------------------------------------
@@ -289,15 +292,19 @@ export-sfr5c: unhide
 	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr export jsonl --out $(SFR5C_PROFILES)
 	SFR_DB_URL=$(SFR5C_DB_URL) uv run sfr export cards --out $(SFR5C_CARDS)
 
-# Без scripts/stamp_thresholds.py: он штампует боевые пороги из ApiSettings, а
-# новому индексу пороги ставятся после калибровки —
-# `sfr-match stamp-thresholds --index-dir … --none … --weak … --high …`.
+# Со штампом порогов из ApiSettings: с выкладки 26.09 это боевой индекс, и без
+# штампа пересборка молча разоружала бы сверку (`thresholds_match: null`).
+# Пока индекс был экспериментальным, штамп стоял бы ложный — тогда пороги
+# ставились руками после калибровки (`sfr-match stamp-thresholds --index-dir …
+# --none … --weak … --high …`); так же надо делать и при перекалибровке, до
+# того как новые числа попадут в ApiSettings.
 # Запускать только вне харнесса (docs/DECISIONS.md 18.09):
 #   nohup sh -c 'make index-sfr5c && touch data/eval/index_sfr5c.done' \
 #       > data/eval/index_sfr5c.log 2>&1 & disown
 index-sfr5c: unhide
 	uv run sfr-match index -m frida --clean --compose full \
 		--profiles $(SFR5C_PROFILES) --index-root $(SFR5C_INDEX_ROOT)
+	SFR_API_INDEX_ROOT=$(SFR5C_INDEX_ROOT) uv run python scripts/stamp_thresholds.py
 
 eval-sfr5c: unhide
 	uv run sfr-match eval --models frida --clean --compose full \

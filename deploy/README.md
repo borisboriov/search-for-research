@@ -65,7 +65,7 @@ docker exec sfr-proxy id                              # uid=10001(caddy), не r
 curl -s https://$DOMAIN/api/health || true      # 404 — так и должно быть (API закрыт)
 curl -s -o /dev/null -w '%{http_code}\n' https://$DOMAIN/            # 200, лендинг
 n=$(curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/')
-echo "sitemap: $n профилей"   # должно равняться profiles_count (5 538)
+echo "sitemap: $n профилей"   # должно равняться profiles_count (9 002)
 curl -s https://$DOMAIN/robots.txt | grep sitemap
 ```
 

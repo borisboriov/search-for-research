@@ -10,7 +10,7 @@ from sfr_match.index import resolve_index_dir
 class ApiSettings(BaseSettings):
     """Read from ``SFR_API_*`` environment variables (and ``.env``).
 
-    The index is *not* built here: it is produced offline by ``make index-sfr5``
+    The index is *not* built here: it is produced offline by ``make index-sfr5c``
     and mounted read-only. The service only needs to know which directory to open.
     """
 
@@ -22,9 +22,10 @@ class ApiSettings(BaseSettings):
     )
 
     # Which index to serve. index_dir, when set, wins over the model/clean/compose triple.
-    # SFR-5: боевой индекс — каталог 12 вузов (`make index-sfr5`); индекс SFR-2
-    # остаётся на диске для воспроизводимости SFR-2 и включается через env.
-    index_root: Path = Path("data/indexes_sfr5")
+    # SFR-5c (выкладка 26.09): боевой индекс — каталог 12 вузов с потолком на вуз
+    # (`make index-sfr5c`, 9 002 профиля). Индексы SFR-2, SFR-5 и SFR-5b остаются
+    # на диске для воспроизводимости своих отчётов и включаются через env.
+    index_root: Path = Path("data/indexes_sfr5c")
     model: str = "frida"
     clean: bool = True
     compose: str = "full"
@@ -59,7 +60,7 @@ class ApiSettings(BaseSettings):
 
     # Card enrichment (citations, top works) built offline by `sfr export cards`.
     # Optional: a missing file degrades to empty card fields (tests, bare index).
-    cards_path: Path | None = Path("data/exports/cards_sfr5.jsonl")
+    cards_path: Path | None = Path("data/exports/cards_sfr5c.jsonl")
 
     # Catalogue listing (sitemap, landing preview): page size cap.
     list_default_limit: int = 100
