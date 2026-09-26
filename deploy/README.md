@@ -85,6 +85,17 @@ curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/re
 curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
 ```
 
+### Смена индекса (переезд на новый каталог)
+
+`sync-artifacts.sh` кладёт индекс в каталог, названный в скрипте, и удаляет в
+нём лишнее (`rsync --delete`), но **старый каталог другого имени на сервере
+остаётся**: после переезда `data/indexes_sfr5` → `data/indexes_sfr5c` (26.09) на
+VPS лежат оба, это ~150 МБ впустую. Убирать — **после** того, как новый индекс
+проверен на бою (`/api/health` отдаёт новый `index_version` и
+`thresholds_match: true`): `rm -rf ~/search-for-research/data/indexes_sfr5`.
+Раньше — не надо: это единственный способ откатиться, вернув три пути в
+`ApiSettings`, `docker-compose.yml` и `sync-artifacts.sh`.
+
 Выбранная схема сборки web: **сборка без живого API + обязательная
 пост-деплойная ревалидация** (`/` и `/sitemap.xml`). Альтернатива — строить
 образ при поднятом api — отвергнута: docker build не видит сеть compose,

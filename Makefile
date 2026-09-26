@@ -5,7 +5,7 @@
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
-	metrics-deploy-sfr5c
+	metrics-deploy-sfr5c review-deploy-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -336,6 +336,14 @@ metrics-deploy-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5C_RUNS)/frida_clean.json \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--out docs/sfr5c_deploy_metrics.json
+
+# Двадцать пар слепого пересуда на проверку человеку — отдельным файлом, чтобы
+# не затереть выборку §7 (её читал Борис по #112).
+review-deploy-sfr5c: unhide
+	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_RUNS) \
+		--index-root $(SFR5C_INDEX_ROOT) \
+		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
+		--out $(SFR5C_EVAL)/judgments_for_review_deploy.md
 
 # Выборка для человека (§7 отчёта) целиком одной командой: раньше два раздела
 # склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки
