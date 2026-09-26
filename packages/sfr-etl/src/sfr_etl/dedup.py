@@ -60,6 +60,9 @@ log = structlog.get_logger(__name__)
 SUSPECT_MIN_SHARE = 0.25
 # Меньше этого числа работ — судить о бимодальности не по чему.
 SUSPECT_MIN_WORKS = 8
+# Сколько подозрительных профилей показать в review-файле первыми: полный список
+# на 9 тыс. каталога — сотни строк, и человеку нужен приоритет, а не справочник.
+SUSPECT_TOP = 20
 
 _INITIALS_RE = re.compile(r"[^\w\s]", flags=re.UNICODE)
 
@@ -1313,13 +1316,30 @@ def render_dedup_review(
         "подобласти. Расклейка не делается: делить работы между людьми, которых "
         "мы не знаем, нечем. На фронте флаг пока не показывается.",
         "",
-        "| Автор | Имя | Вуз | Работ | Группы | Темы |",
-        "|---|---|---|---|---|---|",
     ]
-    for item in list(suspects)[:n_examples]:
-        lines.append(
-            f"| `{item['author_id']}` | {item['name']} | {item['institution']} | "
-            f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} | "
-            f"{'; '.join(item['topics'][:4])} |"
-        )
+
+    def table(rows: Sequence[dict[str, Any]]) -> list[str]:
+        out = ["| Автор | Имя | Вуз | Работ | Группы | Темы |", "|---|---|---|---|---|---|"]
+        for item in rows:
+            out.append(
+                f"| `{item['author_id']}` | {item['name']} | {item['institution']} | "
+                f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} | "
+                f"{'; '.join(item['topics'][:4])} |"
+            )
+        return out
+
+    # Сначала топ по размеру *меньшей* группы: чем она больше, тем меньше похоже
+    # на шум и больше — на двух настоящих людей в одном профиле. Полный список
+    # ниже отсортирован по id и читается как справочник, а не как приоритет.
+    top = sorted(suspects, key=lambda s: (-s["cluster_sizes"][1], s["author_id"]))[:SUSPECT_TOP]
+    if len(suspects) > len(top):
+        lines += [
+            f"### Топ-{len(top)} по размеру меньшей тематической группы — смотреть эти",
+            "",
+            *table(top),
+            "",
+            f"### Полный список — {_first(n_examples, n_suspects)}, по id",
+            "",
+        ]
+    lines += table(list(suspects)[:n_examples])
     return "\n".join(lines) + "\n"

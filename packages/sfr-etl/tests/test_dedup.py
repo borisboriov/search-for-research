@@ -822,3 +822,25 @@ def test_load_decisions_rejects_two_verdicts_for_one_pair(tmp_path: Path) -> Non
     )
     with pytest.raises(ValueError, match="уже решена выше"):
         load_dedup_decisions(path)
+
+
+def test_review_file_puts_worst_suspects_first(engine: Engine) -> None:
+    """Топ-20 по меньшей группе — приоритет для человека, полный список — справочник."""
+    suspects = [
+        {
+            "author_id": f"A{i:03d}",
+            "name": f"Автор {i}",
+            "institution": "МФТИ",
+            "n_works": 30,
+            "cluster_sizes": [20, i],  # меньшая группа растёт с номером
+            "topics": ["тема"],
+        }
+        for i in range(1, 26)
+    ]
+    text = render_dedup_review([], [], suspects, n_suspects=len(suspects), n_examples=10000)
+    assert "### Топ-20 по размеру меньшей тематической группы" in text
+    head = text.split("### Полный список")[0]
+    # Первым в топе — профиль с самой большой меньшей группой (25), а не A001.
+    assert head.index("`A025`") < head.index("`A006`")
+    assert "`A001`" not in head, "пять самых слабых в топ-20 не попадают"
+    assert "`A001`" in text, "полный список всё равно печатается"

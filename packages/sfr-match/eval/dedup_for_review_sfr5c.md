@@ -11,28 +11,28 @@
 | Канонический | Имена | Вуз | Дубли | Сигнал |
 |---|---|---|---|---|
 | `A5010299342` | Андрей Андреевич Шкаликов; А. А. Шкаликов | Московский государственный университет | `A5076625726` | abbrev+institution+topics |
+| `A5014434996` | N. Chubarova; Natalia Chubarova | Московский государственный университет | `A5113036029` | abbrev+institution+topics |
 | `A5016531787` | N. Yu. Tabachkova | Высшая школа экономики; Национальный исследовательский технологический университет МИСиС | `A5059699485` | orcid |
+| `A5024991865` | Grigory V. Zyryanov; G. V. Zyryanov | Уральский федеральный университет | `A5110847406`, `A5020486264` | склеено ранее (признак не восстановить — работы уже перенесены) |
 | `A5028750791` | Svetlana G. Jorstad; S. G. Jorstad | Санкт-Петербургский государственный университет | `A5114375175` | human (#93) |
 | `A5035715715` | Alexander Snigirev; A. Snigirev | Московский государственный университет | `A5105694793` | abbrev+institution+topics |
 | `A5051616216` | Igor S. Golyak; Il. S. Golyak | Московский государственный технический университет имени Н. Э. Баумана | `A5109502076` | склеено ранее (признак не восстановить — работы уже перенесены) |
+| `A5055996094` | Sergei Sharakin; S. Sharakin | Московский государственный университет | `A5038736353` | abbrev+institution+topics |
 | `A5062267829` | A. V. Pestov; Alexandr V. Pestov | Уральский федеральный университет | `A5109499265` | abbrev+institution+topics |
 | `A5065752368` | Evgeny A. Viktorov; E. A. Viktorov | Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики | `A5071720585` | abbrev+institution+topics |
+| `A5072035061` | L. I. Isaenko; Lyudmila I. Isaenko | Новосибирский государственный университет | `A5110810683` | abbrev+institution+topics |
+| `A5080073119` | A. B. Rubin; Andrey B. Rubin | Московский государственный университет | `A5109416325`, `A5088071447` | склеено ранее (признак не восстановить — работы уже перенесены) |
 | `A5083666599` | T. Aushev | Московский физико-технический институт | `A5107138481` | orcid |
 | `A5100367029` | Qiang Wang | Санкт-Петербургский государственный университет | `A5101786689` | orcid |
+| `A5102818854` | A. V. Kulikov; Andrey V. Kulikov | Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики | `A5102536047` | abbrev+institution+topics |
 | `A5104155912` | G. Chelkov; G. A. Chelkov | Московский физико-технический институт; Московский государственный университет | `A5107824305` | orcid |
 | `A5108463072` | S. Lobanov; Sergei Lobanov | Новосибирский государственный университет | `A5108765594` | abbrev+institution+topics |
 | `A5110156933` | S. M. Klimentov; Sergei M. Klimentov | Национальный исследовательский ядерный университет МИФИ | `A5103461360` | abbrev+institution+topics |
+| `A5110340004` | V. S. Aksenov; Viktor S. Aksenov | Национальный исследовательский ядерный университет МИФИ | `A5110743887` | abbrev+institution+topics |
+| `A5110629778` | G. V. Sidorenko; Georgy V. Sidorenko | Национальный исследовательский ядерный университет МИФИ | `A5111203075` | abbrev+institution+topics |
 | `A5111713776` | E. V. Podivilov; Evgeny V. Podivilov | Новосибирский государственный университет | `A5112685205` | abbrev+institution+topics |
 | `A5112334685` | A. A. Chistyakov; Alexander A. Chistyakov | Национальный исследовательский ядерный университет МИФИ | `A5111954803` | abbrev+institution+topics |
 | `A5112367657` | A. G. Kharlamov | Новосибирский государственный университет | `A5107868597` | orcid |
-| `A5014434996` | N. Chubarova; Natalia Chubarova | Московский государственный университет | `A5113036029` | abbrev+institution+topics |
-| `A5024991865` | Grigory V. Zyryanov; G. V. Zyryanov | Уральский федеральный университет | `A5110847406`, `A5020486264` | abbrev+institution+topics |
-| `A5055996094` | Sergei Sharakin; S. Sharakin | Московский государственный университет | `A5038736353` | abbrev+institution+topics |
-| `A5072035061` | L. I. Isaenko; Lyudmila I. Isaenko | Новосибирский государственный университет | `A5110810683` | abbrev+institution+topics |
-| `A5080073119` | A. B. Rubin; Andrey B. Rubin | Московский государственный университет | `A5109416325`, `A5088071447` | abbrev+institution+topics |
-| `A5102818854` | A. V. Kulikov; Andrey V. Kulikov | Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики | `A5102536047` | abbrev+institution+topics |
-| `A5110340004` | V. S. Aksenov; Viktor S. Aksenov | Национальный исследовательский ядерный университет МИФИ | `A5110743887` | abbrev+institution+topics |
-| `A5110629778` | G. V. Sidorenko; Georgy V. Sidorenko | Национальный исследовательский ядерный университет МИФИ | `A5111203075` | abbrev+institution+topics |
 | `A5112502915` | E. N. Ulomsky; Evgeny N. Ulomsky | Уральский федеральный университет | `A5113218225` | abbrev+institution+topics |
 
 ## Решено человеком — 4
@@ -251,6 +251,33 @@
 ## Подозрение на чужую склейку — все 267
 
 Работы профиля распадаются на две тематические группы без общей подобласти. Расклейка не делается: делить работы между людьми, которых мы не знаем, нечем. На фронте флаг пока не показывается.
+
+### Топ-20 по размеру меньшей тематической группы — смотреть эти
+
+| Автор | Имя | Вуз | Работ | Группы | Темы |
+|---|---|---|---|---|---|
+| `A5025268957` | Vladimir N. Mikhaylov | Санкт-Петербургский государственный университет | 25 | 13+12 | Crystallization and Solubility Studies; X-ray Diffraction in Crystallography; Catalytic Cross-Coupling Reactions; N-Heterocyclic Carbenes in Organic and Inorganic Chemistry |
+| `A5034427136` | Andrey Yu. Konyaev | Уральский федеральный университет | 25 | 13+12 | Nonlinear Waves and Solitons; Algebraic structures and combinatorial models; Advanced Topics in Algebra; Electric Power Systems and Control |
+| `A5059798297` | Vasiliy Fomenko | Уральский федеральный университет | 25 | 12+12 | Radiation Detection and Scintillator Technologies; Nuclear Physics and Applications; Spectroscopy and Quantum Chemical Studies; Semiconductor materials and devices |
+| `A5069508961` | С. В. Малышев | Санкт-Петербургский государственный университет | 25 | 13+12 | Geological and Geochemical Analysis; Wheat and Barley Genetics and Pathology; Geological Studies and Exploration; Geochemistry and Geologic Mapping |
+| `A5111524384` | V. A. Zubov | Санкт-Петербургский государственный университет | 25 | 12+12 | Optical and Acousto-Optic Technologies; Optical Polarization and Ellipsometry; Spectroscopy Techniques in Biomedical and Chemical Research; Atmospheric Ozone and Climate |
+| `A5004388867` | S. V. Fedorov | Высшая школа экономики | 25 | 13+11 | Marine and coastal ecosystems; Atmospheric and Environmental Gas Dynamics; Engineering Technology and Methodologies; Water Quality Monitoring and Analysis |
+| `A5013206562` | А. S. Alekseev | Высшая школа экономики | 25 | 13+11 | Geological Studies and Exploration; Paleontology and Stratigraphy of Fossils; Hydrocarbon exploration and reservoir analysis; Geological and Geochemical Analysis |
+| `A5057931192` | S V Kireev | Национальный исследовательский ядерный университет МИФИ | 25 | 12+11 | Spectroscopy and Laser Applications; Laser Design and Applications; Atmospheric and Environmental Gas Dynamics; Advanced Chemical Sensor Technologies |
+| `A5058183061` | Anton I. Kanev | Московский государственный технический университет имени Н. Э. Баумана | 25 | 12+11 | Remote Sensing and LiDAR Applications; Remote Sensing in Agriculture; Semantic Web and Ontologies; Advanced Computational Techniques and Applications |
+| `A5063730286` | A. A. Fomichev | Московский физико-технический институт | 25 | 14+11 | Advanced Fiber Laser Technologies; Solid State Laser Technologies; Laser Design and Applications; Geophysics and Sensor Technology |
+| `A5082380865` | К. В. Пугачев | Новосибирский государственный университет | 25 | 11+11 | Particle physics theoretical and experimental studies; Mosquito-borne diseases and control; Quantum Chromodynamics and Particle Interactions; High-Energy Particle Collisions Research |
+| `A5082582724` | A. V. Golubkov | Высшая школа экономики | 25 | 13+11 | Rare-earth and actinide compounds; Solid-state spectroscopy and crystallography; Material Science and Thermodynamics; Magnetic Properties of Alloys |
+| `A5101462418` | Hongzhi Yu | Уральский федеральный университет | 25 | 12+11 | Astrophysics and Star Formation Studies; Atmospheric Ozone and Climate; Stellar, planetary, and galactic studies; Astro and Planetary Science |
+| `A5107980327` | А. Антонов | Московский государственный университет | 25 | 14+11 | Particle physics theoretical and experimental studies; High-Energy Particle Collisions Research; Quantum Chromodynamics and Particle Interactions; Particle Detector Development and Performance |
+| `A5108684386` | N. V. Kudrevatykh | Уральский федеральный университет | 25 | 13+11 | Chemical synthesis and pharmacological studies; Magnetic Properties of Alloys; Magnetic and transport properties of perovskites and related materials; Rare-earth and actinide compounds |
+| `A5113833663` | А. В. Лобода | Московский государственный университет | 25 | 14+11 | Holomorphic and Operator Theory; Algebraic and Geometric Analysis; Analytic and geometric function theory; Geometric Analysis and Curvature Flows |
+| `A5002397716` | Ilia Semenkov | Высшая школа экономики | 22 | 12+10 | Functional Brain Connectivity Studies; EEG and Brain-Computer Interfaces; Neurobiology of Language and Bilingualism; Advanced Vision and Imaging |
+| `A5003859451` | D. Karpenkov | Национальный исследовательский технологический университет МИСиС | 25 | 15+10 | Particle physics theoretical and experimental studies; Quantum Chromodynamics and Particle Interactions; High-Energy Particle Collisions Research; Magnetic Properties of Alloys |
+| `A5010483789` | V. I. Subbotin | Московский государственный университет | 25 | 15+10 | Heat Transfer and Boiling Studies; Advanced ceramic materials synthesis; Nuclear reactor physics and engineering; Heat transfer and supercritical fluids |
+| `A5013480255` | L. A. Pozdnyakov | Московский государственный университет | 25 | 13+10 | Particle physics theoretical and experimental studies; High-Energy Particle Collisions Research; Quantum Chromodynamics and Particle Interactions; Soil Carbon and Nitrogen Dynamics |
+
+### Полный список — все 267, по id
 
 | Автор | Имя | Вуз | Работ | Группы | Темы |
 |---|---|---|---|---|---|
