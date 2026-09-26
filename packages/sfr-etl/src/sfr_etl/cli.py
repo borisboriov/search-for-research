@@ -502,7 +502,7 @@ def export_jsonl(
 @export_app.command("cards")
 def export_cards(
     out: Annotated[Path, typer.Option(help="Output JSONL path")] = Path(
-        "data/exports/cards_sfr5.jsonl"
+        "data/exports/cards_sfr5c.jsonl"
     ),
 ) -> None:
     """Export card enrichment for the API (SFR-3): citations + top works per supervisor."""

@@ -47,9 +47,10 @@ make etl                        # авторы → работы → профил
 | `make api` | uvicorn на `localhost:8000` |
 | `make docker-build` / `make docker-up` / `make docker-down` | Контейнер с API |
 | `make bench` | Замер ресурсов и латентности → `docs/sfr2_resources.json` |
-| `make catalog-sfr5` | Пересборка каталога из БД: склейка дублей, профили, экспорты |
-| `make index-sfr5` | Боевой индекс каталога 12 вузов (`data/indexes_sfr5`) |
-| `make eval-sfr5` | Регрессия на новом корпусе: golden + OOD, судейские пулы |
+| `make catalog-sfr5c` | Пересборка боевого каталога из БД: склейка дублей, профили, экспорты |
+| `make index-sfr5c` | Боевой индекс каталога 12 вузов с потолком (`data/indexes_sfr5c`) |
+| `make eval-sfr5c` | Регрессия на боевом корпусе: golden + OOD + external, судейские пулы |
+| `make catalog-sfr5` / `index-sfr5` / `eval-sfr5` | То же для каталога SFR-5 (квота, 5 538) — **заморожено**: цели перезапишут артефакты, на которых стоит воспроизводимость SFR-5 |
 
 CLI-пайплайн по шагам:
 

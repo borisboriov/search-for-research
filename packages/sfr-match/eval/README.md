@@ -18,7 +18,7 @@
 
 ```bash
 uv run sfr-match eval --queries external --models frida \
-  --index-root data/indexes_sfr5 --runs-dir data/eval/runs_external
+  --index-root data/indexes_sfr5c --runs-dir data/eval/runs_external
 ```
 
 ## Как собрать внешний тест-сет (инструкция для Бориса и Светы)
