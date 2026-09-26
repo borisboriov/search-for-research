@@ -264,7 +264,7 @@ SAM = 77% от TAM. Воронка корректна: TAM ⊃ SAM ⊃ SOM и в
 
 ## Что дальше
 
-Задачи — только на доске GitHub «SFR — задачи» (issues репозитория; `label:human` — руки Бориса, `label:sveta` — Света, `label:agent` — ночной агент, `label:decision` — открытые решения). Ближайшая итерация кода — SFR-7 «Ранжирование» (список работ — issues `label:agent`; решения — `docs/DECISIONS.md`). Живой план продукта — `docs/product/mvp_spec.md` (v1.13; база НР — раздел 1.4а). История решений, риски рынка и Q&A-точки к защите — `docs/product/brief_history_qa.md`. TODO-файлы не ведутся с 12.09: `SFR_TODO.md` — в `03_archive/`, `TODO_BORIS.md` удалён из репо, TODO Светы — в `03_archive/` (всё в issues `label:sveta`).
+Задачи — только на доске GitHub «SFR — задачи» (issues репозитория; `label:human` — руки Бориса, `label:sveta` — Света, `label:agent` — автономная сессия агента, `label:decision` — открытые решения). Ближайшая итерация кода — SFR-7 «Ранжирование» (список работ — issues `label:agent`; решения — `docs/DECISIONS.md`). Живой план продукта — `docs/product/mvp_spec.md` (v1.13; база НР — раздел 1.4а). История решений, риски рынка и Q&A-точки к защите — `docs/product/brief_history_qa.md`. TODO-файлы не ведутся с 12.09: `SFR_TODO.md` — в `03_archive/`, `TODO_BORIS.md` удалён из репо, TODO Светы — в `03_archive/` (всё в issues `label:sveta`).
 
 ## Контакты и формат работы
 
