@@ -160,9 +160,10 @@ def test_rejudged_grades_override_and_diff_is_reported(tp, scene) -> None:  # ty
         ood=ood,
         judgments=merged,
     )
-    assert with_rejudged["delta"]["потолок"]["sets"]["golden_in_domain_24"]["success_at_1"][
-        "after"
-    ] == 0.0
+    assert (
+        with_rejudged["delta"]["потолок"]["sets"]["golden_in_domain_24"]["success_at_1"]["after"]
+        == 0.0
+    )
 
 
 def test_table_has_three_rows_per_set_and_all_universities(tp, scene) -> None:  # type: ignore[no-untyped-def]
