@@ -161,3 +161,17 @@ def test_decisive_section_shows_three_points_and_works(dp, scene) -> None:  # ty
     assert "| база |" in text and "| потолок |" in text and "| полный |" in text
     assert "«Статья B1» (2024)" in text, "названия работ обязательны (#107)"
     assert "`q02`" not in text
+
+
+def test_decisive_section_shows_both_judges(dp, scene) -> None:  # type: ignore[no-untyped-def]
+    """Расхождение двух судей на решающей паре видно в самой выборке, а не в другом файле."""
+    queries, points, judgments = scene
+    rows = dp.decisive_queries(queries, points, judgments)
+    rejudged = {
+        ("q01", "B1"): Judgment(query_id="q01", author_id="B1", grade=1, judge="fable"),
+        ("q01", "A1"): Judgment(query_id="q01", author_id="A1", grade=2, judge="fable"),
+    }
+    text = dp.render_decisive_section(rows, points, judgments, rejudged)
+    assert "расхождений 1" in text
+    assert "2 → 1 ⚠" in text, "расхождение помечено"
+    assert "2 = 2" in text, "совпадение показано как совпадение"

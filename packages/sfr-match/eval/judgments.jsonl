@@ -1169,3 +1169,16 @@
 {"query_id": "e01", "author_id": "A5067118675", "grade": 0, "rationale": "нелинейно-оптические материалы", "iteration": "SFR-5b"}
 {"query_id": "e01", "author_id": "A5071907096", "grade": 0, "rationale": "тонкие магнитные плёнки", "iteration": "SFR-5b"}
 {"query_id": "e01", "author_id": "A5057838397", "grade": 0, "rationale": "детекторы на NICA", "iteration": "SFR-5b"}
+{"query_id": "q01", "author_id": "A5022906506", "grade": 1, "rationale": "депрессия и анорексия на YouTube — дискурс-анализ, ML и NLP нет", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q04", "author_id": "A5029059211", "grade": 1, "rationale": "магнетизм и электронная структура FeSi, MnSi, Pd; сверхпроводимости нет", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q06", "author_id": "A5110579031", "grade": 1, "rationale": "одна экспериментальная работа по поляризации лазера (2013); рядом ГВ и мм-радиометр", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q13", "author_id": "A5090699168", "grade": 1, "rationale": "кристаллография в темах; работы — сложность минералов, галогенные связи, метод не показан", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q16", "author_id": "A5061589446", "grade": 2, "rationale": "мемристоры второго порядка на мультиферроидных переходах, синаптическая пластичность, 2 работы", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q21", "author_id": "A5086295663", "grade": 2, "rationale": "селективное лазерное плавление WC-Co и кварцевого стекла — материалы для аддитивных технологий", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q22", "author_id": "A5020280635", "grade": 2, "rationale": "моделирование динамики обработки отверстий на ЧПУ и раскатки труб — прикладное", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5011816761", "grade": 1, "rationale": "молекулярные магнетики Cu(II)-нитроксилы, спиновые переходы — магнетизм, не сверхпроводимость", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q25", "author_id": "A5031290021", "grade": 1, "rationale": "спиновая физика перовскитных нанокристаллов, экситоны — смежно, эксперимент, сверхпроводимости нет", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q28", "author_id": "A5015793075", "grade": 0, "rationale": "артефакт классификатора; работы про краевые задачи и управление колебаниями струны", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q28", "author_id": "A5033826700", "grade": 1, "rationale": "теория и философия права, правосубъектность ИИ; гражданского и договорного нет", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q28", "author_id": "A5037747723", "grade": 0, "rationale": "артефакт классификатора; работы про стромальные клетки и ионные каналы", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}
+{"query_id": "q30", "author_id": "A5030795507", "grade": 1, "rationale": "маркетинг и бренды (частные марки, relationship marketing); соцсетей в работах нет", "iteration": "SFR-5c", "judge": "fable (sfr-judge)"}

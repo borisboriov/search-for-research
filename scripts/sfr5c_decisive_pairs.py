@@ -61,6 +61,22 @@ def _grade(judgments: dict[tuple[str, str], Judgment], query_id: str, author_id:
     return 0 if judgment is None else judgment.grade
 
 
+def _grades(
+    judgments: dict[tuple[str, str], Judgment],
+    rejudged: dict[tuple[str, str], Judgment] | None,
+    query_id: str,
+    author_id: str,
+) -> str:
+    """«2», «2 = 2» или «2 → 1 ⚠»: оценка первого судьи и, если есть, второго."""
+    before = _grade(judgments, query_id, author_id)
+    second = (rejudged or {}).get((query_id, author_id))
+    if second is None:
+        return str(before)
+    if second.grade == before:
+        return f"{before} = {second.grade}"
+    return f"{before} → {second.grade} ⚠"
+
+
 def decisive_queries(
     queries: Sequence[Query],
     points: Sequence[PointRuns],
@@ -126,8 +142,14 @@ def render_decisive_section(
     rows: Sequence[dict[str, Any]],
     points: Sequence[PointRuns],
     judgments: dict[tuple[str, str], Judgment],
+    rejudged: dict[tuple[str, str], Judgment] | None = None,
 ) -> str:
-    """Раздел «Решающие пары» для человека: три точки рядом, с работами."""
+    """Раздел «Решающие пары» для человека: три точки рядом, с работами.
+
+    ``rejudged`` — оценки второго судьи. Если они есть, у каждой пары печатаются
+    **обе**: расхождение двух судей на решающей паре — первое, что стоит смотреть
+    человеку, и искать его по двум файлам он не должен.
+    """
     names = [point.name for point in points]
     lines = [
         "# Решающие пары трёх точек — обязательный раздел выборки (§6.3 SPEC_SFR5c)",
@@ -140,6 +162,18 @@ def render_decisive_section(
         "Колонки точек: " + " · ".join(f"**{name}**" for name in names) + ".",
         "",
     ]
+    if rejudged:
+        disagree = sum(
+            1
+            for key, value in rejudged.items()
+            if key in judgments and judgments[key].grade != value.grade
+        )
+        lines += [
+            f"Оценки печатаются как **было → пересуд** ({len(rejudged)} пар пересужены "
+            f"вторым, независимым прогоном судьи; расхождений {disagree}). Расходящиеся "
+            "помечены ⚠ — смотреть их первыми.",
+            "",
+        ]
     for row in rows:
         query: Query = row["query"]
         lines += [
@@ -152,7 +186,9 @@ def render_decisive_section(
         ]
         for point in points:
             state = row["points"][point.name]
-            top = ", ".join(f"`{a}` ({_grade(judgments, query.id, a)})" for a in state["top5"])
+            top = ", ".join(
+                f"`{a}` ({_grades(judgments, rejudged, query.id, a)})" for a in state["top5"]
+            )
             score = "—" if state["top1_score"] is None else f"{state['top1_score']:.3f}"
             lines.append(
                 f"| {point.name} | {int(state['s1'])} | {int(state['s5'])} | {score} | {top} |"
@@ -170,7 +206,7 @@ def render_decisive_section(
                 works = profile_works(str(record.get("profile_text") or ""))
                 lines += [
                     f"- `{author_id}` **{record['name']}** — {record.get('institution') or '?'}; "
-                    f"оценка **{_grade(judgments, query.id, author_id)}**",
+                    f"оценка **{_grades(judgments, rejudged, query.id, author_id)}**",
                     f"  - работы: {'; '.join(works) or '—'}",
                 ]
         lines.append("")
@@ -184,6 +220,12 @@ def main() -> None:
         "--section-out",
         type=Path,
         default=Path("packages/sfr-match/eval/judgments_decisive_sfr5c.md"),
+    )
+    parser.add_argument(
+        "--rejudged",
+        type=Path,
+        default=None,
+        help="Файл пересуженных оценок: печатать «было → пересуд» у каждой пары",
     )
     args = parser.parse_args()
 
@@ -214,7 +256,14 @@ def main() -> None:
         for record in pool:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
     args.section_out.parent.mkdir(parents=True, exist_ok=True)
-    args.section_out.write_text(render_decisive_section(rows, points, judgments), encoding="utf-8")
+    rejudged = (
+        load_judgments(args.rejudged)
+        if args.rejudged is not None and args.rejudged.exists()
+        else None
+    )
+    args.section_out.write_text(
+        render_decisive_section(rows, points, judgments, rejudged), encoding="utf-8"
+    )
     print(
         f"решающих запросов: {len(rows)} "
         f"({', '.join(r['query'].id for r in rows)}); "

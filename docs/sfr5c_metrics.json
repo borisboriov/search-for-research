@@ -1,0 +1,755 @@
+{
+  "index_version": "frida_clean-9010p-31879d9e",
+  "n_profiles": 9010,
+  "corpus_strata": {
+    "full": 9010,
+    "meta": 0
+  },
+  "quality": {
+    "success_at_1": 0.733,
+    "success_at_5": 0.967,
+    "by_kind": {
+      "edge": {
+        "n": 6,
+        "success_at_1": 0.5,
+        "success_at_5": 0.833
+      },
+      "in-domain": {
+        "n": 24,
+        "success_at_1": 0.792,
+        "success_at_5": 1.0
+      }
+    },
+    "per_query": [
+      {
+        "id": "q01",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.602868
+      },
+      {
+        "id": "q02",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.544334
+      },
+      {
+        "id": "q03",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.442733
+      },
+      {
+        "id": "q04",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.517439
+      },
+      {
+        "id": "q05",
+        "expect": "in-domain",
+        "s1": false,
+        "s5": true,
+        "top1": 0.434552
+      },
+      {
+        "id": "q06",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.491932
+      },
+      {
+        "id": "q07",
+        "expect": "in-domain",
+        "s1": false,
+        "s5": true,
+        "top1": 0.578272
+      },
+      {
+        "id": "q08",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.527473
+      },
+      {
+        "id": "q09",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.5019
+      },
+      {
+        "id": "q10",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.472241
+      },
+      {
+        "id": "q11",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.491822
+      },
+      {
+        "id": "q12",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.455418
+      },
+      {
+        "id": "q13",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.506389
+      },
+      {
+        "id": "q14",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.44999
+      },
+      {
+        "id": "q15",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.404124
+      },
+      {
+        "id": "q16",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.491379
+      },
+      {
+        "id": "q17",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.496064
+      },
+      {
+        "id": "q18",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.522355
+      },
+      {
+        "id": "q19",
+        "expect": "in-domain",
+        "s1": false,
+        "s5": true,
+        "top1": 0.451772
+      },
+      {
+        "id": "q20",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.394592
+      },
+      {
+        "id": "q21",
+        "expect": "in-domain",
+        "s1": false,
+        "s5": true,
+        "top1": 0.443801
+      },
+      {
+        "id": "q22",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.426392
+      },
+      {
+        "id": "q23",
+        "expect": "edge",
+        "s1": true,
+        "s5": true,
+        "top1": 0.453921
+      },
+      {
+        "id": "q24",
+        "expect": "edge",
+        "s1": false,
+        "s5": true,
+        "top1": 0.380373
+      },
+      {
+        "id": "q25",
+        "expect": "edge",
+        "s1": false,
+        "s5": true,
+        "top1": 0.390458
+      },
+      {
+        "id": "q26",
+        "expect": "edge",
+        "s1": true,
+        "s5": true,
+        "top1": 0.476413
+      },
+      {
+        "id": "q27",
+        "expect": "edge",
+        "s1": true,
+        "s5": true,
+        "top1": 0.348556
+      },
+      {
+        "id": "q28",
+        "expect": "edge",
+        "s1": false,
+        "s5": false,
+        "top1": 0.370858
+      },
+      {
+        "id": "q29",
+        "expect": "in-domain",
+        "s1": false,
+        "s5": true,
+        "top1": 0.424507
+      },
+      {
+        "id": "q30",
+        "expect": "in-domain",
+        "s1": true,
+        "s5": true,
+        "top1": 0.481491
+      }
+    ]
+  },
+  "stratum_share_top5": {
+    "full": 150,
+    "meta": 0,
+    "unknown": 0,
+    "full_share": 1.0,
+    "slots": 150
+  },
+  "stratum_share_top1": {
+    "full": 30,
+    "meta": 0,
+    "unknown": 0,
+    "full_share": 1.0,
+    "slots": 30
+  },
+  "calibration": {
+    "counts": {
+      "in_domain": 24,
+      "edge": 6,
+      "ood": 19
+    },
+    "recommended": {
+      "threshold": 0.33,
+      "false_cuts_in_domain": 0,
+      "false_cuts_edge": 0,
+      "ood_caught": 18
+    },
+    "rows": [
+      {
+        "threshold": 0.06,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 0
+      },
+      {
+        "threshold": 0.07,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 0
+      },
+      {
+        "threshold": 0.08,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 1
+      },
+      {
+        "threshold": 0.09,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 2
+      },
+      {
+        "threshold": 0.1,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 2
+      },
+      {
+        "threshold": 0.11,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 2
+      },
+      {
+        "threshold": 0.12,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 3
+      },
+      {
+        "threshold": 0.13,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 3
+      },
+      {
+        "threshold": 0.14,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 4
+      },
+      {
+        "threshold": 0.15,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 6
+      },
+      {
+        "threshold": 0.16,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 9
+      },
+      {
+        "threshold": 0.17,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 11
+      },
+      {
+        "threshold": 0.18,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 11
+      },
+      {
+        "threshold": 0.19,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 12
+      },
+      {
+        "threshold": 0.2,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 12
+      },
+      {
+        "threshold": 0.21,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 13
+      },
+      {
+        "threshold": 0.22,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 13
+      },
+      {
+        "threshold": 0.23,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 14
+      },
+      {
+        "threshold": 0.24,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 14
+      },
+      {
+        "threshold": 0.25,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 15
+      },
+      {
+        "threshold": 0.26,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 16
+      },
+      {
+        "threshold": 0.27,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 16
+      },
+      {
+        "threshold": 0.28,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 16
+      },
+      {
+        "threshold": 0.29,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 17
+      },
+      {
+        "threshold": 0.3,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 17
+      },
+      {
+        "threshold": 0.31,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 18
+      },
+      {
+        "threshold": 0.32,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 18
+      },
+      {
+        "threshold": 0.33,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 18
+      },
+      {
+        "threshold": 0.34,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 0,
+        "ood_caught": 18
+      },
+      {
+        "threshold": 0.35,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 1,
+        "ood_caught": 18
+      },
+      {
+        "threshold": 0.36,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 1,
+        "ood_caught": 18
+      },
+      {
+        "threshold": 0.37,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 1,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.38,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 2,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.39,
+        "false_cuts_in_domain": 0,
+        "false_cuts_edge": 3,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.4,
+        "false_cuts_in_domain": 1,
+        "false_cuts_edge": 4,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.41,
+        "false_cuts_in_domain": 2,
+        "false_cuts_edge": 4,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.42,
+        "false_cuts_in_domain": 2,
+        "false_cuts_edge": 4,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.43,
+        "false_cuts_in_domain": 4,
+        "false_cuts_edge": 4,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.44,
+        "false_cuts_in_domain": 5,
+        "false_cuts_edge": 4,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.45,
+        "false_cuts_in_domain": 8,
+        "false_cuts_edge": 4,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.46,
+        "false_cuts_in_domain": 10,
+        "false_cuts_edge": 5,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.47,
+        "false_cuts_in_domain": 10,
+        "false_cuts_edge": 5,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.48,
+        "false_cuts_in_domain": 11,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.49,
+        "false_cuts_in_domain": 12,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.5,
+        "false_cuts_in_domain": 16,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.51,
+        "false_cuts_in_domain": 18,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.52,
+        "false_cuts_in_domain": 19,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.53,
+        "false_cuts_in_domain": 21,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.54,
+        "false_cuts_in_domain": 21,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.55,
+        "false_cuts_in_domain": 22,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.56,
+        "false_cuts_in_domain": 22,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.57,
+        "false_cuts_in_domain": 22,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.58,
+        "false_cuts_in_domain": 23,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.59,
+        "false_cuts_in_domain": 23,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.6,
+        "false_cuts_in_domain": 23,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      },
+      {
+        "threshold": 0.61,
+        "false_cuts_in_domain": 24,
+        "false_cuts_edge": 6,
+        "ood_caught": 19
+      }
+    ]
+  },
+  "top1_scores": {
+    "in_domain": [
+      0.3946,
+      0.4041,
+      0.4245,
+      0.4264,
+      0.4346,
+      0.4427,
+      0.4438,
+      0.45,
+      0.4518,
+      0.4554,
+      0.4722,
+      0.4815,
+      0.4914,
+      0.4918,
+      0.4919,
+      0.4961,
+      0.5019,
+      0.5064,
+      0.5174,
+      0.5224,
+      0.5275,
+      0.5443,
+      0.5783,
+      0.6029
+    ],
+    "edge": [
+      0.3486,
+      0.3709,
+      0.3804,
+      0.3905,
+      0.4539,
+      0.4764
+    ],
+    "ood": [
+      0.0704,
+      0.0875,
+      0.1126,
+      0.1386,
+      0.1407,
+      0.149,
+      0.1533,
+      0.1587,
+      0.1597,
+      0.1653,
+      0.1692,
+      0.1851,
+      0.2034,
+      0.2216,
+      0.2448,
+      0.2576,
+      0.2887,
+      0.3006,
+      0.3659
+    ]
+  },
+  "ood_per_query": [
+    {
+      "id": "o01",
+      "top1": 0.112643,
+      "comment": "бытовой ремонт"
+    },
+    {
+      "id": "o02",
+      "top1": 0.138556,
+      "comment": "хобби, музыка"
+    },
+    {
+      "id": "o04",
+      "top1": 0.153313,
+      "comment": "потребительский выбор"
+    },
+    {
+      "id": "o06",
+      "top1": 0.070444,
+      "comment": "личные финансы, документы"
+    },
+    {
+      "id": "o09",
+      "top1": 0.244814,
+      "comment": "бытовое планирование"
+    },
+    {
+      "id": "o10",
+      "top1": 0.203441,
+      "comment": "рукоделие"
+    },
+    {
+      "id": "o11",
+      "top1": 0.159729,
+      "comment": "ремонт, стройматериалы для дома"
+    },
+    {
+      "id": "o13",
+      "top1": 0.2887,
+      "comment": "туризм"
+    },
+    {
+      "id": "o14",
+      "top1": 0.169221,
+      "comment": "быт, напитки"
+    },
+    {
+      "id": "o15",
+      "top1": 0.221591,
+      "comment": "красота"
+    },
+    {
+      "id": "o16",
+      "top1": 0.148951,
+      "comment": "быт, сборка мебели"
+    },
+    {
+      "id": "o17",
+      "top1": 0.185065,
+      "comment": "потребительский выбор"
+    },
+    {
+      "id": "o19",
+      "top1": 0.140652,
+      "comment": "правила игры"
+    },
+    {
+      "id": "o20",
+      "top1": 0.158717,
+      "comment": "быт, чистка"
+    },
+    {
+      "id": "o21",
+      "top1": 0.087489,
+      "comment": "административные процедуры"
+    },
+    {
+      "id": "o22",
+      "top1": 0.165252,
+      "comment": "потребительский выбор"
+    },
+    {
+      "id": "o26",
+      "top1": 0.300585,
+      "comment": "SFR-5: музыковедение; перефраз «музыковедение и анализ музыкальной формы» находит лингвистов, не музыковедов"
+    },
+    {
+      "id": "o32",
+      "top1": 0.257613,
+      "comment": "SFR-5: история искусства; перефраз «визуальная культура Возрождения» находит психологов зрительного восприятия"
+    },
+    {
+      "id": "o34",
+      "top1": 0.365855,
+      "comment": "SFR-5: киноведение; перефраз «нарратология в кино и медиа» находит дискурс-аналитиков языка — спорный случай, как o10"
+    }
+  ]
+}
