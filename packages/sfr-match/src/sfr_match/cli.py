@@ -192,9 +192,11 @@ def pool(
     Sorted by author — not by score — so the judge cannot tell which model
     produced a pair (SPEC_SFR1 §5.2).
 
-    ``--blind`` убирает и последний след прежней разметки — поле ``judged``:
-    судья, который пересуживает уже оценённые пары, не должен видеть, какие из
-    них кто-то смотрел (рубрика, п. 5). Пул без него — полный пересуд.
+    ``--blind`` убирает и последний след прежней разметки — поле ``judged``: судья,
+    который пересуживает уже оценённые пары, не должен видеть, какие из них кто-то
+    смотрел (рубрика, п. 5). Он же меняет порядок на ``(author_id, query_id)``:
+    пятёрка одного запроса подряд — это якорь («этот лучше предыдущего»), а не
+    оценка профиля по рубрике; так же собирался пул пересуда решающих пар SFR-5c.
     """
     try:
         runs = load_runs(runs_dir)
@@ -223,6 +225,8 @@ def pool(
         if not blind:
             record["judged"] = (query_id, author_id) in existing
         records.append(record)
+    if blind:
+        records.sort(key=lambda r: (str(r["author_id"]), str(r["query_id"])))
     write_jsonl(out, records)
     if blind:
         typer.secho(f"слепой пул: {len(records)} пар → {out}", fg=typer.colors.GREEN)

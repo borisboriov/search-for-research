@@ -69,7 +69,9 @@ def test_pool_blind_hides_that_a_pair_was_ever_judged(
         "profile_text",
     }
     ids = [(r["query_id"], r["author_id"]) for r in records]
-    assert ids == sorted(ids), "порядок — по (запрос, автор), а не по score"
+    assert ids == sorted(ids, key=lambda k: (k[1], k[0])), (
+        "порядок — по author_id: пятёрка одного запроса подряд якорит судью"
+    )
     assert len(ids) == len(set(ids)), "пара встречается один раз"
     assert "слепой пул" in result.output
 
@@ -86,6 +88,8 @@ def test_pool_without_blind_still_marks_judged_pairs(
     assert result.exit_code == 0, result.output
     records = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines() if line]
     assert all("judged" in record for record in records)
+    ids = [(r["query_id"], r["author_id"]) for r in records]
+    assert ids == sorted(ids), "обычный пул остаётся в порядке (запрос, автор)"
 
 
 def test_review_sample_reads_the_judgments_file_it_is_given(
