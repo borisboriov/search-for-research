@@ -927,3 +927,82 @@ Drive — Борис.
 процедурная гарантия: убрать её можно только судьёй без доступа к файловой
 системе. Восстановленный `CRITERIA_SFR5c.md` предрегистрацией не является;
 доказательство того, что критерии писались до цифр, — спека в git.
+
+## 13. Выкладка (сессия 26.09, вечер)
+
+Условия сессии — комментарий Бориса в #98 от 26.09 («выкладывать, с пересборкой
+каталога по файлу решений») и `docs/DECISIONS.md` той же даты. Отличие от
+чеклиста §11: на сайт едет **не измеренный индекс 9 010**, а каталог, к которому
+применены все 17 решений человека о склейках, — и пороги для него калибруются
+заново.
+
+### 13.1 Что поехало и в каком состоянии
+
+| Что | Было в проде | Стало |
+|---|---|---|
+| Каталог | 5 538 профилей (`data/indexes_sfr5`) | **9 002** (`data/indexes_sfr5c`) |
+| Карточки | `cards_sfr5.jsonl` | `cards_sfr5c.jsonl` |
+| БД разработки | `data/sfr.db`, 5 541 профиль | `data/sfr.db` ← `sfr5c.db`, **9 002**; прежняя — `data/backups/sfr_2026-09-26_before_sfr5c.db` |
+| Тройка лендинга (#20) | старая | Воронцов / Галкина / Кенжин (`b4c509c`, уже в `main`) |
+| Три расклейки 26.09 | один профиль на пару | по два профиля |
+
+### 13.2 Пересборка каталога: 9 010 → 9 002
+
+`SFR_DB_URL=sqlite:///data/sfr5c.db uv run sfr etl dedup --apply --decisions
+"$(pwd)/packages/sfr-match/eval/dedup_decisions.jsonl" --review-out
+packages/sfr-match/eval/dedup_for_review_sfr5c.md --examples 10000`, затем
+`build-profiles` и `make export-sfr5c`. Перед `--apply` копия БД сохранена в
+`data/backups/sfr5c_2026-09-26_before_decisions.db`.
+
+| Проверка | Ожидание §9 спеки / #98 | Факт |
+|---|---|---|
+| Размер каталога | ≈9 002 (8 новых склеек) | **9 002** |
+| Склеек всего | 24 + 8 | **32** (перенесено 158 работ, дублей работ снято 0) |
+| Пар `same` из #112 склеено | 8 | **8** (плюс Jorstad из #93 — всего 9 `same` из 17 решений) |
+| Инвариант «запрещено, но склеено» | пусто | **0** |
+| «Требуют решения человека» / «похоже, один человек» | — | **0 / 0** (все 17 разобраны) |
+| Профили в 300–1 500 символах | 100 % | **100 %**, 0 кандидатов без работ |
+| Три расклейки 26.09 | по два профиля | Лукинские, Корянов, Иноуэ — **по два**, ни один не склеен |
+| Тройка превью лендинга | кандидаты, не дубли, без `suspect_merge` | все три на месте |
+| `suspect_merge` | не трогать | **267**, как было |
+| Сеть | 0 | **0 запросов** (пересборка идёт из БД, работы не догружались) |
+
+Состав каталога по вузам практически не сдвинулся: МГУ **19,0 %** (1 712),
+ВШЭ 13,1 % (1 176), СПбГУ 12,9 % (1 163), три крупнейших — **45,0 %**. Все
+восемь склеек пришлись на МГТУ, МГУ, МФТИ и МИФИ по одному-два профиля.
+
+### 13.3 Артефакты измерения сохранены — §4–§6 воспроизводятся
+
+Пересборка перезаписывает ровно те пути, на которых стоят §4–§7 отчёта, поэтому
+измеренные артефакты сохранены рядом с суффиксом `_9010`:
+`data/indexes_sfr5c_9010`, `data/exports/{profiles,cards}_sfr5c_9010.jsonl`,
+`data/eval/runs{,_ood,_external}_sfr5c_9010`, `data/eval/calibration_sfr5c_9010.json`,
+БД до применения решений — в `data/backups/`. Точка «потолок» в обоих скриптах
+параметризована (#114), и три файла отчёта собираются из архива **байт в байт**
+— проверено `diff`:
+
+```bash
+# §4 — docs/sfr5c_metrics.json
+uv run python scripts/analyze_sfr5.py --runs-dir data/eval/runs_sfr5c_9010 \
+  --ood-runs-dir data/eval/runs_ood_sfr5c_9010 \
+  --profiles data/exports/profiles_sfr5c_9010.jsonl --out docs/sfr5c_metrics.json
+# §6 — docs/sfr5c_decision_metrics.json
+uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
+  --cap-db data/backups/sfr5c_2026-09-26_before_decisions.db
+# §7 — packages/sfr-match/eval/judgments_for_review_sfr5c.md
+uv run sfr-match review-sample --n 20 --runs-dir data/eval/runs_sfr5c_9010 \
+  --index-root data/indexes_sfr5c_9010 --iteration SFR-5c --out data/eval/judgments_sample_sfr5c.md
+uv run python scripts/sfr5c_decisive_pairs.py \
+  --cap-runs data/eval/runs_sfr5c_9010 --cap-profiles data/exports/profiles_sfr5c_9010.jsonl \
+  --rejudged v1=packages/sfr-match/eval/judgments_rejudge_sfr5c.jsonl \
+  --rejudged v2=packages/sfr-match/eval/judgments_rejudge_sfr5c_v2.jsonl \
+  --section-out data/eval/judgments_decisive_sfr5c.md \
+  --sample data/eval/judgments_sample_sfr5c.md \
+  --out packages/sfr-match/eval/judgments_for_review_sfr5c.md
+```
+
+Без суффиксов те же цели (`make metrics-sfr5c`, `make review-sfr5c`) считают
+**текущий** каталог — это и есть их обычная работа после выкладки.
+
+Единственное изменение в `docs/sfr5c_metrics.json` — добавился блок
+`threshold_hints` (см. 13.4); ни одно число §4 не изменилось.
