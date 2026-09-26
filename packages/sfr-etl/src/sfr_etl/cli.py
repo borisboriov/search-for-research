@@ -7,7 +7,7 @@ from typing import Annotated
 
 import structlog
 import typer
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Author, Institution
@@ -327,8 +327,15 @@ def etl_dedup(
             suspect_stats = detect_suspect_merges(session)
             suspects = suspect_examples(session, limit=max(examples, 20))
         else:
-            suspect_stats = {"checked": 0, "suspect": 0}
-            suspects = []
+            # Флаги suspect_merge не пересчитываются без --apply, но уже лежат в БД
+            # с прошлого прогона — показываем их, а не «0 из 0».
+            suspect_stats = {
+                "checked": 0,
+                "suspect": session.execute(
+                    select(func.count()).select_from(Author).where(Author.suspect_merge.is_(True))
+                ).scalar_one(),
+            }
+            suspects = suspect_examples(session, limit=max(examples, 20))
         review_out.parent.mkdir(parents=True, exist_ok=True)
         review_out.write_text(
             render_dedup_review(
@@ -350,7 +357,9 @@ def etl_dedup(
         f"{merge_stats['works_dropped']}); требуют решения человека: {len(findings.review)}; "
         f"похоже, один человек: {len(findings.near_duplicates)}; "
         f"тёзок без сигнала: {len(namesakes)}; "
-        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']}; "
+        f"подозрительных профилей: {suspect_stats['suspect']}"
+        + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
+        + "; "
         f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']} "
         f"→ {review_out}"
     )

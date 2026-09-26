@@ -168,7 +168,11 @@ def same_surname(left: str, right: str) -> bool:
 
 
 def full_first_name(display_name: str) -> str | None:
-    """Развёрнутое (не инициал) первое имя, если оно записано; иначе None."""
+    """Развёрнутое (не инициал) первое имя, если оно записано; иначе None.
+
+    Части в одну-две буквы — инициалы, в том числе усечённые («Il.», «Yu.»,
+    «Al.»): «Il. S. Golyak» и «Igor S. Golyak» — один человек, а не конфликт.
+    """
     cleaned = _INITIALS_RE.sub(" ", display_name).lower()
     parts = [p for p in cleaned.split() if p]
     if len(parts) < 2:
@@ -177,7 +181,7 @@ def full_first_name(display_name: str) -> str | None:
         (i for i in range(len(parts) - 1, -1, -1) if len(parts[i]) > 1), len(parts) - 1
     )
     for i, part in enumerate(parts):
-        if i != surname_at and len(part) > 1:
+        if i != surname_at and len(part) > 2:
             return part
     return None
 

@@ -363,6 +363,8 @@ def test_same_surname_survives_transliteration(left: str, right: str, expected: 
         ("Andrey Popov", "Андрей Попов", False),
         ("Alexey Smirnov", "Aleksei Smirnov", False),
         ("V. V. Koryanov", "Vsevolod V. Koryanov", False),  # инициал ни с чем не спорит
+        ("Igor S. Golyak", "Il. S. Golyak", False),  # усечённый инициал — тоже инициал
+        ("Yu. A. Zolotov", "Yuri A. Zolotov", False),
     ],
 )
 def test_first_names_conflict_oracle(left: str, right: str, expected: bool) -> None:
