@@ -86,6 +86,7 @@ SFR-2 API и пороги · SFR-3 фронт · SFR-4 деплой · SFR-4b а
 - Находки ревью (`/review-iteration`) → issues с лейблом `from-review`.
 - **Ссылки в issue.** Файл репозитория, о котором идёт задача (код, отчёт, спека, eval-файл), — всегда ссылкой на `blob/main` без номера строки: [`docs/SFR5_REPORT.md`](https://github.com/borisboriov/search-for-research/blob/main/docs/SFR5_REPORT.md) §5 — параграф словами, потому что строки уезжают. Permalink по SHA — только если важна конкретная строка на конкретной версии. Удалённые файлы (`docs/NEXT.md`, `TODO_BORIS.md`, TODO-файлы папки) — не ссылать: в «Откуда» остаётся имя файла текстом и дословная цитата, история — `git log --all -- <путь>`. Продуктовые документы лежат в `docs/product/` (бриф, спека MVP, ресерчи, план курса) — на них тоже ссылка на `blob/main`. Бинарники папки документов (паспорт xlsx, дек pptx, скрины) — именем файла без пути.
 - Агент **не меняет** milestones, лейблы `sveta` и `decision` и не удаляет issues.
+- **`git push` и merge — Борис.** Пуш из сессии агента отклоняется разрешениями; агент готовит ветку, коммиты и текст PR (`gh pr create` после пуша Бориса), выкладку на VPS не делает.
 - **Ветки, PR, merge и push.** Агент работает в ветке `sfr-<N>` и готовит текст PR; `git push`, merge PR и удаление ветки делает Борис. `gh pr merge` и `git push` агент не выполняет ни в каком режиме — это не техническое ограничение, а правило.
 - «Требует человека» = issue `human` (и `decision` для нерешённого). Закрытые issues не удалять: внешнему агенту нужна история.
 
@@ -193,7 +194,9 @@ uv run python scripts/bench_sfr4.py              # перемер §3 + пров
 ```bash
 uv run sfr etl authors --institution <id> --strategy stratified --quota 500
 uv run sfr etl works --institution <id>   # по вузам: сбой стоит одного вуза
-make catalog-sfr5   # backfill-mega + dedup + build-profiles + экспорты
+make catalog-sfr5   # backfill-mega + dedup --apply + build-profiles + экспорты
+uv run sfr etl dedup                       # по умолчанию --dry-run (#10); пишет review-файл
+uv run sfr etl unmerge A5… [--apply]       # расклеить ложную склейку из raw и кэша (#108)
 make index-sfr5     # индекс frida_clean по data/exports/profiles_sfr5.jsonl
 make eval-sfr5      # golden + OOD по новому индексу, затем судейские пулы
 uv run python scripts/contacts_experiment.py   # §5, только измерение
