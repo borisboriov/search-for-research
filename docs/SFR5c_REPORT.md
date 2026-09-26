@@ -1225,8 +1225,7 @@ compose, что на бою, плюс `docker-compose.local.yml`):
 ```bash
 # 1. С машины разработчика: запушить ветку и открыть PR
 git push -u origin deploy-sfr5c
-#    текст PR подготовлен — docs/pr_deploy_sfr5c.md; `gh pr create` после пуша
-#    может выполнить агент
+#    текст PR готов в сессии; `gh pr create` после пуша выполняет агент
 
 # 2. После merge — на VPS
 ssh <user>@<host>
