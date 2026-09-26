@@ -91,7 +91,7 @@ def option_by_prefix(field: dict[str, Any], prefix: str) -> dict[str, str] | Non
     """Найти опцию single-select по префиксу имени (полные имена меняются)."""
     for option in field.get("options", []):
         if option["name"].startswith(prefix):
-            return option
+            return dict(option)
     return None
 
 

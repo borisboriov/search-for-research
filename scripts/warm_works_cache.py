@@ -104,7 +104,8 @@ def main() -> None:
                 # 429 = кредиты кончились: ретраить бессмысленно, останавливаемся.
                 max_attempts=1,
             )
-        return local.client
+        api: OpenAlexClient = local.client
+        return api
 
     def warm(author_id: str) -> None:
         nonlocal done, failed

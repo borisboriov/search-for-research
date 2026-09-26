@@ -1,0 +1,286 @@
+{
+  "measured_at": "2026-09-18 06:23:49",
+  "host": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "docker": false
+  },
+  "models": [
+    {
+      "model": "frida",
+      "health": {
+        "status": "ok",
+        "model": "ai-forever/FRIDA",
+        "index_version": "frida_clean-12119p-99460725",
+        "profiles_count": 12119,
+        "institutions_count": 12,
+        "score_threshold": 0.33,
+        "score_weak": 0.4,
+        "score_high": 0.49,
+        "thresholds_match": true,
+        "search_backend": "numpy",
+        "compose": "full",
+        "built_at": "2026-09-18T03:17:07+00:00",
+        "cache_hits": 0,
+        "cache_misses": 0,
+        "cache_hit_rate": 0.0
+      },
+      "cold_start_s": 15.5,
+      "rss_idle_mb": 3634.5,
+      "rss_load_mb": 3703.6,
+      "seq_p50_ms": 0.5,
+      "seq_p95_ms": 128.6,
+      "seq_mean_ms": 21.5,
+      "conc4_p50_ms": 1.2,
+      "conc4_p95_ms": 2.5,
+      "conc4_rps": 2508.51,
+      "requests": 30,
+      "image_mb": null
+    }
+  ],
+  "examples": [
+    {
+      "request": {
+        "query": "нейросети для медицинских изображений",
+        "k": 5
+      },
+      "took_ms": 126.7,
+      "below_threshold": false,
+      "index_version": "frida_clean-12119p-99460725",
+      "results": [
+        {
+          "rank": 1,
+          "name": "Aleksandr Sinitca",
+          "score": 0.5143454074859619,
+          "institution": "Автономная некоммерческая организация высшего образования Университет Иннополис",
+          "h_index": 13,
+          "topics": [
+            "Radiomics and Machine Learning in Medical Imaging",
+            "Video Surveillance and Tracking Methods",
+            "AI in cancer detection",
+            "Advanced Neural Network Applications",
+            "Medical Image Segmentation Techniques"
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "Ramil Kuleev",
+          "score": 0.45367759466171265,
+          "institution": "Автономная некоммерческая организация высшего образования Университет Иннополис",
+          "h_index": 9,
+          "topics": [
+            "COVID-19 diagnosis using AI",
+            "Radiomics and Machine Learning in Medical Imaging",
+            "Lung Cancer Diagnosis and Treatment",
+            "Topic Modeling",
+            "Medical Image Segmentation Techniques"
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "Aleksandra Vatian",
+          "score": 0.4512645900249481,
+          "institution": "Санкт-Петербургский национальный исследовательский университет информационных технологий, механики и оптики",
+          "h_index": 6,
+          "topics": [
+            "AI in cancer detection",
+            "Radiomics and Machine Learning in Medical Imaging",
+            "Topic Modeling",
+            "Semantic Web and Ontologies",
+            "Artificial Intelligence in Healthcare"
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "Alexander Savelev",
+          "score": 0.4368027448654175,
+          "institution": "Санкт-Петербургский государственный университет",
+          "h_index": 8,
+          "topics": [
+            "Image Processing Techniques and Applications",
+            "Cell Image Analysis Techniques",
+            "Advanced Neural Network Applications",
+            "Lung Cancer Diagnosis and Treatment",
+            "Image Retrieval and Classification Techniques"
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "Alexandra Dalechina",
+          "score": 0.43458107113838196,
+          "institution": "Национальный исследовательский ядерный университет МИФИ",
+          "h_index": 6,
+          "topics": [
+            "Radiomics and Machine Learning in Medical Imaging",
+            "Brain Tumor Detection and Classification",
+            "Advanced Radiotherapy Techniques",
+            "Advanced Neural Network Applications",
+            "Glioma Diagnosis and Treatment"
+          ]
+        }
+      ]
+    },
+    {
+      "request": {
+        "query": "нейтринные эксперименты и безнейтринный двойной бета-распад",
+        "k": 5
+      },
+      "took_ms": 123.9,
+      "below_threshold": false,
+      "index_version": "frida_clean-12119p-99460725",
+      "results": [
+        {
+          "rank": 1,
+          "name": "S. G. Belogurov",
+          "score": 0.49124202132225037,
+          "institution": "Национальный исследовательский ядерный университет МИФИ",
+          "h_index": 5,
+          "topics": [
+            "Neutrino Physics Research",
+            "Particle physics theoretical and experimental studies",
+            "Nuclear physics research studies",
+            "Radiation Detection and Scintillator Technologies",
+            "Radioactive Decay and Measurement Techniques"
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "В. Н. Корноухов",
+          "score": 0.47391167283058167,
+          "institution": "Национальный исследовательский ядерный университет МИФИ",
+          "h_index": 34,
+          "topics": [
+            "Neutrino Physics Research",
+            "Particle physics theoretical and experimental studies",
+            "Dark Matter and Cosmic Phenomena",
+            "Astrophysics and Cosmic Phenomena",
+            "Radiation Detection and Scintillator Technologies"
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "S. Belogurov",
+          "score": 0.4729737341403961,
+          "institution": "Национальный исследовательский ядерный университет МИФИ",
+          "h_index": 72,
+          "topics": [
+            "Particle physics theoretical and experimental studies",
+            "Quantum Chromodynamics and Particle Interactions",
+            "High-Energy Particle Collisions Research",
+            "Neutrino Physics Research",
+            "Particle Detector Development and Performance"
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "Л. В. Инжечик",
+          "score": 0.4468824565410614,
+          "institution": "Московский физико-технический институт",
+          "h_index": 22,
+          "topics": [
+            "Neutrino Physics Research",
+            "Particle physics theoretical and experimental studies",
+            "Astrophysics and Cosmic Phenomena",
+            "Dark Matter and Cosmic Phenomena",
+            "Particle Detector Development and Performance"
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "I. N. Machulin",
+          "score": 0.422650545835495,
+          "institution": "Национальный исследовательский ядерный университет МИФИ",
+          "h_index": 5,
+          "topics": [
+            "Neutrino Physics Research",
+            "Dark Matter and Cosmic Phenomena",
+            "Atomic and Subatomic Physics Research",
+            "Particle physics theoretical and experimental studies",
+            "Astrophysics and Cosmic Phenomena"
+          ]
+        }
+      ]
+    },
+    {
+      "request": {
+        "query": "как самому починить стиральную машину, которая не сливает воду",
+        "k": 5
+      },
+      "took_ms": 124.6,
+      "below_threshold": true,
+      "index_version": "frida_clean-12119p-99460725",
+      "results": [
+        {
+          "rank": 1,
+          "name": "Б.С. Ксенофонтов",
+          "score": 0.11264345049858093,
+          "institution": "Московский государственный технический университет имени Н. Э. Баумана",
+          "h_index": 10,
+          "topics": [
+            "Industrial Engineering and Technologies",
+            "Minerals Flotation and Separation Techniques",
+            "Mining and Gasification Technologies",
+            "Engineering and Environmental Studies",
+            "Engineering Technology and Methodologies"
+          ]
+        },
+        {
+          "rank": 2,
+          "name": "С. И. Шахов",
+          "score": 0.10317780077457428,
+          "institution": "Национальный исследовательский технологический университет МИСиС",
+          "h_index": 5,
+          "topics": [
+            "Metallurgical Processes and Thermodynamics",
+            "Diverse Industrial Engineering Technologies",
+            "Industrial Engineering and Technologies",
+            "Iron and Steelmaking Processes",
+            "Engineering and Environmental Studies"
+          ]
+        },
+        {
+          "rank": 3,
+          "name": "V. U. Mnatsakanyan",
+          "score": 0.10182123631238937,
+          "institution": "Национальный исследовательский технологический университет МИСиС",
+          "h_index": 5,
+          "topics": [
+            "Industrial Engineering and Technologies",
+            "Belt Conveyor Systems Engineering",
+            "Mining Techniques and Economics",
+            "Engineering Technology and Methodologies",
+            "Engineering and Environmental Studies"
+          ]
+        },
+        {
+          "rank": 4,
+          "name": "Р. С. Шафир",
+          "score": 0.09864147752523422,
+          "institution": "Московский государственный университет",
+          "h_index": 5,
+          "topics": [
+            "Advanced Mathematical Modeling in Engineering",
+            "Numerical methods in inverse problems",
+            "Stability and Controllability of Differential Equations",
+            "Differential Equations and Numerical Methods",
+            "Advanced Mathematical Physics Problems"
+          ]
+        },
+        {
+          "rank": 5,
+          "name": "A. T. Il’íchev",
+          "score": 0.09855297207832336,
+          "institution": "Московский государственный технический университет имени Н. Э. Баумана",
+          "h_index": 17,
+          "topics": [
+            "Arctic and Antarctic ice dynamics",
+            "Advanced Mathematical Physics Problems",
+            "Nonlinear Waves and Solitons",
+            "Nonlinear Photonic Systems",
+            "Ocean Waves and Remote Sensing"
+          ]
+        }
+      ]
+    }
+  ]
+}
