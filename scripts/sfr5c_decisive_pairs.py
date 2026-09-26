@@ -45,6 +45,21 @@ class PointRuns:
     profiles: dict[str, dict[str, Any]]
 
 
+@dataclass
+class Rejudge:
+    """Один прогон пересуда: как его называть в колонке и что он поставил."""
+
+    label: str
+    grades: dict[tuple[str, str], Judgment]
+
+    @classmethod
+    def parse(cls, spec: str) -> Rejudge:
+        """``v2=path/to/file.jsonl`` или просто ``path`` (метка — имя файла)."""
+        label, sep, raw = spec.partition("=")
+        path = Path(raw if sep else spec)
+        return cls(label=label if sep else path.stem, grades=load_judgments(path))
+
+
 def load_profiles(path: Path) -> dict[str, dict[str, Any]]:
     """``profiles_*.jsonl`` → id → запись (имя, вуз, темы, profile_text)."""
     out: dict[str, dict[str, Any]] = {}
@@ -63,18 +78,30 @@ def _grade(judgments: dict[tuple[str, str], Judgment], query_id: str, author_id:
 
 def _grades(
     judgments: dict[tuple[str, str], Judgment],
-    rejudged: dict[tuple[str, str], Judgment] | None,
+    rejudged: Sequence[Rejudge],
     query_id: str,
     author_id: str,
 ) -> str:
-    """«2», «2 = 2» или «2 → 1 ⚠»: оценка первого судьи и, если есть, второго."""
-    before = _grade(judgments, query_id, author_id)
-    second = (rejudged or {}).get((query_id, author_id))
-    if second is None:
-        return str(before)
-    if second.grade == before:
-        return f"{before} = {second.grade}"
-    return f"{before} → {second.grade} ⚠"
+    """«2», «2 = 2 = 2» или «1 → 2 → 2 ⚠»: накопленная оценка и все пересуды.
+
+    Пересудов может быть несколько (v1 и v2 SFR-5c): человек должен видеть все
+    колонки сразу, иначе он сравнивает файл с файлом руками (#114). ⚠ ставится,
+    если хоть одна колонка разошлась с любой другой.
+    """
+    first = _grade(judgments, query_id, author_id)
+    if not rejudged:
+        return str(first)
+    cells = [str(first)]
+    grades = [first]
+    for pass_ in rejudged:
+        judgment = pass_.grades.get((query_id, author_id))
+        # «?» — пары нет в этом прогоне пересуда (пул пересуда мог быть уже).
+        cells.append("?" if judgment is None else str(judgment.grade))
+        if judgment is not None:
+            grades.append(judgment.grade)
+    if len(set(grades)) == 1 and "?" not in cells:
+        return " = ".join(cells)
+    return " → ".join(cells) + (" ⚠" if len(set(grades)) > 1 else "")
 
 
 def decisive_queries(
@@ -138,17 +165,26 @@ def rejudge_pool(
     return [pairs[key] for key in sorted(pairs, key=lambda k: (k[1], k[0]))]
 
 
+def _disagreements(judgments: dict[tuple[str, str], Judgment], pass_: Rejudge) -> int:
+    """Сколько пар этого прогона разошлись с накопленной разметкой."""
+    return sum(
+        1
+        for key, value in pass_.grades.items()
+        if key in judgments and judgments[key].grade != value.grade
+    )
+
+
 def render_decisive_section(
     rows: Sequence[dict[str, Any]],
     points: Sequence[PointRuns],
     judgments: dict[tuple[str, str], Judgment],
-    rejudged: dict[tuple[str, str], Judgment] | None = None,
+    rejudged: Sequence[Rejudge] = (),
 ) -> str:
     """Раздел «Решающие пары» для человека: три точки рядом, с работами.
 
-    ``rejudged`` — оценки второго судьи. Если они есть, у каждой пары печатаются
-    **обе**: расхождение двух судей на решающей паре — первое, что стоит смотреть
-    человеку, и искать его по двум файлам он не должен.
+    ``rejudged`` — прогоны пересуда. Если они есть, у каждой пары печатаются
+    **все** оценки в одну строку: расхождение судей на решающей паре — первое,
+    что стоит смотреть человеку, и искать его по нескольким файлам он не должен.
     """
     names = [point.name for point in points]
     lines = [
@@ -163,16 +199,16 @@ def render_decisive_section(
         "",
     ]
     if rejudged:
-        disagree = sum(
-            1
-            for key, value in rejudged.items()
-            if key in judgments and judgments[key].grade != value.grade
+        columns = " → ".join(["**было**"] + [f"**{p.label}**" for p in rejudged])
+        counts = ", ".join(
+            f"{p.label}: {len(p.grades)} пар, расхождений с накопленной "
+            f"{_disagreements(judgments, p)}"
+            for p in rejudged
         )
         lines += [
-            f"Оценки печатаются как **было → пересуд** ({len(rejudged)} пар пересужены "
-            f"отдельным прогоном судьи по той же рубрике; расхождений {disagree}). "
-            "Судья не независим от разметки конструктивно — слеп пул, а не он "
-            "(§6 отчёта). Расходящиеся помечены ⚠ — смотреть их первыми.",
+            f"Оценки печатаются как {columns} ({counts}). Судья не независим от "
+            "разметки конструктивно — слеп пул, а не он (§6 отчёта). Пары, где хоть "
+            "одна колонка разошлась с другой, помечены ⚠ — смотреть их первыми.",
             "",
         ]
     for row in rows:
@@ -214,19 +250,78 @@ def render_decisive_section(
     return "\n".join(lines)
 
 
+def render_review_file(decisive: str, sample: str | None) -> str:
+    """Оба раздела выборки в один файл — тот, который читает человек.
+
+    Раньше файл склеивался руками, и повторный прогон его не воспроизводил
+    (#114). Заголовки первого уровня у частей срезаются: в собранном файле H1
+    один, а части — H2.
+    """
+
+    def body(text: str) -> str:
+        lines = text.splitlines()
+        if lines and lines[0].startswith("# "):
+            lines = lines[1:]
+        return "\n".join(lines).strip("\n")
+
+    parts = [
+        "# Судейские оценки SFR-5c — выборка для ручной проверки",
+        "",
+        "Два раздела. **Первый — «Решающие пары»** (обязательный, §6.3 спеки): "
+        "пары, из-за которых метрики трёх каталогов расходятся, со всеми "
+        "оценками, которые по ним есть, — смотреть их первыми, начиная с "
+        "помеченных ⚠. **Второй — случайная выборка** из новой партии оценок "
+        "этой итерации.",
+        "",
+        "Порог из спеки: **≥4 расхождений из 20** в случайной выборке → партию "
+        "надо пересуживать. В решающих парах расхождение судей — не повод "
+        "пересуживать, а повод решить, какое чтение рубрики верное: вердикт "
+        "человека здесь и есть истина.",
+        "",
+        "---",
+        "",
+        "## Часть 1. Решающие пары трёх точек",
+        "",
+        body(decisive),
+    ]
+    if sample is not None:
+        parts += ["", "---", "", "## Часть 2. Случайная выборка новой партии", "", body(sample)]
+    return "\n".join(parts) + "\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--pool-out", type=Path, default=Path("data/eval/pool_rejudge_sfr5c.jsonl"))
     parser.add_argument(
         "--section-out",
         type=Path,
-        default=Path("packages/sfr-match/eval/judgments_decisive_sfr5c.md"),
+        default=Path("data/eval/judgments_decisive_sfr5c.md"),
     )
     parser.add_argument(
         "--rejudged",
+        action="append",
+        default=[],
+        metavar="LABEL=PATH",
+        help="Прогон пересуда: печатать его колонкой «было → …». Можно несколько раз",
+    )
+    parser.add_argument(
+        "--sample",
         type=Path,
         default=None,
-        help="Файл пересуженных оценок: печатать «было → пересуд» у каждой пары",
+        help="Готовая случайная выборка (`sfr-match review-sample`) — второй раздел --out",
+    )
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Собранный файл выборки для человека: оба раздела и общий заголовок",
+    )
+    # Точка «потолок» пересобирается при выкладке (#98), поэтому её пути —
+    # аргументы: измерения §4–§6 воспроизводятся по архивным `*_9010`.
+    parser.add_argument("--cap-name", default="потолок 9 010")
+    parser.add_argument("--cap-runs", type=Path, default=Path("data/eval/runs_sfr5c"))
+    parser.add_argument(
+        "--cap-profiles", type=Path, default=Path("data/exports/profiles_sfr5c.jsonl")
     )
     args = parser.parse_args()
 
@@ -237,9 +332,9 @@ def main() -> None:
             profiles=load_profiles(Path("data/exports/profiles_sfr5.jsonl")),
         ),
         PointRuns(
-            name="потолок 9 010",
-            run=load_run(Path("data/eval/runs_sfr5c/frida_clean.json")),
-            profiles=load_profiles(Path("data/exports/profiles_sfr5c.jsonl")),
+            name=args.cap_name,
+            run=load_run(args.cap_runs / "frida_clean.json"),
+            profiles=load_profiles(args.cap_profiles),
         ),
         PointRuns(
             name="12 119",
@@ -256,19 +351,19 @@ def main() -> None:
     with args.pool_out.open("w", encoding="utf-8") as handle:
         for record in pool:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    rejudged = [Rejudge.parse(spec) for spec in args.rejudged]
+    section = render_decisive_section(rows, points, judgments, rejudged)
     args.section_out.parent.mkdir(parents=True, exist_ok=True)
-    rejudged = (
-        load_judgments(args.rejudged)
-        if args.rejudged is not None and args.rejudged.exists()
-        else None
-    )
-    args.section_out.write_text(
-        render_decisive_section(rows, points, judgments, rejudged), encoding="utf-8"
-    )
+    args.section_out.write_text(section, encoding="utf-8")
+    if args.out is not None:
+        sample = args.sample.read_text(encoding="utf-8") if args.sample is not None else None
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(render_review_file(section, sample), encoding="utf-8")
     print(
         f"решающих запросов: {len(rows)} "
         f"({', '.join(r['query'].id for r in rows)}); "
         f"пар на пересуд: {len(pool)} → {args.pool_out}; раздел → {args.section_out}"
+        + (f"; выборка → {args.out}" if args.out is not None else "")
     )
 
 

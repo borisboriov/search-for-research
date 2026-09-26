@@ -4,7 +4,7 @@
 	deploy-local deploy-local-down audit \
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
-	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c
+	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -270,6 +270,11 @@ SFR5C_DEDUP_REVIEW := packages/sfr-match/eval/dedup_for_review_sfr5c.md
 # Абсолютный путь: цель может быть вызвана из подкаталога, а отсутствие файла
 # решений под --apply теперь ошибка, а не предупреждение (ревью SFR-5c).
 SFR5C_DEDUP_DECISIONS := $(CURDIR)/packages/sfr-match/eval/dedup_decisions.jsonl
+SFR5C_EVAL := packages/sfr-match/eval
+SFR5C_REVIEW := $(SFR5C_EVAL)/judgments_for_review_sfr5c.md
+# Части собранного файла — в data/eval: в git едет только результат склейки.
+SFR5C_DECISIVE := data/eval/judgments_decisive_sfr5c.md
+SFR5C_SAMPLE := data/eval/judgments_sample_sfr5c.md
 
 # --examples 10000 вместо 10: файл читает Борис целиком, а не как примеры.
 catalog-sfr5c: unhide
@@ -311,8 +316,26 @@ eval-sfr5c: unhide
 # 12 119 пересчитываются заново из sfr5b.db — не берутся из старого JSON,
 # чтобы поправка #94 попала в обе правые колонки.
 metrics-sfr5c: unhide
+	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_RUNS) \
+		--ood-runs-dir $(SFR5C_OOD_RUNS) --profiles $(SFR5C_PROFILES) \
+		--out docs/sfr5c_metrics.json
 	uv run python scripts/sfr5c_three_points.py
 	uv run python scripts/sfr5c_rejudge_classes.py
+
+# Выборка для человека (§7 отчёта) целиком одной командой: раньше два раздела
+# склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки
+# оценок — «было → v1 → v2»: оба пересуда рядом, расхождения помечены ⚠.
+# Точка «потолок» пересобрана при выкладке #98; чтобы получить файл ровно как в
+# §7, добавить `--cap-runs data/eval/runs_sfr5c_9010
+# --cap-profiles data/exports/profiles_sfr5c_9010.jsonl` и
+# `--index-root data/indexes_sfr5c_9010` у review-sample.
+review-sfr5c: unhide
+	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_RUNS) \
+		--index-root $(SFR5C_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)
+	uv run python scripts/sfr5c_decisive_pairs.py \
+		--rejudged v1=$(SFR5C_EVAL)/judgments_rejudge_sfr5c.jsonl \
+		--rejudged v2=$(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
+		--section-out $(SFR5C_DECISIVE) --sample $(SFR5C_SAMPLE) --out $(SFR5C_REVIEW)
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.

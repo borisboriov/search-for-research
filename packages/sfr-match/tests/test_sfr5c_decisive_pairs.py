@@ -167,11 +167,58 @@ def test_decisive_section_shows_both_judges(dp, scene) -> None:  # type: ignore[
     """Расхождение двух судей на решающей паре видно в самой выборке, а не в другом файле."""
     queries, points, judgments = scene
     rows = dp.decisive_queries(queries, points, judgments)
-    rejudged = {
-        ("q01", "B1"): Judgment(query_id="q01", author_id="B1", grade=1, judge="fable"),
-        ("q01", "A1"): Judgment(query_id="q01", author_id="A1", grade=2, judge="fable"),
-    }
+    rejudged = [
+        dp.Rejudge(
+            label="v1",
+            grades={
+                ("q01", "B1"): Judgment(query_id="q01", author_id="B1", grade=1, judge="fable"),
+                ("q01", "A1"): Judgment(query_id="q01", author_id="A1", grade=2, judge="fable"),
+            },
+        )
+    ]
     text = dp.render_decisive_section(rows, points, judgments, rejudged)
-    assert "расхождений 1" in text
+    assert "расхождений с накопленной 1" in text
     assert "2 → 1 ⚠" in text, "расхождение помечено"
     assert "2 = 2" in text, "совпадение показано как совпадение"
+
+
+def test_decisive_section_shows_every_rejudge_pass(dp, scene) -> None:  # type: ignore[no-untyped-def]
+    """Два пересуда — три колонки «было → v1 → v2» в одной строке (#114)."""
+    queries, points, judgments = scene
+    rows = dp.decisive_queries(queries, points, judgments)
+    rejudged = [
+        dp.Rejudge(
+            label="v1",
+            grades={("q01", "B1"): Judgment(query_id="q01", author_id="B1", grade=1)},
+        ),
+        dp.Rejudge(
+            label="v2",
+            grades={("q01", "B1"): Judgment(query_id="q01", author_id="B1", grade=2)},
+        ),
+    ]
+    text = dp.render_decisive_section(rows, points, judgments, rejudged)
+    assert "**было** → **v1** → **v2**" in text
+    assert "2 → 1 → 2 ⚠" in text, "все три колонки в одной строке, ⚠ за любое расхождение"
+    assert "2 → ? → ?" in text, "пары вне пула пересуда видны как «?», а не как нули"
+
+
+def test_rejudge_parse_takes_label_and_path(dp, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """`--rejudged v2=path` — метка колонки отделяется от пути (#114)."""
+    path = tmp_path / "judgments_rejudge_x.jsonl"
+    path.write_text(
+        json.dumps({"query_id": "q01", "author_id": "A1", "grade": 1}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    labelled = dp.Rejudge.parse(f"v2={path}")
+    assert labelled.label == "v2" and labelled.grades[("q01", "A1")].grade == 1
+    assert dp.Rejudge.parse(str(path)).label == "judgments_rejudge_x"
+
+
+def test_review_file_joins_both_parts(dp) -> None:  # type: ignore[no-untyped-def]
+    """`make review-sfr5c` собирает файл целиком: один H1, две части (#114)."""
+    text = dp.render_review_file("# Решающие пары\n\nтело раздела\n", "# Выборка\n\n1. пара\n")
+    assert text.count("\n# ") == 0 and text.startswith("# Судейские оценки SFR-5c")
+    assert "## Часть 1. Решающие пары трёх точек" in text
+    assert "## Часть 2. Случайная выборка новой партии" in text
+    assert "тело раздела" in text and "1. пара" in text
+    assert "Часть 2" not in dp.render_review_file("# Решающие пары\n\nтело\n", None)
