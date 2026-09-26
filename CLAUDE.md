@@ -16,9 +16,10 @@ SEO-контур, обогащение карточек) и **SFR-4** (фикс�
 в pre-commit — `docs/SFR4b_REPORT.md`) и **SFR-5** (каталог 12 вузов,
 стратифицированный отбор, дедупликация, перекалибровка порогов —
 `docs/SFR5_REPORT.md`). **SFR-5 закрыта целиком**, включая бэкфилл
-публикаций: каталог — 5 538 профилей, у каждого загружены работы, пороги
+публикаций: каталог был 5 538 профилей, у каждого загружены работы, пороги
 перекалиброваны на полном корпусе и уточнены мини-сессией фиксов ревью 06.09
-(**0.32 / 0.40 / 0.47**, `docs/DECISIONS.md`). **SFR-4 закрыта целиком
+(0.32 / 0.40 / 0.47 — **больше не боевые**, см. SFR-5c ниже;
+`docs/DECISIONS.md`). **SFR-4 закрыта целиком
 08.09**. **SFR-6 сделана 12.09** — фронт переведён на дизайн-направление B
 «Академичная свежесть» (дизайн-система `apps/web/design/DESIGN_SYSTEM.md` **v2.1**:
 тёплый офф-вайт, акцент `#0F5F5C`, Literata + IBM Plex Sans, теней нет;
@@ -31,18 +32,27 @@ SEO-контур, обогащение карточек) и **SFR-4** (фикс�
 12 119 профилей в копии БД `data/sfr5b.db` и индексе `data/indexes_sfr5b`
 (пороги 0.33 / 0.40 / 0.49 только в его `meta.json`); прод не менялся, отчёт —
 `docs/SFR5b_REPORT.md`. **SFR-5c измерена 26.09** (ветка `sfr-5c`, #98):
-каталог 12 вузов с потолком на вуз — 9 010 профилей в `data/sfr5c.db` и индексе
-`data/indexes_sfr5c` (пороги 0.33 / 0.40 / 0.48 только в его `meta.json`), сеть 0
-запросов; Success@5 91,7 → 100 % на наборе 24 при сохранённом edge, `q07` и `q10`
+каталог 12 вузов с потолком на вуз — 9 010 профилей, сеть 0 запросов;
+Success@5 91,7 → 100 % на наборе 24 при сохранённом edge, `q07` и `q10`
 закрыты; перекос выдачи переехал с МГУ (22 → 12 % слотов) на ВШЭ (22,7 %).
 Отчёт — `docs/SFR5c_REPORT.md`, рекомендация §11 — **выкладывать с двумя
-оговорками**; **прод не переключён**, решение и выкладка за Борисом (#98), спека
-остаётся в корне до неё. **Ревью пройдено 26.09** (0 Critical, 0 High, 3 Medium):
+оговорками**. **Ревью пройдено 26.09** (0 Critical, 0 High, 3 Medium):
 рубрика судейства вынесена в git (`packages/sfr-match/eval/JUDGE_RUBRIC.md`),
 tie-break из неё убран, решающие пары пересужены заново (**v2**) — расхождение
 с накопленной разметкой **29,6 %**, а не 37,8 %; рост Success@5 виден только по
 накопленной разметке, по строгой база уже проходит (Success@1 растёт в обеих).
-Итог фиксов — §12 отчёта, открытое — #114, #115.
+Итог фиксов — §12 отчёта, открытое — #115.
+**Выкладка SFR-5c подготовлена 26.09** (ветка `deploy-sfr5c`, #98; решение
+Бориса — «выкладывать с пересборкой каталога по файлу решений»). Каталог
+пересобран с 17 решениями человека о склейках: **9 002 профиля**, боевые
+артефакты — `data/indexes_sfr5c` (`frida_clean-9002p-35e591d4`),
+`data/exports/cards_sfr5c.jsonl`, боевая dev-БД `data/sfr.db` (прежняя — в
+`data/backups/`); **пороги 0.33 / 0.40 / 0.49** в `ApiSettings` и в `meta.json`
+индекса. Артефакты измерения 9 010 сохранены рядом с суффиксом `_9010` — §4, §6
+и §7 отчёта воспроизводятся по ним байт в байт (§13). Цифры качества для
+паспорта считаются **только по слепому пересуду** субагентом `sfr-judge`
+(`docs/DECISIONS.md` 26.09, канонический судья). `git push`, merge и выкладка
+на VPS — Борис; результат проверок с боевого адреса — §13 отчёта.
 **Решение по базе НР (#90, 24.09): три дорожки**,
 `docs/DECISIONS.md` 24.09; дальше — #99 (новые вузы и НИИ) → #100 (мягкие
 пороги) → **SFR-7 ранжирование**.
@@ -155,7 +165,7 @@ Search For Research — сервис кросс-вузового подбора 
 копируются, `design/mockups/*` — история v1), боевая компоновка
 (`deploy/`, SFR-4 — выложена на VPS 08.09). Осталось:
 переезд с файлового индекса на PostgreSQL/pgvector — только когда корпус
-перерастёт десятки тысяч профилей, на 5 538 `IndexFlatIP` ещё достаточен.
+перерастёт десятки тысяч профилей, на 9 002 `IndexFlatIP` ещё достаточен.
 
 ## Команды
 
@@ -190,7 +200,7 @@ make bench       # замер ресурсов и латентности → doc
 Итерация SFR-3 добавила:
 
 ```bash
-make export-sfr5    # data/exports/cards_sfr5.jsonl — обогащение карточек для API
+make export-sfr5c   # data/exports/cards_sfr5c.jsonl — обогащение карточек для API
 make web-setup      # npm ci в apps/web
 make web-dev / web-lint / web-typecheck / web-test / web-build
 make web-e2e        # Playwright против живого API; скриншоты в e2e/screenshots
@@ -206,18 +216,27 @@ SFR_WEB_URL=http://localhost:8080 make web-e2e   # e2e против компон
 uv run python scripts/bench_sfr4.py              # перемер §3 + проверки защиты
 ```
 
-Итерация SFR-5 добавила:
+Итерация SFR-5 добавила (боевые цели — `*-sfr5c`, блок SFR-5 заморожен: его
+цели перезапишут артефакты, на которых стоит воспроизводимость SFR-5):
 
 ```bash
 uv run sfr etl authors --institution <id> --strategy stratified --quota 500
 uv run sfr etl works --institution <id>   # по вузам: сбой стоит одного вуза
-make catalog-sfr5   # backfill-mega + dedup --apply + build-profiles + экспорты
+make catalog-sfr5c  # backfill-mega + dedup --apply + build-profiles + экспорты
 uv run sfr etl dedup                       # по умолчанию --dry-run (#10); пишет review-файл
 uv run sfr etl unmerge A5… [--apply]       # расклеить ложную склейку из raw и кэша (#108)
-make index-sfr5     # индекс frida_clean по data/exports/profiles_sfr5.jsonl
-make eval-sfr5      # golden + OOD по новому индексу, затем судейские пулы
+make index-sfr5c    # индекс frida_clean по profiles_sfr5c.jsonl + штамп порогов
+make eval-sfr5c     # golden + OOD + external, затем судейские пулы
+make metrics-sfr5c  # docs/sfr5c_metrics.json и таблица трёх точек
+make review-sfr5c   # выборка судейских оценок на проверку человеком
 uv run python scripts/contacts_experiment.py   # §5, только измерение
 ```
+
+**Решения человека о склейках** — `packages/sfr-match/eval/dedup_decisions.jsonl`
+(`same` склеивает поверх блокеров, `different` запрещает навсегда); без файла
+`dedup --apply` останавливается. **Судейство** — субагент `sfr-judge` по рубрике
+`packages/sfr-match/eval/JUDGE_RUBRIC.md`; цифры качества наружу берутся только
+со слепого пула (`sfr-match pool --blind`, `make metrics-deploy-sfr5c`).
 
 **Порядок для ингеста работ:** сначала `scripts/warm_works_cache.py`
 (греет дисковый кэш в несколько потоков, останавливается на 429), затем
@@ -240,9 +259,11 @@ PATH или из запиненного docker-образа.
 Боевой контур — каталог `deploy/` (compose, Caddyfile с rate limiting,
 sync-artifacts.sh, README с процедурами); гайд пилота — `docs/PILOT_TEST_GUIDE.md`.
 Пороги уверенности живут в настройках API, отдаются в `/health` и штампуются
-в `meta.json` индекса шагом `make index-sfr5` (`scripts/stamp_thresholds.py`,
-числа берутся из `ApiSettings`); действующие значения — в `docs/SFR5_REPORT.md`
-§5 — фронт чисел не знает, менять только там.
+в `meta.json` индекса шагом `make index-sfr5c` (`scripts/stamp_thresholds.py`,
+числа берутся из `ApiSettings`); действующие значения — **0.33 / 0.40 / 0.49**,
+обоснование — §13 `docs/SFR5c_REPORT.md`, рецепт `weak`/`high` — в коде
+(`threshold_hints` в `scripts/analyze_sfr5.py`). Фронт чисел не знает, менять
+только в `ApiSettings` — и одновременно с индексом и `cards`.
 
 CLI пайплайна (typer, точка входа `sfr`):
 ```bash
