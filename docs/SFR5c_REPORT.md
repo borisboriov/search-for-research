@@ -219,6 +219,73 @@ E. V. Sokolov, Shestakov, Бескин, Sokoloff, Popruzhenko) и пять но�
 
 *Заполняется по критериям §6.1 спеки.*
 
+### Чеклист выкладки — для отдельной короткой сессии (≈1 час)
+
+Выкладка **не делалась** в этой сессии (§0 и §9 спеки). Чеклист переписан с
+фактическими путями и числами; запускать только после «да» Бориса в #98.
+Три вещи едут **одновременно** (`docs/DECISIONS.md` 17.09): индекс + `cards` +
+три порога в `ApiSettings`; вместе с ними — **#20** (тройка лендинга из
+`b4c509c`, на бою до сих пор старая) и **три расклейки** 26.09.
+
+**Что менять (фактические пути):**
+
+1. `apps/api/src/sfr_api/settings.py`: `index_root` `data/indexes_sfr5` →
+   **`data/indexes_sfr5c`**; `cards_path` `data/exports/cards_sfr5.jsonl` →
+   **`data/exports/cards_sfr5c.jsonl`**; `score_threshold` / `score_weak` /
+   `score_high` 0.32 / 0.40 / 0.47 → числа из §5 этого отчёта (они же в
+   `data/indexes_sfr5c/frida_clean/meta.json`; штамп и настройки обязаны
+   совпасть, иначе `/health` покажет `thresholds_match: false`); комментарий про
+   калибровку в строках 25 и 34–35 — на новый индекс и на 9 010 профилей.
+2. `deploy/docker-compose.yml`: `SFR_API_INDEX_ROOT` (стр. 28),
+   `SFR_API_CARDS_PATH` (стр. 29), volume `../data/indexes_sfr5` (стр. 37) и
+   комментарии-заголовки (стр. 8–9) → `sfr5c`.
+   `deploy/sync-artifacts.sh`: проверка наличия (стр. 17), `rsync` индекса
+   (стр. 28) и `cards` (стр. 29), финальное сообщение (стр. 31).
+   `Makefile`: умолчания цели `api` (`SFR_API_INDEX_ROOT`, `SFR_API_CARDS_PATH`).
+   `deploy/README.md` стр. 68: «(5 538)» → «(9 010)».
+3. `packages/sfr-match/eval/ood_queries.jsonl` — убрать `o13` и `o15` отдельным
+   коммитом с записью в `DECISIONS.md`, если §5 этого отчёта подтвердил их
+   отклонение. Тогда `make eval-sfr5` перестанет воспроизводить таблицу
+   калибровки SFR-5 (19 → 17 посторонних) — это осознанная цена, и её надо
+   назвать в том же коммите.
+4. `grep -rn "5 538\|5538\|0\.32\|0\.47" docs/ apps/ deploy/ CLAUDE.md` —
+   кроме `docs/specs/` и старых отчётов (это история). Точно требуют правки:
+   `CLAUDE.md` (строки 19 и 140 — состояние и «на 5 538 IndexFlatIP достаточен»),
+   `deploy/README.md`, `apps/api/src/sfr_api/settings.py`.
+5. **Решение, которое принимается в сессии выкладки, а не здесь:** становится ли
+   `data/sfr5c.db` новой `data/sfr.db` (с бэкапом
+   `data/backups/sfr_<дата>_before_sfr5c.db`). Рекомендация — **да, с бэкапом**:
+   все команды `sfr etl` по умолчанию идут в `sfr.db`, и #99 должен продолжать с
+   выложенного каталога. Альтернатива (`SFR_DB_URL` в `.env` на `sfr5c.db`)
+   хрупка: одна команда без переменной — и каталог расходится. Записать в
+   `DECISIONS.md`.
+
+**Порядок.** Ветка → PR → Борис: push, merge, `git pull` на VPS → с машины
+разработчика `deploy/sync-artifacts.sh user@host` (индекс ≈150 МБ +
+`cards_sfr5c.jsonl` 11 МБ) → на VPS `cd deploy && docker compose up -d --build`
+(пересобираются api и web — web тянет #20) → ревалидация ISR:
+`curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate`.
+
+**Проверки после выкладки:**
+
+- `docker compose exec api curl -s localhost:8000/api/health`:
+  `profiles_count` = **9010**, `thresholds_match: true`,
+  `index_version` = slug из §5, `built_at` — дата сборки индекса 26.09;
+- `curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'` == **9010**;
+  лендинг 200, тройка превью — Воронцов / Галкина / Кенжин;
+- карточки трёх расклеенных пар отдают **по два профиля**:
+  `/supervisor/A5112269203` и `/supervisor/A5073953503` (Лукинские),
+  `/supervisor/A5017119124` и `/supervisor/A5007427934` (Корянов),
+  `/supervisor/A5101454429` и `/supervisor/A5101454427` (Иноуэ);
+- `SFR_WEB_URL=https://$DOMAIN make web-e2e` (размер каталога берётся с лендинга);
+- три запроса руками: `q07`-подобный (ML в физике частиц — должны быть люди из
+  ВШЭ), запрос про профиль МГУ, посторонний `o01` (баннер «уверенных совпадений
+  нет»).
+
+После — `Closes #98` в PR выкладки (#20 закрывает Борис после обновления
+сервера); правка паспорта (#95, файл-предложение этой сессии) — Борис; Google
+Drive — Борис.
+
 ## 12. Независимое ревью
 
 *Оставлено под ревью (`/review-iteration` в отдельной сессии).*
