@@ -9,8 +9,8 @@ name: Board sync
 #
 # Токен: GITHUB_TOKEN Actions не имеет доступа к пользовательским Projects v2,
 # поэтому нужен PAT Бориса в секрете репозитория BOARD_SYNC_TOKEN
-# (classic PAT со scope `project` и `repo` — те же, что даёт `gh auth refresh -s project`;
-# скрипт проверяет scope `project` через `gh auth status`).
+# (classic PAT со scope `project`, `repo` и `read:org` — без `read:org` `gh project`
+# падает с «unknown owner type»; скрипт проверяет scope `project` через `gh auth status`).
 #
 # Цикла событий нет: скрипт меняет только поля доски, лейблы и issues не трогает.
 
@@ -43,7 +43,7 @@ jobs:
           GH_TOKEN: ${{ secrets.BOARD_SYNC_TOKEN }}
         run: |
           if [ -z "$GH_TOKEN" ]; then
-            echo "::error::секрет BOARD_SYNC_TOKEN не задан — PAT со scope project и repo (Settings → Secrets and variables → Actions)"
+            echo "::error::секрет BOARD_SYNC_TOKEN не задан — classic PAT со scope project, repo, read:org (Settings → Secrets and variables → Actions)"
             exit 1
           fi
           gh auth status
