@@ -1,0 +1,51 @@
+name: Board sync
+
+# Поля доски «SFR — задачи» (Status / Priority / Iteration) — производные от
+# лейблов и состояния issues: правила — в докстринге scripts/gh_board_sync.py.
+# Раньше синхронизацию запускали руками (`make board-sync`) после каждого треда
+# и забывали; с 27.09.2026 (#142) её запускает этот workflow — по событиям issues,
+# раз в сутки (на случай пропущенных событий) и руками через workflow_dispatch.
+# `make board-sync` остаётся ручным запасным путём.
+#
+# Токен: GITHUB_TOKEN Actions не имеет доступа к пользовательским Projects v2,
+# поэтому нужен PAT Бориса в секрете репозитория BOARD_SYNC_TOKEN
+# (classic PAT со scope `project` и `repo` — те же, что даёт `gh auth refresh -s project`;
+# скрипт проверяет scope `project` через `gh auth status`).
+#
+# Цикла событий нет: скрипт меняет только поля доски, лейблы и issues не трогает.
+
+on:
+  issues:
+    types: [opened, reopened, closed, labeled, unlabeled, milestoned, demilestoned]
+  schedule:
+    - cron: "17 3 * * *" # 06:17 МСК, минута не :00
+  workflow_dispatch:
+
+# Всплеск событий (несколько лейблов подряд) — выполняется только последний
+# прогон; отменённый ничего не ломает: скрипт идемпотентен и пишет только
+# отличающиеся значения.
+concurrency:
+  group: board-sync
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository == 'borisboriov/search-for-research'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync board fields from labels
+        env:
+          GH_TOKEN: ${{ secrets.BOARD_SYNC_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::секрет BOARD_SYNC_TOKEN не задан — PAT со scope project и repo (Settings → Secrets and variables → Actions)"
+            exit 1
+          fi
+          gh auth status
+          python3 scripts/gh_board_sync.py --dry-run
+          python3 scripts/gh_board_sync.py
