@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { KNOWN_AUTHOR_ID, KNOWN_AUTHOR_NAME } from "./helpers";
+import { catalogueCount, COLD_START, KNOWN_AUTHOR_ID, KNOWN_AUTHOR_NAME } from "./helpers";
 
 // SSR-контур (SPEC_SFR3 §3): полный HTML профиля без JS, sitemap со всеми
 // профилями, robots.txt закрывает /results и /api.
@@ -21,13 +21,15 @@ test("sitemap.xml перечисляет все профили каталога"
   // компоновки API снаружи недоступен по дизайну (SFR-4), а лендинг
   // рендерит то же число сервером из /api/health. Заодно проверяется, что
   // витрина и sitemap говорят об одном каталоге.
-  const [sitemap, landing] = await Promise.all([request.get("/sitemap.xml"), request.get("/")]);
-  const html = await landing.text();
-  const stat = html.match(/>([\d\u00a0\s]+)<\/span><span[^>]*>научрук\S* в каталоге/);
-  expect(stat, "лендинг не показывает счётчик каталога — API отвечает?").not.toBeNull();
-  const profilesCount = Number(stat![1].replace(/[\s\u00a0]/g, ""));
-  const urls = (await sitemap.text()).match(/\/supervisor\//g) ?? [];
-  expect(urls.length).toBe(profilesCount);
+  // На холодном старте обе страницы могут прийти снимком без данных API —
+  // повторяем пару запросов, пока счётчик не появится и не сойдётся с sitemap.
+  await expect(async () => {
+    const [sitemap, landing] = await Promise.all([request.get("/sitemap.xml"), request.get("/")]);
+    const profilesCount = catalogueCount(await landing.text());
+    expect(profilesCount, "лендинг не показывает счётчик каталога — API отвечает?").not.toBeNull();
+    const urls = (await sitemap.text()).match(/\/supervisor\//g) ?? [];
+    expect(urls.length).toBe(profilesCount);
+  }).toPass(COLD_START);
 });
 
 test("robots.txt: каталог открыт, выдача и API закрыты", async ({ request }) => {

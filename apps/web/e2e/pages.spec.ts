@@ -1,6 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-import { DESKTOP, KNOWN_AUTHOR_ID, KNOWN_AUTHOR_NAME, MOBILE, screenshot } from "./helpers";
+import {
+  COLD_START,
+  DESKTOP,
+  KNOWN_AUTHOR_ID,
+  KNOWN_AUTHOR_NAME,
+  MOBILE,
+  screenshot,
+} from "./helpers";
 
 // Скриншоты трёх страниц на 1440 и 390 — материал визуальной сверки с
 // design/mockups/*.png (SPEC_SFR3 §5). Файлы в e2e/screenshots (gitignored).
@@ -12,12 +19,16 @@ for (const [label, viewport] of [
     test.use({ viewport });
 
     test(`лендинг (${label})`, async ({ page }) => {
-      await page.goto("/");
+      // Превью подборки — реальные профили каталога; на холодном старте первый
+      // рендер может прийти без данных API, поэтому страница перезагружается,
+      // пока превью не появится (#26).
+      await expect(async () => {
+        await page.goto("/");
+        await expect(page.getByText(KNOWN_AUTHOR_NAME)).toBeVisible({ timeout: 2_000 });
+      }).toPass(COLD_START);
       await expect(page.getByRole("heading", { level: 1 })).toContainText(
         "Научный руководитель под твою тему",
       );
-      // Превью подборки — реальные профили каталога
-      await expect(page.getByText(KNOWN_AUTHOR_NAME)).toBeVisible();
       await screenshot(page, `landing-${label}`);
     });
 
