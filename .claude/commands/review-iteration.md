@@ -5,12 +5,12 @@ argument-hint: SFR-5
 
 Проведи независимое код-ревью итерации $ARGUMENTS с помощью субагента `sfr-reviewer`
 (он описан в `.claude/agents/sfr-reviewer.md`; передай ему название итерации и попроси
-записать отчёт в `docs/REVIEW_$ARGUMENTS.md`). Сам код не правь.
+записать отчёт в `docs/reports/REVIEW_$ARGUMENTS.md`). Сам код не правь.
 
 Когда отчёт готов: прочитай его, проверь, что каждая High/Critical находка подтверждена
 цитатой кода, и выведи мне краткую сводку: число находок по severity, три самые важные,
 и предложение — заводить ли мини-сессию фиксов или включить в §0 следующей спеки.
 
 Итог ревью (severity, находки → issues `from-review`, что исправлено) запиши разделом
-«Независимое ревью» в `docs/SFR<N>_REPORT.md` — так его видит Stop-хук
-`.claude/hooks/review-reminder.sh`; файл `docs/REVIEW_*.md` временный и в git не идёт.
+«Независимое ревью» в `docs/reports/SFR<N>_REPORT.md` — так его видит Stop-хук
+`.claude/hooks/review-reminder.sh`; файл `docs/reports/REVIEW_*.md` временный и в git не идёт.
