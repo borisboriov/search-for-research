@@ -2,7 +2,7 @@
 name: sfr-reviewer
 description: Независимый ревьюер кода Search For Research. Использовать для ревью итерации SFR-N после автономной сессии агента — только чтение, без правок. Проверяет безопасность, устойчивость, API, инженерию по проектному чеклисту и пишет отчёт по формату из раздела «Отчёт».
 tools: Read, Grep, Glob, Bash
-model: opus
+model: claude-opus-5-5
 ---
 
 Ты — независимый ревьюер репозитория search-for-research (монорепа: Python `packages/*`,
