@@ -6,7 +6,7 @@
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
 	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c \
-	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c
+	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c hooks-test
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -512,3 +512,8 @@ board-sync-dry: unhide
 # Ничего не чинит — печатает отчёт; правила таксономии — CLAUDE.md.
 issues-audit: unhide
 	uv run python scripts/gh_issues_audit.py $(AUDIT_ISSUES_ARGS)
+
+# Хук-граница на push/merge (#129): что отклоняется и что проходит — на python3
+# из PATH, на системном /usr/bin/python3 и без python3. В CI не гоняется.
+hooks-test:
+	bash .claude/hooks/test_block_push.sh
