@@ -5,7 +5,8 @@
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
-	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c
+	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c \
+	pool-base-blind-sfr5c metrics-base-blind-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -363,6 +364,26 @@ review-deploy-sfr5c: unhide
 		--index-root $(SFR5C_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--out $(SFR5C_EVAL)/judgments_for_review_deploy.md
+
+# #122: тот же слепой пересуд топ-5 — на прежнем боевом индексе 5 538
+# (data/indexes_sfr5 и прогон runs_sfr5 замороженного блока SFR-5; на VPS
+# этого индекса уже нет). Пара «5 538 → 9 002» одним судьёй и одной рубрикой —
+# §13.11 отчёта. Те же CLI и скрипт, что у выкладки, другие входы; накопленный
+# judgments.jsonl не трогается. Вторая команда метрик — совпадение двух слепых
+# прогонов на общих парах двух пятёрок (не #115: пул другой).
+pool-base-blind-sfr5c: unhide
+	uv run sfr-match pool --runs-dir $(SFR5_RUNS) --index-root $(SFR5_INDEX_ROOT) \
+		--depth 5 --blind --out data/eval/pool_base5538_blind.jsonl
+
+metrics-base-blind-sfr5c: unhide
+	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5_RUNS)/frida_clean.json \
+		--judgments $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
+		--out docs/sfr5c_base_blind_metrics.json
+	uv run python scripts/sfr5c_rejudge_classes.py \
+		--v1 $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
+		--v2 $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
+		--v1-label "слепой пересуд 9 002" --v2-label "слепой пересуд 5 538" \
+		--out docs/sfr5c_blind_overlap_classes.json
 
 # Выборка для человека (§7 отчёта) целиком одной командой: раньше два раздела
 # склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки

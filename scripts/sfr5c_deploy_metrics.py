@@ -1,10 +1,15 @@
-"""Качество выкладываемого индекса по двум разметкам — цифры §13 и паспорта.
+"""Качество индекса по двум разметкам — цифры §13 и паспорта.
 
-Пересуд топ-5 на итоговом индексе делает слепой судья (`sfr-judge`, Fable) по
-рубрике 26.09: **только эти цифры идут в паспорт** (#95, условия Бориса в #98).
+Пересуд топ-5 на индексе делает слепой судья (`sfr-judge`, Fable) по рубрике
+26.09: **только эти цифры идут в паспорт** (#95, условия Бориса в #98).
 Накопленная разметка `judgments.jsonl` считается рядом — она сравнима с §4 и со
 всеми прошлыми отчётами, но получена судьёй-сборщиком и оптимистична. Две
 колонки в одном файле, чтобы никто не взял их из разных мест и не сложил.
+
+Индекс задаётся прогоном (`--runs`, в нём `index_version`), разметка — своим
+файлом: по умолчанию выложенный индекс 9 002 (`make metrics-deploy-sfr5c`),
+тот же скрипт на прежнем боевом индексе 5 538 — `make metrics-base-blind-sfr5c`
+(#122, пара «было → стало» одним судьёй, §13.11 отчёта).
 
 Наборы — те же, что в §6: `golden in-domain 24`, «те же 22» (без `q29`/`q30`,
 перемеченных на ревью SFR-5) и `edge 6`. Неоценённая пара считается нулём —
@@ -76,12 +81,17 @@ def sets_of(queries: list[Any]) -> dict[str, list[Any]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--runs", type=Path, default=Path("data/eval/runs_sfr5c/frida_clean.json"))
+    parser.add_argument(
+        "--runs",
+        type=Path,
+        default=Path("data/eval/runs_sfr5c/frida_clean.json"),
+        help="Прогон golden set на индексе, который оценивается",
+    )
     parser.add_argument(
         "--judgments",
         type=Path,
         default=Path("packages/sfr-match/eval/judgments_deploy_sfr5c.jsonl"),
-        help="Слепая разметка выкладываемого индекса",
+        help="Слепая разметка топ-5 этого же индекса",
     )
     parser.add_argument("--out", type=Path, default=Path("docs/sfr5c_deploy_metrics.json"))
     args = parser.parse_args()
