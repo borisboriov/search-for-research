@@ -31,6 +31,8 @@ blocked=(
     "bash -lc 'git -C /tmp push'"
     "eval \"git push\""
     "echo \"\$(git push)\""
+    "echo \"\`git push\`\""
+    $'cat <<EOF\n$(git push)\nEOF'
     "gh pr merge 1"
     "gh pr merge --auto --squash 12"
     "gh api repos/o/r/pulls/1/merge -X PUT"
@@ -51,6 +53,9 @@ allowed=(
     "echo 'gh pr merge'"
     "grep -rn \"git push\" ."
     "ls push/"
+    "echo '\`git push\`'"
+    $'cat > f.md <<\'EOF\'\nничего не пушим: `git push` — только Борис\ngit push origin main\n$(git push)\nEOF'
+    $'python3 - <<"PY"\nprint("git push")\nPY\ngit status'
     "make hooks-test"
 )
 

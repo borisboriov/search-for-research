@@ -150,10 +150,12 @@ make board-sync       # применить
 (`.claude/commands/issues.md`); правила таксономии остаются здесь, команда на них ссылается.
 
 **Конфигурация Claude Code — в git** (с 26.09.2026): `.claude/settings.json` (режим `auto`, allow/deny,
-Stop-хук `.claude/hooks/review-reminder.sh`), субагенты `.claude/agents/` (`sfr-reviewer` — независимое
+Stop-хук `.claude/hooks/review-reminder.sh`, PreToolUse-хук `.claude/hooks/block-push.sh`), субагенты `.claude/agents/` (`sfr-reviewer` — независимое
 ревью итерации, `sfr-judge` — слепое судейство пар по рубрике `packages/sfr-match/eval/JUDGE_RUBRIC.md`),
 команды `.claude/commands/` (`/issues`, `/review-iteration`). Личное — только `.claude/settings.local.json`
-(исключён через `.claude/.gitignore`).
+(исключён через `.claude/.gitignore`). **Граница — только хук `block-push.sh`** (#129, DECISIONS 27.09):
+он отклоняет любую форму `git push` и `gh pr merge` по разобранным аргументам, тесты — `make hooks-test`;
+`allow`/`deny` в settings — гигиена и подсказка, а не защита.
 
 ## Что это за проект
 

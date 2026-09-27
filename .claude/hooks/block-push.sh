@@ -13,7 +13,9 @@
 #   * `gh pr merge`;
 #   * `gh api`, меняющий PR: эндпоинт `…/pulls/N/merge`, методы PUT/PATCH/DELETE
 #     на `…/pulls…`, GraphQL-мутации слияния.
-# Строки в кавычках — это строки: `echo "git push"` проходит.
+# Строки в кавычках — это строки: `echo "git push"` проходит; тело heredoc с
+# кавычками у разделителя (`<<'EOF'`) — литерал, тело без кавычек проверяется
+# только на подстановки `$(…)` / `` `…` ``, которые bash в нём выполнит.
 #
 # Протокол Claude Code: отказ — код 2 и причина в stderr (её видит агент),
 # пропуск — код 0 без вывода. Разбор — python3 из системы; если его нет или
@@ -62,8 +64,6 @@ MUTATING = {"PUT", "PATCH", "DELETE"}
 
 
 def tokenize(command: str) -> list[str]:
-    # Перенос строки с обратным слэшем — продолжение команды, как в bash.
-    command = command.replace("\\\n", " ")
     lexer = shlex.shlex(command, posix=True, punctuation_chars=";&|()<>\n")
     lexer.whitespace = " \t\r"
     lexer.whitespace_split = True
@@ -71,9 +71,75 @@ def tokenize(command: str) -> list[str]:
     return list(lexer)
 
 
-def substitutions(command: str) -> list[str]:
-    """Содержимое `$(…)` и `` `…` ``: в двойных кавычках bash их тоже выполняет."""
-    return re.findall(r"\$\(([^()]*)\)", command) + re.findall(r"`([^`]*)`", command)
+HEREDOC = re.compile(r"(?<!<)<<-?\s*(['\"]?)([A-Za-z0-9_]+)\1(?!<)")
+
+
+def split_heredocs(command: str) -> tuple[str, list[str]]:
+    """Отделить тела heredoc от команды.
+
+    Тело — не команда: `cat > f <<'EOF'` с текстом «git push» внутри ничего не
+    пушит. Тело с кавычками у разделителя (`<<'EOF'`) — литерал, его не
+    смотрим вовсе; без кавычек (`<<EOF`) bash выполняет в нём `$(…)` и `` `…` ``,
+    поэтому такие тела возвращаются для поиска подстановок.
+    """
+    code: list[str] = []
+    bodies: list[str] = []
+    pending: list[tuple[str, bool, list[str]]] = []
+    for line in command.split("\n"):
+        if pending:
+            delim, quoted, buf = pending[0]
+            if line.strip() == delim:
+                pending.pop(0)
+                if not quoted:
+                    bodies.append("\n".join(buf))
+            else:
+                buf.append(line)
+            continue
+        code.append(line)
+        for match in HEREDOC.finditer(line):
+            pending.append((match.group(2), bool(match.group(1)), []))
+    bodies.extend("\n".join(buf) for _, quoted, buf in pending if not quoted)
+    return "\n".join(code), bodies
+
+
+def substitutions(text: str, quotes: bool = True) -> list[str]:
+    """Содержимое `$(…)` и `` `…` ``, которые bash выполнит.
+
+    В одинарных кавычках подстановок нет, в двойных — есть. `quotes=False` —
+    для тела heredoc без кавычек: там кавычки — обычные символы.
+    """
+    found: list[str] = []
+    i, n, state = 0, len(text), "plain"
+    while i < n:
+        ch = text[i]
+        if state == "single":
+            if ch == "'":
+                state = "plain"
+            i += 1
+            continue
+        if ch == "\\":
+            i += 2
+            continue
+        if quotes and ch == "'" and state == "plain":
+            state = "single"
+        elif quotes and ch == '"':
+            state = "double" if state == "plain" else "plain"
+        elif text.startswith("$(", i):
+            depth, j = 1, i + 2
+            while j < n and depth:
+                depth += {"(": 1, ")": -1}.get(text[j], 0)
+                j += 1
+            found.append(text[i + 2 : j - 1])
+            i = j
+            continue
+        elif ch == "`":
+            end = text.find("`", i + 1)
+            end = n if end == -1 else end
+            found.append(text[i + 1 : end])
+            i = end + 1
+            continue
+        i += 1
+    return found
 
 
 def segments(tokens: list[str]) -> list[list[str]]:
@@ -199,11 +265,16 @@ def check_argv(argv: list[str], cwd: str | None, depth: int) -> str | None:
 def check_command(command: str, cwd: str | None, depth: int = 0) -> str | None:
     if depth > 5:
         return None
-    for inner in substitutions(command):
+    # Перенос строки с обратным слэшем — продолжение команды, как в bash.
+    code, bodies = split_heredocs(command.replace("\\\n", " "))
+    inner_commands = substitutions(code)
+    for body in bodies:
+        inner_commands += substitutions(body, quotes=False)
+    for inner in inner_commands:
         found = check_command(inner, cwd, depth + 1)
         if found:
             return found
-    for argv in segments(tokenize(command)):
+    for argv in segments(tokenize(code)):
         found = check_argv(argv, cwd, depth)
         if found:
             return found
