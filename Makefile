@@ -553,3 +553,12 @@ issues-audit: unhide
 # из PATH, на системном /usr/bin/python3 и без python3. В CI не гоняется.
 hooks-test:
 	bash .claude/hooks/test_block_push.sh
+
+# Согласованность живых документов (#144): пути и старые адреса в md, блок «Состояние»
+# DECISIONS против брифа, meta.json боевого индекса и ApiSettings, открытая итерация,
+# версия спеки MVP. Только stdlib, идёт в CI. `-live` — плюс сверка с боевым /api/health.
+docs-check:
+	python3 scripts/docs_check.py
+
+docs-check-live:
+	python3 scripts/docs_check.py --live

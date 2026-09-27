@@ -91,7 +91,7 @@ Stop-хук `.claude/hooks/review-reminder.sh`, PreToolUse-хук `.claude/hooks
 ревью итерации, `sfr-judge` — слепое судейство пар по рубрике `packages/sfr-match/eval/JUDGE_RUBRIC.md`),
 команды `.claude/commands/` (`/issues`, `/review-iteration`). Личное — только `.claude/settings.local.json`
 (исключён через `.claude/.gitignore`). **Граница — только хук `block-push.sh`** (#129, DECISIONS 27.09):
-он отклоняет push в `main`, force/delete и `gh pr merge` по разобранным аргументам и пропускает push своей ветки (с 27.09.2026), тесты — `make hooks-test`;
+он отклоняет push в `main`, force/delete и `gh pr merge` по разобранным аргументам и пропускает push своей ветки (с 27.09.2026), тесты — `make hooks-test`; **`make docs-check`** (`scripts/docs_check.py`, в CI) — согласованность живых документов: пути, старые адреса, блок «Состояние» против брифа, `meta.json` индекса и `ApiSettings`; `make docs-check-live` — плюс боевой `/api/health`;
 `allow`/`deny` в settings — гигиена и подсказка, а не защита.
 
 ## Что это за проект

@@ -30,6 +30,11 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Docs check
+        # Живые документы согласованы: пути, блок «Состояние» против брифа и
+        # ApiSettings (meta.json индекса в CI нет — эта сверка пропускается).
+        run: make docs-check
+
   web:
     runs-on: ubuntu-latest
     defaults:
