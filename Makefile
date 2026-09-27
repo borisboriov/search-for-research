@@ -69,15 +69,35 @@ index: unhide
 # Full SFR-1 reproduction. NOT the default target any more: it ends in
 # `sfr-match report`, which rewrites the frozen docs/reports/SFR1_REPORT.md — and the
 # judging pool has grown since, so nDCG there would move retroactively.
+# Замороженные отчёты SFR-1 и SFR-2 (#8): штатные цели пишут пересчёт в
+# data/eval/*.check.md и печатают, совпал ли он с отчётом в git (полный diff —
+# data/eval/*.diff). Перезаписать сам отчёт — только явно: ALLOW_OVERWRITE=1.
+ifeq ($(ALLOW_OVERWRITE),1)
+SFR1_REPORT_OUT := docs/reports/SFR1_REPORT.md
+SFR2_REPORT_OUT := docs/reports/SFR2_REPORT.md
+else
+SFR1_REPORT_OUT := data/eval/SFR1_REPORT.check.md
+SFR2_REPORT_OUT := data/eval/SFR2_REPORT.check.md
+endif
+# $(1) — замороженный отчёт, $(2) — пересчёт, $(3) — файл diff.
+define compare_frozen
+	@if [ "$(ALLOW_OVERWRITE)" != 1 ]; then \
+		if diff -u $(1) $(2) > $(3); then echo "$(1): пересчёт совпадает с отчётом в git"; \
+		else echo "$(1): пересчёт расходится с отчётом в git — $$(grep -c '^[-+][^-+]' $(3)) строк, diff в $(3); отчёт не тронут"; fi; \
+	fi
+endef
+
 eval-sfr1: index
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --no-clean
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --clean
 	uv run sfr-match pool
-	uv run sfr-match report
+	uv run sfr-match report --out $(SFR1_REPORT_OUT)
+	$(call compare_frozen,docs/reports/SFR1_REPORT.md,$(SFR1_REPORT_OUT),data/eval/SFR1_REPORT.diff)
 
 # Report only (rankings and judgments already on disk).
 eval-report: unhide
-	uv run sfr-match report-sfr2
+	uv run sfr-match report-sfr2 --out $(SFR2_REPORT_OUT)
+	$(call compare_frozen,docs/reports/SFR2_REPORT.md,$(SFR2_REPORT_OUT),data/eval/SFR2_REPORT.diff)
 
 # ---------------------------------------------------------------------------
 # SFR-2: search API over the two-university corpus
@@ -104,7 +124,8 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # threshold calibration, then the report. Index building is a separate target
 # (hours of embedding); this one only needs the indexes to exist.
 #
-# ВНИМАНИЕ (SFR-5): последний шаг перезаписывает docs/reports/SFR2_REPORT.md, а входные
+# Последний шаг пишет пересчёт в data/eval/SFR2_REPORT.check.md, а не в
+# docs/reports/SFR2_REPORT.md (#8), — и расхождение ожидаемо: входные
 # наборы с тех пор пересмотрены — посторонние 17 → 19, а в golden set четыре
 # запроса (q27-q30) перемечены из out-of-domain в edge/in-domain. Поэтому в
 # отчёте задним числом сдвинутся таблица калибровки, nDCG, строка состава
@@ -112,8 +133,8 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # их теперь 24 вместо 22. Проверка «код цел, изменились данные» — прогон с
 # исходной разметкой (git stash push packages/sfr-match/eval/queries.jsonl):
 # на ней Success@1/@3/@5 и MRR воспроизводятся байт в байт.
-# Разбор прогона 06.09 — docs/reports/SFR5_REPORT.md §8. После прогона отчёт возвращать:
-#   git checkout docs/reports/SFR2_REPORT.md
+# Разбор прогона 06.09 — docs/reports/SFR5_REPORT.md §8. Перезаписать сам отчёт —
+# `make eval ALLOW_OVERWRITE=1` (затем `git diff` и осознанный коммит).
 eval: eval-sfr2
 
 eval-sfr2: unhide
@@ -128,7 +149,8 @@ eval-sfr2: unhide
 	uv run sfr-match pool --runs-dir $(SFR2_OOD_RUNS) --queries ood \
 		--index-root $(SFR2_INDEX_ROOT) --out data/eval/pool_ood.jsonl
 	uv run sfr-match calibrate --runs-dir $(SFR2_RUNS) --ood-runs-dir $(SFR2_OOD_RUNS)
-	uv run sfr-match report-sfr2
+	uv run sfr-match report-sfr2 --out $(SFR2_REPORT_OUT)
+	$(call compare_frozen,docs/reports/SFR2_REPORT.md,$(SFR2_REPORT_OUT),data/eval/SFR2_REPORT.diff)
 
 # Card enrichment for the API (SFR-3): citations + top works, from the local DB.
 # Псевдоним export-sfr5: до SFR-5 цель писала в data/exports/cards.jsonl, который
