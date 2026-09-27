@@ -76,3 +76,31 @@ def test_unjudged_pairs_count_as_zero_and_are_reported(dm) -> None:  # type: ign
     assert summary["success_at_5"] == 0.5
     assert summary["unjudged_pairs"] == 2, "обе пары q02 не оценены"
     assert summary["per_query"][0]["grades"] == [2, 0]
+
+
+def test_merge_makes_the_old_grade_stale_and_the_pair_unjudged(dm) -> None:  # type: ignore[no-untyped-def]
+    """#123, сценарий q17: оценку ставили профилю до склейки, после склейки у того
+    же id другой profile_text — старая оценка не берётся, пара неоценённая."""
+    from sfr_match.evalset import profile_fingerprint
+
+    before, after = "Belogurov: LHCb", "Belogurov: LHCb + GERDA 0νββ"
+    run = _run({"q17": ["A5107886204"]})
+    queries = [Query(id="q17", text="нейтрино", expect="in-domain")]
+    judged = {
+        ("q17", "A5107886204"): Judgment(
+            query_id="q17", author_id="A5107886204", grade=1, profile_fp=profile_fingerprint(before)
+        )
+    }
+    current = {"A5107886204": profile_fingerprint(after)}
+    usable, block = dm.drop_stale("слепая", judged, current)
+    assert usable == {}
+    assert block is not None and block["stale"] == 1
+    assert block["stale_pairs"] == [["q17", "A5107886204"]]
+    summary = dm.summarize(run, queries, usable)
+    assert summary["unjudged_pairs"] == 1, "устаревшая оценка — неоценённая пара, а не 1"
+    # Профиль не менялся — оценка остаётся; строк без отпечатка сверка не касается.
+    same = {"A5107886204": profile_fingerprint(before)}
+    assert dm.drop_stale("слепая", judged, same)[0] == judged
+    legacy = {k: v.model_copy(update={"profile_fp": ""}) for k, v in judged.items()}
+    usable, block = dm.drop_stale("накопленная", legacy, current)
+    assert usable == legacy and block is None, "без отпечатка — как до #123, JSON без блока"

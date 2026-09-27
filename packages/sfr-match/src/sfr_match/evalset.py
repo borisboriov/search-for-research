@@ -4,9 +4,10 @@ Both files live in git (``packages/sfr-match/eval/``) — they are a project ass
 not a build artefact (SPEC_SFR1 §2).
 """
 
+import hashlib
 import json
 import os
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Literal
 
@@ -69,6 +70,12 @@ class Judgment(BaseModel):
     # иначе pydantic молча выбросит поле, и по файлу нельзя будет сказать, чьи это
     # оценки — а с SFR-5c пары судит отдельный субагент, а не сессия (SFR-5c §6).
     judge: str = ""
+    # #123: отпечаток профиля, по которому ставилась оценка (`profile_fingerprint`
+    # его `profile_text`). После склейки у канонического id другой профиль, и
+    # старая оценка к нему не относится: метрики такие пары считают
+    # неоценёнными, а не берут устаревшую оценку молча. Пусто — строка до #123,
+    # сверить не с чем.
+    profile_fp: str = ""
 
 
 def _iter_jsonl(path: Path) -> Iterator[dict[str, object]]:
@@ -106,6 +113,39 @@ def load_queries(path: Path | None = None) -> list[Query]:
             raise ValueError(f"{path}: duplicate query id {query.id!r}")
         seen.add(query.id)
     return queries
+
+
+def profile_fingerprint(profile_text: str) -> str:
+    """Отпечаток профиля для строки оценки (#123): 16 hex от sha256 текста."""
+    return hashlib.sha256(profile_text.encode("utf-8")).hexdigest()[:16]
+
+
+def split_stale(
+    judgments: Mapping[tuple[str, str], Judgment], fingerprints: Mapping[str, str]
+) -> tuple[dict[tuple[str, str], Judgment], dict[str, int], list[tuple[str, str]]]:
+    """Отделить оценки, профиль которых изменился после судейства (#123).
+
+    ``fingerprints`` — отпечатки текущих профилей (id → отпечаток). Оценка с
+    отпечатком, который не совпал с текущим профилем, **устарела** — её нет в
+    результате, пара считается неоценённой. Оценка без отпечатка (строки до
+    #123) остаётся: сверить не с чем, это «без отпечатка», а не «устарела».
+    Возвращает (годные оценки, счётчики, ключи устаревших).
+    """
+    usable: dict[tuple[str, str], Judgment] = {}
+    counts = {"fresh": 0, "stale": 0, "no_fingerprint": 0}
+    stale: list[tuple[str, str]] = []
+    for key, judgment in judgments.items():
+        current = fingerprints.get(key[1])
+        if not judgment.profile_fp:
+            counts["no_fingerprint"] += 1
+            usable[key] = judgment
+        elif current is not None and current != judgment.profile_fp:
+            counts["stale"] += 1
+            stale.append(key)
+        else:
+            counts["fresh"] += 1
+            usable[key] = judgment
+    return usable, counts, sorted(stale)
 
 
 def load_judgments(path: Path | None = None) -> dict[tuple[str, str], Judgment]:

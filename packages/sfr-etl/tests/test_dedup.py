@@ -1,5 +1,6 @@
 """Дедупликация авторов (SPEC_SFR5 §3): склейка расщеплённых и флаг чужой склейки."""
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -961,3 +962,28 @@ def test_initials_prefix_pairs_go_to_the_human_and_are_never_merged(engine: Engi
         )
         assert "## Похоже, один человек — инициалы-префикс — все 2" in text
         assert "`A1`, `A2`" in text
+
+
+def test_judged_pairs_in_merges_lists_grades_that_a_merge_makes_stale(tmp_path: Path) -> None:
+    """#123: оценки на каноническом и на дубле — в список; на постороннем — нет."""
+    from sfr_etl.dedup import ROLE_CANONICAL, ROLE_DUPLICATE, judged_pairs_in_merges
+
+    (tmp_path / "judgments.jsonl").write_text(
+        "\n".join(
+            json.dumps(row)
+            for row in (
+                {"query_id": "q17", "author_id": "A5107886204", "grade": 1},
+                {"query_id": "q17", "author_id": "A5104688244", "grade": 2},
+                {"query_id": "q01", "author_id": "A0000000001", "grade": 2},
+            )
+        ),
+        encoding="utf-8",
+    )
+    group = MergeGroup(canonical="A5107886204", duplicates=["A5104688244"], signal="human (#112)")
+    found = judged_pairs_in_merges([group], eval_dir=tmp_path)
+    assert [(f["author_id"], f["role"]) for f in found] == [
+        ("A5107886204", ROLE_CANONICAL),
+        ("A5104688244", ROLE_DUPLICATE),
+    ]
+    text = render_dedup_review([], [], [], n_suspects=0, stale_judgments=found)
+    assert "## Оценки, которые склейки делают устаревшими — все 2" in text

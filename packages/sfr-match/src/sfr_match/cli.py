@@ -15,6 +15,7 @@ from sfr_match.evalset import (
     eval_dir,
     load_judgments,
     load_queries,
+    profile_fingerprint,
     query_set_path,
     write_jsonl,
 )
@@ -241,6 +242,47 @@ def pool(
         return
     todo = sum(1 for record in records if not record["judged"])
     typer.secho(f"пул: {len(records)} пар, неоценённых {todo} → {out}", fg=typer.colors.GREEN)
+
+
+@app.command(name="stamp-judgments")
+def stamp_judgments_cmd(
+    pool: Annotated[Path, typer.Option("--pool", help="Пул, по которому судили (с profile_text)")],
+    judgments: Annotated[Path, typer.Option("--judgments", help="Файл оценок этого прогона")],
+) -> None:
+    """Проставить отпечаток профиля в оценки после судейства (#123).
+
+    Судья пишет строку по формату рубрики, а менять рубрику ради служебного поля
+    нельзя, — поэтому отпечаток ставится отдельным шагом: из того же пула, по
+    которому судили (`profile_fingerprint` его `profile_text`). Уже проставленные
+    строки не меняются; строки, которых нет в пуле, остаются без отпечатка.
+    """
+    texts = {
+        (str(r["query_id"]), str(r["author_id"])): str(r["profile_text"])
+        for r in _read_jsonl(pool)
+        if r.get("profile_text")
+    }
+    rows = _read_jsonl(judgments)
+    counts = {"stamped": 0, "already": 0, "not_in_pool": 0}
+    for row in rows:
+        key = (str(row["query_id"]), str(row["author_id"]))
+        if row.get("profile_fp"):
+            counts["already"] += 1
+        elif key in texts:
+            row["profile_fp"] = profile_fingerprint(texts[key])
+            counts["stamped"] += 1
+        else:
+            counts["not_in_pool"] += 1
+    write_jsonl(judgments, rows)
+    typer.secho(
+        f"{judgments}: отпечаток проставлен {counts['stamped']}, уже был {counts['already']}, "
+        f"нет в пуле {counts['not_in_pool']}",
+        fg=typer.colors.GREEN,
+    )
+
+
+def _read_jsonl(path: Path) -> list[dict[str, Any]]:
+    with path.open(encoding="utf-8") as handle:
+        return [json.loads(line) for line in handle if line.strip()]
 
 
 @app.command(name="review-sample")

@@ -111,3 +111,21 @@ def test_real_judgments_carry_the_sfr5_batch() -> None:
     judgments = load_judgments()
     marked = [j for j in judgments.values() if j.iteration == "sfr5"]
     assert len(marked) == 83
+
+
+def test_split_stale_separates_fresh_stale_and_legacy() -> None:
+    from sfr_match.evalset import Judgment, profile_fingerprint, split_stale
+
+    fp_old, fp_new = profile_fingerprint("old"), profile_fingerprint("new")
+    judgments = {
+        ("q1", "A1"): Judgment(query_id="q1", author_id="A1", grade=2, profile_fp=fp_new),
+        ("q1", "A2"): Judgment(query_id="q1", author_id="A2", grade=2, profile_fp=fp_old),
+        ("q1", "A3"): Judgment(query_id="q1", author_id="A3", grade=1),
+    }
+    usable, counts, stale = split_stale(judgments, {"A1": fp_new, "A2": fp_new, "A3": fp_new})
+    assert set(usable) == {("q1", "A1"), ("q1", "A3")}
+    assert counts == {"fresh": 1, "stale": 1, "no_fingerprint": 1}
+    assert stale == [("q1", "A2")]
+    assert len(profile_fingerprint("x")) == 16 and profile_fingerprint("x") != profile_fingerprint(
+        "y"
+    )

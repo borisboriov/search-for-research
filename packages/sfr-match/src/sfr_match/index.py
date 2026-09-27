@@ -206,3 +206,17 @@ def resolve_index_dir(
     root: Path = DEFAULT_INDEX_ROOT,
 ) -> Path:
     return index_path(resolve_model(model), clean=clean, compose=compose, root=root)
+
+
+def profile_fingerprints(index_root: Path) -> dict[str, str]:
+    """Отпечатки профилей индекса (#123): id → `profile_fingerprint(profile_text)`.
+
+    ``index_root`` — корень (`data/indexes_sfr5c`) или сам каталог индекса.
+    """
+    from sfr_match.evalset import profile_fingerprint
+
+    candidates = [index_root, *sorted(p for p in index_root.iterdir() if p.is_dir())]
+    docs_dir = next(d for d in candidates if (d / "docs.json").exists())
+    return {
+        str(doc["id"]): profile_fingerprint(str(doc["profile_text"])) for doc in load_docs(docs_dir)
+    }

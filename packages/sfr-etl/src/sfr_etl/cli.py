@@ -29,6 +29,7 @@ from sfr_etl.dedup import (
     apply_merges,
     detect_suspect_merges,
     find_splits,
+    judged_pairs_in_merges,
     load_decisions_or_fail,
     mix_candidates,
     recompute_merged_aggregates,
@@ -372,6 +373,8 @@ def etl_dedup(
         # (mix_candidates ничего не пишет); флаг suspect_merge в БД пишет лишь
         # detect_suspect_merges выше, под --apply.
         suspects, suspect_stats = mix_candidates(session)
+        # #123: оценки на склеенных id устаревают — список в review-файл.
+        stale_judgments = judged_pairs_in_merges(merges)
         review_out.parent.mkdir(parents=True, exist_ok=True)
         review_out.write_text(
             render_dedup_review(
@@ -384,6 +387,7 @@ def etl_dedup(
                 near_duplicates=findings.near_duplicates,
                 decisions=findings.decisions,
                 initials_prefix=findings.initials_prefix,
+                stale_judgments=stale_judgments,
             ),
             encoding="utf-8",
         )
@@ -406,6 +410,7 @@ def etl_dedup(
         f"{merge_stats['works_dropped']}); требуют решения человека: {len(findings.review)}; "
         f"похоже, один человек: {len(findings.near_duplicates)}; "
         f"инициалы-префикс: {len(findings.initials_prefix)}; "
+        f"оценок на склеенных id: {len(stale_judgments)}; "
         f"тёзок без сигнала: {len(namesakes)}; "
         f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']} ("
         + ", ".join(f"{name} {suspect_stats[name]}" for name in MIX_SIGNALS)

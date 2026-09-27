@@ -25,8 +25,15 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from sfr_match.evalset import Judgment, load_judgments, load_queries, query_set_path
+from sfr_match.evalset import (
+    Judgment,
+    load_judgments,
+    load_queries,
+    query_set_path,
+    split_stale,
+)
 from sfr_match.evaluate import Run, load_run
+from sfr_match.index import profile_fingerprints
 from sfr_match.metrics import mean, success_at_k
 
 TOP = 5
@@ -70,6 +77,23 @@ def summarize(
     }
 
 
+def drop_stale(
+    name: str, judgments: dict[tuple[str, str], Judgment], fingerprints: dict[str, str] | None
+) -> tuple[dict[tuple[str, str], Judgment], dict[str, Any] | None]:
+    """Устаревшие оценки (#123) — вон, с отчётом; без индекса — как есть."""
+    if fingerprints is None:
+        return judgments, None
+    usable, counts, stale = split_stale(judgments, fingerprints)
+    print(
+        f"{name}: оценок с отпечатком профиля {counts['fresh'] + counts['stale']}, "
+        f"из них устарели {counts['stale']} (профиль изменился после оценки — пары считаются "
+        f"неоценёнными); без отпечатка {counts['no_fingerprint']}"
+    )
+    if counts["fresh"] + counts["stale"] == 0:
+        return usable, None  # строк с отпечатком нет — JSON как до #123
+    return usable, {**counts, "stale_pairs": [list(key) for key in stale]}
+
+
 def sets_of(queries: list[Any]) -> dict[str, list[Any]]:
     in_domain = [q for q in queries if q.expect == "in-domain"]
     return {
@@ -94,12 +118,19 @@ def main() -> None:
         help="Слепая разметка топ-5 этого же индекса",
     )
     parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr5c_deploy_metrics.json"))
+    parser.add_argument(
+        "--index-root",
+        type=Path,
+        default=None,
+        help="Индекс прогона: сверка отпечатков профилей в оценках (#123)",
+    )
     args = parser.parse_args()
 
     run = load_run(args.runs)
     queries = load_queries(query_set_path("golden"))
-    blind = load_judgments(args.judgments)
-    accumulated = load_judgments()
+    fingerprints = profile_fingerprints(args.index_root) if args.index_root else None
+    blind, blind_stale = drop_stale("слепая", load_judgments(args.judgments), fingerprints)
+    accumulated, accumulated_stale = drop_stale("накопленная", load_judgments(), fingerprints)
 
     payload: dict[str, Any] = {
         "index_version": run.index_version,
@@ -121,6 +152,12 @@ def main() -> None:
             for name, subset in sets_of(queries).items()
         },
     }
+    # Блок только при оценках с отпечатком: у разметки до #123 его нет, и JSON
+    # прошлых прогонов воспроизводится байт в байт.
+    if blind_stale is not None:
+        payload["judgments"]["blind"]["staleness"] = blind_stale
+    if accumulated_stale is not None:
+        payload["judgments"]["accumulated"]["staleness"] = accumulated_stale
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     for name, both in payload["sets"].items():

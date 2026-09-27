@@ -269,6 +269,9 @@ DECISION_VERDICTS = ("same", "different")
 # не предусмотрена.
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_DECISIONS_PATH = REPO_ROOT / "packages" / "sfr-match" / "eval" / "dedup_decisions.jsonl"
+# Файлы оценок судьи (`judgments*.jsonl`): sfr-etl их только читает, простым JSON —
+# sfr-match он не импортирует.
+EVAL_DIR = REPO_ROOT / "packages" / "sfr-match" / "eval"
 # Статусы решений человека для отчёта. «Запрещено, но склеено» — инвариант:
 # на правильной базе таких строк не бывает, и это самая быстрая проверка того,
 # что сессия стартовала не с той БД (§4.2 SPEC_SFR5c).
@@ -1474,6 +1477,48 @@ def suspect_examples(session: Session, limit: int = 20) -> list[dict[str, Any]]:
     return out
 
 
+ROLE_CANONICAL = "канонический — профиль меняется"
+ROLE_DUPLICATE = "дубль — выбывает из каталога"
+
+
+def judged_pairs_in_merges(
+    groups: Sequence[MergeGroup], eval_dir: Path = EVAL_DIR
+) -> list[dict[str, Any]]:
+    """Оценки судьи, которые склейки делают устаревшими (#123).
+
+    Оценка стоит на паре (запрос, `author_id`) и относится к профилю на момент
+    судейства. У канонического автора склейка меняет `profile_text`, у дубля
+    профиля больше нет — такие пары надо пересудить (слепой пул) или считать
+    неоценёнными, а не брать старую оценку молча. Список — в review-файл, чтобы
+    пересуд был плановым.
+    """
+    roles: dict[str, tuple[str, str]] = {}
+    for group in groups:
+        roles[group.canonical] = (ROLE_CANONICAL, group.canonical)
+        for duplicate in group.duplicates:
+            roles[duplicate] = (ROLE_DUPLICATE, group.canonical)
+    found: list[dict[str, Any]] = []
+    for path in sorted(eval_dir.glob("judgments*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            author_id = str(row.get("author_id", ""))
+            if author_id in roles:
+                role, canonical = roles[author_id]
+                found.append(
+                    {
+                        "file": path.name,
+                        "query_id": str(row.get("query_id", "")),
+                        "author_id": author_id,
+                        "grade": row.get("grade"),
+                        "role": role,
+                        "canonical": canonical,
+                    }
+                )
+    return found
+
+
 def _first(n_examples: int, total: int) -> str:
     return f"все {total}" if n_examples >= total else f"первые {n_examples} из {total}"
 
@@ -1489,6 +1534,7 @@ def render_dedup_review(
     near_duplicates: Sequence[MergeGroup] = (),
     decisions: Sequence[DecisionOutcome] = (),
     initials_prefix: Sequence[MergeGroup] = (),
+    stale_judgments: Sequence[dict[str, Any]] = (),
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
@@ -1626,6 +1672,24 @@ def render_dedup_review(
         lines.append(
             f"| {ids} | {'; '.join(dict.fromkeys(group.names))} | "
             f"{'; '.join(dict.fromkeys(group.institutions))} | {group.signal} |"
+        )
+    lines += [
+        "",
+        f"## Оценки, которые склейки делают устаревшими — "
+        f"{_first(n_examples, len(stale_judgments))}",
+        "",
+        "Оценка судьи стоит на `author_id` и относится к профилю на момент "
+        "судейства. У канонического автора склейка меняет профиль, дубль выбывает — "
+        "такие пары пересудить слепым пулом или считать неоценёнными, а не брать "
+        "старую оценку молча (#123; скрипты метрик сверяют отпечаток профиля).",
+        "",
+        "| Файл | Запрос | Автор | Оценка | Роль в склейке | Канонический |",
+        "|---|---|---|---|---|---|",
+    ]
+    for item in list(stale_judgments)[:n_examples]:
+        lines.append(
+            f"| `{item['file']}` | {item['query_id']} | `{item['author_id']}` | {item['grade']} | "
+            f"{item['role']} | `{item['canonical']}` |"
         )
     lines += [
         "",

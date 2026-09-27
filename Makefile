@@ -409,6 +409,7 @@ ood19-sfr5c: unhide $(SFR5C_OOD19)
 # топ-5 — цифры для паспорта (#95), накопленная разметка — рядом для сравнения.
 metrics-deploy-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5C_RUNS)/frida_clean.json \
+		--index-root $(SFR5C_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--out docs/metrics/sfr5c_deploy_metrics.json
 
@@ -440,6 +441,7 @@ pool-base-blind-sfr5c: unhide
 
 metrics-base-blind-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5_RUNS)/frida_clean.json \
+		--index-root $(SFR5_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
 		--out docs/metrics/sfr5c_base_blind_metrics.json
 	uv run python scripts/sfr5c_rejudge_classes.py \
