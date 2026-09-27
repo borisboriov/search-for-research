@@ -411,6 +411,8 @@ metrics-deploy-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5C_RUNS)/frida_clean.json \
 		--index-root $(SFR5C_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
+		--borderline $(SFR5C_EVAL)/judgments_borderline_deploy.md \
+		--interval-out docs/metrics/sfr5c_deploy_interval.json \
 		--out docs/metrics/sfr5c_deploy_metrics.json
 
 # Слепой пул топ-5 golden set (24 in-domain + 6 edge = 150 пар) на пересуд
@@ -443,6 +445,8 @@ metrics-base-blind-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5_RUNS)/frida_clean.json \
 		--index-root $(SFR5_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
+		--borderline $(SFR5C_EVAL)/judgments_borderline_base5538.md \
+		--interval-out docs/metrics/sfr5c_base_blind_interval.json \
 		--out docs/metrics/sfr5c_base_blind_metrics.json
 	uv run python scripts/sfr5c_rejudge_classes.py \
 		--v1 $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \

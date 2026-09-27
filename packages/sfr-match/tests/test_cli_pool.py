@@ -59,11 +59,11 @@ def test_pool_blind_hides_that_a_pair_was_ever_judged(
     assert all("judged" not in record for record in records), (
         "следа прежней разметки быть не должно"
     )
+    # #131: без expect — метка набора подсказывает судье, что запрос «трудный»
     assert set(records[0]) == {
         "query_id",
         "author_id",
         "query",
-        "expect",
         "name",
         "topics",
         "profile_text",

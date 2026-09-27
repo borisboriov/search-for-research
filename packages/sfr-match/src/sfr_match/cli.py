@@ -201,7 +201,8 @@ def pool(
     Sorted by author — not by score — so the judge cannot tell which model
     produced a pair (SPEC_SFR1 §5.2).
 
-    ``--blind`` убирает и последний след прежней разметки — поле ``judged``: судья,
+    ``--blind`` убирает поле ``expect`` (#131) и последний след прежней разметки —
+    поле ``judged``: судья,
     который пересуживает уже оценённые пары, не должен видеть, какие из них кто-то
     смотрел (рубрика, п. 5). Он же меняет порядок на ``(author_id, query_id)``:
     пятёрка одного запроса подряд — это якорь («этот лучше предыдущего»), а не
@@ -231,7 +232,12 @@ def pool(
             "topics": docs[author_id]["topics"],
             "profile_text": docs[author_id]["profile_text"],
         }
-        if not blind:
+        if blind:
+            # #131: метка набора (in-domain / edge) — не оценка, но подсказка
+            # судье: edge-запрос читается как «заведомо трудный». Слепой пул её
+            # не несёт; в обычном пуле остаётся — там её читает человек.
+            del record["expect"]
+        else:
             record["judged"] = (query_id, author_id) in existing
         records.append(record)
     if blind:

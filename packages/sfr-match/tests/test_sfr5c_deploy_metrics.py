@@ -104,3 +104,45 @@ def test_merge_makes_the_old_grade_stale_and_the_pair_unjudged(dm) -> None:  # t
     legacy = {k: v.model_copy(update={"profile_fp": ""}) for k, v in judged.items()}
     usable, block = dm.drop_stale("накопленная", legacy, current)
     assert usable == legacy and block is None, "без отпечатка — как до #123, JSON без блока"
+
+
+BORDERLINE_MD = """\
+# Пары, где судья колебался
+
+| Запрос | НР | Оценка | Альтернатива | В чём сомнение |
+|---|---|---|---|---|
+| `q01` | `A1` Имя — Вуз | **1** | 2 | формат выкладки: id первым, оценка жирным |
+| `q02` | Имя (`A2`) | 2 | 1 | формат базы: id в скобках после имени |
+| `q03` | `A3` Имя | 1 | — | без альтернативы строка не берётся |
+
+Текст после таблицы: | `q09` | не строка таблицы |
+"""
+
+
+def test_borderline_table_is_read_in_both_formats(dm, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    path = tmp_path / "judgments_borderline_test.md"
+    path.write_text(BORDERLINE_MD, encoding="utf-8")
+    assert dm.load_borderline(path) == {("q01", "A1"): 2, ("q02", "A2"): 1}
+
+
+def test_borderline_interval_moves_every_disputed_pair_down_then_up(dm) -> None:  # type: ignore[no-untyped-def]
+    queries = [
+        Query(id="q01", text="первый", expect="in-domain"),
+        Query(id="q02", text="второй", expect="in-domain"),
+    ]
+    run = _run({"q01": ["A1", "A9"], "q02": ["A7", "A2"]})
+    judgments = {
+        ("q01", "A1"): Judgment(query_id="q01", author_id="A1", grade=1),
+        ("q01", "A9"): Judgment(query_id="q01", author_id="A9", grade=0),
+        ("q02", "A7"): Judgment(query_id="q02", author_id="A7", grade=0),
+        ("q02", "A2"): Judgment(query_id="q02", author_id="A2", grade=2),
+    }
+    # Спорные: q01/A1 (1 или 2) и q02/A2 (2 или 1); пара вне разметки игнорируется.
+    alternatives = {("q01", "A1"): 2, ("q02", "A2"): 1, ("q05", "A5"): 2}
+    interval = dm.borderline_interval(run, queries, judgments, alternatives)
+    assert interval["borderline_pairs"] == 3
+    s1 = interval["golden_in_domain_24"]["success_at_1"]
+    s5 = interval["golden_in_domain_24"]["success_at_5"]
+    assert (s1["low"], s1["point"], s1["high"]) == (0.0, 0.0, 0.5), "вверх: q01/A1 → 2"
+    assert (s5["low"], s5["point"], s5["high"]) == (0.0, 0.5, 1.0), "вниз: q02/A2 → 1"
+    assert judgments[("q01", "A1")].grade == 1, "исходная разметка не меняется"

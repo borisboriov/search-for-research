@@ -1,0 +1,41 @@
+{
+  "index_version": "frida_clean-9002p-35e591d4",
+  "borderline": "packages/sfr-match/eval/judgments_borderline_deploy.md",
+  "borderline_pairs": 43,
+  "golden_in_domain_24": {
+    "success_at_1": {
+      "low": 0.583,
+      "point": 0.667,
+      "high": 0.792
+    },
+    "success_at_5": {
+      "low": 0.833,
+      "point": 0.875,
+      "high": 0.958
+    }
+  },
+  "golden_same_22": {
+    "success_at_1": {
+      "low": 0.636,
+      "point": 0.727,
+      "high": 0.818
+    },
+    "success_at_5": {
+      "low": 0.909,
+      "point": 0.955,
+      "high": 0.955
+    }
+  },
+  "golden_edge": {
+    "success_at_1": {
+      "low": 0.5,
+      "point": 0.5,
+      "high": 0.667
+    },
+    "success_at_5": {
+      "low": 0.833,
+      "point": 0.833,
+      "high": 0.833
+    }
+  }
+}
