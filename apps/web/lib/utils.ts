@@ -67,7 +67,15 @@ export function institutionShort(institution: string | null): string | null {
   return INSTITUTION_SHORT[institution] ?? institution;
 }
 
-/** Дата сборки индекса из `/health` (`built_at`, ISO) для плашки P-08.
+/** Какую дату показывать в плашке P-08 «обновлено»: дату данных каталога
+ * (`data_updated_at`, #16), а если индекс без штампа — дату его сборки. */
+export function catalogueDate(
+  health: { built_at?: string | null; data_updated_at?: string | null } | null | undefined,
+): string | null {
+  return health?.data_updated_at || health?.built_at || null;
+}
+
+/** Дата из `/health` (`data_updated_at` или `built_at`, ISO) для плашки P-08.
  * Считаем в UTC, чтобы дата не «плыла» от часового пояса рендерящей машины;
  * мусор на входе — null, плашка тогда показывается без даты. */
 export function formatIndexDate(builtAt: string | null | undefined): string | null {

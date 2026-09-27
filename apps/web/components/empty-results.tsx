@@ -128,6 +128,29 @@ export function QueryHint({
   );
 }
 
+/** 429 — сработал лимит частоты запросов (#23). Сервис жив, студент просто
+ * спрашивал подряд: сказать это прямо, иначе первый тестер пилота решит, что
+ * сервис сломан. Тот же вид, что у ошибки, — отдельного макета нет. */
+export function RateLimitedState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <Card className="mt-2 flex flex-col items-center gap-[18px] rounded-search px-5 py-10 sm:px-12 sm:py-14">
+      <span className="flex size-16 items-center justify-center rounded-full bg-accent-soft">
+        <LogoMark className="size-[30px] text-fg-subtle" />
+      </span>
+      <h2 className="text-center font-display text-[24px] font-semibold sm:text-[28px]">
+        Слишком много запросов подряд
+      </h2>
+      <p className="max-w-[560px] text-center text-[15px] leading-relaxed text-fg-muted sm:text-[16px]">
+        Сервис работает — просто запросы пришли чаще, чем он успевает их разбирать.
+        Подожди немного, около минуты, и попробуй ещё раз.
+      </p>
+      <Button type="button" onClick={onRetry} className="mt-1.5">
+        Повторить
+      </Button>
+    </Card>
+  );
+}
+
 /** Ошибка сети / API недоступен — в том же стиле (макета нет, SPEC_SFR3 §2). */
 export function ErrorState({ onRetry }: { onRetry: () => void }) {
   return (

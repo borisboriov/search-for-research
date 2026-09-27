@@ -40,7 +40,7 @@ Valery/Vladislav, Корянов Vsevolod/Victor, Иноуэ Akihisa/Atsuo — �
 
 import json
 import re
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -223,6 +223,44 @@ def first_names_conflict(left: str, right: str) -> bool:
     return _levenshtein(fa, fb) >= FIRST_NAME_CONFLICT_DISTANCE
 
 
+# #113: сколько тем из топ-5 должно совпасть у пары «инициалы-префикс», чтобы
+# она попала в список на решение человека. Тот же порог, что у склейки
+# «полное имя ↔ инициалы», но здесь пара **никогда** не склеивается сама:
+# «A. Bogdanov» и «A. A. Bogdanov» в большом вузе — чаще два человека.
+INITIALS_PREFIX_TOPIC_OVERLAP = 3
+
+INITIALS_BOTH = "оба инициалами"
+INITIALS_ONE_FULL = "одно имя полное"
+
+
+def folded_initials(display_name: str) -> str:
+    """Инициалы из ключа имени, сведённые к латинице: «Е. Г. Попова» → «eg»."""
+    initials = name_key(display_name).partition("|")[2]
+    return "".join(fold_name(letter)[:1] for letter in initials)
+
+
+def initials_prefix_pair(left: str, right: str) -> str | None:
+    """Класс пары «одна фамилия, инициалы одного — префикс инициалов другого» (#113).
+
+    «S. G. Belogurov» ↔ «S. Belogurov», «I. Machulin» ↔ «I. N. Machulin»,
+    «Nikita Mkrtchyan» ↔ «N. V. Mkrtchyan», «V. Prosin» ↔ «В. В. Просин»:
+    ключи имён разные, поэтому правила склейки пару не видят вовсе. Возвращает
+    класс (``INITIALS_BOTH`` / ``INITIALS_ONE_FULL``) или None, если пара не
+    такая: фамилии разные, инициалы совпадают или не префиксы, развёрнутые
+    имена спорят («Nikita» против «Nikolai»).
+    """
+    if not same_surname(left, right) or name_key(left) == name_key(right):
+        return None
+    a, b = folded_initials(left), folded_initials(right)
+    if not a or not b or a == b or not (a.startswith(b) or b.startswith(a)):
+        return None
+    if first_names_conflict(left, right):
+        return None
+    if not _spelled_out(left) and not _spelled_out(right):
+        return INITIALS_BOTH
+    return INITIALS_ONE_FULL
+
+
 DECISION_VERDICTS = ("same", "different")
 # Путь считается от корня репозитория, а не от текущей директории: `sfr etl dedup`
 # запускают и не из корня, а относительный путь молча превращал бы отсутствующий
@@ -231,6 +269,9 @@ DECISION_VERDICTS = ("same", "different")
 # не предусмотрена.
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_DECISIONS_PATH = REPO_ROOT / "packages" / "sfr-match" / "eval" / "dedup_decisions.jsonl"
+# Файлы оценок судьи (`judgments*.jsonl`): sfr-etl их только читает, простым JSON —
+# sfr-match он не импортирует.
+EVAL_DIR = REPO_ROOT / "packages" / "sfr-match" / "eval"
 # Статусы решений человека для отчёта. «Запрещено, но склеено» — инвариант:
 # на правильной базе таких строк не бывает, и это самая быстрая проверка того,
 # что сессия стартовала не с той БД (§4.2 SPEC_SFR5c).
@@ -350,13 +391,19 @@ class DedupFindings:
     одно имя и вуз без сигнала (не трогать); ``review`` — сигнал есть, но его
     блокирует конфликт ORCID или имён, решает человек; ``near_duplicates`` —
     похоже, один человек (полное имя ↔ инициалы, один вуз), но общих тем
-    меньше порога — тоже человеку, отдельным списком (#109).
+    меньше порога — тоже человеку, отдельным списком (#109); ``initials_prefix``
+    — инициалы одного профиля — префикс инициалов другого («S. G.» ↔ «S.»),
+    один вуз, общие темы: третий список человеку, автоматически не склеивается
+    (#113).
     """
 
     merges: list[MergeGroup] = field(default_factory=list)
     namesakes: list[MergeGroup] = field(default_factory=list)
     review: list[MergeGroup] = field(default_factory=list)
     near_duplicates: list[MergeGroup] = field(default_factory=list)
+    # #113: одна фамилия и вуз, инициалы одного — префикс инициалов другого,
+    # общих тем ≥ INITIALS_PREFIX_TOPIC_OVERLAP. Только человеку, не склеивается.
+    initials_prefix: list[MergeGroup] = field(default_factory=list)
     decisions: list[DecisionOutcome] = field(default_factory=list)
 
     @property
@@ -594,6 +641,7 @@ def find_splits(
     abbrev_topic_overlap: int = ABBREV_TOPIC_OVERLAP,
     near_duplicate_topic_overlap: int = NEAR_DUPLICATE_TOPIC_OVERLAP,
     decisions: Sequence[DedupDecision] = (),
+    foreign_orcid: Callable[[Author], str | None] | None = None,
 ) -> DedupFindings:
     """Группы для склейки, тёзки без сигнала, пары на решение человека.
 
@@ -607,6 +655,12 @@ def find_splits(
     её из всех списков «на решение человека»: решение уже принято. Запрещённая
     пара перехватывается там, где сигнал находится, а не фильтруется потом —
     иначе Лукинские снова уехали бы в review как «общая работа при разных ORCID».
+
+    ``foreign_orcid`` (#118) — проверка «ORCID профиля записан на другое имя»
+    (`sfr_etl.orcid.foreign_orcid_note`, запись с `pub.orcid.org`). Пара с
+    блокером «разные ORCID», у которой один ORCID чужой, по-прежнему не
+    склеивается, но идёт человеку с пометкой: такой блокер ничего не доказывает.
+    Без проверки (по умолчанию) — прежнее поведение и ни одного запроса в сеть.
     """
     authors = _catalogue_authors(session)
     by_db_id = {a.id: a for a in authors}
@@ -735,6 +789,17 @@ def find_splits(
                     continue
                 blocker = _blocker(by_db_id[left], by_db_id[right])
                 if blocker is not None:
+                    if blocker == "разные ORCID" and foreign_orcid is not None:
+                        notes = [
+                            note
+                            for note in (
+                                foreign_orcid(by_db_id[left]),
+                                foreign_orcid(by_db_id[right]),
+                            )
+                            if note
+                        ]
+                        if notes:
+                            blocker = f"разные ORCID — {'; '.join(notes)}"
                     send_to_review(left, right, f"{signal}, но {blocker}")
                     continue
                 union.union(left, right)
@@ -763,6 +828,11 @@ def find_splits(
         if len(member_ids) == 2 and listed:
             continue  # пара уже стоит в более информативном списке
         namesakes.append(group)
+
+    listed_elsewhere = {frozenset([g.canonical, *g.duplicates]) for g in [*near, *review]}
+    initials_prefix = _initials_prefix_pairs(
+        session, authors, union, decided_db_keys, listed_elsewhere, top_topics
+    )
 
     merges: list[MergeGroup] = []
     for root, members in union.groups().items():
@@ -795,8 +865,67 @@ def find_splits(
         namesakes=namesakes,
         review=review,
         near_duplicates=near,
+        initials_prefix=initials_prefix,
         decisions=decision_outcomes(session, decisions),
     )
+
+
+def _top_topics(session: Session, author_id: int) -> set[str]:
+    return set(
+        session.execute(
+            select(AuthorTopic.topic_name)
+            .where(AuthorTopic.author_id == author_id)
+            .order_by(AuthorTopic.score.desc())
+            .limit(5)
+        ).scalars()
+    )
+
+
+def _initials_prefix_pairs(
+    session: Session,
+    authors: Sequence[Author],
+    union: "_Union",
+    decided: set[frozenset[int]],
+    listed: set[frozenset[str]],
+    top_topics: dict[int, set[str]],
+) -> list[MergeGroup]:
+    """Третий список человеку (#113): «инициалы-префикс», один вуз, общие темы.
+
+    Рамка — фамилия (с транслитерацией и родом) и вуз; пара, решённая человеком,
+    уже склеенная другим сигналом или стоящая в другом списке, сюда не попадает.
+    Ничего не склеивает: только список.
+    """
+    by_surname: dict[tuple[str, int | None], list[Author]] = {}
+    for author in authors:
+        key = surname_key(author.display_name)
+        if key:
+            by_surname.setdefault((key, author.last_known_institution_id), []).append(author)
+    found: list[MergeGroup] = []
+    for members in by_surname.values():
+        for i, left in enumerate(members):
+            for right in members[i + 1 :]:
+                kind = initials_prefix_pair(left.display_name, right.display_name)
+                if kind is None or frozenset((left.id, right.id)) in decided:
+                    continue
+                if union.find(left.id) == union.find(right.id):
+                    continue  # склеены другим сигналом или решением человека
+                if frozenset((left.openalex_id, right.openalex_id)) in listed:
+                    continue
+                for author in (left, right):
+                    if author.id not in top_topics:
+                        top_topics[author.id] = _top_topics(session, author.id)
+                overlap = len(top_topics[left.id] & top_topics[right.id])
+                if overlap < INITIALS_PREFIX_TOPIC_OVERLAP:
+                    continue
+                found.append(
+                    _group(
+                        {left.id: left, right.id: right},
+                        [left.id, right.id],
+                        f"инициалы-префикс ({kind}), один вуз, общих тем {overlap}",
+                    )
+                )
+    found.sort(key=lambda g: g.canonical)
+    return found
 
 
 def _institution_name(author: Author) -> str:
@@ -1136,26 +1265,191 @@ def suspect_clusters(
     return (sizes[0] if sizes else 0, sizes[1] if len(sizes) > 1 else 0)
 
 
-def detect_suspect_merges(session: Session) -> dict[str, int]:
-    """Отметить профили, похожие на чужую склейку OpenAlex. Флаг, не расклейка."""
-    authors = list(
+# #119: признаки смеси двух людей в одном профиле, кроме двух тематических
+# групп. Откалиброваны на восьми известных смесях из разбора #112 (каталог
+# 9 010 до решений) так, чтобы каждый признак помечал не больше ~5 % боевого
+# каталога; замер — docs/DECISIONS.md 27.09.
+MIX_MIN_AFFILIATIONS = 100  # организаций в `affiliations` (Jianmin Wu — 526)
+MIX_MARGINAL_SHARE = 0.06  # лет в вузе каталога от всего срока аффилиаций…
+MIX_MARGINAL_MIN_SPAN = 15  # …при сроке не короче (Shestakov A — 1 из 17)
+MIX_TOPIC_DOMAIN_SHARE = 0.40  # второй домен в темах автора (Hossain A — 0.42)
+MIX_WORK_DOMAIN_MIN = 4  # второй домен в работах: не меньше работ…
+MIX_WORK_DOMAIN_SHARE = 0.40  # …и такой доли (Sokolov A — 10/25, Sokoloff B — 8/17)
+
+MIX_CLUSTERS = "две группы тем"
+MIX_AFFILIATIONS = "много организаций"
+MIX_MARGINAL = "вуз каталога — случайная аффилиация"
+MIX_TOPIC_DOMAINS = "темы автора в двух доменах"
+MIX_WORK_DOMAINS = "работы в двух доменах"
+MIX_SIGNALS = (MIX_CLUSTERS, MIX_AFFILIATIONS, MIX_MARGINAL, MIX_TOPIC_DOMAINS, MIX_WORK_DOMAINS)
+
+
+def field_domains(session: Session) -> dict[str, str]:
+    """Карта «область OpenAlex → домен» из сырых записей авторов (как `topic_subfields`)."""
+    mapping: dict[str, str] = {}
+    for (raw,) in session.execute(select(Author.raw).where(Author.raw.is_not(None))):
+        for topic in (raw or {}).get("topics") or []:
+            field_name = (topic.get("field") or {}).get("display_name")
+            domain = (topic.get("domain") or {}).get("display_name")
+            if field_name and domain:
+                mapping.setdefault(str(field_name), str(domain))
+    return mapping
+
+
+def _affiliation_years(author: Author) -> tuple[int, int]:
+    """(лет в вузе каталога, лет во всех аффилиациях) по `raw.affiliations`."""
+    own = author.institution.openalex_id if author.institution is not None else None
+    every: set[int] = set()
+    here: set[int] = set()
+    for affiliation in (author.raw or {}).get("affiliations") or []:
+        years = {int(y) for y in affiliation.get("years") or [] if isinstance(y, int)}
+        every |= years
+        institution_id = str((affiliation.get("institution") or {}).get("id") or "")
+        if own and institution_id.rsplit("/", 1)[-1] == own:
+            here |= years
+    return len(here), len(every)
+
+
+def _second_share(counts: dict[str, float]) -> tuple[str, str, float, float]:
+    """Два крупнейших ключа и доля/величина второго: (1-й, 2-й, доля 2-го, 2-й)."""
+    ranked = sorted(counts.items(), key=lambda kv: -kv[1])
+    total = sum(counts.values()) or 1.0
+    if len(ranked) < 2:
+        return (ranked[0][0] if ranked else "", "", 0.0, 0.0)
+    return ranked[0][0], ranked[1][0], ranked[1][1] / total, ranked[1][1]
+
+
+def mix_signals(
+    author: Author,
+    works: Sequence[Work],
+    *,
+    subfields: dict[str, str] | None = None,
+    domains: dict[str, str] | None = None,
+) -> list[tuple[str, str]]:
+    """Признаки того, что в профиле два человека: [(признак, пояснение), …].
+
+    Только чтение: ничего не пишет. Пусто — признаков нет. Признаки независимы,
+    каждый поймал свою часть известных смесей (#119); профили с примесью в 2–5
+    чужих работ (Popruzhenko B, Usachev B, Sokolov B) ими не отличаются от
+    междисциплинарных — это замер, а не недосмотр (DECISIONS 27.09).
+    """
+    found: list[tuple[str, str]] = []
+    raw = author.raw or {}
+    if len(works) >= SUSPECT_MIN_WORKS:
+        _, second = suspect_clusters(works, subfields)
+        # Вторая по размеру группа — ровно «второй человек»; `largest >= second`
+        # проверять не надо: размеры уже отсортированы по убыванию (#11). `>=` в
+        # доле, а не `>`: группа ровно в четверть работ уже подозрительна.
+        if second >= SUSPECT_MIN_SHARE * len(works):
+            found.append((MIX_CLUSTERS, f"вторая группа — {second} из {len(works)} работ"))
+    n_affiliations = len(raw.get("affiliations") or [])
+    if n_affiliations >= MIX_MIN_AFFILIATIONS:
+        found.append((MIX_AFFILIATIONS, f"организаций в affiliations: {n_affiliations}"))
+    here, span = _affiliation_years(author)
+    if span >= MIX_MARGINAL_MIN_SPAN and here <= MIX_MARGINAL_SHARE * span:
+        found.append((MIX_MARGINAL, f"в вузе каталога {here} из {span} лет аффилиаций"))
+    by_domain: dict[str, float] = {}
+    for topic in raw.get("topics") or []:
+        domain = (topic.get("domain") or {}).get("display_name")
+        if domain:
+            by_domain[str(domain)] = by_domain.get(str(domain), 0.0) + float(
+                topic.get("count") or 0
+            )
+    first, second_domain, share, _ = _second_share(by_domain)
+    if share >= MIX_TOPIC_DOMAIN_SHARE:
+        found.append((MIX_TOPIC_DOMAINS, f"{first} / {second_domain} {share:.0%}"))
+    domains = domains or {}
+    work_domains: dict[str, float] = {}
+    for work in works:
+        top = work.topics[0] if work.topics else None
+        field_name = top.get("field") if isinstance(top, dict) else None
+        domain = domains.get(str(field_name)) if field_name else None
+        if domain:  # область неизвестна (записи до SFR-5) — не второй домен, а пропуск
+            work_domains[domain] = work_domains.get(domain, 0.0) + 1
+    first, second_domain, share, count = _second_share(work_domains)
+    n_known = int(sum(work_domains.values()))
+    if (
+        n_known >= SUSPECT_MIN_WORKS
+        and count >= MIX_WORK_DOMAIN_MIN
+        and share >= MIX_WORK_DOMAIN_SHARE
+    ):
+        found.append(
+            (MIX_WORK_DOMAINS, f"{first} / {second_domain}: {int(count)} из {n_known} работ")
+        )
+    return found
+
+
+def _catalogue_with_works(session: Session) -> list[Author]:
+    return list(
         session.execute(
             select(Author)
             .where(Author.is_supervisor_candidate.is_(True), Author.merged_into_id.is_(None))
-            .options(selectinload(Author.works))
+            .options(
+                selectinload(Author.works),
+                selectinload(Author.institution),
+                selectinload(Author.topics),
+            )
         ).scalars()
     )
+
+
+def mix_candidates(session: Session) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Профили с признаками смеси и счётчики по признакам — **только чтение** (#119).
+
+    Для `--dry-run` и для review-файла: в БД ничего не пишется. Порядок — по
+    числу сработавших признаков, затем по id: несколько независимых признаков
+    сразу — главный кандидат на ручную проверку.
+    """
+    subfields = topic_subfields(session)
+    domains = field_domains(session)
+    counts = {"checked": 0, "suspect": 0, **{name: 0 for name in MIX_SIGNALS}}
+    found: list[dict[str, Any]] = []
+    for author in _catalogue_with_works(session):
+        counts["checked"] += 1
+        works = list(author.works)
+        signals = mix_signals(author, works, subfields=subfields, domains=domains)
+        if not signals:
+            continue
+        counts["suspect"] += 1
+        for name, _ in signals:
+            counts[name] += 1
+        largest, second = suspect_clusters(works, subfields) if works else (0, 0)
+        found.append(
+            {
+                "author_id": author.openalex_id,
+                "name": author.display_name,
+                "institution": _institution_name(author),
+                "n_works": len(works),
+                "cluster_sizes": [largest, second],
+                "topics": [t.topic_name for t in sorted(author.topics, key=lambda t: -t.score)][:6],
+                "reasons": [f"{name}: {detail}" for name, detail in signals],
+            }
+        )
+    found.sort(key=lambda item: (-len(item["reasons"]), item["author_id"]))
+    return found, counts
+
+
+def detect_suspect_merges(session: Session) -> dict[str, int]:
+    """Отметить профили, похожие на чужую склейку OpenAlex. Флаг, не расклейка.
+
+    Правило флага — прежнее, «две группы тем»: #119 заказывал замер, а не смену
+    детектора («правило и топ-20 `suspect_merge` не трогать»). Остальные
+    признаки смеси считает `mix_candidates` — только для review-файла; делать
+    ли их флагом, решает человек. Пишет в БД — вызывается только с `--apply`.
+    """
     mapping = topic_subfields(session)
     stats = {"checked": 0, "suspect": 0}
-    for author in authors:
+    for author in _catalogue_with_works(session):
         works = list(author.works)
         stats["checked"] += 1
         suspect = False
         if len(works) >= SUSPECT_MIN_WORKS:
-            largest, second = suspect_clusters(works, mapping)
-            # >= , а не > : профиль, ровно пополам расщеплённый между двумя
-            # людьми (6 + 6 из 12), — самая подозрительная форма из возможных.
-            suspect = second >= SUSPECT_MIN_SHARE * len(works) and largest >= second
+            _, second = suspect_clusters(works, mapping)
+            # Вторая по размеру группа — ровно «второй человек»; `largest >=
+            # second` проверять не надо: размеры уже отсортированы по убыванию
+            # (#11). `>=` в доле, а не `>`: группа ровно в четверть работ уже
+            # подозрительна, а профиль пополам (6 + 6 из 12) — тем более.
+            suspect = second >= SUSPECT_MIN_SHARE * len(works)
         author.suspect_merge = suspect
         if suspect:
             stats["suspect"] += 1
@@ -1190,6 +1484,48 @@ def suspect_examples(session: Session, limit: int = 20) -> list[dict[str, Any]]:
     return out
 
 
+ROLE_CANONICAL = "канонический — профиль меняется"
+ROLE_DUPLICATE = "дубль — выбывает из каталога"
+
+
+def judged_pairs_in_merges(
+    groups: Sequence[MergeGroup], eval_dir: Path = EVAL_DIR
+) -> list[dict[str, Any]]:
+    """Оценки судьи, которые склейки делают устаревшими (#123).
+
+    Оценка стоит на паре (запрос, `author_id`) и относится к профилю на момент
+    судейства. У канонического автора склейка меняет `profile_text`, у дубля
+    профиля больше нет — такие пары надо пересудить (слепой пул) или считать
+    неоценёнными, а не брать старую оценку молча. Список — в review-файл, чтобы
+    пересуд был плановым.
+    """
+    roles: dict[str, tuple[str, str]] = {}
+    for group in groups:
+        roles[group.canonical] = (ROLE_CANONICAL, group.canonical)
+        for duplicate in group.duplicates:
+            roles[duplicate] = (ROLE_DUPLICATE, group.canonical)
+    found: list[dict[str, Any]] = []
+    for path in sorted(eval_dir.glob("judgments*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            author_id = str(row.get("author_id", ""))
+            if author_id in roles:
+                role, canonical = roles[author_id]
+                found.append(
+                    {
+                        "file": path.name,
+                        "query_id": str(row.get("query_id", "")),
+                        "author_id": author_id,
+                        "grade": row.get("grade"),
+                        "role": role,
+                        "canonical": canonical,
+                    }
+                )
+    return found
+
+
 def _first(n_examples: int, total: int) -> str:
     return f"все {total}" if n_examples >= total else f"первые {n_examples} из {total}"
 
@@ -1204,6 +1540,10 @@ def render_dedup_review(
     review: Sequence[MergeGroup] = (),
     near_duplicates: Sequence[MergeGroup] = (),
     decisions: Sequence[DecisionOutcome] = (),
+    initials_prefix: Sequence[MergeGroup] = (),
+    stale_judgments: Sequence[dict[str, Any]] = (),
+    mix: Sequence[dict[str, Any]] = (),
+    n_mix: int | None = None,
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
@@ -1226,6 +1566,7 @@ def render_dedup_review(
         f"Склеек: **{len(merges)}**; решено человеком: **{len(decisions)}**; "
         f"требуют решения человека: **{len(review)}**; "
         f"похоже, один человек, но сигнала не хватило: **{len(near_duplicates)}**; "
+        f"похоже, один человек — инициалы-префикс: **{len(initials_prefix)}**; "
         f"групп тёзок без сигнала: **{len(namesakes)}**; "
         f"профилей с флагом `suspect_merge`: **{n_suspects}**.",
         "",
@@ -1323,6 +1664,44 @@ def render_dedup_review(
         )
     lines += [
         "",
+        f"## Похоже, один человек — инициалы-префикс — {_first(n_examples, len(initials_prefix))}",
+        "",
+        "Одна фамилия и вуз, инициалы одного — префикс инициалов другого "
+        "(«S. G. Belogurov» ↔ «S. Belogurov», «Nikita Mkrtchyan» ↔ «N. V. Mkrtchyan»), "
+        f"общих тем из топ-5 ≥ {INITIALS_PREFIX_TOPIC_OVERLAP}. Ключи имён разные, "
+        "поэтому правила склейки таких пар не видят; автоматически не склеиваем — "
+        "частые фамилии дают тёзок (A. Bogdanov ↔ A. A. Bogdanov). Вердикт — строкой "
+        "в `dedup_decisions.jsonl` (#113).",
+        "",
+        "| Авторы | Имена | Вуз | Что совпало |",
+        "|---|---|---|---|",
+    ]
+    for group in list(initials_prefix)[:n_examples]:
+        ids = ", ".join(f"`{i}`" for i in [group.canonical, *group.duplicates])
+        lines.append(
+            f"| {ids} | {'; '.join(dict.fromkeys(group.names))} | "
+            f"{'; '.join(dict.fromkeys(group.institutions))} | {group.signal} |"
+        )
+    lines += [
+        "",
+        f"## Оценки, которые склейки делают устаревшими — "
+        f"{_first(n_examples, len(stale_judgments))}",
+        "",
+        "Оценка судьи стоит на `author_id` и относится к профилю на момент "
+        "судейства. У канонического автора склейка меняет профиль, дубль выбывает — "
+        "такие пары пересудить слепым пулом или считать неоценёнными, а не брать "
+        "старую оценку молча (#123; скрипты метрик сверяют отпечаток профиля).",
+        "",
+        "| Файл | Запрос | Автор | Оценка | Роль в склейке | Канонический |",
+        "|---|---|---|---|---|---|",
+    ]
+    for item in list(stale_judgments)[:n_examples]:
+        lines.append(
+            f"| `{item['file']}` | {item['query_id']} | `{item['author_id']}` | {item['grade']} | "
+            f"{item['role']} | `{item['canonical']}` |"
+        )
+    lines += [
+        "",
         f"## Не склеено: тёзки — {_first(n_examples, len(namesakes))}",
         "",
         "Одинаковое имя и вуз, но ни ORCID, ни общей работы. Склеить их "
@@ -1348,13 +1727,15 @@ def render_dedup_review(
         "",
     ]
 
-    def table(rows: Sequence[dict[str, Any]]) -> list[str]:
-        out = ["| Автор | Имя | Вуз | Работ | Группы | Темы |", "|---|---|---|---|---|---|"]
+    def table(rows: Sequence[dict[str, Any]], *, reasons: bool = False) -> list[str]:
+        head = "| Автор | Имя | Вуз | Работ | Группы |" + (" Признаки |" if reasons else "")
+        out = [head + " Темы |", "|---" * (7 if reasons else 6) + "|"]
         for item in rows:
+            why = f" {'; '.join(item['reasons'])} |" if reasons else ""
             out.append(
                 f"| `{item['author_id']}` | {item['name']} | {item['institution']} | "
-                f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} | "
-                f"{'; '.join(item['topics'][:4])} |"
+                f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} |"
+                f"{why} {'; '.join(item['topics'][:4])} |"
             )
         return out
 
@@ -1372,4 +1753,22 @@ def render_dedup_review(
             "",
         ]
     lines += table(list(suspects)[:n_examples])
+    if mix:
+        # #119: признаки смеси — только здесь; флаг `suspect_merge` они не ставят.
+        # `mix` уже отсортирован по числу признаков (`mix_candidates`).
+        n_mix = len(mix) if n_mix is None else n_mix
+        lines += [
+            "",
+            f"## Признаки смеси двух людей (#119) — топ-{min(SUSPECT_TOP, len(mix))} "
+            f"из {n_mix}, только для просмотра",
+            "",
+            "Пять признаков: две группы тем (правило флага выше); сотня и больше "
+            "организаций; вуз каталога — случайная аффилиация; темы или работы в двух "
+            "доменах. **Флаг `suspect_merge` они не ставят** — делать ли их флагом, "
+            "решает человек. Каждый признак срабатывает и на честных "
+            "междисциплинарных профилях, поэтому смотреть сначала тех, у кого "
+            "признаков несколько.",
+            "",
+            *table(list(mix)[:SUSPECT_TOP], reasons=True),
+        ]
     return "\n".join(lines) + "\n"

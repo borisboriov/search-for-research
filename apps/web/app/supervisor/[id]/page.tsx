@@ -11,7 +11,7 @@ import { SupervisorHeader } from "@/components/supervisor-header";
 import { Card } from "@/components/ui/card";
 import { WorksList } from "@/components/works-list";
 import { getHealth, getSupervisor } from "@/lib/api";
-import { formatIndexDate, institutionShort } from "@/lib/utils";
+import { catalogueDate, formatIndexDate, institutionShort } from "@/lib/utils";
 
 // ISR, а не SSG: страницы рендерятся по запросу и кэшируются на час, поэтому
 // сборка не требует живого API, а каталог (меняется раз в семестр) не устаревает
@@ -66,10 +66,11 @@ export default async function SupervisorPage({ params }: PageProps) {
   if (!AUTHOR_ID.test(id)) notFound();
   const card = await getSupervisor(id);
   if (card === null) notFound();
-  // Дата для плашки P-08: сборка индекса из /health. Ошибку глотаем — без даты
-  // плашка остаётся, страница из-за неё падать не должна.
+  // Дата для плашки P-08: дата данных каталога из /health (#16), у индекса без
+  // штампа — дата его сборки. Ошибку глотаем — без даты плашка остаётся,
+  // страница из-за неё падать не должна.
   const health = await getHealth().catch(() => null);
-  const updatedAt = formatIndexDate(health?.built_at);
+  const updatedAt = formatIndexDate(catalogueDate(health));
 
   // Мобильный порядок блоков (шапка → наукометрия → написать → чем занимается →
   // работы → «это вы?») против двух независимых колонок на десктопе: на мобайле

@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -51,8 +52,9 @@ from sfr5b_decision_metrics import (
     load_catalogue,
 )
 
-from sfr_match.evalset import Judgment, load_judgments, load_queries, query_set_path
+from sfr_match.evalset import Judgment, load_judgments, load_queries, query_set_path, split_stale
 from sfr_match.evaluate import Run, load_run
+from sfr_match.index import profile_fingerprints
 
 # Три профиля, расклеенные руками 26.09 (#108): в базе 5 538 их нет, но это не
 # новые люди. Список короткий и осознанный — хардкод честнее, чем «вычислить».
@@ -78,6 +80,8 @@ class Point:
     catalogue: Catalogue
     aliases: Aliases
     thresholds: dict[str, float] | None = None
+    # #123: индекс точки — для сверки отпечатков профилей в оценках.
+    index_root: Path | None = None
 
     @property
     def size(self) -> int:
@@ -141,8 +145,15 @@ def three_points(
     external: list[Any],
     ood: list[Any],
     judgments: dict[tuple[str, str], Judgment],
+    stale: Mapping[str, set[tuple[str, str]]] | None = None,
 ) -> dict[str, Any]:
-    """Две дельты от одной базы + состав точек. Чистая функция — вся логика тестируема."""
+    """Две дельты от одной базы + состав точек. Чистая функция — вся логика тестируема.
+
+    ``stale`` (#123) — по имени точки: оценки, профиль которых изменился после
+    судейства относительно базы **или** этой точки; для точки они не берутся —
+    пара считается неоценённой.
+    """
+    stale = stale or {}
     if len({base.name, cap.name, full.name}) != 3:
         raise ValueError("имена трёх точек должны различаться: это ключи JSON и колонки таблицы")
     payloads = {
@@ -153,7 +164,7 @@ def three_points(
             before=base.golden,
             ood_before=base.ood,
             ext_before=base.external,
-            judgments=judgments,
+            judgments={k: v for k, v in judgments.items() if k not in stale.get(point.name, set())},
             old=base.catalogue,
             after=point.golden,
             ood_after=point.ood,
@@ -350,6 +361,7 @@ def _point(
         catalogue=load_catalogue(profiles),
         aliases=load_aliases_from_db(require_db(db)) if db is not None else Aliases(),
         thresholds=read_thresholds(index_root / "frida_clean"),
+        index_root=index_root,
     )
 
 
@@ -367,6 +379,33 @@ def require_db(db: Path) -> Path:
             "Для архива 9 010 — --cap-db data/backups/sfr5c_2026-09-26_before_decisions.db"
         )
     return db
+
+
+def stale_by_point(
+    judgments: dict[tuple[str, str], Judgment], base: Point, points: Sequence[Point]
+) -> dict[str, set[tuple[str, str]]]:
+    """Устаревшие оценки (#123) для каждой точки: относительно базы или точки.
+
+    Строк с отпечатком нет (разметка до #123) — индексы даже не читаются, и
+    результат совпадает с прежним байт в байт.
+    """
+    if not any(j.profile_fp for j in judgments.values()):
+        return {}
+    by_root: dict[Path, set[tuple[str, str]]] = {}
+    for point in (base, *points):
+        if point.index_root is not None and point.index_root not in by_root:
+            _, counts, stale = split_stale(judgments, profile_fingerprints(point.index_root))
+            by_root[point.index_root] = set(stale)
+            print(
+                f"{point.name}: оценок с отпечатком {counts['fresh'] + counts['stale']}, "
+                f"устарели {counts['stale']} — для точки считаются неоценёнными"
+            )
+    base_stale = by_root.get(base.index_root, set()) if base.index_root else set()
+    return {
+        point.name: base_stale
+        | (by_root.get(point.index_root, set()) if point.index_root else set())
+        for point in points
+    }
 
 
 def main() -> None:
@@ -433,17 +472,26 @@ def main() -> None:
     }
     as_judged = load_judgments()
     variants = {
-        "as_judged": three_points(base=base, cap=cap, full=full, judgments=as_judged, **queries)
+        "as_judged": three_points(
+            base=base,
+            cap=cap,
+            full=full,
+            judgments=as_judged,
+            stale=stale_by_point(as_judged, base, (cap, full)),
+            **queries,
+        )
     }
     diff: list[dict[str, Any]] = []
     if args.rejudged.exists():
         rejudged = load_rejudged(args.rejudged)
         diff = rejudge_diff(as_judged, rejudged)
+        overlaid = overlay_judgments(as_judged, rejudged)
         variants["with_rejudged"] = three_points(
             base=base,
             cap=cap,
             full=full,
-            judgments=overlay_judgments(as_judged, rejudged),
+            judgments=overlaid,
+            stale=stale_by_point(overlaid, base, (cap, full)),
             **queries,
         )
     else:

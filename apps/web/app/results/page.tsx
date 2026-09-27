@@ -4,7 +4,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 
-import { EmptyResults, ErrorState, QueryHint, WeakBanner } from "@/components/empty-results";
+import {
+  EmptyResults,
+  ErrorState,
+  QueryHint,
+  RateLimitedState,
+  WeakBanner,
+} from "@/components/empty-results";
 import { DEFAULT_FILTERS, FiltersRow, FiltersSheetRow, type FilterState } from "@/components/filters";
 import { QueryBar } from "@/components/query-bar";
 import { validateQuery } from "@/components/search-box";
@@ -17,6 +23,7 @@ import { counterText, institutionShort } from "@/lib/utils";
 type State =
   | { kind: "loading" }
   | { kind: "error" }
+  | { kind: "rate_limited" }
   | { kind: "invalid"; message: string }
   | { kind: "done"; response: MatchResponse };
 
@@ -47,6 +54,10 @@ export async function fetchMatch(text: string): Promise<State> {
       body: JSON.stringify({ query: text, k: 10 }),
       signal: timeoutSignal(MATCH_TIMEOUT_MS),
     });
+    // 429 отдаёт прокси (лимит Caddy), до route handler Next: тело — не JSON,
+    // поэтому статус проверяется до любого .json(). Это не «сервис лёг», а
+    // «слишком часто» — отдельное сообщение (#23).
+    if (response.status === 429) return { kind: "rate_limited" };
     if (response.status === 422) {
       const payload: unknown = await response.json().catch(() => null);
       const detail =
@@ -170,6 +181,7 @@ function ResultsForQuery({ query }: { query: string }) {
         )}
 
         {state.kind === "error" && <ErrorState onRetry={retry} />}
+        {state.kind === "rate_limited" && <RateLimitedState onRetry={retry} />}
 
         {state.kind === "invalid" && (
           <QueryHint message={state.message} onEditQuery={() => setEditingQuery(true)} />

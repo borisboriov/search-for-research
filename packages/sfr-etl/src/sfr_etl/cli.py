@@ -21,6 +21,7 @@ from sfr_etl.catalog import (
 from sfr_etl.client import OpenAlexClient
 from sfr_etl.dedup import (
     DEFAULT_DECISIONS_PATH,
+    MIX_SIGNALS,
     STATUS_FORBIDDEN_BUT_MERGED,
     STATUS_NOT_IN_CATALOGUE,
     DecisionsFileMissing,
@@ -28,7 +29,9 @@ from sfr_etl.dedup import (
     apply_merges,
     detect_suspect_merges,
     find_splits,
+    judged_pairs_in_merges,
     load_decisions_or_fail,
+    mix_candidates,
     recompute_merged_aggregates,
     render_dedup_review,
     suspect_examples,
@@ -36,6 +39,7 @@ from sfr_etl.dedup import (
 )
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
+from sfr_etl.orcid import OrcidClient, foreign_orcid_note
 from sfr_etl.profiles import build_profiles
 from sfr_etl.report import (
     cache_size_info,
@@ -310,6 +314,14 @@ def etl_dedup(
     decisions: Annotated[
         Path, typer.Option(help="Файл решений человека о склейках (§4 SPEC_SFR5c)")
     ] = DEFAULT_DECISIONS_PATH,
+    orcid_names: Annotated[
+        bool,
+        typer.Option(
+            "--orcid-names/--no-orcid-names",
+            help="Проверять имя в записи ORCID у пар «разные ORCID» (pub.orcid.org, "
+            "кэш в data/raw; #118). По умолчанию — выключено, сети нет",
+        ),
+    ] = False,
 ) -> None:
     """Склеить расщеплённые профили и отметить подозрительные (SPEC_SFR5 §3).
 
@@ -341,8 +353,13 @@ def etl_dedup(
     upgrade_to_head(settings.sfr_db_url)
     engine = make_engine(settings.sfr_db_url)
     started = time.monotonic()
+    orcid_client = OrcidClient(cache_dir=settings.raw_cache_dir) if orcid_names else None
     with session_scope(engine) as session:
-        findings = find_splits(session, decisions=human_decisions)
+        findings = find_splits(
+            session,
+            decisions=human_decisions,
+            foreign_orcid=foreign_orcid_note(orcid_client) if orcid_client else None,
+        )
         merges, namesakes = findings.merges, findings.namesakes
         merge_stats = {"groups": 0, "duplicates": 0, "works_moved": 0, "works_dropped": 0}
         aggregate_stats = {"canonical": 0, "changed": 0}
@@ -364,6 +381,11 @@ def etl_dedup(
                 ).scalar_one(),
             }
             suspects = suspect_examples(session, limit=max(examples, 20))
+        # Признаки смеси (#119) — только чтением и только в review-файл: флаг
+        # suspect_merge они не ставят ни в --dry-run, ни с --apply.
+        mix, mix_stats = mix_candidates(session)
+        # #123: оценки на склеенных id устаревают — список в review-файл.
+        stale_judgments = judged_pairs_in_merges(merges)
         review_out.parent.mkdir(parents=True, exist_ok=True)
         review_out.write_text(
             render_dedup_review(
@@ -375,6 +397,10 @@ def etl_dedup(
                 review=findings.review,
                 near_duplicates=findings.near_duplicates,
                 decisions=findings.decisions,
+                initials_prefix=findings.initials_prefix,
+                stale_judgments=stale_judgments,
+                mix=mix,
+                n_mix=mix_stats["suspect"],
             ),
             encoding="utf-8",
         )
@@ -396,15 +422,24 @@ def etl_dedup(
         f"работ перенесено {merge_stats['works_moved']}, дублей работ снято "
         f"{merge_stats['works_dropped']}); требуют решения человека: {len(findings.review)}; "
         f"похоже, один человек: {len(findings.near_duplicates)}; "
+        f"инициалы-префикс: {len(findings.initials_prefix)}; "
+        f"оценок на склеенных id: {len(stale_judgments)}; "
         f"тёзок без сигнала: {len(namesakes)}; "
         f"подозрительных профилей: {suspect_stats['suspect']}"
         + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
-        + "; "
+        + f"; признаки смеси, только review: {mix_stats['suspect']} из {mix_stats['checked']} ("
+        + ", ".join(f"{name} {mix_stats[name]}" for name in MIX_SIGNALS)
+        + "); "
         f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']}; "
         f"решений человека: {len(findings.decisions)} (не в каталоге {ignored}, "
         f"запрещено-но-склеено {len(violations)}) "
         f"→ {review_out}"
     )
+    if orcid_client is not None:
+        typer.echo(
+            f"ORCID: запросов к pub.orcid.org {orcid_client.n_requests}, "
+            f"из кэша {orcid_client.n_cache_hits}"
+        )
 
 
 @etl_app.command("unmerge")

@@ -21,12 +21,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
 
-from sfr_match.evalset import Judgment, load_judgments, load_queries, query_set_path
+from sfr_match.evalset import (
+    Judgment,
+    load_judgments,
+    load_queries,
+    query_set_path,
+    split_stale,
+)
 from sfr_match.evaluate import Run, load_run
+from sfr_match.index import profile_fingerprints
 from sfr_match.metrics import mean, success_at_k
 
 TOP = 5
@@ -70,6 +78,84 @@ def summarize(
     }
 
 
+def drop_stale(
+    name: str, judgments: dict[tuple[str, str], Judgment], fingerprints: dict[str, str] | None
+) -> tuple[dict[tuple[str, str], Judgment], dict[str, Any] | None]:
+    """Устаревшие оценки (#123) — вон, с отчётом; без индекса — как есть."""
+    if fingerprints is None:
+        return judgments, None
+    usable, counts, stale = split_stale(judgments, fingerprints)
+    print(
+        f"{name}: оценок с отпечатком профиля {counts['fresh'] + counts['stale']}, "
+        f"из них устарели {counts['stale']} (профиль изменился после оценки — пары считаются "
+        f"неоценёнными); без отпечатка {counts['no_fingerprint']}"
+    )
+    if counts["fresh"] + counts["stale"] == 0:
+        return usable, None  # строк с отпечатком нет — JSON как до #123
+    return usable, {**counts, "stale_pairs": [list(key) for key in stale]}
+
+
+def load_borderline(path: Path) -> dict[tuple[str, str], int]:
+    """Альтернативные оценки спорных пар из `judgments_borderline_*.md` (#131).
+
+    Строка таблицы: `| `q08` | …`A5…`… | <оценка> | <альтернатива> | … |` — id автора
+    где угодно во второй колонке, оценка может быть выделена `**…**`.
+    """
+    alternatives: dict[tuple[str, str], int] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 4:
+            continue
+        query = re.fullmatch(r"`?(q\d+)`?", cells[0])
+        author = re.search(r"`(A\d+)`", cells[1])
+        alt = re.fullmatch(r"\**([012])\**", cells[3])
+        if query and author and alt:
+            alternatives[(query.group(1), author.group(1))] = int(alt.group(1))
+    return alternatives
+
+
+def with_alternatives(
+    judgments: dict[tuple[str, str], Judgment],
+    alternatives: dict[tuple[str, str], int],
+    pick: Any,
+) -> dict[tuple[str, str], Judgment]:
+    """Разметка, где у спорных пар оценка заменена на min/max(оценка, альтернатива)."""
+    out = dict(judgments)
+    for key, alt in alternatives.items():
+        if key in out:
+            out[key] = out[key].model_copy(update={"grade": pick(out[key].grade, alt)})
+    return out
+
+
+def borderline_interval(
+    run: Run,
+    queries: list[Any],
+    judgments: dict[tuple[str, str], Judgment],
+    alternatives: dict[tuple[str, str], int],
+) -> dict[str, Any]:
+    """Интервал Success@k по спорным парам (#131): все альтернативы вниз / все вверх.
+
+    Не доверительный интервал, а чувствительность цифры к колебаниям судьи на
+    парах, где он сам назвал вторую оценку: сколько стоит «спорное» в обе стороны.
+    """
+    low = with_alternatives(judgments, alternatives, min)
+    high = with_alternatives(judgments, alternatives, max)
+    out: dict[str, Any] = {"borderline_pairs": len(alternatives)}
+    for name, subset in sets_of(queries).items():
+        point, lo, hi = (summarize(run, subset, j) for j in (judgments, low, high))
+        ids = {q.id for q in subset}
+        out[name] = {
+            # Спорных пар в самом наборе: в защите — «37 из 120 пар этих 24
+            # запросов», а не общее число по всем 150 парам пула.
+            "borderline_pairs": sum(1 for query_id, _ in alternatives if query_id in ids),
+            **{
+                metric: {"low": lo[metric], "point": point[metric], "high": hi[metric]}
+                for metric in ("success_at_1", "success_at_5")
+            },
+        }
+    return out
+
+
 def sets_of(queries: list[Any]) -> dict[str, list[Any]]:
     in_domain = [q for q in queries if q.expect == "in-domain"]
     return {
@@ -94,12 +180,26 @@ def main() -> None:
         help="Слепая разметка топ-5 этого же индекса",
     )
     parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr5c_deploy_metrics.json"))
+    parser.add_argument(
+        "--index-root",
+        type=Path,
+        default=None,
+        help="Индекс прогона: сверка отпечатков профилей в оценках (#123)",
+    )
+    parser.add_argument(
+        "--borderline",
+        type=Path,
+        default=None,
+        help="Спорные пары судьи (judgments_borderline_*.md) — интервал в --interval-out (#131)",
+    )
+    parser.add_argument("--interval-out", type=Path, default=None)
     args = parser.parse_args()
 
     run = load_run(args.runs)
     queries = load_queries(query_set_path("golden"))
-    blind = load_judgments(args.judgments)
-    accumulated = load_judgments()
+    fingerprints = profile_fingerprints(args.index_root) if args.index_root else None
+    blind, blind_stale = drop_stale("слепая", load_judgments(args.judgments), fingerprints)
+    accumulated, accumulated_stale = drop_stale("накопленная", load_judgments(), fingerprints)
 
     payload: dict[str, Any] = {
         "index_version": run.index_version,
@@ -121,8 +221,31 @@ def main() -> None:
             for name, subset in sets_of(queries).items()
         },
     }
+    # Блок только при оценках с отпечатком: у разметки до #123 его нет, и JSON
+    # прошлых прогонов воспроизводится байт в байт.
+    if blind_stale is not None:
+        payload["judgments"]["blind"]["staleness"] = blind_stale
+    if accumulated_stale is not None:
+        payload["judgments"]["accumulated"]["staleness"] = accumulated_stale
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    if args.borderline is not None and args.interval_out is not None:
+        interval = {
+            "index_version": run.index_version,
+            "borderline": str(args.borderline),
+            **borderline_interval(run, queries, blind, load_borderline(args.borderline)),
+        }
+        args.interval_out.write_text(
+            json.dumps(interval, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        for name in ("golden_in_domain_24", "golden_same_22", "golden_edge"):
+            row = interval[name]
+            s1, s5 = row["success_at_1"], row["success_at_5"]
+            print(
+                f"интервал {name:22s} S@1 {s1['low']:.3f}–{s1['high']:.3f} "
+                f"(точка {s1['point']:.3f}) · S@5 {s5['low']:.3f}–{s5['high']:.3f} "
+                f"(точка {s5['point']:.3f}) · спорных пар {row['borderline_pairs']}"
+            )
     for name, both in payload["sets"].items():
         for markup in ("blind", "accumulated"):
             row = both[markup]

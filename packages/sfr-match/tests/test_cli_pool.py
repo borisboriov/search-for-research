@@ -59,11 +59,11 @@ def test_pool_blind_hides_that_a_pair_was_ever_judged(
     assert all("judged" not in record for record in records), (
         "следа прежней разметки быть не должно"
     )
+    # #131: без expect — метка набора подсказывает судье, что запрос «трудный»
     assert set(records[0]) == {
         "query_id",
         "author_id",
         "query",
-        "expect",
         "name",
         "topics",
         "profile_text",
@@ -178,3 +178,30 @@ def test_eval_queries_file_missing_fails_loudly(tmp_path: Path) -> None:
     result = runner.invoke(app, ["eval", "--queries-file", str(missing)])
     assert result.exit_code != 0
     assert "nope.jsonl" in result.output
+
+
+def test_stamp_judgments_adds_the_profile_fingerprint_from_the_pool(tmp_path: Path) -> None:
+    # #123: отпечаток ставится после судейства из того же пула; строки вне пула
+    # и уже проставленные не меняются.
+    from sfr_match.evalset import profile_fingerprint
+
+    pool = tmp_path / "pool.jsonl"
+    write_jsonl(pool, [{"query_id": "q1", "author_id": "A1", "profile_text": "текст профиля"}])
+    judgments = tmp_path / "judgments.jsonl"
+    write_jsonl(
+        judgments,
+        [
+            {"query_id": "q1", "author_id": "A1", "grade": 2, "judge": "fable (sfr-judge)"},
+            {"query_id": "q1", "author_id": "A9", "grade": 0, "judge": "fable (sfr-judge)"},
+            {"query_id": "q2", "author_id": "A1", "grade": 1, "profile_fp": "keep"},
+        ],
+    )
+    result = runner.invoke(
+        app, ["stamp-judgments", "--pool", str(pool), "--judgments", str(judgments)]
+    )
+    assert result.exit_code == 0, result.output
+    rows = [json.loads(line) for line in judgments.read_text(encoding="utf-8").splitlines()]
+    assert rows[0]["profile_fp"] == profile_fingerprint("текст профиля")
+    assert "profile_fp" not in rows[1]
+    assert rows[2]["profile_fp"] == "keep"
+    assert "проставлен 1, уже был 1, нет в пуле 1" in result.output

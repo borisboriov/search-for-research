@@ -261,4 +261,5 @@ class MatchService:
             search_backend=select_search_backend(),
             compose=meta.compose,
             built_at=meta.built_at,
+            data_updated_at=meta.data_updated_at or None,
         )

@@ -55,3 +55,29 @@ describe("fetchMatch: предел ожидания", () => {
     expect(init.signal).toBeUndefined();
   });
 });
+
+describe("fetchMatch: 429 от лимитера (#23)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("429 — отдельное состояние, а не «Сервис недоступен»; тело не разбирается", async () => {
+    // Caddy отвечает на лимит до route handler Next: тело пустое, не JSON.
+    const json = vi.fn(async () => {
+      throw new SyntaxError("Unexpected end of JSON input");
+    });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: false, status: 429, json })),
+    );
+    const state = await fetchMatch(QUERY);
+    expect(state.kind).toBe("rate_limited");
+    expect(json).not.toHaveBeenCalled();
+  });
+
+  it("прочие не-2xx по-прежнему — ошибка сервиса", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 502, json: async () => ({}) })));
+    const state = await fetchMatch(QUERY);
+    expect(state.kind).toBe("error");
+  });
+});

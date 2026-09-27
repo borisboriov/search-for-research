@@ -24,7 +24,13 @@ services:
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
     volumes:
       - ./data/indexes_sfr5c:/app/data/indexes_sfr5c:ro
-      - ./data/exports:/app/data/exports:ro
+      # Только карточки, как в deploy/docker-compose.yml (#13).
+      - type: bind
+        source: ./data/exports/cards_sfr5c.jsonl
+        target: /app/data/exports/cards_sfr5c.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
       - ${SFR_HF_CACHE:-hf-cache}:/models
 
 volumes:

@@ -2,7 +2,12 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { EmptyResults, EXAMPLE_QUERIES, QueryHint } from "@/components/empty-results";
+import {
+  EmptyResults,
+  EXAMPLE_QUERIES,
+  QueryHint,
+  RateLimitedState,
+} from "@/components/empty-results";
 
 describe("EmptyResults", () => {
   it("заголовок, объяснение и три примера удачных запросов", () => {
@@ -35,5 +40,17 @@ describe("QueryHint", () => {
     expect(screen.queryByText("Сервис сейчас недоступен")).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Изменить запрос" }));
     expect(onEditQuery).toHaveBeenCalled();
+  });
+});
+
+describe("RateLimitedState (#23)", () => {
+  it("говорит «слишком много запросов», а не «сервис недоступен»; кнопка — повтор", async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+    render(<RateLimitedState onRetry={onRetry} />);
+    expect(screen.getByText("Слишком много запросов подряд")).toBeInTheDocument();
+    expect(screen.queryByText(/недоступен/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Повторить" }));
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 });

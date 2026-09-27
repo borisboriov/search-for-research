@@ -30,8 +30,9 @@ cd search-for-research
 
 # 3. Окружение
 cd deploy && cp env.example .env
-# заполнить .env: SITE_ADDRESS (одно имя или несколько через запятую,
-#   значение в кавычках), NEXT_PUBLIC_SITE_URL (канонический адрес, один),
+# заполнить .env: SITE_ADDRESS (канонический адрес), REDIRECT_FROM /
+#   REDIRECT_TO (301 www → апекс, #21; имя из REDIRECT_FROM в SITE_ADDRESS
+#   не ставить — Caddy не стартует), NEXT_PUBLIC_SITE_URL (канонический адрес, один),
 # REVALIDATE_SECRET=$(openssl rand -hex 32), SFR_API_LOG_SALT=$(openssl rand -hex 16),
 # NEXT_PUBLIC_CLAIM_EMAIL (или оставить пустым — ссылка «Это вы?» скрыта)
 cd ..
@@ -49,7 +50,7 @@ cd ..
 #    них держатся Search Console и Яндекс.Вебмастер: удалишь — кабинет
 #    отвалится вместе с отчётами по индексации.
 source deploy/.env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}   # мы ещё в корне репо
-for name in $(echo "$SITE_ADDRESS" | tr ',' ' '); do dig +short "$name"; done
+for name in $(echo "$SITE_ADDRESS" | tr ',' ' ') ${REDIRECT_FROM:-}; do dig +short "$name"; done
 # каждое имя должно вернуть IP этого сервера
 cd deploy && docker compose up -d --build
 # первый старт api качает веса FRIDA (~2 ГБ) в том hf-cache — единожды;
@@ -69,6 +70,14 @@ echo "sitemap: $n профилей"   # должно равняться profiles
 curl -s https://$DOMAIN/robots.txt | grep sitemap
 ```
 
+**Переход на 301 `www` → апекс (#21, при первом обновлении после 27.09).** В
+`deploy/.env` на сервере: `SITE_ADDRESS="search-for-research.ru"` (без `www`),
+`REDIRECT_FROM=www.search-for-research.ru`, `REDIRECT_TO=https://search-for-research.ru`
+— все три строки вместе, иначе одно имя окажется в двух блоках Caddyfile и
+прокси не стартует. Проверка после `docker compose up -d --build proxy`:
+`curl -sI https://www.search-for-research.ru/supervisor/A5050048876 | head -3`
+→ `301` и `location: https://search-for-research.ru/supervisor/A5050048876`.
+
 ## Обновление
 
 ```bash
@@ -77,6 +86,7 @@ git pull
 # если менялись артефакты — с машины разработчика: deploy/sync-artifacts.sh user@host
 cd deploy
 docker compose up -d --build        # пересборка только изменившихся образов
+docker compose restart api          # если привозились артефакты: api читает их на старте
 # --build здесь не только про наш код: пересборка подтягивает патчи базовых
 # образов и `apk upgrade` в прокси. Это единственный способ закрывать CVE
 # базы — CI их не видит (docs/reports/SFR4b_REPORT.md).
@@ -97,8 +107,24 @@ curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_cou
 | Что | Где |
 |---|---|
 | путь индекса | `apps/api/src/sfr_api/settings.py` (`index_root`), `deploy/docker-compose.yml` (`SFR_API_INDEX_ROOT` и volume), `apps/api/Dockerfile` (`ENV SFR_API_INDEX_ROOT`), `deploy/sync-artifacts.sh` |
-| путь `cards` | `settings.py` (`cards_path`), `docker-compose.yml` (`SFR_API_CARDS_PATH`), `sync-artifacts.sh` |
+| путь `cards` | `settings.py` (`cards_path`), `docker-compose.yml` (`SFR_API_CARDS_PATH` и bind-монтирование одного файла), `sync-artifacts.sh` |
 | пороги | **только** `settings.py`: `score_threshold`, `score_weak`, `score_high` (env `SFR_API_SCORE_THRESHOLD`, `SFR_API_SCORE_WEAK`, `SFR_API_SCORE_HIGH`). Compose их намеренно не передаёт, `deploy/.env` в контейнер api не попадает — других мест нет |
+
+**`cards` монтируется одним файлом** (#13): в контейнер api попадает только
+`cards_sfr5c.jsonl`, не весь `data/exports`. Следствие: `rsync` заменяет файл
+через переименование, а работающий контейнер держит старый — после
+`sync-artifacts.sh` нужен явный `docker compose restart api`. `up -d --build`
+его не заменяет: compose пересоздаёт контейнер, только если изменились образ
+или конфиг сервиса, а новые данные при том же образе — не изменение. Без файла
+на сервере контейнер не поднимется — это намеренно (`create_host_path: false`).
+
+**Дата данных в `meta.json`** (#16): локальный индекс проштампован полем
+`data_updated_at`. Api до этой ветки читает `meta.json` строго и на незнакомом
+ключе не стартует (с неё — пропускает незнакомые ключи). Поэтому на первой
+выкладке после #16 `sync-artifacts.sh` и пересборка api — одним заходом, без
+перезапуска старого контейнера между ними; при откате кода ниже этой ветки —
+удалить ключ `data_updated_at` из `meta.json` на сервере или привезти прежний
+`meta.json`.
 
 **Чеклист выкладки нового индекса** (#99 и дальше):
 

@@ -6,7 +6,7 @@
 import hashlib
 import json
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -45,6 +45,12 @@ class IndexMeta:
     # можно только по прогонам, — и служат сверкой: settings API и индекс
     # не должны разъехаться незаметно. Источник истины для рантайма — settings.
     thresholds: dict[str, float] | None = None
+    # #16: дата данных каталога — самая свежая `updated_date` записи OpenAlex
+    # среди авторов каталога (`scripts/stamp_data_date.py`, шаг `make
+    # index-sfr5c`). Не `built_at`: индекс пересобирают и без доливки данных,
+    # а посетитель читает плашку «обновлено» как «когда обновились данные о
+    # человеке». Пусто — индекс без штампа, фронт тогда показывает `built_at`.
+    data_updated_at: str = ""
 
     @property
     def slug(self) -> str:
@@ -151,7 +157,22 @@ def load_meta(index_dir: Path) -> IndexMeta:
     path = index_dir / META_FILE
     if not path.exists():
         raise FileNotFoundError(f"{index_dir} has no index — run `sfr-match index` first")
-    return IndexMeta(**json.loads(path.read_text(encoding="utf-8")))
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    # Незнакомые ключи пропускаются: `meta.json` приезжает на сервер отдельно
+    # от кода (sync-artifacts.sh), и поле, дописанное новой версией, не должно
+    # ронять api старой — при откате или между rsync и пересборкой образа.
+    known = {f.name for f in fields(IndexMeta)}
+    return IndexMeta(**{key: value for key, value in raw.items() if key in known})
+
+
+def stamp_data_updated_at(index_dir: Path, value: str) -> IndexMeta:
+    """Дописать дату данных каталога в meta.json уже собранного индекса (#16)."""
+    meta = load_meta(index_dir)
+    meta.data_updated_at = value
+    (index_dir / META_FILE).write_text(
+        json.dumps(asdict(meta), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return meta
 
 
 def stamp_thresholds(index_dir: Path, thresholds: dict[str, float]) -> IndexMeta:
@@ -190,3 +211,17 @@ def resolve_index_dir(
     root: Path = DEFAULT_INDEX_ROOT,
 ) -> Path:
     return index_path(resolve_model(model), clean=clean, compose=compose, root=root)
+
+
+def profile_fingerprints(index_root: Path) -> dict[str, str]:
+    """Отпечатки профилей индекса (#123): id → `profile_fingerprint(profile_text)`.
+
+    ``index_root`` — корень (`data/indexes_sfr5c`) или сам каталог индекса.
+    """
+    from sfr_match.evalset import profile_fingerprint
+
+    candidates = [index_root, *sorted(p for p in index_root.iterdir() if p.is_dir())]
+    docs_dir = next(d for d in candidates if (d / "docs.json").exists())
+    return {
+        str(doc["id"]): profile_fingerprint(str(doc["profile_text"])) for doc in load_docs(docs_dir)
+    }
