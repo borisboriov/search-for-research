@@ -388,14 +388,22 @@ metrics-base-blind-sfr5c: unhide
 # Выборка для человека (§7 отчёта) целиком одной командой: раньше два раздела
 # склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки
 # оценок — «было → v1 → v2»: оба пересуда рядом, расхождения помечены ⚠.
-# Точка «потолок» пересобрана при выкладке #98; чтобы получить файл ровно как в
-# §7, добавить `--cap-runs data/eval/runs_sfr5c_9010
-# --cap-profiles data/exports/profiles_sfr5c_9010.jsonl` и
-# `--index-root data/indexes_sfr5c_9010` у review-sample.
+# Цель **воспроизводит §7 по архиву измерения** (точка «потолок 9 010»,
+# `*_sfr5c_9010`), а не считает текущий каталог: её выход — трекаемый файл,
+# который Борис читал по #112, и на каталоге 9 002 он получил бы чужие данные
+# (ревью выкладки SFR-5c). Пул решающих пар из архива совпадает с тем, что
+# входил в пересуды v1/v2, — перезапись байт в байт. Выборка по выложенному
+# каталогу — `review-deploy-sfr5c`.
+SFR5C_9010_RUNS := data/eval/runs_sfr5c_9010
+SFR5C_9010_INDEX_ROOT := data/indexes_sfr5c_9010
+SFR5C_9010_PROFILES := data/exports/profiles_sfr5c_9010.jsonl
+
 review-sfr5c: unhide
-	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_RUNS) \
-		--index-root $(SFR5C_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)
+	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_9010_RUNS) \
+		--index-root $(SFR5C_9010_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)
 	uv run python scripts/sfr5c_decisive_pairs.py \
+		--cap-runs $(SFR5C_9010_RUNS) --cap-profiles $(SFR5C_9010_PROFILES) \
+		--pool-out data/eval/pool_rejudge_sfr5c.jsonl \
 		--rejudged v1=$(SFR5C_EVAL)/judgments_rejudge_sfr5c.jsonl \
 		--rejudged v2=$(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
 		--section-out $(SFR5C_DECISIVE) --sample $(SFR5C_SAMPLE) --out $(SFR5C_REVIEW)

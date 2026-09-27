@@ -1007,8 +1007,10 @@ uv run python scripts/sfr5c_decisive_pairs.py \
   --out packages/sfr-match/eval/judgments_for_review_sfr5c.md
 ```
 
-Без суффиксов те же цели (`make metrics-sfr5c`, `make review-sfr5c`) считают
-**текущий** каталог — это и есть их обычная работа после выкладки.
+Без суффиксов `make metrics-sfr5c` считает **текущий** каталог. `make
+review-sfr5c` после ревью выкладки (13.12) собирает §7 **по архиву** `_9010`
+сама — эти четыре команды ей больше не нужны, а выборка по выложенному
+каталогу — `make review-deploy-sfr5c`.
 
 **Что именно воспроизводится, проверено `diff` на момент закрытия сессии:**
 
