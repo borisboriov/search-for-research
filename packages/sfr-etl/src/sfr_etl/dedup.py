@@ -1262,28 +1262,184 @@ def suspect_clusters(
     return (sizes[0] if sizes else 0, sizes[1] if len(sizes) > 1 else 0)
 
 
-def detect_suspect_merges(session: Session) -> dict[str, int]:
-    """Отметить профили, похожие на чужую склейку OpenAlex. Флаг, не расклейка."""
-    authors = list(
+# #119: признаки смеси двух людей в одном профиле, кроме двух тематических
+# групп. Откалиброваны на восьми известных смесях из разбора #112 (каталог
+# 9 010 до решений) так, чтобы каждый признак помечал не больше ~5 % боевого
+# каталога; замер — docs/DECISIONS.md 27.09.
+MIX_MIN_AFFILIATIONS = 100  # организаций в `affiliations` (Jianmin Wu — 526)
+MIX_MARGINAL_SHARE = 0.06  # лет в вузе каталога от всего срока аффилиаций…
+MIX_MARGINAL_MIN_SPAN = 15  # …при сроке не короче (Shestakov A — 1 из 17)
+MIX_TOPIC_DOMAIN_SHARE = 0.40  # второй домен в темах автора (Hossain A — 0.42)
+MIX_WORK_DOMAIN_MIN = 4  # второй домен в работах: не меньше работ…
+MIX_WORK_DOMAIN_SHARE = 0.40  # …и такой доли (Sokolov A — 10/25, Sokoloff B — 8/17)
+
+MIX_CLUSTERS = "две группы тем"
+MIX_AFFILIATIONS = "много организаций"
+MIX_MARGINAL = "вуз каталога — случайная аффилиация"
+MIX_TOPIC_DOMAINS = "темы автора в двух доменах"
+MIX_WORK_DOMAINS = "работы в двух доменах"
+MIX_SIGNALS = (MIX_CLUSTERS, MIX_AFFILIATIONS, MIX_MARGINAL, MIX_TOPIC_DOMAINS, MIX_WORK_DOMAINS)
+
+
+def field_domains(session: Session) -> dict[str, str]:
+    """Карта «область OpenAlex → домен» из сырых записей авторов (как `topic_subfields`)."""
+    mapping: dict[str, str] = {}
+    for (raw,) in session.execute(select(Author.raw).where(Author.raw.is_not(None))):
+        for topic in (raw or {}).get("topics") or []:
+            field_name = (topic.get("field") or {}).get("display_name")
+            domain = (topic.get("domain") or {}).get("display_name")
+            if field_name and domain:
+                mapping.setdefault(str(field_name), str(domain))
+    return mapping
+
+
+def _affiliation_years(author: Author) -> tuple[int, int]:
+    """(лет в вузе каталога, лет во всех аффилиациях) по `raw.affiliations`."""
+    own = author.institution.openalex_id if author.institution is not None else None
+    every: set[int] = set()
+    here: set[int] = set()
+    for affiliation in (author.raw or {}).get("affiliations") or []:
+        years = {int(y) for y in affiliation.get("years") or [] if isinstance(y, int)}
+        every |= years
+        institution_id = str((affiliation.get("institution") or {}).get("id") or "")
+        if own and institution_id.rsplit("/", 1)[-1] == own:
+            here |= years
+    return len(here), len(every)
+
+
+def _second_share(counts: dict[str, float]) -> tuple[str, str, float, float]:
+    """Два крупнейших ключа и доля/величина второго: (1-й, 2-й, доля 2-го, 2-й)."""
+    ranked = sorted(counts.items(), key=lambda kv: -kv[1])
+    total = sum(counts.values()) or 1.0
+    if len(ranked) < 2:
+        return (ranked[0][0] if ranked else "", "", 0.0, 0.0)
+    return ranked[0][0], ranked[1][0], ranked[1][1] / total, ranked[1][1]
+
+
+def mix_signals(
+    author: Author,
+    works: Sequence[Work],
+    *,
+    subfields: dict[str, str] | None = None,
+    domains: dict[str, str] | None = None,
+) -> list[tuple[str, str]]:
+    """Признаки того, что в профиле два человека: [(признак, пояснение), …].
+
+    Только чтение: ничего не пишет. Пусто — признаков нет. Признаки независимы,
+    каждый поймал свою часть известных смесей (#119); профили с примесью в 2–5
+    чужих работ (Popruzhenko B, Usachev B, Sokolov B) ими не отличаются от
+    междисциплинарных — это замер, а не недосмотр (DECISIONS 27.09).
+    """
+    found: list[tuple[str, str]] = []
+    raw = author.raw or {}
+    if len(works) >= SUSPECT_MIN_WORKS:
+        _, second = suspect_clusters(works, subfields)
+        # Вторая по размеру группа — ровно «второй человек»; `largest >= second`
+        # проверять не надо: размеры уже отсортированы по убыванию (#11). `>=` в
+        # доле, а не `>`: группа ровно в четверть работ уже подозрительна.
+        if second >= SUSPECT_MIN_SHARE * len(works):
+            found.append((MIX_CLUSTERS, f"вторая группа — {second} из {len(works)} работ"))
+    n_affiliations = len(raw.get("affiliations") or [])
+    if n_affiliations >= MIX_MIN_AFFILIATIONS:
+        found.append((MIX_AFFILIATIONS, f"организаций в affiliations: {n_affiliations}"))
+    here, span = _affiliation_years(author)
+    if span >= MIX_MARGINAL_MIN_SPAN and here <= MIX_MARGINAL_SHARE * span:
+        found.append((MIX_MARGINAL, f"в вузе каталога {here} из {span} лет аффилиаций"))
+    by_domain: dict[str, float] = {}
+    for topic in raw.get("topics") or []:
+        domain = (topic.get("domain") or {}).get("display_name")
+        if domain:
+            by_domain[str(domain)] = by_domain.get(str(domain), 0.0) + float(
+                topic.get("count") or 0
+            )
+    first, second_domain, share, _ = _second_share(by_domain)
+    if share >= MIX_TOPIC_DOMAIN_SHARE:
+        found.append((MIX_TOPIC_DOMAINS, f"{first} / {second_domain} {share:.0%}"))
+    domains = domains or {}
+    work_domains: dict[str, float] = {}
+    for work in works:
+        top = work.topics[0] if work.topics else None
+        field_name = top.get("field") if isinstance(top, dict) else None
+        domain = domains.get(str(field_name)) if field_name else None
+        if domain:  # область неизвестна (записи до SFR-5) — не второй домен, а пропуск
+            work_domains[domain] = work_domains.get(domain, 0.0) + 1
+    first, second_domain, share, count = _second_share(work_domains)
+    n_known = int(sum(work_domains.values()))
+    if (
+        n_known >= SUSPECT_MIN_WORKS
+        and count >= MIX_WORK_DOMAIN_MIN
+        and share >= MIX_WORK_DOMAIN_SHARE
+    ):
+        found.append(
+            (MIX_WORK_DOMAINS, f"{first} / {second_domain}: {int(count)} из {n_known} работ")
+        )
+    return found
+
+
+def _catalogue_with_works(session: Session) -> list[Author]:
+    return list(
         session.execute(
             select(Author)
             .where(Author.is_supervisor_candidate.is_(True), Author.merged_into_id.is_(None))
-            .options(selectinload(Author.works))
+            .options(
+                selectinload(Author.works),
+                selectinload(Author.institution),
+                selectinload(Author.topics),
+            )
         ).scalars()
     )
-    mapping = topic_subfields(session)
-    stats = {"checked": 0, "suspect": 0}
-    for author in authors:
+
+
+def mix_candidates(session: Session) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    """Профили с признаками смеси и счётчики по признакам — **только чтение** (#119).
+
+    Для `--dry-run` и для review-файла: в БД ничего не пишется. Порядок — по
+    числу сработавших признаков, затем по id: несколько независимых признаков
+    сразу — главный кандидат на ручную проверку.
+    """
+    subfields = topic_subfields(session)
+    domains = field_domains(session)
+    counts = {"checked": 0, "suspect": 0, **{name: 0 for name in MIX_SIGNALS}}
+    found: list[dict[str, Any]] = []
+    for author in _catalogue_with_works(session):
+        counts["checked"] += 1
         works = list(author.works)
+        signals = mix_signals(author, works, subfields=subfields, domains=domains)
+        if not signals:
+            continue
+        counts["suspect"] += 1
+        for name, _ in signals:
+            counts[name] += 1
+        largest, second = suspect_clusters(works, subfields) if works else (0, 0)
+        found.append(
+            {
+                "author_id": author.openalex_id,
+                "name": author.display_name,
+                "institution": _institution_name(author),
+                "n_works": len(works),
+                "cluster_sizes": [largest, second],
+                "topics": [t.topic_name for t in sorted(author.topics, key=lambda t: -t.score)][:6],
+                "reasons": [f"{name}: {detail}" for name, detail in signals],
+            }
+        )
+    found.sort(key=lambda item: (-len(item["reasons"]), item["author_id"]))
+    return found, counts
+
+
+def detect_suspect_merges(session: Session) -> dict[str, int]:
+    """Отметить профили, похожие на чужую склейку OpenAlex. Флаг, не расклейка.
+
+    Пишет `suspect_merge` — поэтому вызывается только с `--apply`; `--dry-run`
+    считает те же признаки через `mix_candidates`, ничего не записывая.
+    """
+    subfields = topic_subfields(session)
+    domains = field_domains(session)
+    stats = {"checked": 0, "suspect": 0}
+    for author in _catalogue_with_works(session):
         stats["checked"] += 1
-        suspect = False
-        if len(works) >= SUSPECT_MIN_WORKS:
-            _, second = suspect_clusters(works, mapping)
-            # Вторая по размеру группа — ровно «второй человек»; `largest >=
-            # second` проверять не надо: размеры уже отсортированы по убыванию
-            # (#11). `>=` в доле, а не `>`: группа ровно в четверть работ уже
-            # подозрительна, а профиль пополам (6 + 6 из 12) — тем более.
-            suspect = second >= SUSPECT_MIN_SHARE * len(works)
+        suspect = bool(
+            mix_signals(author, list(author.works), subfields=subfields, domains=domains)
+        )
         author.suspect_merge = suspect
         if suspect:
             stats["suspect"] += 1
@@ -1492,29 +1648,40 @@ def render_dedup_review(
         "",
         f"## Подозрение на чужую склейку — {_first(n_examples, n_suspects)}",
         "",
-        "Работы профиля распадаются на две тематические группы без общей "
-        "подобласти. Расклейка не делается: делить работы между людьми, которых "
-        "мы не знаем, нечем. На фронте флаг пока не показывается.",
+        "Признаки того, что в профиле OpenAlex два человека (#119): работы "
+        "распадаются на две тематические группы без общей подобласти; сотня и больше "
+        "организаций; вуз каталога — случайная аффилиация; темы или работы в двух "
+        "доменах. Расклейка не делается: делить работы между людьми, которых мы не "
+        "знаем, нечем. Флаг — подсказка для ручной проверки, не приговор: каждый "
+        "признак срабатывает и на честных междисциплинарных профилях, поэтому "
+        "смотреть сначала тех, у кого признаков несколько. На фронте не показывается.",
         "",
     ]
 
     def table(rows: Sequence[dict[str, Any]]) -> list[str]:
-        out = ["| Автор | Имя | Вуз | Работ | Группы | Темы |", "|---|---|---|---|---|---|"]
+        out = [
+            "| Автор | Имя | Вуз | Работ | Группы | Признаки | Темы |",
+            "|---|---|---|---|---|---|---|",
+        ]
         for item in rows:
             out.append(
                 f"| `{item['author_id']}` | {item['name']} | {item['institution']} | "
                 f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} | "
+                f"{'; '.join(item.get('reasons') or ['две группы тем'])} | "
                 f"{'; '.join(item['topics'][:4])} |"
             )
         return out
 
-    # Сначала топ по размеру *меньшей* группы: чем она больше, тем меньше похоже
-    # на шум и больше — на двух настоящих людей в одном профиле. Полный список
-    # ниже отсортирован по id и читается как справочник, а не как приоритет.
-    top = sorted(suspects, key=lambda s: (-s["cluster_sizes"][1], s["author_id"]))[:SUSPECT_TOP]
+    # Сначала топ: больше независимых признаков — больше похоже на двух людей;
+    # при равенстве — размер *меньшей* тематической группы. Полный список ниже
+    # отсортирован по id и читается как справочник, а не как приоритет.
+    top = sorted(
+        suspects,
+        key=lambda s: (-len(s.get("reasons") or []), -s["cluster_sizes"][1], s["author_id"]),
+    )[:SUSPECT_TOP]
     if len(suspects) > len(top):
         lines += [
-            f"### Топ-{len(top)} по размеру меньшей тематической группы — смотреть эти",
+            f"### Топ-{len(top)} по числу признаков — смотреть эти",
             "",
             *table(top),
             "",

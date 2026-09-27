@@ -7,7 +7,7 @@ from typing import Annotated
 
 import structlog
 import typer
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Author, Institution
@@ -21,6 +21,7 @@ from sfr_etl.catalog import (
 from sfr_etl.client import OpenAlexClient
 from sfr_etl.dedup import (
     DEFAULT_DECISIONS_PATH,
+    MIX_SIGNALS,
     STATUS_FORBIDDEN_BUT_MERGED,
     STATUS_NOT_IN_CATALOGUE,
     DecisionsFileMissing,
@@ -29,9 +30,9 @@ from sfr_etl.dedup import (
     detect_suspect_merges,
     find_splits,
     load_decisions_or_fail,
+    mix_candidates,
     recompute_merged_aggregates,
     render_dedup_review,
-    suspect_examples,
     unmerge_author,
 )
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
@@ -366,18 +367,11 @@ def etl_dedup(
             # склеенных, а агрегаты нужно восстанавливать и после повторного
             # ингеста авторов, который их перезаписывает.
             aggregate_stats = recompute_merged_aggregates(session)
-            suspect_stats = detect_suspect_merges(session)
-            suspects = suspect_examples(session, limit=max(examples, 20))
-        else:
-            # Флаги suspect_merge не пересчитываются без --apply, но уже лежат в БД
-            # с прошлого прогона — показываем их, а не «0 из 0».
-            suspect_stats = {
-                "checked": 0,
-                "suspect": session.execute(
-                    select(func.count()).select_from(Author).where(Author.suspect_merge.is_(True))
-                ).scalar_one(),
-            }
-            suspects = suspect_examples(session, limit=max(examples, 20))
+            detect_suspect_merges(session)
+        # Признаки смеси (#119) считаются и в --dry-run — только чтением
+        # (mix_candidates ничего не пишет); флаг suspect_merge в БД пишет лишь
+        # detect_suspect_merges выше, под --apply.
+        suspects, suspect_stats = mix_candidates(session)
         review_out.parent.mkdir(parents=True, exist_ok=True)
         review_out.write_text(
             render_dedup_review(
@@ -413,9 +407,10 @@ def etl_dedup(
         f"похоже, один человек: {len(findings.near_duplicates)}; "
         f"инициалы-префикс: {len(findings.initials_prefix)}; "
         f"тёзок без сигнала: {len(namesakes)}; "
-        f"подозрительных профилей: {suspect_stats['suspect']}"
-        + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
-        + "; "
+        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']} ("
+        + ", ".join(f"{name} {suspect_stats[name]}" for name in MIX_SIGNALS)
+        + ("" if apply else "; dry-run — в БД не записано")
+        + "); "
         f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']}; "
         f"решений человека: {len(findings.decisions)} (не в каталоге {ignored}, "
         f"запрещено-но-склеено {len(violations)}) "
