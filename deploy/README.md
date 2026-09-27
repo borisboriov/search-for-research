@@ -79,7 +79,7 @@ cd deploy
 docker compose up -d --build        # пересборка только изменившихся образов
 # --build здесь не только про наш код: пересборка подтягивает патчи базовых
 # образов и `apk upgrade` в прокси. Это единственный способ закрывать CVE
-# базы — CI их не видит (docs/SFR4b_REPORT.md).
+# базы — CI их не видит (docs/reports/SFR4b_REPORT.md).
 source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
 curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
 curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
