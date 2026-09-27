@@ -1545,7 +1545,7 @@ def render_dedup_review(
     mix: Sequence[dict[str, Any]] = (),
     n_mix: int | None = None,
 ) -> str:
-    """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
+    """Выборка дедупликации (`data/eval/review/`) — что склеено и что осталось человеку.
 
     Файл нужен ровно затем, зачем `judgments_for_review*.md`: решения принимал
     агент, и без выборки на глазах человека они остаются непроверенными.

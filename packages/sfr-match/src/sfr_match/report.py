@@ -222,7 +222,7 @@ def sample_for_review(
     n: int = 20,
     seed: int = 20260829,
 ) -> str:
-    """`eval/judgments_for_review.md` — a random sample for a human to re-check.
+    """Random sample of judgments for a human to re-check (``data/eval/review/``).
 
     Кроме тем OpenAlex к каждой паре печатаются названия работ из ``profile_text``:
     оценка ставится по работам, а темы OpenAlex считаются по массе публикаций и

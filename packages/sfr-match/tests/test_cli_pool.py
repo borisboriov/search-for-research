@@ -134,6 +134,46 @@ def test_review_sample_reads_the_judgments_file_it_is_given(
     assert text.count("## ") == 1, "в файле оценок одна пара — в выборке тоже одна"
 
 
+def test_review_sample_default_goes_to_gitignored_data_not_eval(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    # #143: без --out выборка ложится в data/eval/review — прежнее умолчание
+    # eval/judgments_for_review.md переписало бы выборку SFR-1, проверенную Борисом.
+    index_root, runs_dir = _scene(tmp_path, profiles, fake_embedder)
+    queries: list[Query] = load_queries(query_set_path("golden"))[:1]
+    judgments = tmp_path / "judgments.jsonl"
+    write_jsonl(
+        judgments,
+        [
+            Judgment(
+                query_id=queries[0].id, author_id="A1", grade=2, rationale="тест", iteration="t"
+            ).model_dump()
+        ],
+    )
+    eval_dir = tmp_path / "eval"
+    eval_dir.mkdir()
+    (eval_dir / "queries.jsonl").write_bytes(query_set_path("golden").read_bytes())
+    monkeypatch.setenv("SFR_MATCH_EVAL_DIR", str(eval_dir))
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(
+        app,
+        [
+            "review-sample",
+            "--n",
+            "5",
+            "--runs-dir",
+            str(runs_dir),
+            "--index-root",
+            str(index_root),
+            "--judgments",
+            str(judgments),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / "data/eval/review/judgments_for_review.md").exists()
+    assert not (eval_dir / "judgments_for_review.md").exists(), "в eval/ умолчание не пишет"
+
+
 def test_eval_queries_file_runs_an_archived_query_set(
     tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type, monkeypatch
 ) -> None:  # type: ignore[no-untyped-def]
