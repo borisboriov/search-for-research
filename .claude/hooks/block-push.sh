@@ -28,17 +28,23 @@ set -uo pipefail
 payload=$(cat 2>/dev/null || true)
 reason_prefix="push и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
 
-if ! command -v python3 >/dev/null 2>&1; then
-    # Только встроенные средства bash: без python3 может не оказаться и grep.
+# Осторожный отказ без разбора: только встроенные средства bash — без python3
+# может не оказаться и grep.
+fallback() {
     shopt -s nocasematch
     if [[ $payload == *push* || $payload == *merge* ]]; then
-        echo "$reason_prefix: python3 не найден, команда с push/merge отклонена без разбора" >&2
+        echo "$reason_prefix: $1, команда с push/merge отклонена без разбора" >&2
         exit 2
     fi
     exit 0
-fi
+}
 
-HOOK_PAYLOAD=$payload exec python3 - <<'PY'
+command -v python3 >/dev/null 2>&1 || fallback "python3 не найден"
+
+# Скрипт — аргументом `-c`, команда — через stdin: переменная окружения или
+# аргумент упёрлись бы в лимит размера (у команды больше ~1 МБ exec падал с
+# «Argument list too long», и хук молча пропускал её).
+read -r -d '' script <<'PY' || true
 from __future__ import annotations
 
 import json
@@ -282,7 +288,7 @@ def check_command(command: str, cwd: str | None, depth: int = 0) -> str | None:
 
 
 def main() -> int:
-    raw = os.environ.get("HOOK_PAYLOAD", "")
+    raw = sys.stdin.read()
     try:
         payload = json.loads(raw) if raw.strip() else {}
     except json.JSONDecodeError:
@@ -298,10 +304,23 @@ def main() -> int:
             return 2
         return 0
     if found:
-        print(f"{PREFIX}: отклонено «{found}». Подготовь команду и текст — выполнит Борис.", file=sys.stderr)
+        print(
+            f"{PREFIX}: отклонено «{found}». Подготовь команду и текст — выполнит Борис. "
+            "Если это текст, а не вызов (сообщение коммита, markdown): обратные кавычки "
+            "и $(…) внутри \"…\" bash выполняет — передай текст файлом или heredoc в "
+            "кавычках (git commit -F - <<'MSG').",
+            file=sys.stderr,
+        )
         return 2
     return 0
 
 
 sys.exit(main())
 PY
+
+printf '%s' "$payload" | python3 -c "$script"
+code=$?
+# 0 — пропуск, 2 — отказ. Любой другой код — python упал раньше своего разбора
+# (синтаксис, память): закрываемся так же, как без python3.
+[ "$code" -eq 0 ] || [ "$code" -eq 2 ] && exit "$code"
+fallback "разбор команды упал (код $code)"

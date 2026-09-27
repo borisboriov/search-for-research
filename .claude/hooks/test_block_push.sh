@@ -100,6 +100,27 @@ if [ -x /bin/bash ] && ! PATH=/bin command -v python3 >/dev/null 2>&1; then
     echo "[без python3] запасная проверка по словам push/merge"
 fi
 
+# Python есть, но падает раньше своего разбора — тот же осторожный отказ.
+broken=$(mktemp -d)
+printf '#!/bin/sh\nexit 1\n' > "$broken/python3"
+chmod +x "$broken/python3"
+payload "git -C . push" | PATH="$broken:$PATH" bash "$hook" >/dev/null 2>&1
+[ $? -eq 2 ] || { echo "FAIL [python3 падает] git push должен отклоняться"; failures=$((failures + 1)); }
+payload "git status" | PATH="$broken:$PATH" bash "$hook" >/dev/null 2>&1
+[ $? -eq 0 ] || { echo "FAIL [python3 падает] git status должен проходить"; failures=$((failures + 1)); }
+rm -rf "$broken"
+echo "[python3 падает] запасная проверка по словам push/merge"
+
+# Команда больше мегабайта: полезная нагрузка идёт через stdin, а не через
+# окружение — раньше exec падал с «Argument list too long» и хук её пропускал.
+big=$(python3 -c 'import json; print(json.dumps({"tool_input": {"command": "git -C . push; cat <<\x27EOF\x27\n" + "x" * 1200000 + "\nEOF"}}))')
+printf '%s' "$big" | bash "$hook" >/dev/null 2>&1
+[ $? -eq 2 ] || { echo "FAIL [1,2 МБ] git push в большой команде должен отклоняться"; failures=$((failures + 1)); }
+big=$(python3 -c 'import json; print(json.dumps({"tool_input": {"command": "git status; cat <<\x27EOF\x27\n" + "x" * 1200000 + "\nEOF"}}))')
+printf '%s' "$big" | bash "$hook" >/dev/null 2>&1
+[ $? -eq 0 ] || { echo "FAIL [1,2 МБ] большая команда без push должна проходить"; failures=$((failures + 1)); }
+echo "[1,2 МБ] большая команда разбирается"
+
 # Сообщение отказа — то, что увидит агент.
 msg=$(payload "git -c x=y push origin main" | bash "$hook" 2>&1 >/dev/null)
 case $msg in
