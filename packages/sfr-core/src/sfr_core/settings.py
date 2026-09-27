@@ -56,7 +56,7 @@ class Settings(BaseSettings):
         if not value or "@" not in value:
             msg = (
                 "OPENALEX_MAILTO is required for the OpenAlex polite pool. "
-                "Set it in .env or the environment (see .env.example)."
+                "Set it in .env or the environment (see env.example)."
             )
             raise ValueError(msg)
         return value

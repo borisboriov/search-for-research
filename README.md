@@ -18,7 +18,7 @@ FAISS на пути поиска в Linux, перекалиброванный п
 
 ```bash
 git clone <repo-url> && cd search-for-research
-cp .env.example .env            # впишите свой email в OPENALEX_MAILTO
+cp env.example .env             # впишите свой email в OPENALEX_MAILTO
 make setup                      # uv sync + pre-commit
 uv run sfr institutions resolve "Moscow Institute of Physics and Technology"
 make etl                        # авторы → работы → профили → data/exports/profiles.jsonl
