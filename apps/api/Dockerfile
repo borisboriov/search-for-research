@@ -2,7 +2,7 @@
 #
 # The image carries code and dependencies only. The model weights are NOT baked in
 # (FRIDA is ~2 GB): they are downloaded once into the mounted HF cache volume on
-# first start. The index is built offline (`make index-sfr5`) and mounted read-only.
+# first start. The index is built offline (`make index-sfr5c`) and mounted read-only.
 FROM python:3.12-slim AS base
 
 # torch from the CPU index: the default wheels on linux/amd64 pull CUDA (gigabytes)

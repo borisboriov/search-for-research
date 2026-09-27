@@ -87,14 +87,72 @@ curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_cou
 
 ### Смена индекса (переезд на новый каталог)
 
-`sync-artifacts.sh` кладёт индекс в каталог, названный в скрипте, и удаляет в
-нём лишнее (`rsync --delete`), но **старый каталог другого имени на сервере
-остаётся**: после переезда `data/indexes_sfr5` → `data/indexes_sfr5c` (26.09) на
-VPS лежат оба, это ~150 МБ впустую. Убирать — **после** того, как новый индекс
-проверен на бою (`/api/health` отдаёт новый `index_version` и
-`thresholds_match: true`): `rm -rf ~/search-for-research/data/indexes_sfr5`.
-Раньше — не надо: это единственный способ откатиться, вернув три пути в
-`ApiSettings`, `docker-compose.yml` и `sync-artifacts.sh`.
+**Правило (`docs/DECISIONS.md` 17.09): индекс, `cards` и пороги меняются
+одновременно — и при выкладке, и при откате.** Пороги принадлежат паре
+модель×индекс: новый индекс с прежними числами (или прежний с новыми) — это
+чужая шкала грейдов и баннера, а сервис на старте сверяет пороги из настроек
+со штампом в `meta.json` индекса и отдаёт результат в `/api/health` полем
+`thresholds_match`. Все три вещи лежат в git, в четырёх файлах:
+
+| Что | Где |
+|---|---|
+| путь индекса | `apps/api/src/sfr_api/settings.py` (`index_root`), `deploy/docker-compose.yml` (`SFR_API_INDEX_ROOT` и volume), `apps/api/Dockerfile` (`ENV SFR_API_INDEX_ROOT`), `deploy/sync-artifacts.sh` |
+| путь `cards` | `settings.py` (`cards_path`), `docker-compose.yml` (`SFR_API_CARDS_PATH`), `sync-artifacts.sh` |
+| пороги | **только** `settings.py`: `score_threshold`, `score_weak`, `score_high` (env `SFR_API_SCORE_THRESHOLD`, `SFR_API_SCORE_WEAK`, `SFR_API_SCORE_HIGH`). Compose их намеренно не передаёт, `deploy/.env` в контейнер api не попадает — других мест нет |
+
+**Чеклист выкладки нового индекса** (#99 и дальше):
+
+1. **Калибровка до штампа.** Цель `make index-sfr5c` штампует в `meta.json`
+   пороги из *текущего* `ApiSettings` — на новом корпусе это ложный штамп:
+   `thresholds_match: true` будет значить «проштамповано», а не
+   «откалибровано». Порядок: собрать индекс → `sfr-match calibrate` и рецепт
+   `weak`/`high` (`threshold_hints` в `scripts/analyze_sfr5.py`) → `sfr-match
+   stamp-thresholds --index-dir <индекс>/frida_clean --none … --weak … --high …`
+   новыми числами → те же числа в `settings.py`.
+2. **Один PR на все четыре файла** из таблицы выше; `grep` по старому имени
+   каталога индекса и старым числам порогов по `apps/`, `deploy/`, `Makefile`
+   должен быть пуст.
+3. **Записать SHA `main` до merge** выкладочного PR — это точка отката (для
+   выкладки SFR-5c 26.09: `2e20bf9`, merge — `73c07e2`).
+4. После выкладки — проверки из «Обновления» плюс `/api/health`: новый
+   `index_version`, `profiles_count` = число в sitemap, **`thresholds_match: true`**.
+5. Старый каталог индекса на сервере не удалять до шага 4. `sync-artifacts.sh`
+   кладёт индекс в каталог, названный в скрипте, и удаляет лишнее только в нём
+   (`rsync --delete`): после переезда `data/indexes_sfr5` → `data/indexes_sfr5c`
+   на VPS лежат оба, ~150 МБ. Убирать — после проверки:
+   `rm -rf ~/search-for-research/data/indexes_sfr5`.
+
+**Откат к предыдущему индексу** — все четыре файла сразу, из коммита до
+выкладки (`PRE` — SHA из шага 3; для SFR-5c `PRE=2e20bf9`):
+
+```bash
+# 1. С машины разработчика — только если старого индекса на VPS уже нет
+#    (после шага 5 выше): старая версия скрипта везёт старые артефакты
+git show "$PRE:deploy/sync-artifacts.sh" > /tmp/sync-old.sh
+bash /tmp/sync-old.sh user@host
+
+# 2. На VPS: вернуть четыре файла, коммитов на сервере не делать
+cd ~/search-for-research
+git checkout "$PRE" -- apps/api/src/sfr_api/settings.py apps/api/Dockerfile \
+    deploy/docker-compose.yml deploy/sync-artifacts.sh
+cd deploy && docker compose up -d --build api
+
+# 3. Ревалидация ISR: лендинг и sitemap показывают число профилей
+source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
+curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
+
+# 4. Последний шаг — сверка: старый index_version, его profiles_count и пороги,
+#    thresholds_match: true. false — откачено не всё: пороги не совпали с
+#    индексом, ищи файл из таблицы, который остался новым
+docker compose exec -T api curl -s localhost:8000/api/health \
+  | python3 -c 'import json,sys; h=json.load(sys.stdin); print(h["index_version"], h["profiles_count"], h["score_threshold"], h["score_weak"], h["score_high"], "thresholds_match:", h["thresholds_match"])'
+curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
+```
+
+Затем закрепить откат в git: `git revert -m 1 <merge выкладки>` отдельным PR в
+`main`, после merge на VPS — `git checkout -- . && git pull` (рабочее дерево
+сервера совпадёт с `main`, пересборка не нужна). Откат «только путей» без
+порогов — ровно тот случай, который `thresholds_match: false` и ловит.
 
 Выбранная схема сборки web: **сборка без живого API + обязательная
 пост-деплойная ревалидация** (`/` и `/sitemap.xml`). Альтернатива — строить
