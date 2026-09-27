@@ -308,7 +308,7 @@ def report(
     out: Annotated[Path, typer.Option("--out")] = REPORT_PATH,
     notes: Annotated[Path, typer.Option("--notes")] = NOTES_PATH,
 ) -> None:
-    """Combine runs and judgments into docs/SFR1_REPORT.md."""
+    """Combine runs and judgments into docs/reports/SFR1_REPORT.md."""
     try:
         runs = load_runs(runs_dir)
         queries = load_queries()
@@ -438,7 +438,7 @@ def report_sfr2(
     out: Annotated[Path, typer.Option("--out")] = SFR2_REPORT_PATH,
     notes: Annotated[Path, typer.Option("--notes")] = SFR2_NOTES_PATH,
 ) -> None:
-    """Assemble docs/SFR2_REPORT.md from runs, judgments, calibration and measurements."""
+    """Assemble docs/reports/SFR2_REPORT.md from runs, judgments, calibration and measurements."""
     try:
         runs = load_runs(runs_dir)
         queries = load_queries(query_set_path("golden"))

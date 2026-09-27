@@ -6,7 +6,7 @@
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
 	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c \
-	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c
+	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c hooks-test
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -67,7 +67,7 @@ index: unhide
 	done
 
 # Full SFR-1 reproduction. NOT the default target any more: it ends in
-# `sfr-match report`, which rewrites the frozen docs/SFR1_REPORT.md — and the
+# `sfr-match report`, which rewrites the frozen docs/reports/SFR1_REPORT.md — and the
 # judging pool has grown since, so nDCG there would move retroactively.
 eval-sfr1: index
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --no-clean
@@ -104,7 +104,7 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # threshold calibration, then the report. Index building is a separate target
 # (hours of embedding); this one only needs the indexes to exist.
 #
-# ВНИМАНИЕ (SFR-5): последний шаг перезаписывает docs/SFR2_REPORT.md, а входные
+# ВНИМАНИЕ (SFR-5): последний шаг перезаписывает docs/reports/SFR2_REPORT.md, а входные
 # наборы с тех пор пересмотрены — посторонние 17 → 19, а в golden set четыре
 # запроса (q27-q30) перемечены из out-of-domain в edge/in-domain. Поэтому в
 # отчёте задним числом сдвинутся таблица калибровки, nDCG, строка состава
@@ -112,8 +112,8 @@ SFR2_OOD_RUNS := data/eval/runs_ood
 # их теперь 24 вместо 22. Проверка «код цел, изменились данные» — прогон с
 # исходной разметкой (git stash push packages/sfr-match/eval/queries.jsonl):
 # на ней Success@1/@3/@5 и MRR воспроизводятся байт в байт.
-# Разбор прогона 06.09 — docs/SFR5_REPORT.md §8. После прогона отчёт возвращать:
-#   git checkout docs/SFR2_REPORT.md
+# Разбор прогона 06.09 — docs/reports/SFR5_REPORT.md §8. После прогона отчёт возвращать:
+#   git checkout docs/reports/SFR2_REPORT.md
 eval: eval-sfr2
 
 eval-sfr2: unhide
@@ -157,7 +157,7 @@ docker-down:
 
 # Resource + latency measurements for the report (SPEC_SFR2 §3).
 bench: unhide
-	uv run python scripts/bench_api.py --out docs/sfr2_resources.json
+	uv run python scripts/bench_api.py --out docs/metrics/sfr2_resources.json
 
 # ---------------------------------------------------------------------------
 # SFR-5: каталог 12 вузов квотой — **замороженная** итерация. С выкладки SFR-5c
@@ -175,7 +175,7 @@ SFR5_OOD_RUNS := data/eval/runs_ood_sfr5
 
 # Пересборка каталога из БД: склейка дублей, профили, экспорты.
 # Ингест авторов и работ сюда не входит намеренно: он ходит в сеть и упирается
-# в дневной бюджет OpenAlex (docs/DECISIONS.md), команды — в docs/SFR5_REPORT.md.
+# в дневной бюджет OpenAlex (docs/DECISIONS.md), команды — в docs/reports/SFR5_REPORT.md.
 catalog-sfr5: unhide
 	uv run sfr etl backfill-mega
 	uv run sfr etl dedup --apply
@@ -212,7 +212,7 @@ eval-sfr5: unhide
 # data/indexes_sfr5 и data/exports/*_sfr5.jsonl не трогаются. SFR_DB_URL стоит
 # перед каждой командой, которая ходит в БД: env перекрывает .env.
 # Ингест (authors без квоты, прогрев кэша работ, works --only-missing) сюда не
-# входит по той же причине, что и в SFR-5, — команды в docs/SFR5b_REPORT.md.
+# входит по той же причине, что и в SFR-5, — команды в docs/reports/SFR5b_REPORT.md.
 # ---------------------------------------------------------------------------
 SFR5B_DB_URL := sqlite:///data/sfr5b.db
 SFR5B_PROFILES := data/exports/profiles_sfr5b.jsonl
@@ -266,7 +266,7 @@ eval-sfr5b: unhide
 # SFR_DB_URL всё равно стоит перед каждой командой, которая ходит в БД: env
 # перекрывает .env, но не переживает границу команды.
 # Ингест (authors с потолком, works --only-missing) сюда не входит по той же
-# причине, что в SFR-5/5b, — команды в docs/SFR5c_REPORT.md.
+# причине, что в SFR-5/5b, — команды в docs/reports/SFR5c_REPORT.md.
 # ---------------------------------------------------------------------------
 SFR5C_DB_URL := sqlite:///data/sfr.db
 SFR5C_PROFILES := data/exports/profiles_sfr5c.jsonl
@@ -353,7 +353,7 @@ $(SFR5C_OOD19):
 metrics-sfr5c: unhide $(SFR5C_OOD19)
 	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_9010_RUNS) \
 		--ood-runs-dir $(SFR5C_9010_OOD_RUNS) --ood-queries $(SFR5C_OOD19) \
-		--profiles $(SFR5C_9010_PROFILES) --out docs/sfr5c_metrics.json
+		--profiles $(SFR5C_9010_PROFILES) --out docs/metrics/sfr5c_metrics.json
 	uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
 		--cap-db $(SFR5C_9010_DB) --ood-queries $(SFR5C_OOD19)
 	uv run python scripts/sfr5c_rejudge_classes.py
@@ -361,7 +361,7 @@ metrics-sfr5c: unhide $(SFR5C_OOD19)
 		--v1 $(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
 		--v2 $(SFR5C_EVAL)/judgments_rejudge_sfr5c_v3.jsonl \
 		--v1-label "пересуд v2 (дневная рубрика)" --v2-label "пересуд v3 (с уточнениями)" \
-		--out docs/sfr5c_rejudge_v2_v3.json
+		--out docs/metrics/sfr5c_rejudge_v2_v3.json
 
 # Калибровка выложенного индекса 9 002 по тем 19 посторонним, на которых она
 # считалась 26.09 (§13.4, колонка «(19)»; «18 из 19» в комментарии ApiSettings):
@@ -380,7 +380,7 @@ ood19-sfr5c: unhide $(SFR5C_OOD19)
 metrics-deploy-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5C_RUNS)/frida_clean.json \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
-		--out docs/sfr5c_deploy_metrics.json
+		--out docs/metrics/sfr5c_deploy_metrics.json
 
 # Слепой пул топ-5 golden set (24 in-domain + 6 edge = 150 пар) на пересуд
 # субагентом `sfr-judge`: без поля judged, в порядке author_id. Оценки — в
@@ -411,12 +411,12 @@ pool-base-blind-sfr5c: unhide
 metrics-base-blind-sfr5c: unhide
 	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5_RUNS)/frida_clean.json \
 		--judgments $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
-		--out docs/sfr5c_base_blind_metrics.json
+		--out docs/metrics/sfr5c_base_blind_metrics.json
 	uv run python scripts/sfr5c_rejudge_classes.py \
 		--v1 $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--v2 $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
 		--v1-label "слепой пересуд 9 002" --v2-label "слепой пересуд 5 538" \
-		--out docs/sfr5c_blind_overlap_classes.json
+		--out docs/metrics/sfr5c_blind_overlap_classes.json
 
 # Выборка для человека (§7 отчёта) целиком одной командой: раньше два раздела
 # склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки
@@ -489,7 +489,7 @@ deploy-local-down:
 
 # ---------------------------------------------------------------------------
 # SFR-4b: аудит безопасности (статический анализ + зависимости + секреты).
-# Полный список инструментов и политика падения — docs/SFR4b_REPORT.md.
+# Полный список инструментов и политика падения — docs/reports/SFR4b_REPORT.md.
 # Питоновские сканеры — из uv-группы security, бинарные (gitleaks, trivy,
 # hadolint) — из PATH или из запиненного docker-образа; чего нет — SKIP.
 # ---------------------------------------------------------------------------
@@ -512,3 +512,8 @@ board-sync-dry: unhide
 # Ничего не чинит — печатает отчёт; правила таксономии — CLAUDE.md.
 issues-audit: unhide
 	uv run python scripts/gh_issues_audit.py $(AUDIT_ISSUES_ARGS)
+
+# Хук-граница на push/merge (#129): что отклоняется и что проходит — на python3
+# из PATH, на системном /usr/bin/python3 и без python3. В CI не гоняется.
+hooks-test:
+	bash .claude/hooks/test_block_push.sh

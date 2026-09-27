@@ -6,7 +6,7 @@ the image size. The same pass also checks, on real 1536-dim vectors, that the FA
 search path returns what the NumPy scan returns — the equivalence the unit tests can
 only assert on toy vectors.
 
-    uv run python scripts/bench_api.py --out docs/sfr2_resources.json
+    uv run python scripts/bench_api.py --out docs/metrics/sfr2_resources.json
 
 With ``--no-docker`` the same measurements are taken against a locally started
 uvicorn (honest fallback: RAM and cold start are then host numbers, not container ones).
@@ -282,7 +282,7 @@ def compare_backends(model: str, faiss_rankings: dict[str, list[Any]]) -> dict[s
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models", default="frida,mpnet")
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr2_resources.json"))
+    parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr2_resources.json"))
     parser.add_argument("--requests", type=int, default=30)
     parser.add_argument("--no-docker", action="store_true")
     args = parser.parse_args()

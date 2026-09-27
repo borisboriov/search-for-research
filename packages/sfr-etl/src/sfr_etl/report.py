@@ -1,4 +1,4 @@
-"""Generate docs/REPORT.md: run statistics, profile samples, top topics, data problems."""
+"""Generate docs/reports/REPORT.md: run statistics, profile samples, top topics, data problems."""
 
 import json
 from datetime import UTC, datetime

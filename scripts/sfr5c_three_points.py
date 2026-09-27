@@ -5,7 +5,7 @@ coverage gain / displacement / разнообразия вузов. Этот с�
 переписывает: он дважды вызывает ``decision_metrics`` от одной базы 5 538 —
 к каталогу с потолком (склейки из ``data/sfr5c.db``) и к каталогу без квоты
 (склейки из ``data/sfr5b.db``, **пересчитываются заново**, а не берутся из
-``docs/sfr5b_decision_metrics.json``: так поправка судейства #94 гарантированно
+``docs/metrics/sfr5b_decision_metrics.json``: так поправка судейства #94 гарантированно
 попадает в обе правые колонки) — и рендерит одну таблицу на три колонки.
 
 Почему база одна для обеих правых точек: «новый НР» — это человек, которого не
@@ -380,7 +380,9 @@ def main() -> None:
         default=Path("packages/sfr-match/eval/judgments_rejudge_sfr5c_v2.jsonl"),
         help="Пересуженные решающие пары; нет файла — только вариант «как есть»",
     )
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr5c_decision_metrics.json"))
+    parser.add_argument(
+        "--out", type=Path, default=Path("docs/metrics/sfr5c_decision_metrics.json")
+    )
     # Точка «потолок» пересобрана при выкладке (#98): 9 010 → 9 002. Её пути —
     # аргументы, чтобы §4 и §6 отчёта воспроизводились по архивным `*_9010`.
     parser.add_argument("--cap-suffix", default="sfr5c", help="Суффикс артефактов точки «потолок»")

@@ -226,9 +226,9 @@ E. V. Sokolov, Shestakov, Бескин, Sokoloff, Popruzhenko) и пять но�
 ## 4. Качество: три точки
 
 *Метрики считаются тем же кодом, что в SFR-5 и SFR-5b (`scripts/analyze_sfr5.py`
-с путями SFR-5c → `docs/sfr5c_metrics.json`); команда записана — `make
-metrics-sfr5c` (#114), она же собирает `docs/sfr5c_decision_metrics.json` и
-`docs/sfr5c_rejudge_classes.json`. Сравнение — **только Success@5 /
+с путями SFR-5c → `docs/metrics/sfr5c_metrics.json`); команда записана — `make
+metrics-sfr5c` (#114), она же собирает `docs/metrics/sfr5c_decision_metrics.json` и
+`docs/metrics/sfr5c_rejudge_classes.json`. Сравнение — **только Success@5 /
 Success@1 на наборах 22 и 24**; nDCG между отчётами не сравнивается (пул
 судейства разный). Неоценённые пары считаются 0 — пессимистично.*
 
@@ -259,7 +259,7 @@ Success@1 на наборах 22 и 24**; nDCG между отчётами не 
 
 ### Что изменилось по запросам
 
-Полная таблица — `docs/sfr5c_decision_metrics.json`, `per_query`. Изменения
+Полная таблица — `docs/metrics/sfr5c_decision_metrics.json`, `per_query`. Изменения
 Success@k относительно базы (и, в третьей колонке, что делает полный каталог):
 
 | Запрос | Тип | 5 538 (S@1/S@5) | **потолок** | 12 119 | Что произошло |
@@ -355,7 +355,7 @@ data/eval/runs_ood_sfr5c --variant frida_clean --out data/eval/calibration_sfr5c
 
 `scripts/sfr5c_three_points.py` (`make metrics-sfr5c`, юнит-тест
 `packages/sfr-match/tests/test_sfr5c_three_points.py`, выход —
-`docs/sfr5c_decision_metrics.json`) дважды вызывает `decision_metrics` из
+`docs/metrics/sfr5c_decision_metrics.json`) дважды вызывает `decision_metrics` из
 `scripts/sfr5b_decision_metrics.py` от **одной базы 5 538**: → потолок (склейки
 из `sfr5c.db`) и → 12 119 (склейки из `sfr5b.db`, **пересчитаны заново**, не
 взяты из старого JSON, — поправка судейства #94 попала в обе правые колонки).
@@ -409,7 +409,7 @@ data/eval/runs_ood_sfr5c --variant frida_clean --out data/eval/calibration_sfr5c
 
 `scripts/sfr5c_rejudge_classes.py` (`make metrics-sfr5c`, тест
 `packages/sfr-match/tests/test_sfr5c_rejudge_classes.py`, выход —
-`docs/sfr5c_rejudge_classes.json`) сравнивает три разметки одних и тех же 135 пар.
+`docs/metrics/sfr5c_rejudge_classes.json`) сравнивает три разметки одних и тех же 135 пар.
 
 | Сравнение | пар | расхождений | строже | мягче | классы |
 |---|---|---|---|---|---|
@@ -437,7 +437,7 @@ data/eval/runs_ood_sfr5c --variant frida_clean --out data/eval/calibration_sfr5c
    не настолько, насколько говорил первый пересуд.
 
 Полные метрики варианта Б **по v1** остались в истории git
-(`docs/sfr5c_decision_metrics.json` до коммита пересчёта на v2).
+(`docs/metrics/sfr5c_decision_metrics.json` до коммита пересчёта на v2).
 
 ### Разброс судьи: третий прогон тех же 135 пар (v3, 27.09, #115)
 
@@ -447,7 +447,7 @@ data/eval/runs_ood_sfr5c --variant frida_clean --out data/eval/calibration_sfr5c
 `author_id`, без оценок) **третий раз**: три партии по 45, прежние файлы оценок
 судьям не назывались. Итог — `packages/sfr-match/eval/judgments_rejudge_sfr5c_v3.jsonl`,
 распределение 69 / 49 / 17. Сравнение — `make metrics-sfr5c` →
-`docs/sfr5c_rejudge_v2_v3.json`.
+`docs/metrics/sfr5c_rejudge_v2_v3.json`.
 
 **Оговорка, которая определяет чтение цифры.** v2 судился по дневной редакции
 рубрики (26.09, `53149ed`), v3 — по вечерней (`178e606`) с тремя уточнениями
@@ -583,8 +583,8 @@ data/eval/runs_ood_sfr5c --variant frida_clean --out data/eval/calibration_sfr5c
 названы конкретные работы по теме, а прежняя оценка опиралась на темы OpenAlex
 (`q07`, `q17`, `q04`). Полные обоснования обеих оценок первого пересуда — в
 `judgments_for_review_sfr5c.md` (пометки ⚠ там относятся к **v1**); v2 —
-построчно в `docs/sfr5c_decision_metrics.json` (раздел `rejudge`) и в
-`docs/sfr5c_rejudge_classes.json`.
+построчно в `docs/metrics/sfr5c_decision_metrics.json` (раздел `rejudge`) и в
+`docs/metrics/sfr5c_rejudge_classes.json`.
 
 
 ### Распределение вузов в слотах топ-5 (30 запросов × 5 = 150 слотов)
@@ -645,7 +645,7 @@ golden set смещены к её сильным сторонам (ML для ф�
 относительно базы **выглядят новыми людьми**, хотя это разделённые профили уже
 известных НР. В топ-5 ни один из трёх не входит, на цифры покрытия и вытеснения
 они не влияют, но приростом покрытия их считать нельзя — список назван в
-`docs/sfr5c_decision_metrics.json`, поле `base_caveat`.
+`docs/metrics/sfr5c_decision_metrics.json`, поле `base_caveat`.
 
 Колонка «пришло старых» равна нулю **по конструкции** (находка ревью SFR-5b):
 эмбеддинги старых профилей между индексами не менялись, поэтому старый автор не
@@ -677,7 +677,7 @@ golden set смещены к её сильным сторонам (ML для ф�
      **51 пара у v1, 40 у v2**; ⚠ стоит там, где разошлась хоть одна колонка
      (в файле 101 пометка — пара печатается в строке каждой из трёх точек, где
      встретилась). Действующая разметка итерации — **v2** (§6,
-     `docs/sfr5c_rejudge_classes.json`).
+     `docs/metrics/sfr5c_rejudge_classes.json`).
    - **Часть 2** — случайная выборка новой партии: 13 пар (вся партия — её
      размер меньше 20, поэтому выборка совпала с партией).
 2. **`packages/sfr-match/eval/dedup_for_review_sfr5c.md`** — дедупликация,
@@ -766,9 +766,9 @@ golden set смещены к её сильным сторонам (ML для ф�
       `e01` — в отчёте (§4); новые оценки с `iteration: "SFR-5c"`,
       `judgments.jsonl` только дорос (**+13 / −0**); выборка 20 (фактически 13 —
       вся партия) **плюс «Решающие пары»** по 16 запросам
-- [x] **Таблица трёх точек** — `docs/sfr5c_decision_metrics.json` + §6 в двух
+- [x] **Таблица трёх точек** — `docs/metrics/sfr5c_decision_metrics.json` + §6 в двух
       вариантах судейства (вариант Б — по пересуду **v2**); сравнение трёх
-      разметок — `docs/sfr5c_rejudge_classes.json`; оба скрипта с юнит-тестами;
+      разметок — `docs/metrics/sfr5c_rejudge_classes.json`; оба скрипта с юнит-тестами;
       оговорка про 5 541 vs 5 538 — §6
 - [x] **Пороги нового индекса** 0.33 / 0.40 / 0.48 откалиброваны и проштампованы
       **только в его `meta.json`**; локальный API — `thresholds_match: true`,
@@ -1050,11 +1050,11 @@ packages/sfr-match/eval/dedup_for_review_sfr5c.md --examples 10000`, затем
 собираются из архива этими командами:
 
 ```bash
-# §4 — docs/sfr5c_metrics.json
+# §4 — docs/metrics/sfr5c_metrics.json
 uv run python scripts/analyze_sfr5.py --runs-dir data/eval/runs_sfr5c_9010 \
   --ood-runs-dir data/eval/runs_ood_sfr5c_9010 \
-  --profiles data/exports/profiles_sfr5c_9010.jsonl --out docs/sfr5c_metrics.json
-# §6 — docs/sfr5c_decision_metrics.json
+  --profiles data/exports/profiles_sfr5c_9010.jsonl --out docs/metrics/sfr5c_metrics.json
+# §6 — docs/metrics/sfr5c_decision_metrics.json
 uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
   --cap-db data/backups/sfr5c_2026-09-26_before_decisions.db
 # §7 — packages/sfr-match/eval/judgments_for_review_sfr5c.md
@@ -1080,15 +1080,15 @@ review-sfr5c` (§7) сами собирают отчёт **по архиву** `
 | Файл | Состояние |
 |---|---|
 | `packages/sfr-match/eval/judgments_for_review_sfr5c.md` (§7) | **байт в байт** |
-| `docs/sfr5c_metrics.json` (§4) | всё, кроме блоков `calibration`, `top1_scores.ood` и `ood_per_query`: набор посторонних стал 17 вместо 19 (коммит `a931af0`, см. 13.4). Качество, страты, `threshold_hints`, рекомендация порога 0.33 — совпадают |
-| `docs/sfr5c_decision_metrics.json` (§6) | всё, кроме одной пары чисел: медиана top-1 по посторонним в `scale_shift` (0.1582 / 0.1653 → 0.1579 / 0.1597) — та же причина, 19 → 17 |
+| `docs/metrics/sfr5c_metrics.json` (§4) | всё, кроме блоков `calibration`, `top1_scores.ood` и `ood_per_query`: набор посторонних стал 17 вместо 19 (коммит `a931af0`, см. 13.4). Качество, страты, `threshold_hints`, рекомендация порога 0.33 — совпадают |
+| `docs/metrics/sfr5c_decision_metrics.json` (§6) | всё, кроме одной пары чисел: медиана top-1 по посторонним в `scale_shift` (0.1582 / 0.1653 → 0.1579 / 0.1597) — та же причина, 19 → 17 |
 
 То есть **ни одна цифра качества и ни один порог по архиву не поплыли**;
 разошлись ровно те величины, которые считаются по набору посторонних, и ровно
-на его сокращение. Блок `threshold_hints` в `docs/sfr5c_metrics.json` —
+на его сокращение. Блок `threshold_hints` в `docs/metrics/sfr5c_metrics.json` —
 добавление этой сессии (13.4), остальные числа §4 не менялись.
 
-*Поправка 27.09 (ревью выкладки, #126).* В `docs/sfr5c_decision_metrics.json`
+*Поправка 27.09 (ревью выкладки, #126).* В `docs/metrics/sfr5c_decision_metrics.json`
 сдвигалась не одна колонка, а две: медиана посторонних в `scale_shift` менялась
 и у «потолка», и у «12 119» (0.1653 → 0.1598), в обоих вариантах разметки — 8
 чисел. Теперь это не важно: `analyze_sfr5.py` и `sfr5c_three_points.py`
@@ -1164,7 +1164,7 @@ review-sfr5c` (§7) сами собирают отчёт **по архиву** `
 
 **`o13` и `o15` удалены** из `ood_queries.jsonl` (19 → 17) отдельным коммитом,
 решение и его цена — `docs/DECISIONS.md` 26.09: калибровочные таблицы SFR-5,
-SFR-5b и блок OOD в `docs/sfr5c_metrics.json` считались на 19 посторонних и
+SFR-5b и блок OOD в `docs/metrics/sfr5c_metrics.json` считались на 19 посторонних и
 дословно больше не воспроизводятся; на рекомендацию порога это не влияет.
 
 **Что изменилось в выдаче от восьми склеек** (накопленная разметка, для
@@ -1204,7 +1204,7 @@ set написаны агентом; оценки ставит модель, ч�
 этого же набора (`q08`, `q17`, `q25`); неоценённых пар 0». *Поправка 27.09
 (ревью выкладки, #128): прежде здесь стояло «человеческого судейства нет» —
 неточно: именно уточнения по `q08` и `q17` дали этим запросам 0/0 и 1/1.*
-Полные данные — `docs/sfr5c_deploy_metrics.json`, команда —
+Полные данные — `docs/metrics/sfr5c_deploy_metrics.json`, команда —
 `make metrics-deploy-sfr5c`.
 
 **Две разметки сравнивать между собой нельзя**, и это не оговорка ради приличия:
@@ -1435,7 +1435,7 @@ pool-base-blind-sfr5c`: без `judged`, по `author_id`) на
 150 пар, все с `iteration: "SFR-5c-base-blind"` и `judge`; распределение
 **2 — 74, 1 — 54, 0 — 22** (на 9 002 — 86 / 47 / 17); неоценённых пар в топ-5
 **0**; `judgments.jsonl` не тронут. Метрики — тем же скриптом, что 13.5
-(`make metrics-base-blind-sfr5c` → `docs/sfr5c_base_blind_metrics.json`).
+(`make metrics-base-blind-sfr5c` → `docs/metrics/sfr5c_base_blind_metrics.json`).
 Проверка скрипта на старом индексе: колонка накопленной разметки дала ровно
 цифры, которые сейчас стоят в паспорте (91,7 / 75,0 и 90,9 / 77,3).
 
@@ -1462,7 +1462,7 @@ pool-base-blind-sfr5c`: без `judged`, по `author_id`) на
 топ-5 обоих индексов; у 86 из них `profile_text` совпадает дословно (87-я —
 склеенный Белогуров в `q17`, оба раза 2). Два прогона разошлись на **7 из 87
 (8,1 %)**, **4 строже и 3 мягче** — без перекоса в одну сторону
-(`docs/sfr5c_blind_overlap_classes.json`). Ни одно из семи расхождений не
+(`docs/metrics/sfr5c_blind_overlap_classes.json`). Ни одно из семи расхождений не
 меняет вердикт Success@k: в `q10` и `q11` пары не на первом месте и пятёрку
 держат другие двойки, `q08` и `q28` проваливаются при любой из двух оценок,
 `q05`, `q18`, `q19` проходят при любой. Это не измерение #115: там 135

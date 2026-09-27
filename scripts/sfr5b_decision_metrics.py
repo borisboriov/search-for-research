@@ -401,7 +401,9 @@ def main() -> None:
         "--profiles-after", type=Path, default=Path("data/exports/profiles_sfr5b.jsonl")
     )
     parser.add_argument("--db", type=Path, default=Path("data/sfr5b.db"), help="Склейки из БД")
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr5b_decision_metrics.json"))
+    parser.add_argument(
+        "--out", type=Path, default=Path("docs/metrics/sfr5b_decision_metrics.json")
+    )
     args = parser.parse_args()
 
     if args.db.exists():

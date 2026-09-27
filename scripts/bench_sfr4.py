@@ -11,7 +11,7 @@
 - RAM контейнеров в покое и под штормом, холодный старт api, недоступность
   API снаружи compose.
 
-    uv run python scripts/bench_sfr4.py --out docs/sfr4_bench.json
+    uv run python scripts/bench_sfr4.py --out docs/metrics/sfr4_bench.json
 
 На бою тот же скрипт запускается с самого сервера против публичного адреса
 (там же, где docker — часть замеров идёт через `docker exec`):
@@ -208,7 +208,7 @@ def main() -> None:
     global PROXY
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr4_bench.json"))
+    parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr4_bench.json"))
     parser.add_argument(
         "--base-url",
         default=PROXY,

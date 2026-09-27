@@ -8,11 +8,11 @@
 
 **Итерация SFR-1** — мини-тест embedding-моделей: пакет `sfr-match` (индекс, поиск,
 eval-харнесс), golden set из 30 запросов студентов, сравнение 5 вариантов
-(4 модели + BM25) × чистка profile_text. Результат — `docs/SFR1_REPORT.md`.
+(4 модели + BM25) × чистка profile_text. Результат — `docs/reports/SFR1_REPORT.md`.
 
 **Итерация SFR-2** — сервис поиска: `apps/api` (FastAPI `/api/match`), контейнер,
 FAISS на пути поиска в Linux, перекалиброванный порог «мы никого не нашли» и
-эксперимент о том, что класть в индекс. Результат — `docs/SFR2_REPORT.md`.
+эксперимент о том, что класть в индекс. Результат — `docs/reports/SFR2_REPORT.md`.
 
 ## Quickstart
 
@@ -24,8 +24,8 @@ uv run sfr institutions resolve "Moscow Institute of Physics and Technology"
 make etl                        # авторы → работы → профили → data/exports/profiles.jsonl
 ```
 
-Отчёт о прогоне: `make report` → `docs/REPORT.md` (статистика генерируется,
-ручной разбор и DoD-чеклист живут в `docs/REPORT_notes.md` и подклеиваются в конец).
+Отчёт о прогоне: `make report` → `docs/reports/REPORT.md` (статистика генерируется,
+ручной разбор и DoD-чеклист живут в `docs/reports/REPORT_notes.md` и подклеиваются в конец).
 
 ## Команды
 
@@ -37,16 +37,16 @@ make etl                        # авторы → работы → профил
 | `make test` | pytest + coverage (порог ≥80%), без integration-тестов |
 | `make test-integration` | Контрактный смоук по живому OpenAlex API |
 | `make etl` | Полный пайплайн ингеста (нужен предварительный `institutions resolve`) |
-| `make report` | Генерация `docs/REPORT.md` |
+| `make report` | Генерация `docs/reports/REPORT.md` |
 | `make index` | Сборка всех индексов SFR-1 (5 вариантов × clean/no-clean) |
-| `make eval-sfr1` | Прогон мини-теста SFR-1. **Перезаписывает замороженный `docs/SFR1_REPORT.md`** — см. `docs/DECISIONS.md` |
-| `make eval-report` | Только перегенерация `docs/SFR2_REPORT.md` |
+| `make eval-sfr1` | Прогон мини-теста SFR-1. **Перезаписывает замороженный `docs/reports/SFR1_REPORT.md`** — см. `docs/DECISIONS.md` |
+| `make eval-report` | Только перегенерация `docs/reports/SFR2_REPORT.md` |
 | `make test-slow` | Смоук-тест с настоящей моделью (не гоняется в CI) |
 | `make index-sfr2` | Шесть индексов SFR-2: frida/mpnet × три состава `profile_text` |
-| `make eval` (= `make eval-sfr2`) | Воспроизведение всех цифр `docs/SFR2_REPORT.md` (нужны индексы) |
+| `make eval` (= `make eval-sfr2`) | Воспроизведение всех цифр `docs/reports/SFR2_REPORT.md` (нужны индексы) |
 | `make api` | uvicorn на `localhost:8000` |
 | `make docker-build` / `make docker-up` / `make docker-down` | Контейнер с API |
-| `make bench` | Замер ресурсов и латентности → `docs/sfr2_resources.json` |
+| `make bench` | Замер ресурсов и латентности → `docs/metrics/sfr2_resources.json` |
 | `make catalog-sfr5c` | Пересборка боевого каталога из БД: склейка дублей, профили, экспорты |
 | `make index-sfr5c` | Боевой индекс каталога 12 вузов с потолком (`data/indexes_sfr5c`) |
 | `make eval-sfr5c` | Регрессия на боевом корпусе: golden + OOD + external, судейские пулы |
@@ -69,12 +69,12 @@ uv run sfr report
 uv run sfr-match index -m e5-base            # profiles.jsonl → эмбеддинги → data/indexes/
 uv run sfr-match search "нейросети для текстов" -m e5-base -k 10
 uv run sfr-match eval --models e5-base,bm25  # golden set → data/eval/runs/
-uv run sfr-match report                      # → docs/SFR1_REPORT.md
+uv run sfr-match report                      # → docs/reports/SFR1_REPORT.md
 ```
 
 Модели: `e5-base`, `mpnet`, `frida`, `minilm`, `bm25` (см. `sfr_match/models.py`).
 Флаг `--clean` строит вариант с очищенным `profile_text` (LaTeX-мусор и
-«аннотации-списки авторов» — проблемы №1–2 из `docs/REPORT.md`).
+«аннотации-списки авторов» — проблемы №1–2 из `docs/reports/REPORT.md`).
 
 ### Каталог 12 вузов (SFR-5)
 
@@ -99,7 +99,7 @@ uv run python scripts/warm_works_cache.py   # сеть: греет кэш, ~23 �
 uv run sfr etl works --only-missing         # запись в БД по кэшу, без сети
 ```
 
-Подробности — `docs/SFR5_REPORT.md` §3 и `docs/DECISIONS.md`.
+Подробности — `docs/reports/SFR5_REPORT.md` §3 и `docs/DECISIONS.md`.
 
 ### Сервис поиска (SFR-2)
 

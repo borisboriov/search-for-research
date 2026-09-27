@@ -93,7 +93,7 @@ def main() -> None:
         default=Path("packages/sfr-match/eval/judgments_deploy_sfr5c.jsonl"),
         help="Слепая разметка топ-5 этого же индекса",
     )
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr5c_deploy_metrics.json"))
+    parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr5c_deploy_metrics.json"))
     args = parser.parse_args()
 
     run = load_run(args.runs)

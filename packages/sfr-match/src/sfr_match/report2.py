@@ -1,8 +1,8 @@
-"""Render ``docs/SFR2_REPORT.md`` from what SFR-2 actually measured (SPEC_SFR2 §7).
+"""Render ``docs/reports/SFR2_REPORT.md`` from what SFR-2 actually measured (SPEC_SFR2 §7).
 
 Same split as SFR-1: everything here is generated from artefacts on disk and gets
 overwritten on every run; the hand-written analysis lives in
-``docs/SFR2_REPORT_notes.md`` and is appended verbatim.
+``docs/reports/SFR2_REPORT_notes.md`` and is appended verbatim.
 """
 
 import json
@@ -16,9 +16,9 @@ from sfr_match.evalset import Query
 from sfr_match.index import load_docs
 from sfr_match.report import VariantMetrics
 
-SFR2_REPORT_PATH = Path("docs/SFR2_REPORT.md")
-SFR2_NOTES_PATH = Path("docs/SFR2_REPORT_notes.md")
-RESOURCES_PATH = Path("docs/sfr2_resources.json")
+SFR2_REPORT_PATH = Path("docs/reports/SFR2_REPORT.md")
+SFR2_NOTES_PATH = Path("docs/reports/SFR2_REPORT_notes.md")
+RESOURCES_PATH = Path("docs/metrics/sfr2_resources.json")
 
 COMPOSITION_TITLES = {
     "full": "полный profile_text (бейзлайн)",

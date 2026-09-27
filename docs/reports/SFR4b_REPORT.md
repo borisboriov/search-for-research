@@ -265,10 +265,10 @@ make audit AUDIT_ARGS="--fail-unfixed"       # строго: валить и CVE
 - [x] **Реальные находки исправлены, регрессии зелёные.** `make lint`,
       `make typecheck`, `make test` (204 теста, покрытие 95.65%),
       `make web-lint/typecheck/test/build`, `make eval` (≡ SFR-2: Success@k,
-      nDCG и MRR совпали с `docs/SFR2_REPORT.md`; разошлась только строка
+      nDCG и MRR совпали с `docs/reports/SFR2_REPORT.md`; разошлась только строка
       латентности — замер шёл на нагруженной машине, поэтому сгенерированный
       отчёт откачен).
-- [x] **`docs/SFR4b_REPORT.md`; DECISIONS, SESSIONS, TODO_BORIS обновлены;**
+- [x] **`docs/reports/SFR4b_REPORT.md`; DECISIONS, SESSIONS, TODO_BORIS обновлены;**
       в `.claude/agents/sfr-reviewer.md` добавлена строка чеклиста
       «`make audit` зелёный» (файл вне git, правится локально).
 
