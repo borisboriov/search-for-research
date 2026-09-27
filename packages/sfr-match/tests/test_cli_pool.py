@@ -132,3 +132,49 @@ def test_review_sample_reads_the_judgments_file_it_is_given(
     text = out.read_text(encoding="utf-8")
     assert "выдуманная пара для теста" in text, "обоснования берутся из указанного файла"
     assert text.count("## ") == 1, "в файле оценок одна пара — в выборке тоже одна"
+
+
+def test_eval_queries_file_runs_an_archived_query_set(
+    tmp_path: Path, profiles: list[ProfileRecord], fake_embedder: type, monkeypatch
+) -> None:  # type: ignore[no-untyped-def]
+    # --queries-file — архивная редакция набора (19 посторонних до 26.09, #126):
+    # прогон идёт ровно по файлу, а не по действующему набору того же имени.
+    spec = resolve_model("e5-base")
+    index_root = tmp_path / "indexes"
+    out_dir = index_path(spec, clean=False, root=index_root)
+    build_index(profiles, spec, clean=False, out_dir=out_dir, embedder=fake_embedder(spec))
+    monkeypatch.setattr(
+        "sfr_match.cli.load_backend",
+        lambda directory, key: DenseBackend(directory, spec, embedder=fake_embedder(spec)),
+    )
+    archived = load_queries(query_set_path("ood"))[:2]
+    queries_file = tmp_path / "ood_archived.jsonl"
+    write_jsonl(queries_file, [q.model_dump() for q in archived])
+    runs_dir = tmp_path / "runs"
+
+    result = runner.invoke(
+        app,
+        [
+            "eval",
+            "--models",
+            "e5-base",
+            "--no-clean",
+            "--index-root",
+            str(index_root),
+            "--runs-dir",
+            str(runs_dir),
+            "--queries-file",
+            str(queries_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    run = json.loads(next(runs_dir.glob("*.json")).read_text(encoding="utf-8"))
+    assert [r["query_id"] for r in run["results"]] == [q.id for q in archived]
+
+
+def test_eval_queries_file_missing_fails_loudly(tmp_path: Path) -> None:
+    missing = tmp_path / "nope.jsonl"
+    result = runner.invoke(app, ["eval", "--queries-file", str(missing)])
+    assert result.exit_code != 0
+    assert "nope.jsonl" in result.output

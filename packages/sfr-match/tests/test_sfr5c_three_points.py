@@ -211,3 +211,13 @@ def test_read_thresholds_handles_missing_and_present(tp, tmp_path: Path) -> None
         '{"thresholds": {"none": 0.31, "weak": 0.4, "high": 0.48}}', encoding="utf-8"
     )
     assert tp.read_thresholds(tmp_path) == {"none": 0.31, "weak": 0.4, "high": 0.48}
+
+
+def test_missing_point_db_fails_instead_of_empty_aliases(tp, tmp_path: Path) -> None:  # type: ignore[no-untyped-def]
+    # `--cap-suffix sfr5c_9010` без `--cap-db` искал несуществующий
+    # data/sfr5c_9010.db и молча считал точку без склеек (#126).
+    with pytest.raises(SystemExit, match="--cap-db"):
+        tp.require_db(tmp_path / "sfr5c_9010.db")
+    db = tmp_path / "point.db"
+    db.write_bytes(b"")
+    assert tp.require_db(db) == db
