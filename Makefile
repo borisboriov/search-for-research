@@ -5,7 +5,8 @@
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
-	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c
+	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c \
+	pool-base-blind-sfr5c metrics-base-blind-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -364,17 +365,45 @@ review-deploy-sfr5c: unhide
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--out $(SFR5C_EVAL)/judgments_for_review_deploy.md
 
+# #122: тот же слепой пересуд топ-5 — на прежнем боевом индексе 5 538
+# (data/indexes_sfr5 и прогон runs_sfr5 замороженного блока SFR-5; на VPS
+# этого индекса уже нет). Пара «5 538 → 9 002» одним судьёй и одной рубрикой —
+# §13.11 отчёта. Те же CLI и скрипт, что у выкладки, другие входы; накопленный
+# judgments.jsonl не трогается. Вторая команда метрик — совпадение двух слепых
+# прогонов на общих парах двух пятёрок (не #115: пул другой).
+pool-base-blind-sfr5c: unhide
+	uv run sfr-match pool --runs-dir $(SFR5_RUNS) --index-root $(SFR5_INDEX_ROOT) \
+		--depth 5 --blind --out data/eval/pool_base5538_blind.jsonl
+
+metrics-base-blind-sfr5c: unhide
+	uv run python scripts/sfr5c_deploy_metrics.py --runs $(SFR5_RUNS)/frida_clean.json \
+		--judgments $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
+		--out docs/sfr5c_base_blind_metrics.json
+	uv run python scripts/sfr5c_rejudge_classes.py \
+		--v1 $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
+		--v2 $(SFR5C_EVAL)/judgments_base5538_blind.jsonl \
+		--v1-label "слепой пересуд 9 002" --v2-label "слепой пересуд 5 538" \
+		--out docs/sfr5c_blind_overlap_classes.json
+
 # Выборка для человека (§7 отчёта) целиком одной командой: раньше два раздела
 # склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки
 # оценок — «было → v1 → v2»: оба пересуда рядом, расхождения помечены ⚠.
-# Точка «потолок» пересобрана при выкладке #98; чтобы получить файл ровно как в
-# §7, добавить `--cap-runs data/eval/runs_sfr5c_9010
-# --cap-profiles data/exports/profiles_sfr5c_9010.jsonl` и
-# `--index-root data/indexes_sfr5c_9010` у review-sample.
+# Цель **воспроизводит §7 по архиву измерения** (точка «потолок 9 010»,
+# `*_sfr5c_9010`), а не считает текущий каталог: её выход — трекаемый файл,
+# который Борис читал по #112, и на каталоге 9 002 он получил бы чужие данные
+# (ревью выкладки SFR-5c). Пул решающих пар из архива совпадает с тем, что
+# входил в пересуды v1/v2, — перезапись байт в байт. Выборка по выложенному
+# каталогу — `review-deploy-sfr5c`.
+SFR5C_9010_RUNS := data/eval/runs_sfr5c_9010
+SFR5C_9010_INDEX_ROOT := data/indexes_sfr5c_9010
+SFR5C_9010_PROFILES := data/exports/profiles_sfr5c_9010.jsonl
+
 review-sfr5c: unhide
-	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_RUNS) \
-		--index-root $(SFR5C_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)
+	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_9010_RUNS) \
+		--index-root $(SFR5C_9010_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)
 	uv run python scripts/sfr5c_decisive_pairs.py \
+		--cap-runs $(SFR5C_9010_RUNS) --cap-profiles $(SFR5C_9010_PROFILES) \
+		--pool-out data/eval/pool_rejudge_sfr5c.jsonl \
 		--rejudged v1=$(SFR5C_EVAL)/judgments_rejudge_sfr5c.jsonl \
 		--rejudged v2=$(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
 		--section-out $(SFR5C_DECISIVE) --sample $(SFR5C_SAMPLE) --out $(SFR5C_REVIEW)

@@ -121,6 +121,10 @@ def main() -> None:
     parser.add_argument("--v1", type=Path, default=eval_dir / "judgments_rejudge_sfr5c.jsonl")
     parser.add_argument("--v2", type=Path, default=eval_dir / "judgments_rejudge_sfr5c_v2.jsonl")
     parser.add_argument("--out", type=Path, default=Path("docs/sfr5c_rejudge_classes.json"))
+    # Подписи строк таблицы: скрипт сравнивает любые два прогона (#122 — два
+    # слепых пересуда топ-5 на разных индексах), а не только v1/v2 решающих пар.
+    parser.add_argument("--v1-label", default="пересуд v1 (с tie-break)")
+    parser.add_argument("--v2-label", default="пересуд v2 (без tie-break)")
     args = parser.parse_args()
 
     original = load_judgments()
@@ -145,9 +149,9 @@ def main() -> None:
 
     print("| Сравнение | пар с оценками в обоих | расхождений | строже | мягче | классы |")
     print("|---|---|---|---|---|---|")
-    print(render("`judgments.jsonl` ↔ пересуд v1 (с tie-break)", payload["orig_vs_v1"]))
-    print(render("`judgments.jsonl` ↔ пересуд v2 (без tie-break)", payload["orig_vs_v2"]))
-    print(render("пересуд v1 ↔ пересуд v2", payload["v1_vs_v2"]))
+    print(render(f"`judgments.jsonl` ↔ {args.v1_label}", payload["orig_vs_v1"]))
+    print(render(f"`judgments.jsonl` ↔ {args.v2_label}", payload["orig_vs_v2"]))
+    print(render(f"{args.v1_label} ↔ {args.v2_label}", payload["v1_vs_v2"]))
     print(f"\nполные данные → {args.out}")
 
 

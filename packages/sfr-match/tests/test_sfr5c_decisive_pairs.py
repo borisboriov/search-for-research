@@ -222,3 +222,11 @@ def test_review_file_joins_both_parts(dp) -> None:  # type: ignore[no-untyped-de
     assert "## Часть 2. Случайная выборка новой партии" in text
     assert "тело раздела" in text and "1. пара" in text
     assert "Часть 2" not in dp.render_review_file("# Решающие пары\n\nтело\n", None)
+
+
+def test_cap_label_follows_run_size(dp) -> None:  # type: ignore[no-untyped-def]
+    # Подпись точки берётся из прогона: архив измерения — «потолок 9 010»,
+    # пересобранный каталог — «потолок 9 002», а не чужое число по умолчанию.
+    assert dp.cap_label(9010) == "потолок 9 010"
+    assert dp.cap_label(9002) == "потолок 9 002"
+    assert dp.cap_label(12119) == "потолок 12 119"

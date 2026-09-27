@@ -36,6 +36,16 @@ from sfr_match.report import profile_works
 TOP = 5
 
 
+def cap_label(n_profiles: int) -> str:
+    """Подпись точки «потолок» — по числу профилей её прогона, а не константой.
+
+    Константа «потолок 9 010» пережила пересборку каталога до 9 002: цель,
+    запущенная на текущем каталоге, подписывала бы его чужим числом (ревью
+    выкладки SFR-5c). Число берётся из тех же данных, что и строки таблицы.
+    """
+    return f"потолок {n_profiles:,}".replace(",", " ")
+
+
 @dataclass
 class PointRuns:
     """Одна точка: как называется, что нашла, какие у неё профили."""
@@ -318,13 +328,18 @@ def main() -> None:
     )
     # Точка «потолок» пересобирается при выкладке (#98), поэтому её пути —
     # аргументы: измерения §4–§6 воспроизводятся по архивным `*_9010`.
-    parser.add_argument("--cap-name", default="потолок 9 010")
+    parser.add_argument(
+        "--cap-name",
+        default=None,
+        help="Подпись точки «потолок»; по умолчанию — «потолок N» по числу профилей прогона",
+    )
     parser.add_argument("--cap-runs", type=Path, default=Path("data/eval/runs_sfr5c"))
     parser.add_argument(
         "--cap-profiles", type=Path, default=Path("data/exports/profiles_sfr5c.jsonl")
     )
     args = parser.parse_args()
 
+    cap_run = load_run(args.cap_runs / "frida_clean.json")
     points = [
         PointRuns(
             name="5 538",
@@ -332,8 +347,8 @@ def main() -> None:
             profiles=load_profiles(Path("data/exports/profiles_sfr5.jsonl")),
         ),
         PointRuns(
-            name=args.cap_name,
-            run=load_run(args.cap_runs / "frida_clean.json"),
+            name=args.cap_name or cap_label(cap_run.n_profiles),
+            run=cap_run,
             profiles=load_profiles(args.cap_profiles),
         ),
         PointRuns(
