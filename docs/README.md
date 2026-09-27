@@ -70,8 +70,8 @@ docs/
 
 ## Старые пути
 
-До 27.09.2026 отчёты и JSON лежали в `docs/` напрямую (`docs/SFR5_REPORT.md`,
-`docs/sfr5_metrics.json`). Ссылки в **закрытых** issues, в `SESSIONS.md`, в
+До 27.09.2026 отчёты и JSON лежали прямо в `docs/`, без подпапок (например,
+`SFR5_REPORT.md` и `sfr5_metrics.json`). Ссылки в **закрытых** issues, в `SESSIONS.md`, в
 датированных записях `DECISIONS.md` и в спеках ведут на старые пути — это
 история, её не переписывали. Файлы теперь в `reports/` и `metrics/`; история
 файла — `git log --follow -- docs/reports/<файл>`.
