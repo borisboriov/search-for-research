@@ -11,6 +11,7 @@
 | `judgments_rejudge_*.jsonl` | пересуд «решающих пар» отдельным прогоном судьи; `judgments.jsonl` при этом не меняется | агент (LLM) |
 | `judgments_deploy_sfr5c.jsonl` | пересуд топ-5 golden set на **боевом** индексе слепым судьёй — единственный источник абсолютных цифр качества для паспорта (`docs/DECISIONS.md` 26.09) | субагент `sfr-judge` (Fable) |
 | `judgments_base5538_blind.jsonl` | тот же слепой пересуд топ-5 на **прежнем** боевом индексе 5 538 — пара «было → стало» одним судьёй и одной рубрикой (#122, §13.11 `docs/SFR5c_REPORT.md`; `make metrics-base-blind-sfr5c`) | субагент `sfr-judge` (Fable) |
+| `judgments_rejudge_sfr5c_v3.jsonl` | третий прогон тех же 135 решающих пар, рубрика 26.09 с уточнениями — разброс судьи v2 ↔ v3 (#115, §6 `docs/SFR5c_REPORT.md`; `make metrics-sfr5c` → `docs/sfr5c_rejudge_v2_v3.json`) | субагент `sfr-judge` (Fable) |
 | `judgments_for_review*.md` | случайная выборка на ручную проверку (`make review-sfr5c`, `make review-deploy-sfr5c`) | агент готовит, человек читает |
 | `judgments_borderline_deploy.md`, `judgments_borderline_base5538.md` | пары, где судья сам колебался между двумя оценками, с альтернативой и причиной — читать раньше случайной выборки | агент собирает из отчётов судьи, человек читает |
 | `JUDGE_RUBRIC.md` | **рубрика оценки** — единственное правило для судьи, версионируется вместе с оценками | правится осознанно, с записью в `DECISIONS.md` |

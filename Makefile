@@ -347,7 +347,9 @@ $(SFR5C_OOD19):
 # её выходы — трекаемые файлы отчёта, и на каталоге 9 002 с 17 посторонними она
 # переписала бы их чужими числами (ревью выкладки, #126). Проверено 27.09 — оба
 # JSON совпадают байт в байт. Калибровка выложенного индекса — `ood19-sfr5c`
-# (19 посторонних) и `eval-sfr5c` + `analyze_sfr5.py` (17).
+# (19 посторонних) и `eval-sfr5c` + `analyze_sfr5.py` (17). Последняя команда —
+# третий прогон тех же 135 решающих пар (#115): разброс судьи v2 ↔ v3, разбор
+# по классам — §6 отчёта.
 metrics-sfr5c: unhide $(SFR5C_OOD19)
 	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_9010_RUNS) \
 		--ood-runs-dir $(SFR5C_9010_OOD_RUNS) --ood-queries $(SFR5C_OOD19) \
@@ -355,6 +357,11 @@ metrics-sfr5c: unhide $(SFR5C_OOD19)
 	uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
 		--cap-db $(SFR5C_9010_DB) --ood-queries $(SFR5C_OOD19)
 	uv run python scripts/sfr5c_rejudge_classes.py
+	uv run python scripts/sfr5c_rejudge_classes.py \
+		--v1 $(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
+		--v2 $(SFR5C_EVAL)/judgments_rejudge_sfr5c_v3.jsonl \
+		--v1-label "пересуд v2 (дневная рубрика)" --v2-label "пересуд v3 (с уточнениями)" \
+		--out docs/sfr5c_rejudge_v2_v3.json
 
 # Калибровка выложенного индекса 9 002 по тем 19 посторонним, на которых она
 # считалась 26.09 (§13.4, колонка «(19)»; «18 из 19» в комментарии ApiSettings):
