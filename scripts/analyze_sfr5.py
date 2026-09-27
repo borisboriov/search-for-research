@@ -120,13 +120,22 @@ def main() -> None:
     parser.add_argument("--profiles", type=Path, default=Path("data/exports/profiles_sfr5.jsonl"))
     parser.add_argument("--variant", default="frida_clean")
     parser.add_argument("--out", type=Path, default=Path("docs/sfr5_metrics.json"))
+    # Набор посторонних менялся (o13/o15 удалены 26.09, 19 → 17): калибровка
+    # прошлых отчётов воспроизводится только по тому набору, на котором считалась.
+    # Архивный файл достаёт из git цель `make ood19-sfr5c`.
+    parser.add_argument(
+        "--ood-queries",
+        type=Path,
+        default=None,
+        help="Файл набора посторонних; по умолчанию — действующий ood_queries.jsonl",
+    )
     args = parser.parse_args()
 
     runs = {run.variant: run for run in load_runs(args.runs_dir)}
     ood_runs = {run.variant: run for run in load_runs(args.ood_runs_dir)}
     run, ood_run = runs[args.variant], ood_runs[args.variant]
     queries = load_queries(query_set_path("golden"))
-    ood_queries = load_queries(query_set_path("ood"))
+    ood_queries = load_queries(args.ood_queries or query_set_path("ood"))
     judgments = load_judgments()
     mapping = strata(args.profiles)
     quality_payload = quality(run, queries, judgments)

@@ -143,6 +143,14 @@ def eval_cmd(
     queries_set: Annotated[
         str, typer.Option("--queries", help="Query set: golden | ood | external")
     ] = "golden",
+    queries_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--queries-file",
+            help="Файл набора вместо --queries: архивная редакция набора (например, "
+            "посторонние до 26.09 — `make ood19-sfr5c`)",
+        ),
+    ] = None,
 ) -> None:
     """Run a query set against every model/variant and store the rankings."""
     mode = _compose(compose)
@@ -152,7 +160,7 @@ def eval_cmd(
     elif clean is None:
         pass
     try:
-        queries = load_queries(query_set_path(queries_set))
+        queries = load_queries(queries_file or query_set_path(queries_set))
     except (FileNotFoundError, ValueError) as exc:
         raise _fail(str(exc)) from exc
     if not queries:

@@ -6,7 +6,7 @@
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
 	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c \
-	pool-base-blind-sfr5c metrics-base-blind-sfr5c
+	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -258,9 +258,11 @@ eval-sfr5b: unhide
 # без квоты) — шаг 1 дорожки данных по решению #90 (issue #98).
 # **С выкладки 26.09 это боевой контур**, а не эксперимент: каталог переехал в
 # `data/sfr.db`, и цели ниже пересобирают то, что стоит в проде. `data/sfr5c.db`
-# осталась замороженной копией измерения (точка «потолок 9 010» в §6 отчёта и
-# умолчание `scripts/sfr5c_three_points.py`) — сюда она больше не подключена,
-# иначе #99 добавил бы вузы в `sfr.db`, а экспорт молча взял бы старый каталог.
+# — снимок **выложенного** каталога 9 002 (совпадает с `sfr.db` на 26.09), а
+# не измерения: точка «потолок 9 010» §4–§6 отчёта живёт в архиве `*_9010` и в
+# `data/backups/sfr5c_2026-09-26_before_decisions.db` (переменные ниже).
+# Снимок сюда не подключён, иначе #99 добавил бы вузы в `sfr.db`, а экспорт
+# молча взял бы старый каталог.
 # SFR_DB_URL всё равно стоит перед каждой командой, которая ходит в БД: env
 # перекрывает .env, но не переживает границу команды.
 # Ингест (authors с потолком, works --only-missing) сюда не входит по той же
@@ -283,6 +285,17 @@ SFR5C_REVIEW := $(SFR5C_EVAL)/judgments_for_review_sfr5c.md
 # Части собранного файла — в data/eval: в git едет только результат склейки.
 SFR5C_DECISIVE := data/eval/judgments_decisive_sfr5c.md
 SFR5C_SAMPLE := data/eval/judgments_sample_sfr5c.md
+# Архив измерения «потолок 9 010» (до применения решений о склейках, #98): на
+# нём стоят §4, §6 и §7 отчёта.
+SFR5C_9010_RUNS := data/eval/runs_sfr5c_9010
+SFR5C_9010_OOD_RUNS := data/eval/runs_ood_sfr5c_9010
+SFR5C_9010_INDEX_ROOT := data/indexes_sfr5c_9010
+SFR5C_9010_PROFILES := data/exports/profiles_sfr5c_9010.jsonl
+SFR5C_9010_DB := data/backups/sfr5c_2026-09-26_before_decisions.db
+# Набор посторонних, на котором считались §4, §6 и калибровка §13.4, — 19
+# запросов до удаления o13/o15 (`a931af0`, DECISIONS 26.09). В действующий
+# набор они не возвращаются: архивная редакция достаётся из git в data/eval.
+SFR5C_OOD19 := data/eval/ood_queries_19.jsonl
 
 # --examples 10000 вместо 10: файл читает Борис целиком, а не как примеры.
 catalog-sfr5c: unhide
@@ -324,23 +337,43 @@ eval-sfr5c: unhide
 	uv run sfr-match pool --runs-dir $(SFR5C_EXT_RUNS) --queries external \
 		--index-root $(SFR5C_INDEX_ROOT) --out data/eval/pool_external_sfr5c.jsonl
 
+$(SFR5C_OOD19):
+	git show a931af0^:packages/sfr-match/eval/ood_queries.jsonl > $@
+
 # Таблица трёх точек 5 538 / потолок / 12 119 (§6.5 спеки). Склейки точки
 # 12 119 пересчитываются заново из sfr5b.db — не берутся из старого JSON,
 # чтобы поправка #94 попала в обе правые колонки.
-# ВНИМАНИЕ: цель считает **текущий** каталог. Точка «потолок» в §4 и §6 отчёта —
-# измерение 9 010 профилей, оно пересобрано при выкладке; чтобы получить ровно
-# те числа, нужны архивные пути (проверено — JSON совпадает байт в байт):
-#   uv run python scripts/analyze_sfr5.py --runs-dir data/eval/runs_sfr5c_9010 \
-#     --ood-runs-dir data/eval/runs_ood_sfr5c_9010 \
-#     --profiles data/exports/profiles_sfr5c_9010.jsonl --out docs/sfr5c_metrics.json
-#   uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
-#     --cap-db data/backups/sfr5c_2026-09-26_before_decisions.db
-metrics-sfr5c: unhide
-	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_RUNS) \
-		--ood-runs-dir $(SFR5C_OOD_RUNS) --profiles $(SFR5C_PROFILES) \
-		--out docs/sfr5c_metrics.json
-	uv run python scripts/sfr5c_three_points.py
+# Цель **воспроизводит §4 и §6 по архиву измерения** (как `review-sfr5c` — §7):
+# её выходы — трекаемые файлы отчёта, и на каталоге 9 002 с 17 посторонними она
+# переписала бы их чужими числами (ревью выкладки, #126). Проверено 27.09 — оба
+# JSON совпадают байт в байт. Калибровка выложенного индекса — `ood19-sfr5c`
+# (19 посторонних) и `eval-sfr5c` + `analyze_sfr5.py` (17). Последняя команда —
+# третий прогон тех же 135 решающих пар (#115): разброс судьи v2 ↔ v3, разбор
+# по классам — §6 отчёта.
+metrics-sfr5c: unhide $(SFR5C_OOD19)
+	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_9010_RUNS) \
+		--ood-runs-dir $(SFR5C_9010_OOD_RUNS) --ood-queries $(SFR5C_OOD19) \
+		--profiles $(SFR5C_9010_PROFILES) --out docs/sfr5c_metrics.json
+	uv run python scripts/sfr5c_three_points.py --cap-suffix sfr5c_9010 \
+		--cap-db $(SFR5C_9010_DB) --ood-queries $(SFR5C_OOD19)
 	uv run python scripts/sfr5c_rejudge_classes.py
+	uv run python scripts/sfr5c_rejudge_classes.py \
+		--v1 $(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
+		--v2 $(SFR5C_EVAL)/judgments_rejudge_sfr5c_v3.jsonl \
+		--v1-label "пересуд v2 (дневная рубрика)" --v2-label "пересуд v3 (с уточнениями)" \
+		--out docs/sfr5c_rejudge_v2_v3.json
+
+# Калибровка выложенного индекса 9 002 по тем 19 посторонним, на которых она
+# считалась 26.09 (§13.4, колонка «(19)»; «18 из 19» в комментарии ApiSettings):
+# прогон посторонних по 19 был перезаписан прогоном по 17 (#126). Выход — в
+# data/eval, трекаемые файлы не трогаются.
+ood19-sfr5c: unhide $(SFR5C_OOD19)
+	uv run sfr-match eval --models frida --clean --compose full \
+		--queries-file $(SFR5C_OOD19) \
+		--index-root $(SFR5C_INDEX_ROOT) --runs-dir data/eval/runs_ood_sfr5c_19
+	uv run python scripts/analyze_sfr5.py --runs-dir $(SFR5C_RUNS) \
+		--ood-runs-dir data/eval/runs_ood_sfr5c_19 --ood-queries $(SFR5C_OOD19) \
+		--profiles $(SFR5C_PROFILES) --out data/eval/metrics_sfr5c_ood19.json
 
 # Качество выкладываемого индекса по двум разметкам (§13): слепой пересуд
 # топ-5 — цифры для паспорта (#95), накопленная разметка — рядом для сравнения.
@@ -394,10 +427,6 @@ metrics-base-blind-sfr5c: unhide
 # (ревью выкладки SFR-5c). Пул решающих пар из архива совпадает с тем, что
 # входил в пересуды v1/v2, — перезапись байт в байт. Выборка по выложенному
 # каталогу — `review-deploy-sfr5c`.
-SFR5C_9010_RUNS := data/eval/runs_sfr5c_9010
-SFR5C_9010_INDEX_ROOT := data/indexes_sfr5c_9010
-SFR5C_9010_PROFILES := data/exports/profiles_sfr5c_9010.jsonl
-
 review-sfr5c: unhide
 	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_9010_RUNS) \
 		--index-root $(SFR5C_9010_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)

@@ -348,9 +348,25 @@ def _point(
         ood=load_run(ood_runs / variant),
         external=load_run(ext_runs / variant) if (ext_runs / variant).exists() else None,
         catalogue=load_catalogue(profiles),
-        aliases=load_aliases_from_db(db) if db is not None and db.exists() else Aliases(),
+        aliases=load_aliases_from_db(require_db(db)) if db is not None else Aliases(),
         thresholds=read_thresholds(index_root / "frida_clean"),
     )
+
+
+def require_db(db: Path) -> Path:
+    """БД точки обязана существовать: без неё карта склеек молча пуста.
+
+    Прежде несуществующий путь давал пустой ``Aliases()`` без единого слова —
+    и `--cap-suffix sfr5c_9010` без `--cap-db` считал точку «потолок» без
+    склеек (ревью выкладки SFR-5c, #126). Точка без склеек задаётся явно
+    (``db=None``, как у базы 5 538), а не опечаткой в пути.
+    """
+    if not db.exists():
+        raise SystemExit(
+            f"нет БД точки {db}: карта склеек была бы пустой. "
+            "Для архива 9 010 — --cap-db data/backups/sfr5c_2026-09-26_before_decisions.db"
+        )
+    return db
 
 
 def main() -> None:
@@ -369,6 +385,13 @@ def main() -> None:
     # аргументы, чтобы §4 и §6 отчёта воспроизводились по архивным `*_9010`.
     parser.add_argument("--cap-suffix", default="sfr5c", help="Суффикс артефактов точки «потолок»")
     parser.add_argument("--cap-db", type=Path, default=None, help="По умолчанию data/<суффикс>.db")
+    parser.add_argument(
+        "--ood-queries",
+        type=Path,
+        default=None,
+        help="Файл набора посторонних; по умолчанию — действующий (17 с 26.09). "
+        "Архивные 19 — `make ood19-sfr5c`",
+    )
     args = parser.parse_args()
 
     eval_dir = Path("data/eval")
@@ -404,7 +427,7 @@ def main() -> None:
     queries = {
         "golden": load_queries(query_set_path("golden")),
         "external": load_queries(query_set_path("external")),
-        "ood": load_queries(query_set_path("ood")),
+        "ood": load_queries(args.ood_queries or query_set_path("ood")),
     }
     as_judged = load_judgments()
     variants = {
