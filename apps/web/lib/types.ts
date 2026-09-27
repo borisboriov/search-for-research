@@ -79,6 +79,9 @@ export interface HealthResponse {
   search_backend: string;
   compose: string;
   built_at: string;
+  /** #16: дата данных каталога (самая свежая запись OpenAlex), YYYY-MM-DD;
+   * null/нет — индекс без штампа, для плашки берётся built_at. */
+  data_updated_at?: string | null;
   cache_hits: number;
   cache_misses: number;
   cache_hit_rate: number;

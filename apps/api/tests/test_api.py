@@ -389,3 +389,15 @@ def test_thresholds_mismatch_is_reported_and_logged(caplog: pytest.LogCaptureFix
         body = client(stamped).get("/api/health").json()
     assert body["thresholds_match"] is False
     assert "разошлись" in caplog.text
+
+
+def test_health_gives_the_catalogue_data_date_not_only_the_build_date(
+    backend: FakeBackend,
+) -> None:
+    # #16: плашка «обновлено» — дата данных каталога; у индекса без штампа — null,
+    # фронт тогда берёт built_at.
+    assert client(backend).get("/api/health").json()["data_updated_at"] is None
+    backend.meta.data_updated_at = "2026-09-04"
+    body = client(backend).get("/api/health").json()
+    assert body["data_updated_at"] == "2026-09-04"
+    assert body["built_at"] == "2026-08-29T18:00:00+00:00"

@@ -45,6 +45,12 @@ class IndexMeta:
     # можно только по прогонам, — и служат сверкой: settings API и индекс
     # не должны разъехаться незаметно. Источник истины для рантайма — settings.
     thresholds: dict[str, float] | None = None
+    # #16: дата данных каталога — самая свежая `updated_date` записи OpenAlex
+    # среди авторов каталога (`scripts/stamp_data_date.py`, шаг `make
+    # index-sfr5c`). Не `built_at`: индекс пересобирают и без доливки данных,
+    # а посетитель читает плашку «обновлено» как «когда обновились данные о
+    # человеке». Пусто — индекс без штампа, фронт тогда показывает `built_at`.
+    data_updated_at: str = ""
 
     @property
     def slug(self) -> str:
@@ -152,6 +158,16 @@ def load_meta(index_dir: Path) -> IndexMeta:
     if not path.exists():
         raise FileNotFoundError(f"{index_dir} has no index — run `sfr-match index` first")
     return IndexMeta(**json.loads(path.read_text(encoding="utf-8")))
+
+
+def stamp_data_updated_at(index_dir: Path, value: str) -> IndexMeta:
+    """Дописать дату данных каталога в meta.json уже собранного индекса (#16)."""
+    meta = load_meta(index_dir)
+    meta.data_updated_at = value
+    (index_dir / META_FILE).write_text(
+        json.dumps(asdict(meta), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return meta
 
 
 def stamp_thresholds(index_dir: Path, thresholds: dict[str, float]) -> IndexMeta:

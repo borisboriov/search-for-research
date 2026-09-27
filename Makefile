@@ -6,7 +6,7 @@
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
 	metrics-deploy-sfr5c review-deploy-sfr5c pool-deploy-sfr5c \
-	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c hooks-test
+	pool-base-blind-sfr5c metrics-base-blind-sfr5c ood19-sfr5c hooks-test stamp-data-date-sfr5c
 
 # macOS: uv marks .venv files with the UF_HIDDEN flag, and CPython >= 3.12.13 skips
 # hidden .pth files, which silently breaks editable workspace imports.
@@ -344,6 +344,14 @@ index-sfr5c: unhide
 	uv run sfr-match index -m frida --clean --compose full \
 		--profiles $(SFR5C_PROFILES) --index-root $(SFR5C_INDEX_ROOT)
 	SFR_API_INDEX_ROOT=$(SFR5C_INDEX_ROOT) uv run python scripts/stamp_thresholds.py
+	$(MAKE) stamp-data-date-sfr5c
+
+# Дата данных каталога в meta.json (#16): самая свежая updated_date записи
+# OpenAlex среди авторов каталога — её показывает плашка «обновлено» на профиле.
+# БД только читается; пересборка индекса без новых данных даёт ту же дату.
+stamp-data-date-sfr5c: unhide
+	uv run python scripts/stamp_data_date.py --db-url $(SFR5C_DB_URL) \
+		--index-dir $(SFR5C_INDEX_ROOT)/frida_clean
 
 eval-sfr5c: unhide
 	uv run sfr-match eval --models frida --clean --compose full \

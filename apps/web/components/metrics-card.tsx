@@ -21,8 +21,9 @@ function Metric({ value, label }: { value: number | null; label: string }) {
 
 /**
  * Наукометрия профиля. Над цифрами — плашка происхождения данных (P-08,
- * ПроДокторов): раньше это была мелкая подпись у заголовка. Дата — сборка
- * индекса из `/health` (`built_at`); ответа нет — плашка без даты.
+ * ПроДокторов): раньше это была мелкая подпись у заголовка. Дата — дата данных
+ * каталога из `/health` (`data_updated_at`, #16; у индекса без штампа —
+ * `built_at`); ответа нет — плашка без даты.
  * Она же несёт tooltip «по данным OpenAlex».
  */
 export function MetricsCard({ card, updatedAt }: { card: SupervisorCard; updatedAt: string | null }) {

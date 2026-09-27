@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   affiliationLine,
   counterText,
+  catalogueDate,
   formatIndexDate,
   formatNumber,
   initials,
@@ -108,5 +109,25 @@ describe("formatIndexDate (плашка P-08)", () => {
     expect(formatIndexDate(undefined)).toBeNull();
     expect(formatIndexDate("")).toBeNull();
     expect(formatIndexDate("не дата")).toBeNull();
+  });
+});
+
+describe("catalogueDate (#16: плашка «обновлено» — дата данных, не сборки индекса)", () => {
+  it("берёт дату данных каталога, если она проштампована", () => {
+    expect(
+      catalogueDate({ built_at: "2026-09-26T18:09:55+00:00", data_updated_at: "2026-09-04" }),
+    ).toBe("2026-09-04");
+    expect(formatIndexDate(catalogueDate({ built_at: "x", data_updated_at: "2026-09-04" }))).toBe(
+      "04.09.2026",
+    );
+  });
+  it("у индекса без штампа — дата сборки; без ответа — null", () => {
+    expect(catalogueDate({ built_at: "2026-09-26T18:09:55+00:00", data_updated_at: null })).toBe(
+      "2026-09-26T18:09:55+00:00",
+    );
+    expect(catalogueDate({ built_at: "2026-09-26T18:09:55+00:00" })).toBe(
+      "2026-09-26T18:09:55+00:00",
+    );
+    expect(catalogueDate(null)).toBeNull();
   });
 });

@@ -135,6 +135,9 @@ class HealthResponse(BaseModel):
     search_backend: str
     compose: str
     built_at: str
+    # #16: дата данных каталога (самая свежая запись OpenAlex среди авторов), а
+    # не сборки индекса; null — индекс без штампа, показывать built_at.
+    data_updated_at: str | None = None
     # Кэш ответов /match (SPEC_SFR4 §2): hit-rate — прямой сигнал, сколько
     # инференса сэкономлено на повторных запросах.
     cache_hits: int
