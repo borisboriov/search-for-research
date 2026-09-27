@@ -1,4 +1,4 @@
-"""Rendering of docs/SFR2_REPORT.md from measured artefacts."""
+"""Rendering of docs/reports/SFR2_REPORT.md from measured artefacts."""
 
 from sfr_match.calibrate import calibrate, recommend
 from sfr_match.evalset import Query

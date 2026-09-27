@@ -1,4 +1,4 @@
-"""Цифры для `docs/SFR5_REPORT.md`: регрессия качества, страты, пороги.
+"""Цифры для `docs/reports/SFR5_REPORT.md`: регрессия качества, страты, пороги.
 
 Отдельный скрипт, а не команда `sfr-match`: `report-sfr2` собирает замороженный
 отчёт SFR-2 и его трогать нельзя, а таблицы SFR-5 нужны разовые — в частности
@@ -119,7 +119,7 @@ def main() -> None:
     parser.add_argument("--ood-runs-dir", type=Path, default=Path("data/eval/runs_ood_sfr5"))
     parser.add_argument("--profiles", type=Path, default=Path("data/exports/profiles_sfr5.jsonl"))
     parser.add_argument("--variant", default="frida_clean")
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr5_metrics.json"))
+    parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr5_metrics.json"))
     # Набор посторонних менялся (o13/o15 удалены 26.09, 19 → 17): калибровка
     # прошлых отчётов воспроизводится только по тому набору, на котором считалась.
     # Архивный файл достаёт из git цель `make ood19-sfr5c`.

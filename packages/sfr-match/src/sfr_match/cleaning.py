@@ -1,6 +1,6 @@
 """Profile-text preprocessing: LaTeX de-noising and author-list abstract removal.
 
-Addresses problems #1–2 from SFR-0 ``docs/REPORT.md``:
+Addresses problems #1–2 from SFR-0 ``docs/reports/REPORT.md``:
 
 1. Physics abstracts arrive with TeX escapes (``\\ensuremath``, ``$…$``, ``\\ifmmode``)
    that eat the profile character budget and add tokens with no semantic content.

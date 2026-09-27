@@ -518,9 +518,11 @@ def export_cards(
 
 @app.command("report")
 def report(
-    out: Annotated[Path, typer.Option(help="Output Markdown path")] = Path("docs/REPORT.md"),
+    out: Annotated[Path, typer.Option(help="Output Markdown path")] = Path(
+        "docs/reports/REPORT.md"
+    ),
 ) -> None:
-    """Generate the run report (docs/REPORT.md)."""
+    """Generate the run report (docs/reports/REPORT.md)."""
     settings = _load_settings()
     upgrade_to_head(settings.sfr_db_url)
     engine = make_engine(settings.sfr_db_url)

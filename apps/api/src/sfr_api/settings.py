@@ -42,7 +42,7 @@ class ApiSettings(BaseSettings):
     # запроса (19 — набор до 26.09, `make ood19-sfr5c`). Тот же порог даёт
     # калибровка на 17 посторонних (без o13/o15).
     # Единственный пропущенный (0.366) попадает в серую зону и получает баннер.
-    # Порог принадлежит паре модель×индекс: §13 docs/SFR5c_REPORT.md.
+    # Порог принадлежит паре модель×индекс: §13 docs/reports/SFR5c_REPORT.md.
     score_threshold: float = 0.33
 
     # Серая зона (SPEC_SFR4 §0.9): top-1 в [score_threshold, score_weak)

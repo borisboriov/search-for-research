@@ -1,4 +1,4 @@
-"""Aggregate eval runs + judgments into docs/SFR1_REPORT.md."""
+"""Aggregate eval runs + judgments into docs/reports/SFR1_REPORT.md."""
 
 import re
 from dataclasses import dataclass
@@ -12,8 +12,8 @@ from sfr_match.evaluate import Run, latency_summary
 from sfr_match.metrics import mean, ndcg_at_k, reciprocal_rank, success_at_k
 from sfr_match.models import REGISTRY
 
-REPORT_PATH = Path("docs/SFR1_REPORT.md")
-NOTES_PATH = Path("docs/SFR1_REPORT_notes.md")
+REPORT_PATH = Path("docs/reports/SFR1_REPORT.md")
+NOTES_PATH = Path("docs/reports/SFR1_REPORT_notes.md")
 
 
 @dataclass

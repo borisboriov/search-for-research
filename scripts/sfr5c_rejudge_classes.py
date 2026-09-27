@@ -120,7 +120,7 @@ def main() -> None:
     eval_dir = Path("packages/sfr-match/eval")
     parser.add_argument("--v1", type=Path, default=eval_dir / "judgments_rejudge_sfr5c.jsonl")
     parser.add_argument("--v2", type=Path, default=eval_dir / "judgments_rejudge_sfr5c_v2.jsonl")
-    parser.add_argument("--out", type=Path, default=Path("docs/sfr5c_rejudge_classes.json"))
+    parser.add_argument("--out", type=Path, default=Path("docs/metrics/sfr5c_rejudge_classes.json"))
     # Подписи строк таблицы: скрипт сравнивает любые два прогона (#122 — два
     # слепых пересуда топ-5 на разных индексах), а не только v1/v2 решающих пар.
     parser.add_argument("--v1-label", default="пересуд v1 (с tie-break)")
