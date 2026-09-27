@@ -1,6 +1,12 @@
 # eval/ — наборы запросов и судейство
 
-Файлы здесь версионируются в git: это актив проекта, а не результат сборки.
+Здесь лежат **входы** (наборы запросов, оценки, рубрика, критерии, решения
+человека) и **доказательства** — review-файлы, на которые отчёт или
+`docs/DECISIONS.md` опираются как на основание утверждения. Всё остальное, что
+пишут цели и CLI, — в gitignored `data/eval/review/` (правило — `docs/DECISIONS.md`
+27.09, «чистка eval», #143).
+
+**Входы** — версионируются, правятся осознанно:
 
 | Файл | Что это | Кто заполняет |
 |---|---|---|
@@ -12,11 +18,34 @@
 | `judgments_deploy_sfr5c.jsonl` | пересуд топ-5 golden set на **боевом** индексе слепым судьёй — единственный источник абсолютных цифр качества для паспорта (`docs/DECISIONS.md` 26.09) | субагент `sfr-judge` (Fable) |
 | `judgments_base5538_blind.jsonl` | тот же слепой пересуд топ-5 на **прежнем** боевом индексе 5 538 — пара «было → стало» одним судьёй и одной рубрикой (#122, §13.11 `docs/reports/SFR5c_REPORT.md`; `make metrics-base-blind-sfr5c`) | субагент `sfr-judge` (Fable) |
 | `judgments_rejudge_sfr5c_v3.jsonl` | третий прогон тех же 135 решающих пар, рубрика 26.09 с уточнениями — разброс судьи v2 ↔ v3 (#115, §6 `docs/reports/SFR5c_REPORT.md`; `make metrics-sfr5c` → `docs/metrics/sfr5c_rejudge_v2_v3.json`) | субагент `sfr-judge` (Fable) |
-| `judgments_for_review*.md` | случайная выборка на ручную проверку (`make review-sfr5c`, `make review-deploy-sfr5c`) | агент готовит, человек читает |
-| `judgments_borderline_deploy.md`, `judgments_borderline_base5538.md` | пары, где судья сам колебался между двумя оценками, с альтернативой и причиной — читать раньше случайной выборки | агент собирает из отчётов судьи, человек читает |
+| `judgments_borderline_deploy.md`, `judgments_borderline_base5538.md` | пары, где судья сам колебался между двумя оценками, с альтернативой и причиной; вход интервала по спорным парам (`--borderline` в `make metrics-deploy-sfr5c` и `metrics-base-blind-sfr5c`, #131) — читать раньше случайной выборки | агент собирает из отчётов судьи, человек читает |
 | `JUDGE_RUBRIC.md` | **рубрика оценки** — единственное правило для судьи, версионируется вместе с оценками | правится осознанно, с записью в `DECISIONS.md` |
 | `dedup_decisions.jsonl` | решения человека о склейках профилей (`same` / `different`) | человек (агент только предлагает пары) |
 | `CRITERIA_*.md` | критерии рекомендации итерации — выписываются **до** первого прогона метрик | агент по спеке итерации |
+
+**Доказательства** — не перегенерируются (или сверяются с пересчётом):
+
+| Файл | На чём стоит | Регенерация |
+|---|---|---|
+| `ood_verification.md` | процедура и решения по набору посторонних: SFR-2, SFR-5 (#12), SFR-5b, `o13`/`o15` (§5 `docs/reports/SFR5c_REPORT.md`) — единственный полный источник решений по OOD-набору | нет, дописывается руками |
+| `dedup_evidence_sfr5c.md` | разбор агента по 13 парам (26.09): доказательства вердиктов #112 и #113 в `dedup_decisions.jsonl`; его «смеси» и «примеси» — восемь профилей, на которых калиброваны признаки смеси (#119) | нет |
+| `judgments_for_review.md`, `judgments_for_review_msu.md` | выборки SFR-1 (МФТИ, МГУ), проверенные Борисом 29.08 — «расхождений нет» в `docs/reports/SFR1_REPORT.md` | нет |
+| `judgments_for_review_sfr2.md` | выборка SFR-2, проверена человеком 29.08 (`docs/reports/SFR2_REPORT.md`) | нет |
+| `judgments_for_review_sfr5b.md` | выборка SFR-5b с решающими парами, проверка Борисом 26.09 — #94, одна поправка (`docs/reports/SFR5b_REPORT.md` §4) | нет |
+| `judgments_for_review_sfr5c.md` | **снапшот** §7 `docs/reports/SFR5c_REPORT.md`, проверка #112 (13 из 13) | `make review-sfr5c` → `data/eval/review/`, сверка со снапшотом байт в байт |
+| `judgments_for_review_deploy.md` | **снапшот** 20 пар слепого пересуда, §13.5 `docs/reports/SFR5c_REPORT.md` | `make review-deploy-sfr5c` → `data/eval/review/`, сверка со снапшотом байт в байт |
+| `dedup_for_review_sfr5c.md` | снимок выкладки 9 002 (§13.2, коммит `e89cb55`); версию, которую Борис читал по #112 (§2, §7, каталог 9 010), даёт `git show f5a903d:packages/sfr-match/eval/dedup_for_review_sfr5c.md`; оставить или перенести — #147 | `make catalog-sfr5c` пишет в `data/eval/review/`, снимок не трогает |
+
+**Review-выборки — в `data/eval/review/`.** Туда пишут `make review-sfr5c`,
+`make review-deploy-sfr5c`, `catalog-sfr5b`/`catalog-sfr5c`, а также CLI по
+умолчанию: `sfr etl dedup` (без `--review-out`) и `sfr-match review-sample`
+(без `--out`). В `eval/` файл попадает только явным копированием — когда отчёт
+цитирует его как доказательство, и тогда это строка таблицы выше.
+Переехали из git 27.09 (#143; история — `git show 9b30c0c:packages/sfr-match/eval/<файл>`):
+`dedup_for_review.md` (SFR-5; переехал — #5 закрыт, решения в `dedup_decisions.jsonl` и #108;
+локальная копия переехала под именем `dedup_for_review_sfr5.md` — прежнее имя занимает умолчание `sfr etl dedup`),
+`dedup_for_review_sfr5b.md` (переехал — решения #93 в `dedup_decisions.jsonl`),
+`judgments_for_review_sfr5.md` (переехал — человеком не проверялся, #4 перекрыт #94).
 
 Запуск по конкретному набору:
 

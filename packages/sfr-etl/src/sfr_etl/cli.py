@@ -308,8 +308,12 @@ def etl_dedup(
         bool, typer.Option("--apply/--dry-run", help="Записать склейки в БД или только показать")
     ] = False,
     review_out: Annotated[
-        Path, typer.Option(help="Куда положить выборку на ручную проверку")
-    ] = Path("packages/sfr-match/eval/dedup_for_review.md"),
+        Path,
+        typer.Option(
+            help="Куда положить выборку на ручную проверку (по умолчанию — gitignored "
+            "data/eval/review: в git едет только то, что цитирует отчёт, #143)"
+        ),
+    ] = Path("data/eval/review/dedup_for_review.md"),
     examples: Annotated[int, typer.Option(help="Сколько примеров каждого вида в файл")] = 10,
     decisions: Annotated[
         Path, typer.Option(help="Файл решений человека о склейках (§4 SPEC_SFR5c)")

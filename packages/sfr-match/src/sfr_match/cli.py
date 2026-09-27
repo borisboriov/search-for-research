@@ -58,6 +58,10 @@ log = structlog.get_logger(__name__)
 
 app = typer.Typer(no_args_is_help=True, help="Search For Research matching (SFR-1)")
 
+# Review-выборки для человека — gitignored; в eval/ их кладут явным копированием,
+# когда отчёт цитирует выборку как доказательство (#143).
+DEFAULT_REVIEW_DIR = Path("data/eval/review")
+
 ModelOpt = Annotated[str, typer.Option("--model", "-m", help="Model key or HuggingFace id")]
 CleanOpt = Annotated[bool, typer.Option("--clean/--no-clean", help="Apply profile-text cleaning")]
 ProfilesOpt = Annotated[Path, typer.Option("--profiles", help="Path to profiles.jsonl")]
@@ -298,7 +302,10 @@ def review_sample(
     index_root: Annotated[Path, typer.Option("--index-root")] = DEFAULT_INDEX_ROOT,
     out: Annotated[
         Path | None,
-        typer.Option("--out", help="Default: eval/judgments_for_review.md (SFR-1 sample)"),
+        typer.Option(
+            "--out",
+            help="По умолчанию — data/eval/review/judgments_for_review.md (gitignored, #143)",
+        ),
     ] = None,
     queries_set: Annotated[str, typer.Option("--queries")] = "golden",
     seed: Annotated[int, typer.Option("--seed")] = 20260829,
@@ -314,7 +321,9 @@ def review_sample(
     """Write a random sample of judgments for a human re-check.
 
     The output path is explicit on purpose: the SFR-1 sample was already checked by
-    hand, and overwriting it would destroy that record.
+    hand, and overwriting it would destroy that record. The default is therefore
+    the gitignored ``data/eval/review/`` (#143), not ``eval/``: a sample goes into
+    git only when a report cites it, by an explicit copy.
 
     ``--iteration`` ограничивает выборку новой партией оценок: судейский пул
     растёт от итерации к итерации, и без фильтра 20 случайных пар оказываются
@@ -342,7 +351,8 @@ def review_sample(
             + (f" с iteration={iteration!r}" if iteration else "")
             + f" в пуле прогонов {runs_dir}"
         )
-    out = out or (eval_dir() / "judgments_for_review.md")
+    out = out or DEFAULT_REVIEW_DIR / "judgments_for_review.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
         sample_for_review(pool_pairs, queries, judgments, profiles, n=n, seed=seed),
         encoding="utf-8",
