@@ -6,7 +6,6 @@
     "deny": [
       "Read(.env)",
       "Read(.env.*)",
-      "Bash(git push *)",
       "Bash(sudo *)",
       "Bash(rm -rf /*)",
       "Bash(rm -rf ~*)",

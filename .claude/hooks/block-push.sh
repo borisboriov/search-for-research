@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# PreToolUse-хук для Bash: push и merge — только Борис (CLAUDE.md, DECISIONS 27.09, #129).
+# PreToolUse-хук для Bash: push в main, force/delete и merge — только Борис
+# (CLAUDE.md, DECISIONS 27.09, #129); push своей ветки сессии разрешён (27.09, #140).
 #
 # Запрет `Bash(git push *)` в settings.json — префиксное правило: `git -C . push`,
 # `git -c k=v push`, `cd x && git push` его обходят. Этот хук — граница: он
@@ -7,9 +8,14 @@
 # строк, скобки, `sh -c` / `bash -lc` / `eval`, подстановки `$(…)` и `` `…` ``,
 # обёртки `env`, `command`, `nohup`, `timeout`, `xargs`, `uv run` и т. п.) и
 # отклоняет вызов, если это
-#   * `git … push` / `git … send-pack` — после любых глобальных опций git
-#     (`-C`, `-c`, `--git-dir`, `--work-tree`, `--no-pager`, …), в том числе
-#     через алиас (`git -c alias.p=push p`, алиас из git config);
+#   * `git … push`, который не является пушем своей ветки: без явной ветки из
+#     `main` (или когда текущую ветку не определить), с назначением `main` /
+#     `master` (`origin main`, `HEAD:main`, `refs/heads/main`), с `--force`,
+#     `--force-with-lease`, `+refspec`, `--delete` / `:ветка`, `--all`, `--tags`,
+#     `--mirror`, `--prune`; `git … send-pack` — всегда. Глобальные опции git
+#     (`-C`, `-c`, `--git-dir`, …) и алиасы (`git -c alias.p=push p`, алиас из
+#     git config) разбираются. Разрешено: `git push origin <ветка>`,
+#     `git push -u origin HEAD` не из `main`;
 #   * `gh pr merge`;
 #   * `gh api`, меняющий PR: эндпоинт `…/pulls/N/merge`, методы PUT/PATCH/DELETE
 #     на `…/pulls…`, GraphQL-мутации слияния.
@@ -26,7 +32,7 @@
 set -uo pipefail
 
 payload=$(cat 2>/dev/null || true)
-reason_prefix="push и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
+reason_prefix="push в main и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
 
 # Осторожный отказ без разбора: только встроенные средства bash — без python3
 # может не оказаться и grep.
@@ -54,7 +60,7 @@ import shlex
 import subprocess
 import sys
 
-PREFIX = "push и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
+PREFIX = "push в main и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
 SEPARATORS = {";", "&&", "||", "|", "&", "|&", ";;", "(", ")", "{", "}", "\n"}
 KEYWORDS = {"if", "then", "else", "elif", "fi", "do", "done", "while", "until", "!", "time"}
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
@@ -67,6 +73,15 @@ WRAPPERS = {
 GIT_OPTS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"}
 PUSH_SUBCOMMANDS = {"push", "send-pack"}
 MUTATING = {"PUT", "PATCH", "DELETE"}
+# Ветки, в которые сессия не пушит ни в какой форме.
+PROTECTED = {"main", "master", "refs/heads/main", "refs/heads/master"}
+# Опции push, которые переписывают историю или трогают чужие ветки.
+PUSH_FORBIDDEN_OPTS = {
+    "-f", "--force", "--force-with-lease", "--force-if-includes", "-d", "--delete",
+    "--mirror", "--all", "--branches", "--tags", "--follow-tags", "--prune",
+}
+# Опции push, у которых значение — отдельным словом (если не через `=`).
+PUSH_OPTS_WITH_VALUE = {"-o", "--push-option", "--repo", "--receive-pack", "--exec"}
 
 
 def tokenize(command: str) -> list[str]:
@@ -181,6 +196,68 @@ def git_alias(name: str, cwd: str | None, inline: dict[str, str]) -> str | None:
     return result.stdout.strip() or None
 
 
+def current_branch(cwd: str | None, git_global: list[str]) -> str | None:
+    """Текущая ветка репозитория (None — detached HEAD или git не ответил)."""
+    try:
+        result = subprocess.run(
+            ["git", *git_global, "symbolic-ref", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=cwd or None, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return result.stdout.strip() or None
+
+
+def check_push(args: list[str], cwd: str | None, git_global: list[str]) -> str | None:
+    """`git push …` пропускается только как push своей ветки.
+
+    Запрещены force/delete/all/tags/mirror/prune, принудительный `+refspec`,
+    удаление `:ветка`, любое назначение из PROTECTED. Без явной ветки
+    (`git push`, `git push -u origin`, `HEAD`) назначение — текущая ветка
+    репозитория: из `main` или при detached HEAD — отказ.
+    """
+    positional: list[str] = []
+    j = 0
+    while j < len(args):
+        arg = args[j]
+        if arg == "--":
+            positional.extend(args[j + 1:])
+            break
+        if arg.startswith("-"):
+            base = arg.split("=", 1)[0]
+            if base in PUSH_FORBIDDEN_OPTS or base.startswith("--force"):
+                return f"git push {base}"
+            if base in PUSH_OPTS_WITH_VALUE and "=" not in arg:
+                j += 2
+                continue
+            j += 1
+            continue
+        positional.append(arg)
+        j += 1
+    refspecs = positional[1:]
+    if not refspecs:
+        branch = current_branch(cwd, git_global)
+        if not branch:
+            return "git push без явной ветки (текущую ветку определить не удалось)"
+        if branch in PROTECTED:
+            return f"git push из ветки {branch}"
+        return None
+    for spec in refspecs:
+        if spec.startswith("+"):
+            return f"git push {spec} (принудительно)"
+        src, sep, dst = spec.partition(":")
+        if sep and not src:
+            return f"git push {spec} (удаление ветки)"
+        target = dst if sep else src
+        if target == "HEAD":
+            target = current_branch(cwd, git_global) or ""
+            if not target:
+                return "git push HEAD (текущую ветку определить не удалось)"
+        if target in PROTECTED:
+            return f"git push … {spec} (в {target})"
+    return None
+
+
 def check_git(argv: list[str], cwd: str | None, depth: int) -> str | None:
     i, inline_aliases = 1, {}
     while i < len(argv):
@@ -199,15 +276,20 @@ def check_git(argv: list[str], cwd: str | None, depth: int) -> str | None:
     if i >= len(argv):
         return None
     sub = argv[i]
-    if sub in PUSH_SUBCOMMANDS:
-        return f"git {sub}"
+    if sub == "send-pack":
+        return "git send-pack"
+    if sub == "push":
+        return check_push(argv[i + 1:], cwd, argv[1:i])
     alias = git_alias(sub, cwd, inline_aliases)
     if alias:
         if alias.startswith("!"):
             return check_command(alias[1:], cwd, depth + 1)
         words = alias.split()
-        if words and words[0] in PUSH_SUBCOMMANDS:
+        if words and words[0] == "send-pack":
             return f"git {sub} (алиас «{alias}»)"
+        if words and words[0] == "push":
+            found = check_push(words[1:] + argv[i + 1:], cwd, argv[1:i])
+            return f"{found} (алиас «{alias}»)" if found else None
     return None
 
 
@@ -305,7 +387,9 @@ def main() -> int:
         return 0
     if found:
         print(
-            f"{PREFIX}: отклонено «{found}». Подготовь команду и текст — выполнит Борис. "
+            f"{PREFIX}: отклонено «{found}». Разрешён только push своей ветки — "
+            "`git push origin <ветка>` не из main, без --force/--delete; PR — `gh pr create`; "
+            "push в main, merge и выкладка — Борис. "
             "Если это текст, а не вызов (сообщение коммита, markdown): обратные кавычки "
             "и $(…) внутри \"…\" bash выполняет — передай текст файлом или heredoc в "
             "кавычках (git commit -F - <<'MSG').",

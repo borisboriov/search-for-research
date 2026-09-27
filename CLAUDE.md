@@ -48,7 +48,7 @@ SFR-2 API и пороги · SFR-3 фронт · SFR-4 деплой · SFR-4b а
 - Находки ревью (`/review-iteration`) → issues с лейблом `from-review`.
 - **Ссылки в issue.** Файл репозитория, о котором идёт задача (код, отчёт, спека, eval-файл), — всегда ссылкой на `blob/main` без номера строки: [`docs/reports/SFR5_REPORT.md`](https://github.com/borisboriov/search-for-research/blob/main/docs/reports/SFR5_REPORT.md) §5 — параграф словами, потому что строки уезжают. Permalink по SHA — только если важна конкретная строка на конкретной версии. Удалённые файлы (`docs/NEXT.md`, `TODO_BORIS.md`, TODO-файлы папки) — не ссылать: в «Откуда» остаётся имя файла текстом и дословная цитата, история — `git log --all -- <путь>`. Продуктовые документы лежат в `docs/product/` (бриф, спека MVP, ресерчи, план курса) — на них тоже ссылка на `blob/main`. Бинарники папки документов (паспорт xlsx, дек pptx, скрины) — именем файла без пути.
 - Агент **не меняет** milestones, лейблы `sveta` и `decision` и не удаляет issues.
-- **Ветки, PR, merge и push.** Агент работает в ветке (`sfr-<N>` для итерации, имя по теме для мини-сессии), делает коммиты и готовит текст PR; после того как Борис запушил ветку, `gh pr create` агенту можно. `git push`, merge PR, удаление ветки и выкладка на VPS — только Борис; `gh pr merge` и `git push` агент не выполняет ни в каком режиме (пуш к тому же отклоняется разрешениями сессии) — это правило, а не только техническое ограничение.
+- **Ветки, PR, merge и push.** Агент работает в ветке (`sfr-<N>` для итерации, имя по теме для мини-сессии), делает коммиты, **сам пушит свою ветку** (`git push -u origin <ветка>`, с 27.09.2026) и открывает PR (`gh pr create`, текст — по правилам ниже). Push в `main`, `--force`, удаление веток, merge PR и выкладка на VPS — только Борис: хук `.claude/hooks/block-push.sh` отклоняет эти формы (`gh pr merge`, push в `main`/`master`, force/delete/all/tags, push без явной ветки из `main`) и пропускает push своей ветки; тесты — `make hooks-test`.
 - «Требует человека» = issue `human` (и `decision` для нерешённого). Закрытые issues не удалять: внешнему агенту нужна история.
 
 **Правила для Бориса и Светы:** доска — главный экран; замечания и результаты — комментарием в issue, а не файлом;
@@ -91,7 +91,7 @@ Stop-хук `.claude/hooks/review-reminder.sh`, PreToolUse-хук `.claude/hooks
 ревью итерации, `sfr-judge` — слепое судейство пар по рубрике `packages/sfr-match/eval/JUDGE_RUBRIC.md`),
 команды `.claude/commands/` (`/issues`, `/review-iteration`). Личное — только `.claude/settings.local.json`
 (исключён через `.claude/.gitignore`). **Граница — только хук `block-push.sh`** (#129, DECISIONS 27.09):
-он отклоняет любую форму `git push` и `gh pr merge` по разобранным аргументам, тесты — `make hooks-test`;
+он отклоняет push в `main`, force/delete и `gh pr merge` по разобранным аргументам и пропускает push своей ветки (с 27.09.2026), тесты — `make hooks-test`;
 `allow`/`deny` в settings — гигиена и подсказка, а не защита.
 
 ## Что это за проект

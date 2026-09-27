@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Тесты хука block-push.sh (#129): что отклоняется и что проходит.
+# Тесты хука block-push.sh (#129, с 27.09 push своей ветки разрешён): что отклоняется и что проходит.
 # Запуск: `make hooks-test` или `bash .claude/hooks/test_block_push.sh`.
 # Прогоняется на python3 из PATH и, если есть, на системном /usr/bin/python3
 # (на macOS это 3.9 — хук обязан работать и на нём).
@@ -33,6 +33,22 @@ blocked=(
     "echo \"\$(git push)\""
     "echo \"\`git push\`\""
     $'cat <<EOF\n$(git push)\nEOF'
+    "git push origin HEAD:main"
+    "git push origin sfr-7:main"
+    "git push origin refs/heads/main"
+    "git push vm master"
+    "git push origin :sfr-7"
+    "git push --delete origin sfr-7"
+    "git push -d origin sfr-7"
+    "git push origin +sfr-7"
+    "git push --force-with-lease origin sfr-7"
+    "git push -f origin sfr-7"
+    "git push --all origin"
+    "git push --tags origin"
+    "git push --mirror origin"
+    "git push --prune origin sfr-7"
+    "git push -o ci.skip origin main"
+    "git -c alias.p=push p origin sfr-7:main"
     "gh pr merge 1"
     "gh pr merge --auto --squash 12"
     "gh api repos/o/r/pulls/1/merge -X PUT"
@@ -57,10 +73,35 @@ allowed=(
     $'cat > f.md <<\'EOF\'\nничего не пушим: `git push` — только Борис\ngit push origin main\n$(git push)\nEOF'
     $'python3 - <<"PY"\nprint("git push")\nPY\ngit status'
     "make hooks-test"
+    "git push origin sfr-7"
+    "git push -u origin sfr-7"
+    "git push --set-upstream origin sfr-7"
+    "git push vm docs-diet"
+    "git push origin sfr-7:sfr-7"
+    "git push -o ci.skip origin sfr-7"
+    "git -C . push origin sfr-7"
+    "git -c alias.p=push p origin sfr-7"
+    "git commit -m x && git push origin sfr-7 && gh pr create --fill"
 )
+
+# Формы без явной ветки зависят от текущей ветки репозитория: проверяем во
+# временных репо на ветке sfr-x (проходит) и main (отклоняется).
+head_cases=(
+    "git push"
+    "git push origin"
+    "git push -u origin"
+    "git push -u origin HEAD"
+    "git push origin HEAD"
+    "git push origin HEAD:refs/heads/main"
+)
+
 
 payload() {
     python3 -c 'import json, sys; print(json.dumps({"tool_name": "Bash", "tool_input": {"command": sys.argv[1]}}))' "$1"
+}
+
+payload_cwd() {
+    python3 -c 'import json, sys; print(json.dumps({"tool_name": "Bash", "cwd": sys.argv[2], "tool_input": {"command": sys.argv[1]}}))' "$1" "$2"
 }
 
 failures=0
@@ -85,7 +126,38 @@ run_suite() {
     echo "[$label] $(PATH="$path_prefix$PATH" python3 --version 2>&1): отклоняется ${#blocked[@]}, проходит ${#allowed[@]}"
 }
 
+# Push без явной ветки: из ветки sfr-x проходит (кроме HEAD:refs/heads/main),
+# из main — отклоняется; в detached HEAD — отклоняется.
+run_head_cases() {
+    local tmp cmd code
+    tmp=$(mktemp -d)
+    git -C "$tmp" init -q -b sfr-x && git -C "$tmp" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+    for cmd in "${head_cases[@]}"; do
+        payload_cwd "$cmd" "$tmp" | bash "$hook" >/dev/null 2>&1
+        code=$?
+        case $cmd in
+            *refs/heads/main*) [ "$code" -eq 2 ] || { echo "FAIL [ветка sfr-x] должно отклоняться (код $code): $cmd"; failures=$((failures + 1)); } ;;
+            *) [ "$code" -eq 0 ] || { echo "FAIL [ветка sfr-x] должно проходить (код $code): $cmd"; failures=$((failures + 1)); } ;;
+        esac
+    done
+    git -C "$tmp" checkout -q -b main
+    for cmd in "${head_cases[@]}"; do
+        payload_cwd "$cmd" "$tmp" | bash "$hook" >/dev/null 2>&1
+        code=$?
+        [ "$code" -eq 2 ] || { echo "FAIL [ветка main] должно отклоняться (код $code): $cmd"; failures=$((failures + 1)); }
+    done
+    git -C "$tmp" checkout -q --detach
+    payload_cwd "git push origin HEAD" "$tmp" | bash "$hook" >/dev/null 2>&1
+    [ $? -eq 2 ] || { echo "FAIL [detached HEAD] git push origin HEAD должен отклоняться"; failures=$((failures + 1)); }
+    # -C на другой репозиторий: ветка берётся оттуда, а не из cwd.
+    payload_cwd "git -C $tmp push origin HEAD" "/" | bash "$hook" >/dev/null 2>&1
+    [ $? -eq 2 ] || { echo "FAIL [-C detached] git -C … push origin HEAD должен отклоняться"; failures=$((failures + 1)); }
+    rm -rf "$tmp"
+    echo "[ветка] формы без явной ветки: ${#head_cases[@]} × (sfr-x, main) + detached"
+}
+
 run_suite "python3 из PATH" ""
+run_head_cases
 if [ -x /usr/bin/python3 ]; then
     run_suite "системный python3" "/usr/bin:"
 fi
@@ -124,7 +196,7 @@ echo "[1,2 МБ] большая команда разбирается"
 # Сообщение отказа — то, что увидит агент.
 msg=$(payload "git -c x=y push origin main" | bash "$hook" 2>&1 >/dev/null)
 case $msg in
-    *"push и merge — только Борис"*) ;;
+    *"push в main и merge — только Борис"*"push своей ветки"*) ;;
     *) echo "FAIL текст отказа: $msg"; failures=$((failures + 1)) ;;
 esac
 
