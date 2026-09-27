@@ -116,3 +116,98 @@
 - Замечание: `uv run pytest packages/sfr-match/tests` отдельно от `make test`
   может упасть на конфликте OpenMP (faiss загружается раньше torch) — давний
   конфликт libomp на macOS (DECISIONS 29.08); `make test` проходит.
+
+## Чистка eval (#143) — мини-сессия 27.09, вечер
+
+*Ветка `eval-cleanup` от `main` `9b30c0c`, промпт — в теле PR. Мера D6 диеты
+документов (#140): в `packages/sfr-match/eval/` оставить входы и доказательства,
+review-выборки — в gitignored `data/eval/review/`. Ничего по смыслу не
+пересчитывалось; боевой каталог, индексы, рубрика и наборы запросов не менялись.*
+
+### Инвентарь: 16 md-файлов `eval/` (кроме README)
+
+Цитаты искались `grep -rn <имя>` по `docs/`, `CLAUDE.md`, `README.md`, `eval/README.md`,
+коду и тестам. По имени цитируется почти каждый файл (кроме одного), поэтому
+вердикт выносится по **роли** цитаты: основание утверждения — или упоминание,
+что выборка была подготовлена. Правило — `docs/DECISIONS.md` 27.09, «чистка eval».
+
+| Файл | Размер | Кто пишет | Цитируют отчёты / DECISIONS | Только история (SESSIONS, спеки) | Вердикт |
+|---|---|---|---|---|---|
+| `CRITERIA_SFR5c.md` | 4,2 КБ | руками, агент | SFR5c §6, §10, §12 | SESSIONS | **вход** — критерии рекомендации |
+| `JUDGE_RUBRIC.md` | 9,7 КБ | руками, с записью в DECISIONS | SFR5c §6, §13.5; DECISIONS 26.09; `sfr-judge` | SESSIONS | **вход** — рубрика |
+| `judgments_borderline_deploy.md` | 14,8 КБ | агент из отчётов судьи | SFR5c §13.5; `sfr5c_deploy_interval.json` | SESSIONS | **вход** `--borderline` (#131) |
+| `judgments_borderline_base5538.md` | 12,6 КБ | то же | SFR5c §13.11; `sfr5c_base_blind_interval.json` | SESSIONS | **вход** `--borderline` (#131) |
+| `ood_verification.md` | 21,3 КБ | руками | отчёты SFR-2, 5, 5b, 5c §5, бэклог #12; DECISIONS; `test_evalset.py` | SESSIONS, спека 5c | **доказательство** — единственный источник решений по OOD-набору |
+| `dedup_evidence_sfr5c.md` | 39,1 КБ | руками, агент (`5751398`) | **по имени — никто.** По смыслу: `note` строк #112 в `dedup_decisions.jsonl` («разбор агента 2026-09-26»), восемь смесей и примесей записи #119 — ровно его разделы 3–5, 7, 9, 10, 12 | — | **доказательство**; ссылки добавлены: `eval/README.md`, поправка к записи #119 |
+| `judgments_for_review.md` | 10,8 КБ | `sfr-match review-sample` (умолчание) | SFR1: «Борис просмотрел… расхождений не нашёл» | спека SFR-1 | **доказательство** проверки человеком |
+| `judgments_for_review_msu.md` | 11,0 КБ | `review-sample` | SFR1 (`_notes`): проверено 29.08 | — | **доказательство** |
+| `judgments_for_review_sfr2.md` | 10,7 КБ | `review-sample` | SFR2: «проверена человеком 29.08» | SESSIONS | **доказательство** |
+| `judgments_for_review_sfr5b.md` | 32,3 КБ | `review-sample` + раздел решающих пар | SFR5b §4: проверка Борисом #94, одна поправка | спека 5b | **доказательство** |
+| `judgments_for_review_sfr5c.md` | 110,0 КБ | `make review-sfr5c` | SFR5c §7, §13.3; DECISIONS 27.09 | спека 5c | **снапшот**: цель → `data/eval/review/` + сверка |
+| `judgments_for_review_deploy.md` | 23,2 КБ | `make review-deploy-sfr5c` | SFR5c §13.5 | SESSIONS | **снапшот**: цель → `data/eval/review/` + сверка |
+| `dedup_for_review_sfr5c.md` | 130,0 КБ | `make catalog-sfr5c` | SFR5c §2, §7 — **версия `f5a903d`** (9 010, её читал Борис по #112); §13.2 — путь в команде; в HEAD — выкладка 9 002 (`e89cb55`) | спека 5c | **остаётся**, решение — **#147** (`decision`): §13 его называет, а по правилу это выход конвейера |
+| `judgments_for_review_sfr5.md` | 10,8 КБ | `review-sample` | SFR5 §4, §10: «человеком ещё не проверена» | спека 5 | **переехал**: не проверялся, #4 перекрыт #94 |
+| `dedup_for_review.md` | 8,5 КБ | `sfr etl dedup` (умолчание) | SFR5 §2, DoD; DECISIONS 05.09 — как формат | спеки 5, 5b; SESSIONS | **переехал**: #5 закрыт («старый файл читать больше не нужно»), решения — #108 и `dedup_decisions.jsonl` |
+| `dedup_for_review_sfr5b.md` | 175,0 КБ | `make catalog-sfr5b` | SFR5b §2, DoD | спеки 5b, 5c; SESSIONS | **переехал** (прямо в #143): решения #93 — в `dedup_decisions.jsonl` |
+
+**Итог.** В git в `eval/` было 16 md на 624 КБ, стало 13 на 430 КБ (−194 КБ,
+−31 %, 20,8 тыс. слов). Главный вес — `dedup_for_review_sfr5c.md` (130 КБ) и
+снапшот §7 (110 КБ): первый ждёт #147, второй — доказательство проверки #112
+и воспроизводится целью. «Корпус двух вузов» в `eval/README.md` уже не было;
+единственное упоминание — `ood_verification.md`, оговорка раздела SFR-2, которую
+следующие разделы файла сами отрабатывают на 12 вузах, — файл в границах «не
+трогать», не менялся.
+
+### Что переехало и что изменилось
+
+- Три файла — `git rm --cached` и перенос в `data/eval/review/` (`1db75e8`);
+  версии — `git show 9b30c0c:packages/sfr-match/eval/<файл>`. Копия SFR-5 в
+  `data/` названа `dedup_for_review_sfr5.md`: имя `dedup_for_review.md` там
+  занимает новое умолчание `sfr etl dedup` — первый же dry-run сессии затёр копию,
+  она восстановлена из git.
+- **Makefile** (`1db75e8`): `SFR5B_DEDUP_REVIEW`, `SFR5C_DEDUP_REVIEW`,
+  `SFR5C_REVIEW`, `SFR5C_DECISIVE`, `SFR5C_SAMPLE` и выход `review-deploy-sfr5c` —
+  в `data/eval/review/`; `review-sfr5c` и `review-deploy-sfr5c` сверяют пересчёт
+  со снапшотом в `eval/` (`compare_frozen`, как `eval-sfr1`/`eval`), снапшот не пишут.
+- **CLI** (`bdd92ae`): умолчание `sfr etl dedup --review-out` и `sfr-match
+  review-sample --out` — `data/eval/review/`. Прежнее умолчание `review-sample`
+  переписало бы выборку SFR-1, проверенную Борисом (докстринг об этом
+  предупреждал, умолчание ему противоречило). `review-sample` создаёт каталог;
+  тест на умолчание.
+- **Документы:** `eval/README.md` — три таблицы (входы, доказательства со
+  столбцом «регенерация», куда пишут выборки и что переехало);
+  `docs/README.md` — строка в «Откуда нельзя брать цифры» и в «Старые пути»;
+  `docs/DECISIONS.md` — запись 27.09 и поправка к записи #119.
+- **Issue:** #147 (`decision`, `code`) — судьба `dedup_for_review_sfr5c.md`.
+
+### Воспроизводимость
+
+| Команда | Результат |
+|---|---|
+| `make metrics-sfr5c` | 4 JSON переписаны, `git diff --stat docs/metrics/` пуст — **байт в байт** |
+| `make metrics-deploy-sfr5c` | 2 JSON — **байт в байт** |
+| `make metrics-base-blind-sfr5c` | 3 JSON — **байт в байт** |
+| `make review-deploy-sfr5c` | → `data/eval/review/judgments_for_review_deploy.md`, «пересчёт совпадает с отчётом в git»; `cmp` со снапшотом — совпадает |
+| `make review-sfr5c` | → `data/eval/review/judgments_for_review_sfr5c.md`, «совпадает»; `cmp` — совпадает |
+| `uv run sfr etl dedup --dry-run` (умолчание) | → `data/eval/review/dedup_for_review.md`; md5 `data/sfr.db` до и после — одинаковый; 32 склейки / 17 решений / 163 / 267 — как §13.2 |
+| `git status` после всех прогонов | только удаления из `eval/` и правки Makefile/CLI/тест — ничего нового в `eval/` и `docs/metrics/` |
+
+Цель `make eval-sfr5c` из критерия #143 **не запускалась**: промпт сессии
+запрещает `eval-*` (перезаписывают прогоны, на которых стоит
+воспроизводимость), а выборки она не пишет — критерий «числа отчётов байт в
+байт» закрыт тремя целями `metrics-*`.
+
+### DoD
+
+- [x] Инвентарь: у каждого из 16 файлов один вердикт с обоснованием (таблица выше).
+- [x] Перенос: три файла в `data/eval/review/`, Makefile и CLI пишут туда же;
+  `git status` — удаления из `eval/`, Makefile, CLI, тест, документы.
+- [x] Воспроизводимость: 9 JSON `docs/metrics/sfr5c_*` и два снапшота — байт в байт.
+- [x] `make test` — 362 passed, покрытие 95,8 % ✓ · `make lint` ✓ · `make typecheck` ✓ ·
+  `make docs-check` ✓.
+- [x] `make audit AUDIT_ARGS="--no-images --strict"` — «Всё чисто» (9 проверок) ✓.
+  Docker Desktop при старте запросил пароль администратора — бинарные сканеры
+  (gitleaks 8.30.1, trivy 0.74.0, hadolint 2.15.1 — версии CI) взяты релизными
+  darwin-сборками со сверкой sha256 по checksums релиза, в PATH только команды,
+  система не менялась; они же — для pre-commit gitleaks.
+- [x] Блок «Состояние» `DECISIONS.md` не менялся; `docs/product/` не трогался.

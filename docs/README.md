@@ -61,7 +61,7 @@ docs/
 | `SFR1_REPORT.md`, `SFR1_REPORT_notes.md` | SFR-1: выбор модели (FRIDA) | **генерируется** `sfr-match report`, `_notes` дописывается как есть; заморожен |
 | `SFR2_REPORT.md`, `SFR2_REPORT_notes.md` | SFR-2: API, пороги, состав индекса | **генерируется** `sfr-match report-sfr2` (последний шаг `make eval`); заморожен — перезапуск перезапишет |
 | `SFR3_REPORT.md` … `SFR6_REPORT.md`, `SFR4b_REPORT.md`, `SFR5b_REPORT.md`, `SFR5c_REPORT.md` | отчёты итераций | пишутся руками, числа — из `metrics/` и прогонов |
-| `BACKLOG_2026-09_REPORT.md` | сессия 27.09: бэклог ревью 12–13.09 и дедупликация-2 (PR #139) | руками |
+| `BACKLOG_2026-09_REPORT.md` | сессии 27.09: бэклог ревью 12–13.09 и дедупликация-2 (PR #139); чистка eval (#143) | руками |
 | `GH_MIGRATION_REPORT.md` | перенос задач из markdown в GitHub Issues (12.09) | руками |
 
 Временный отчёт ревью — `reports/REVIEW_<итерация>.md` (`/review-iteration`): в git
@@ -105,6 +105,9 @@ docs/
   с архивным набором (`make metrics-sfr5c`, `make ood19-sfr5c`).
 - **Генерируемые отчёты** (`REPORT.md`, `SFR1_REPORT.md`, `SFR2_REPORT.md`)
   переписываются своими командами — править их руками бессмысленно.
+- **Review-выборки в `data/eval/review/`** — рабочие выходы целей и CLI, каждый
+  прогон их переписывает; доказательство — только файлы
+  `packages/sfr-match/eval/` из таблицы «Доказательства» его README (#143).
 - **Цифры-деньги** (рынок, стоимость хостинга) — не менять без решения Бориса
   (`product/market_stretch_map_2026-08-08.md`); `03_archive/` папки документов —
   не источник цифр.
@@ -118,3 +121,8 @@ docs/
 issues, в `SESSIONS.md`, в датированных записях `DECISIONS.md` и в спеках ведут на
 старые пути — это история, её не переписывали. История файла —
 `git log --follow -- docs/reports/<файл>`.
+
+До 27.09.2026 в `packages/sfr-match/eval/` лежали и три review-выборки, которые
+переехали в gitignored `data/eval/review/` (#143): `dedup_for_review.md`,
+`dedup_for_review_sfr5b.md`, `judgments_for_review_sfr5.md` (переехали); версия
+из git — `git show 9b30c0c:packages/sfr-match/eval/<файл>`.
