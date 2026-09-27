@@ -223,6 +223,44 @@ def first_names_conflict(left: str, right: str) -> bool:
     return _levenshtein(fa, fb) >= FIRST_NAME_CONFLICT_DISTANCE
 
 
+# #113: сколько тем из топ-5 должно совпасть у пары «инициалы-префикс», чтобы
+# она попала в список на решение человека. Тот же порог, что у склейки
+# «полное имя ↔ инициалы», но здесь пара **никогда** не склеивается сама:
+# «A. Bogdanov» и «A. A. Bogdanov» в большом вузе — чаще два человека.
+INITIALS_PREFIX_TOPIC_OVERLAP = 3
+
+INITIALS_BOTH = "оба инициалами"
+INITIALS_ONE_FULL = "одно имя полное"
+
+
+def folded_initials(display_name: str) -> str:
+    """Инициалы из ключа имени, сведённые к латинице: «Е. Г. Попова» → «eg»."""
+    initials = name_key(display_name).partition("|")[2]
+    return "".join(fold_name(letter)[:1] for letter in initials)
+
+
+def initials_prefix_pair(left: str, right: str) -> str | None:
+    """Класс пары «одна фамилия, инициалы одного — префикс инициалов другого» (#113).
+
+    «S. G. Belogurov» ↔ «S. Belogurov», «I. Machulin» ↔ «I. N. Machulin»,
+    «Nikita Mkrtchyan» ↔ «N. V. Mkrtchyan», «V. Prosin» ↔ «В. В. Просин»:
+    ключи имён разные, поэтому правила склейки пару не видят вовсе. Возвращает
+    класс (``INITIALS_BOTH`` / ``INITIALS_ONE_FULL``) или None, если пара не
+    такая: фамилии разные, инициалы совпадают или не префиксы, развёрнутые
+    имена спорят («Nikita» против «Nikolai»).
+    """
+    if not same_surname(left, right) or name_key(left) == name_key(right):
+        return None
+    a, b = folded_initials(left), folded_initials(right)
+    if not a or not b or a == b or not (a.startswith(b) or b.startswith(a)):
+        return None
+    if first_names_conflict(left, right):
+        return None
+    if not _spelled_out(left) and not _spelled_out(right):
+        return INITIALS_BOTH
+    return INITIALS_ONE_FULL
+
+
 DECISION_VERDICTS = ("same", "different")
 # Путь считается от корня репозитория, а не от текущей директории: `sfr etl dedup`
 # запускают и не из корня, а относительный путь молча превращал бы отсутствующий
@@ -350,13 +388,19 @@ class DedupFindings:
     одно имя и вуз без сигнала (не трогать); ``review`` — сигнал есть, но его
     блокирует конфликт ORCID или имён, решает человек; ``near_duplicates`` —
     похоже, один человек (полное имя ↔ инициалы, один вуз), но общих тем
-    меньше порога — тоже человеку, отдельным списком (#109).
+    меньше порога — тоже человеку, отдельным списком (#109); ``initials_prefix``
+    — инициалы одного профиля — префикс инициалов другого («S. G.» ↔ «S.»),
+    один вуз, общие темы: третий список человеку, автоматически не склеивается
+    (#113).
     """
 
     merges: list[MergeGroup] = field(default_factory=list)
     namesakes: list[MergeGroup] = field(default_factory=list)
     review: list[MergeGroup] = field(default_factory=list)
     near_duplicates: list[MergeGroup] = field(default_factory=list)
+    # #113: одна фамилия и вуз, инициалы одного — префикс инициалов другого,
+    # общих тем ≥ INITIALS_PREFIX_TOPIC_OVERLAP. Только человеку, не склеивается.
+    initials_prefix: list[MergeGroup] = field(default_factory=list)
     decisions: list[DecisionOutcome] = field(default_factory=list)
 
     @property
@@ -764,6 +808,11 @@ def find_splits(
             continue  # пара уже стоит в более информативном списке
         namesakes.append(group)
 
+    listed_elsewhere = {frozenset([g.canonical, *g.duplicates]) for g in [*near, *review]}
+    initials_prefix = _initials_prefix_pairs(
+        session, authors, union, decided_db_keys, listed_elsewhere, top_topics
+    )
+
     merges: list[MergeGroup] = []
     for root, members in union.groups().items():
         if len(members) < 2:
@@ -795,8 +844,67 @@ def find_splits(
         namesakes=namesakes,
         review=review,
         near_duplicates=near,
+        initials_prefix=initials_prefix,
         decisions=decision_outcomes(session, decisions),
     )
+
+
+def _top_topics(session: Session, author_id: int) -> set[str]:
+    return set(
+        session.execute(
+            select(AuthorTopic.topic_name)
+            .where(AuthorTopic.author_id == author_id)
+            .order_by(AuthorTopic.score.desc())
+            .limit(5)
+        ).scalars()
+    )
+
+
+def _initials_prefix_pairs(
+    session: Session,
+    authors: Sequence[Author],
+    union: "_Union",
+    decided: set[frozenset[int]],
+    listed: set[frozenset[str]],
+    top_topics: dict[int, set[str]],
+) -> list[MergeGroup]:
+    """Третий список человеку (#113): «инициалы-префикс», один вуз, общие темы.
+
+    Рамка — фамилия (с транслитерацией и родом) и вуз; пара, решённая человеком,
+    уже склеенная другим сигналом или стоящая в другом списке, сюда не попадает.
+    Ничего не склеивает: только список.
+    """
+    by_surname: dict[tuple[str, int | None], list[Author]] = {}
+    for author in authors:
+        key = surname_key(author.display_name)
+        if key:
+            by_surname.setdefault((key, author.last_known_institution_id), []).append(author)
+    found: list[MergeGroup] = []
+    for members in by_surname.values():
+        for i, left in enumerate(members):
+            for right in members[i + 1 :]:
+                kind = initials_prefix_pair(left.display_name, right.display_name)
+                if kind is None or frozenset((left.id, right.id)) in decided:
+                    continue
+                if union.find(left.id) == union.find(right.id):
+                    continue  # склеены другим сигналом или решением человека
+                if frozenset((left.openalex_id, right.openalex_id)) in listed:
+                    continue
+                for author in (left, right):
+                    if author.id not in top_topics:
+                        top_topics[author.id] = _top_topics(session, author.id)
+                overlap = len(top_topics[left.id] & top_topics[right.id])
+                if overlap < INITIALS_PREFIX_TOPIC_OVERLAP:
+                    continue
+                found.append(
+                    _group(
+                        {left.id: left, right.id: right},
+                        [left.id, right.id],
+                        f"инициалы-префикс ({kind}), один вуз, общих тем {overlap}",
+                    )
+                )
+    found.sort(key=lambda g: g.canonical)
+    return found
 
 
 def _institution_name(author: Author) -> str:
@@ -1206,6 +1314,7 @@ def render_dedup_review(
     review: Sequence[MergeGroup] = (),
     near_duplicates: Sequence[MergeGroup] = (),
     decisions: Sequence[DecisionOutcome] = (),
+    initials_prefix: Sequence[MergeGroup] = (),
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
@@ -1228,6 +1337,7 @@ def render_dedup_review(
         f"Склеек: **{len(merges)}**; решено человеком: **{len(decisions)}**; "
         f"требуют решения человека: **{len(review)}**; "
         f"похоже, один человек, но сигнала не хватило: **{len(near_duplicates)}**; "
+        f"похоже, один человек — инициалы-префикс: **{len(initials_prefix)}**; "
         f"групп тёзок без сигнала: **{len(namesakes)}**; "
         f"профилей с флагом `suspect_merge`: **{n_suspects}**.",
         "",
@@ -1318,6 +1428,26 @@ def render_dedup_review(
         "|---|---|---|---|",
     ]
     for group in list(near_duplicates)[:n_examples]:
+        ids = ", ".join(f"`{i}`" for i in [group.canonical, *group.duplicates])
+        lines.append(
+            f"| {ids} | {'; '.join(dict.fromkeys(group.names))} | "
+            f"{'; '.join(dict.fromkeys(group.institutions))} | {group.signal} |"
+        )
+    lines += [
+        "",
+        f"## Похоже, один человек — инициалы-префикс — {_first(n_examples, len(initials_prefix))}",
+        "",
+        "Одна фамилия и вуз, инициалы одного — префикс инициалов другого "
+        "(«S. G. Belogurov» ↔ «S. Belogurov», «Nikita Mkrtchyan» ↔ «N. V. Mkrtchyan»), "
+        f"общих тем из топ-5 ≥ {INITIALS_PREFIX_TOPIC_OVERLAP}. Ключи имён разные, "
+        "поэтому правила склейки таких пар не видят; автоматически не склеиваем — "
+        "частые фамилии дают тёзок (A. Bogdanov ↔ A. A. Bogdanov). Вердикт — строкой "
+        "в `dedup_decisions.jsonl` (#113).",
+        "",
+        "| Авторы | Имена | Вуз | Что совпало |",
+        "|---|---|---|---|",
+    ]
+    for group in list(initials_prefix)[:n_examples]:
         ids = ", ".join(f"`{i}`" for i in [group.canonical, *group.duplicates])
         lines.append(
             f"| {ids} | {'; '.join(dict.fromkeys(group.names))} | "

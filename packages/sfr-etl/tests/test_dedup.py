@@ -14,6 +14,8 @@ from sfr_core.models import Author, AuthorTopic, Work
 from sfr_core.settings import Settings
 from sfr_etl.dedup import (
     DEFAULT_DECISIONS_PATH,
+    INITIALS_BOTH,
+    INITIALS_ONE_FULL,
     STATUS_ALREADY_MERGED,
     STATUS_BAN_ACTIVE,
     STATUS_FORBIDDEN_BUT_MERGED,
@@ -27,6 +29,7 @@ from sfr_etl.dedup import (
     detect_suspect_merges,
     find_splits,
     first_names_conflict,
+    initials_prefix_pair,
     is_abbreviation_pair,
     load_decisions_or_fail,
     load_dedup_decisions,
@@ -873,3 +876,88 @@ def test_review_file_puts_worst_suspects_first(engine: Engine) -> None:
     assert head.index("`A025`") < head.index("`A006`")
     assert "`A001`" not in head, "пять самых слабых в топ-20 не попадают"
     assert "`A001`" in text, "полный список всё равно печатается"
+
+
+# --- #113: «инициалы-префикс» — третий список человеку, без автосклейки ---
+
+
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        ("S. G. Belogurov", "S. Belogurov", INITIALS_BOTH),
+        ("I. Machulin", "I. N. Machulin", INITIALS_BOTH),
+        ("Е. Г. Попова", "E. Popova", INITIALS_BOTH),
+        ("V. Prosin", "В. В. Просин", INITIALS_BOTH),
+        ("Nikita Mkrtchyan", "N. V. Mkrtchyan", INITIALS_ONE_FULL),
+        ("Sergey Zelik", "Сергей Витальевич Зелик", INITIALS_ONE_FULL),
+        # Тёзки по форме тоже проходят функцию: отсекают их общие темы, а не имя.
+        ("A. Bogdanov", "A. A. Bogdanov", INITIALS_BOTH),
+    ],
+)
+def test_initials_prefix_pair_recognises_the_class(left: str, right: str, expected: str) -> None:
+    assert initials_prefix_pair(left, right) == expected
+
+
+@pytest.mark.parametrize(
+    ("left", "right"),
+    [
+        ("S. Belogurov", "S. Belogurov"),  # один ключ — это другое правило
+        ("A. B. Ivanov", "A. C. Ivanov"),  # инициалы не префикс
+        ("S. Belogurov", "S. G. Belousov"),  # разные фамилии
+        ("Nikita Mkrtchyan", "Nikolai V. Mkrtchyan"),  # развёрнутые имена спорят
+    ],
+)
+def test_initials_prefix_pair_rejects_others(left: str, right: str) -> None:
+    assert initials_prefix_pair(left, right) is None
+
+
+def test_initials_prefix_pairs_go_to_the_human_and_are_never_merged(engine: Engine) -> None:
+    """Machulin-подобная пара — в список; Bogdanov-подобная без общих тем и
+    решённая человеком — нет; склеек ни одной (#113)."""
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        authors = {
+            short: upsert_author(session, record(short, name, None, works), inst.id, SETTINGS)
+            for short, name, works in (
+                ("A1", "I. Machulin", 120),
+                ("A2", "I. N. Machulin", 15),
+                ("A3", "A. Bogdanov", 300),
+                ("A4", "A. A. Bogdanov", 20),
+                ("A5", "S. G. Belogurov", 16),
+                ("A6", "S. Belogurov", 338),
+            )
+        }
+        topics = {
+            "A1": ["Neutrino", "Reactors", "Detectors", "Physics"],
+            "A2": ["Neutrino", "Reactors", "Detectors", "Math"],
+            "A3": ["Biology", "Genetics"],
+            "A4": ["Economics", "Law"],
+            "A5": ["Neutrino", "Germanium", "Detectors"],
+            "A6": ["Neutrino", "Germanium", "Detectors"],
+        }
+        for short, names in topics.items():
+            author_id = authors[short].id
+            session.execute(delete(AuthorTopic).where(AuthorTopic.author_id == author_id))
+            for score, name in enumerate(reversed(names), start=1):
+                session.add(AuthorTopic(author_id=author_id, topic_name=name, score=float(score)))
+    belogurov_decided = DedupDecision(
+        ids=("A6", "A5"), verdict="same", by="Борис", date="2026-09-26", source="#112"
+    )
+    with session_scope(engine) as session:
+        findings = find_splits(session)
+        assert [sorted([g.canonical, *g.duplicates]) for g in findings.initials_prefix] == [
+            ["A1", "A2"],
+            ["A5", "A6"],
+        ]
+        assert "общих тем 3" in findings.initials_prefix[0].signal
+        assert findings.merges == []
+        # Решено человеком — пары в списке больше нет, склейка идёт по решению.
+        decided = find_splits(session, decisions=[belogurov_decided])
+        assert [sorted([g.canonical, *g.duplicates]) for g in decided.initials_prefix] == [
+            ["A1", "A2"]
+        ]
+        text = render_dedup_review(
+            [], [], [], n_suspects=0, initials_prefix=findings.initials_prefix
+        )
+        assert "## Похоже, один человек — инициалы-префикс — все 2" in text
+        assert "`A1`, `A2`" in text

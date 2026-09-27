@@ -375,6 +375,7 @@ def etl_dedup(
                 review=findings.review,
                 near_duplicates=findings.near_duplicates,
                 decisions=findings.decisions,
+                initials_prefix=findings.initials_prefix,
             ),
             encoding="utf-8",
         )
@@ -396,6 +397,7 @@ def etl_dedup(
         f"работ перенесено {merge_stats['works_moved']}, дублей работ снято "
         f"{merge_stats['works_dropped']}); требуют решения человека: {len(findings.review)}; "
         f"похоже, один человек: {len(findings.near_duplicates)}; "
+        f"инициалы-префикс: {len(findings.initials_prefix)}; "
         f"тёзок без сигнала: {len(namesakes)}; "
         f"подозрительных профилей: {suspect_stats['suspect']}"
         + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
