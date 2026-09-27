@@ -243,8 +243,11 @@ SFR5B_INDEX_ROOT := data/indexes_sfr5b
 SFR5B_RUNS := data/eval/runs_sfr5b
 SFR5B_OOD_RUNS := data/eval/runs_ood_sfr5b
 SFR5B_EXT_RUNS := data/eval/runs_external_sfr5b
-# Свой файл выборки: дефолтный dedup_for_review.md ждёт проверки Бориса (#5).
-SFR5B_DEDUP_REVIEW := packages/sfr-match/eval/dedup_for_review_sfr5b.md
+# Свой файл выборки, не дефолтный dedup_for_review.md SFR-5. Выборки — в
+# gitignored data/eval/review (#143): в git в eval/ лежит только то, что отчёт
+# цитирует как доказательство; версия SFR-5b, которую читали по #93, —
+# `git show faf626a:packages/sfr-match/eval/dedup_for_review_sfr5b.md`.
+SFR5B_DEDUP_REVIEW := data/eval/review/dedup_for_review_sfr5b.md
 
 catalog-sfr5b: unhide
 	SFR_DB_URL=$(SFR5B_DB_URL) uv run sfr etl backfill-mega
@@ -297,16 +300,23 @@ SFR5C_INDEX_ROOT := data/indexes_sfr5c
 SFR5C_RUNS := data/eval/runs_sfr5c
 SFR5C_OOD_RUNS := data/eval/runs_ood_sfr5c
 SFR5C_EXT_RUNS := data/eval/runs_external_sfr5c
-SFR5C_DEDUP_REVIEW := packages/sfr-match/eval/dedup_for_review_sfr5c.md
+# Выборка дедупликации пишется в data/eval/review (#143); в eval/ лежит
+# снимок выкладки 9 002 (§13.2 отчёта) — `catalog-sfr5c` его больше не трогает.
+SFR5C_DEDUP_REVIEW := data/eval/review/dedup_for_review_sfr5c.md
 # Решения человека о склейках (§4 SPEC_SFR5c): актив в git, как judgments.jsonl.
 # Абсолютный путь: цель может быть вызвана из подкаталога, а отсутствие файла
 # решений под --apply теперь ошибка, а не предупреждение (ревью SFR-5c).
 SFR5C_DEDUP_DECISIONS := $(CURDIR)/packages/sfr-match/eval/dedup_decisions.jsonl
 SFR5C_EVAL := packages/sfr-match/eval
-SFR5C_REVIEW := $(SFR5C_EVAL)/judgments_for_review_sfr5c.md
-# Части собранного файла — в data/eval: в git едет только результат склейки.
-SFR5C_DECISIVE := data/eval/judgments_decisive_sfr5c.md
-SFR5C_SAMPLE := data/eval/judgments_sample_sfr5c.md
+# Review-выборки пишутся в gitignored data/eval/review (#143). Выборки §7 и
+# §13.5, которые отчёт цитирует, лежат в eval/ снимками: цели их не
+# перезаписывают, а сверяют с пересчётом (`compare_frozen`).
+SFR5C_REVIEW_DIR := data/eval/review
+SFR5C_REVIEW := $(SFR5C_REVIEW_DIR)/judgments_for_review_sfr5c.md
+SFR5C_REVIEW_DEPLOY := $(SFR5C_REVIEW_DIR)/judgments_for_review_deploy.md
+# Части собранного файла — там же.
+SFR5C_DECISIVE := $(SFR5C_REVIEW_DIR)/judgments_decisive_sfr5c.md
+SFR5C_SAMPLE := $(SFR5C_REVIEW_DIR)/judgments_sample_sfr5c.md
 # Архив измерения «потолок 9 010» (до применения решений о склейках, #98): на
 # нём стоят §4, §6 и §7 отчёта.
 SFR5C_9010_RUNS := data/eval/runs_sfr5c_9010
@@ -424,12 +434,14 @@ pool-deploy-sfr5c: unhide
 		--depth 5 --blind --out data/eval/pool_deploy_sfr5c.jsonl
 
 # Двадцать пар слепого пересуда на проверку человеку — отдельным файлом, чтобы
-# не затереть выборку §7 (её читал Борис по #112).
+# не затереть выборку §7 (её читал Борис по #112). Пишет в data/eval/review и
+# сверяет со снимком §13.5 в eval/ (#143).
 review-deploy-sfr5c: unhide
 	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_RUNS) \
 		--index-root $(SFR5C_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
-		--out $(SFR5C_EVAL)/judgments_for_review_deploy.md
+		--out $(SFR5C_REVIEW_DEPLOY)
+	$(call compare_frozen,$(SFR5C_EVAL)/judgments_for_review_deploy.md,$(SFR5C_REVIEW_DEPLOY),$(SFR5C_REVIEW_DIR)/judgments_for_review_deploy.diff)
 
 # #122: тот же слепой пересуд топ-5 — на прежнем боевом индексе 5 538
 # (data/indexes_sfr5 и прогон runs_sfr5 замороженного блока SFR-5; на VPS
@@ -458,11 +470,12 @@ metrics-base-blind-sfr5c: unhide
 # склеивались руками и повторный прогон файл не воспроизводил (#114). Колонки
 # оценок — «было → v1 → v2»: оба пересуда рядом, расхождения помечены ⚠.
 # Цель **воспроизводит §7 по архиву измерения** (точка «потолок 9 010»,
-# `*_sfr5c_9010`), а не считает текущий каталог: её выход — трекаемый файл,
-# который Борис читал по #112, и на каталоге 9 002 он получил бы чужие данные
-# (ревью выкладки SFR-5c). Пул решающих пар из архива совпадает с тем, что
-# входил в пересуды v1/v2, — перезапись байт в байт. Выборка по выложенному
-# каталогу — `review-deploy-sfr5c`.
+# `*_sfr5c_9010`), а не считает текущий каталог: её выход сверяется с
+# трекаемым файлом, который Борис читал по #112, и на каталоге 9 002 он получил
+# бы чужие данные (ревью выкладки SFR-5c). Пул решающих пар из архива совпадает
+# с тем, что входил в пересуды v1/v2, — пересчёт байт в байт. Выборка по
+# выложенному каталогу — `review-deploy-sfr5c`. С #143 выход — в
+# data/eval/review, трекаемый файл §7 в eval/ — снимок, цель его не пишет.
 review-sfr5c: unhide
 	uv run sfr-match review-sample --n 20 --runs-dir $(SFR5C_9010_RUNS) \
 		--index-root $(SFR5C_9010_INDEX_ROOT) --iteration SFR-5c --out $(SFR5C_SAMPLE)
@@ -472,6 +485,7 @@ review-sfr5c: unhide
 		--rejudged v1=$(SFR5C_EVAL)/judgments_rejudge_sfr5c.jsonl \
 		--rejudged v2=$(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
 		--section-out $(SFR5C_DECISIVE) --sample $(SFR5C_SAMPLE) --out $(SFR5C_REVIEW)
+	$(call compare_frozen,$(SFR5C_EVAL)/judgments_for_review_sfr5c.md,$(SFR5C_REVIEW),$(SFR5C_REVIEW_DIR)/judgments_for_review_sfr5c.diff)
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.
