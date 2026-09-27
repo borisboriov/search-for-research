@@ -132,7 +132,7 @@ def to_int(text: str) -> int:
 
 
 def is_ignored(rel: str) -> bool:
-    """Путь в .gitignore — локальный файл (`settings.local.json`, `.env`): в CI его нет — не ошибка."""
+    """Путь из .gitignore — локальный файл (`settings.local.json`): в CI его нет, это не ошибка."""
     try:
         result = subprocess.run(
             ["git", "check-ignore", "-q", rel],
