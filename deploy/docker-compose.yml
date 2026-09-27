@@ -35,7 +35,15 @@ services:
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
     volumes:
       - ../data/indexes_sfr5c:/app/data/indexes_sfr5c:ro
-      - ../data/exports:/app/data/exports:ro
+      # Только карточки, не весь data/exports (#13): профили с полными
+      # текстами (~40–60 МБ) сервису не нужны. create_host_path: false — без
+      # файла контейнер не поднимется, а не получит пустой каталог на его месте.
+      - type: bind
+        source: ../data/exports/cards_sfr5c.jsonl
+        target: /app/data/exports/cards_sfr5c.jsonl
+        read_only: true
+        bind:
+          create_host_path: false
       - ${SFR_HF_CACHE:-hf-cache}:/models
     logging: &logging
       driver: json-file

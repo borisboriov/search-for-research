@@ -97,8 +97,15 @@ curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_cou
 | Что | Где |
 |---|---|
 | путь индекса | `apps/api/src/sfr_api/settings.py` (`index_root`), `deploy/docker-compose.yml` (`SFR_API_INDEX_ROOT` и volume), `apps/api/Dockerfile` (`ENV SFR_API_INDEX_ROOT`), `deploy/sync-artifacts.sh` |
-| путь `cards` | `settings.py` (`cards_path`), `docker-compose.yml` (`SFR_API_CARDS_PATH`), `sync-artifacts.sh` |
+| путь `cards` | `settings.py` (`cards_path`), `docker-compose.yml` (`SFR_API_CARDS_PATH` и bind-монтирование одного файла), `sync-artifacts.sh` |
 | пороги | **только** `settings.py`: `score_threshold`, `score_weak`, `score_high` (env `SFR_API_SCORE_THRESHOLD`, `SFR_API_SCORE_WEAK`, `SFR_API_SCORE_HIGH`). Compose их намеренно не передаёт, `deploy/.env` в контейнер api не попадает — других мест нет |
+
+**`cards` монтируется одним файлом** (#13): в контейнер api попадает только
+`cards_sfr5c.jsonl`, не весь `data/exports`. Следствие: `rsync` заменяет файл
+через переименование, а работающий контейнер держит старый — после
+`sync-artifacts.sh` нужен перезапуск api (`docker compose up -d --build`
+в процедуре обновления его и делает). Без файла на сервере контейнер не
+поднимется — это намеренно (`create_host_path: false`).
 
 **Чеклист выкладки нового индекса** (#99 и дальше):
 
