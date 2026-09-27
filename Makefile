@@ -87,6 +87,18 @@ define compare_frozen
 	fi
 endef
 
+# Снапшот review-выборки в eval/ (#143): доказательство, которое цель
+# пересчитывает в data/eval/review. Расхождение — ошибка цели: пересчёт в
+# gitignored data/ не виден в `git status`, поэтому его ловит код возврата.
+# Снапшот цель не обновляет никогда, в том числе при ALLOW_OVERWRITE=1 —
+# обновление доказательства — осознанное копирование с записью в отчёт.
+define compare_snapshot
+	@if [ "$(ALLOW_OVERWRITE)" = 1 ]; then \
+		echo "$(1): ALLOW_OVERWRITE=1 снапшот не обновляет — копировать $(2) руками, с записью в отчёт"; fi
+	@if diff -u $(1) $(2) > $(3); then echo "$(1): пересчёт совпадает со снапшотом в git"; \
+	else echo "$(1): пересчёт расходится со снапшотом в git — diff в $(3); снапшот не тронут" >&2; exit 1; fi
+endef
+
 eval-sfr1: index
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --no-clean
 	uv run sfr-match eval --models $(shell echo $(MATCH_MODELS) | tr ' ' ',') --clean
@@ -310,7 +322,7 @@ SFR5C_DEDUP_DECISIONS := $(CURDIR)/packages/sfr-match/eval/dedup_decisions.jsonl
 SFR5C_EVAL := packages/sfr-match/eval
 # Review-выборки пишутся в gitignored data/eval/review (#143). Выборки §7 и
 # §13.5, которые отчёт цитирует, лежат в eval/ снимками: цели их не
-# перезаписывают, а сверяют с пересчётом (`compare_frozen`).
+# перезаписывают, а сверяют с пересчётом (`compare_snapshot`: расхождение — ошибка цели).
 SFR5C_REVIEW_DIR := data/eval/review
 SFR5C_REVIEW := $(SFR5C_REVIEW_DIR)/judgments_for_review_sfr5c.md
 SFR5C_REVIEW_DEPLOY := $(SFR5C_REVIEW_DIR)/judgments_for_review_deploy.md
@@ -441,7 +453,7 @@ review-deploy-sfr5c: unhide
 		--index-root $(SFR5C_INDEX_ROOT) \
 		--judgments $(SFR5C_EVAL)/judgments_deploy_sfr5c.jsonl \
 		--out $(SFR5C_REVIEW_DEPLOY)
-	$(call compare_frozen,$(SFR5C_EVAL)/judgments_for_review_deploy.md,$(SFR5C_REVIEW_DEPLOY),$(SFR5C_REVIEW_DIR)/judgments_for_review_deploy.diff)
+	$(call compare_snapshot,$(SFR5C_EVAL)/judgments_for_review_deploy.md,$(SFR5C_REVIEW_DEPLOY),$(SFR5C_REVIEW_DIR)/judgments_for_review_deploy.diff)
 
 # #122: тот же слепой пересуд топ-5 — на прежнем боевом индексе 5 538
 # (data/indexes_sfr5 и прогон runs_sfr5 замороженного блока SFR-5; на VPS
@@ -485,7 +497,7 @@ review-sfr5c: unhide
 		--rejudged v1=$(SFR5C_EVAL)/judgments_rejudge_sfr5c.jsonl \
 		--rejudged v2=$(SFR5C_EVAL)/judgments_rejudge_sfr5c_v2.jsonl \
 		--section-out $(SFR5C_DECISIVE) --sample $(SFR5C_SAMPLE) --out $(SFR5C_REVIEW)
-	$(call compare_frozen,$(SFR5C_EVAL)/judgments_for_review_sfr5c.md,$(SFR5C_REVIEW),$(SFR5C_REVIEW_DIR)/judgments_for_review_sfr5c.diff)
+	$(call compare_snapshot,$(SFR5C_EVAL)/judgments_for_review_sfr5c.md,$(SFR5C_REVIEW),$(SFR5C_REVIEW_DIR)/judgments_for_review_sfr5c.diff)
 
 # ---------------------------------------------------------------------------
 # SFR-3: web front (apps/web, Next.js). npm is pinned by package-lock.json.

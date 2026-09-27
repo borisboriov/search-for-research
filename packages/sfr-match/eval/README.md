@@ -42,7 +42,8 @@
 (без `--out`). В `eval/` файл попадает только явным копированием — когда отчёт
 цитирует его как доказательство, и тогда это строка таблицы выше.
 Переехали из git 27.09 (#143; история — `git show 9b30c0c:packages/sfr-match/eval/<файл>`):
-`dedup_for_review.md` (SFR-5; переехал — #5 закрыт, решения в `dedup_decisions.jsonl` и #108),
+`dedup_for_review.md` (SFR-5; переехал — #5 закрыт, решения в `dedup_decisions.jsonl` и #108;
+локальная копия переехала под именем `dedup_for_review_sfr5.md` — прежнее имя занимает умолчание `sfr etl dedup`),
 `dedup_for_review_sfr5b.md` (переехал — решения #93 в `dedup_decisions.jsonl`),
 `judgments_for_review_sfr5.md` (переехал — человеком не проверялся, #4 перекрыт #94).
 

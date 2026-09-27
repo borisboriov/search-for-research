@@ -2220,12 +2220,14 @@ Drive, #95/#34). Расширение каталога новыми вузами
 выборка, которую проверил человек («расхождений нет», #94, #112), разбор агента
 под вердиктами (`dedup_evidence_sfr5c.md`), процедура OOD (`ood_verification.md`);
 (в) **снапшот** — доказательство, которое цель пересчитывает: копия в git, цель
-пишет в `data/eval/review/` и сверяет байт в байт (`compare_frozen`) — §7
+пишет в `data/eval/review/` и сверяет байт в байт (`compare_snapshot`: расхождение —
+ошибка цели, снапшот не обновляется и при `ALLOW_OVERWRITE=1`) — §7
 (`make review-sfr5c`) и §13.5 (`make review-deploy-sfr5c`) `SFR5c_REPORT.md`.
 **Уезжает** в gitignored `data/eval/review/` выход шага конвейера, чьи числа уже
 стоят таблицей в отчёте, а решения — строками `dedup_decisions.jsonl` с `source`,
 и выборка, которую человек не проверял; версия остаётся в истории git. Уехали
-три файла (194 КБ): `dedup_for_review.md` (SFR-5, #5 закрыт), `dedup_for_review_sfr5b.md`
+три файла (194 КБ): `dedup_for_review.md` (SFR-5, #5 закрыт; локальная копия — `dedup_for_review_sfr5.md`,
+прежнее имя занимает умолчание `sfr etl dedup`), `dedup_for_review_sfr5b.md`
 (#93) и `judgments_for_review_sfr5.md` (не проверялся) — `git show 9b30c0c:packages/sfr-match/eval/<файл>`.
 Цели `review-*`, `catalog-sfr5b`/`catalog-sfr5c` и умолчания CLI (`sfr etl dedup`,
 `sfr-match review-sample`) пишут в `data/eval/review/`: прежнее умолчание
