@@ -40,7 +40,7 @@ Valery/Vladislav, Корянов Vsevolod/Victor, Иноуэ Akihisa/Atsuo — �
 
 import json
 import re
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -638,6 +638,7 @@ def find_splits(
     abbrev_topic_overlap: int = ABBREV_TOPIC_OVERLAP,
     near_duplicate_topic_overlap: int = NEAR_DUPLICATE_TOPIC_OVERLAP,
     decisions: Sequence[DedupDecision] = (),
+    foreign_orcid: Callable[[Author], str | None] | None = None,
 ) -> DedupFindings:
     """Группы для склейки, тёзки без сигнала, пары на решение человека.
 
@@ -651,6 +652,12 @@ def find_splits(
     её из всех списков «на решение человека»: решение уже принято. Запрещённая
     пара перехватывается там, где сигнал находится, а не фильтруется потом —
     иначе Лукинские снова уехали бы в review как «общая работа при разных ORCID».
+
+    ``foreign_orcid`` (#118) — проверка «ORCID профиля записан на другое имя»
+    (`sfr_etl.orcid.foreign_orcid_note`, запись с `pub.orcid.org`). Пара с
+    блокером «разные ORCID», у которой один ORCID чужой, по-прежнему не
+    склеивается, но идёт человеку с пометкой: такой блокер ничего не доказывает.
+    Без проверки (по умолчанию) — прежнее поведение и ни одного запроса в сеть.
     """
     authors = _catalogue_authors(session)
     by_db_id = {a.id: a for a in authors}
@@ -779,6 +786,17 @@ def find_splits(
                     continue
                 blocker = _blocker(by_db_id[left], by_db_id[right])
                 if blocker is not None:
+                    if blocker == "разные ORCID" and foreign_orcid is not None:
+                        notes = [
+                            note
+                            for note in (
+                                foreign_orcid(by_db_id[left]),
+                                foreign_orcid(by_db_id[right]),
+                            )
+                            if note
+                        ]
+                        if notes:
+                            blocker = f"разные ORCID — {'; '.join(notes)}"
                     send_to_review(left, right, f"{signal}, но {blocker}")
                     continue
                 union.union(left, right)

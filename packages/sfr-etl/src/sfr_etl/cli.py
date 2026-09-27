@@ -36,6 +36,7 @@ from sfr_etl.dedup import (
 )
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
+from sfr_etl.orcid import OrcidClient, foreign_orcid_note
 from sfr_etl.profiles import build_profiles
 from sfr_etl.report import (
     cache_size_info,
@@ -310,6 +311,14 @@ def etl_dedup(
     decisions: Annotated[
         Path, typer.Option(help="Файл решений человека о склейках (§4 SPEC_SFR5c)")
     ] = DEFAULT_DECISIONS_PATH,
+    orcid_names: Annotated[
+        bool,
+        typer.Option(
+            "--orcid-names/--no-orcid-names",
+            help="Проверять имя в записи ORCID у пар «разные ORCID» (pub.orcid.org, "
+            "кэш в data/raw; #118). По умолчанию — выключено, сети нет",
+        ),
+    ] = False,
 ) -> None:
     """Склеить расщеплённые профили и отметить подозрительные (SPEC_SFR5 §3).
 
@@ -341,8 +350,13 @@ def etl_dedup(
     upgrade_to_head(settings.sfr_db_url)
     engine = make_engine(settings.sfr_db_url)
     started = time.monotonic()
+    orcid_client = OrcidClient(cache_dir=settings.raw_cache_dir) if orcid_names else None
     with session_scope(engine) as session:
-        findings = find_splits(session, decisions=human_decisions)
+        findings = find_splits(
+            session,
+            decisions=human_decisions,
+            foreign_orcid=foreign_orcid_note(orcid_client) if orcid_client else None,
+        )
         merges, namesakes = findings.merges, findings.namesakes
         merge_stats = {"groups": 0, "duplicates": 0, "works_moved": 0, "works_dropped": 0}
         aggregate_stats = {"canonical": 0, "changed": 0}
@@ -407,6 +421,11 @@ def etl_dedup(
         f"запрещено-но-склеено {len(violations)}) "
         f"→ {review_out}"
     )
+    if orcid_client is not None:
+        typer.echo(
+            f"ORCID: запросов к pub.orcid.org {orcid_client.n_requests}, "
+            f"из кэша {orcid_client.n_cache_hits}"
+        )
 
 
 @etl_app.command("unmerge")
