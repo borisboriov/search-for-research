@@ -1152,10 +1152,12 @@ def detect_suspect_merges(session: Session) -> dict[str, int]:
         stats["checked"] += 1
         suspect = False
         if len(works) >= SUSPECT_MIN_WORKS:
-            largest, second = suspect_clusters(works, mapping)
-            # >= , а не > : профиль, ровно пополам расщеплённый между двумя
-            # людьми (6 + 6 из 12), — самая подозрительная форма из возможных.
-            suspect = second >= SUSPECT_MIN_SHARE * len(works) and largest >= second
+            _, second = suspect_clusters(works, mapping)
+            # Вторая по размеру группа — ровно «второй человек»; `largest >=
+            # second` проверять не надо: размеры уже отсортированы по убыванию
+            # (#11). `>=` в доле, а не `>`: группа ровно в четверть работ уже
+            # подозрительна, а профиль пополам (6 + 6 из 12) — тем более.
+            suspect = second >= SUSPECT_MIN_SHARE * len(works)
         author.suspect_merge = suspect
         if suspect:
             stats["suspect"] += 1
