@@ -126,4 +126,6 @@ issues, в `SESSIONS.md`, в датированных записях `DECISIONS.
 переехали в gitignored `data/eval/review/` (#143): `dedup_for_review.md` (переехал как
 `dedup_for_review_sfr5.md` — прежнее имя занимает умолчание `sfr etl dedup`),
 `dedup_for_review_sfr5b.md`, `judgments_for_review_sfr5.md` (переехали); версия
-из git — `git show 9b30c0c:packages/sfr-match/eval/<файл>`.
+из git — `git show 9b30c0c:packages/sfr-match/eval/<файл>`. Четвёртый, `dedup_for_review_sfr5c.md`
+(снимок выкладки 9 002, который называет §13.2 `SFR5c_REPORT.md`), переехал 27.09 по #147 —
+`git show e89cb55:packages/sfr-match/eval/dedup_for_review_sfr5c.md`.

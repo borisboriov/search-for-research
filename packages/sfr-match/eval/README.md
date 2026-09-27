@@ -34,7 +34,6 @@
 | `judgments_for_review_sfr5b.md` | выборка SFR-5b с решающими парами, проверка Борисом 26.09 — #94, одна поправка (`docs/reports/SFR5b_REPORT.md` §4) | нет |
 | `judgments_for_review_sfr5c.md` | **снапшот** §7 `docs/reports/SFR5c_REPORT.md`, проверка #112 (13 из 13) | `make review-sfr5c` → `data/eval/review/`, сверка со снапшотом байт в байт |
 | `judgments_for_review_deploy.md` | **снапшот** 20 пар слепого пересуда, §13.5 `docs/reports/SFR5c_REPORT.md` | `make review-deploy-sfr5c` → `data/eval/review/`, сверка со снапшотом байт в байт |
-| `dedup_for_review_sfr5c.md` | снимок выкладки 9 002 (§13.2, коммит `e89cb55`); версию, которую Борис читал по #112 (§2, §7, каталог 9 010), даёт `git show f5a903d:packages/sfr-match/eval/dedup_for_review_sfr5c.md`; оставить или перенести — #147 | `make catalog-sfr5c` пишет в `data/eval/review/`, снимок не трогает |
 
 **Review-выборки — в `data/eval/review/`.** Туда пишут `make review-sfr5c`,
 `make review-deploy-sfr5c`, `catalog-sfr5b`/`catalog-sfr5c`, а также CLI по
@@ -45,7 +44,8 @@
 `dedup_for_review.md` (SFR-5; переехал — #5 закрыт, решения в `dedup_decisions.jsonl` и #108;
 локальная копия переехала под именем `dedup_for_review_sfr5.md` — прежнее имя занимает умолчание `sfr etl dedup`),
 `dedup_for_review_sfr5b.md` (переехал — решения #93 в `dedup_decisions.jsonl`),
-`judgments_for_review_sfr5.md` (переехал — человеком не проверялся, #4 перекрыт #94).
+`judgments_for_review_sfr5.md` (переехал — человеком не проверялся, #4 перекрыт #94);
+`dedup_for_review_sfr5c.md` (переехал 27.09 по #147 — снимок выкладки 9 002, который называет §13.2 `SFR5c_REPORT.md`: `git show e89cb55:packages/sfr-match/eval/dedup_for_review_sfr5c.md`; версия, которую Борис читал по #112, — `git show f5a903d:…`; локальная копия — `data/eval/review/dedup_for_review_sfr5c_snapshot_9002.md`, `make catalog-sfr5c` пишет свежую выборку рядом).
 
 Запуск по конкретному набору:
 
