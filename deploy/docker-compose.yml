@@ -80,6 +80,10 @@ services:
       - "443:443"
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:?задай в deploy/.env — домен или http://localhost:8080}
+      # 301 второго имени на канонический адрес (#21); пусто — блок редиректа
+      # слушает неопубликованный localhost:8081 и ни на что не влияет.
+      REDIRECT_FROM: ${REDIRECT_FROM:-http://localhost:8081}
+      REDIRECT_TO: ${REDIRECT_TO:-http://localhost:8080}
     volumes:
       - caddy-data:/data
       - caddy-config:/config
