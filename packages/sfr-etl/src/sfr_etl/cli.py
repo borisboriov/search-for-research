@@ -7,7 +7,7 @@ from typing import Annotated
 
 import structlog
 import typer
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from sfr_core.db import make_engine, session_scope, upgrade_to_head
 from sfr_core.models import Author, Institution
@@ -34,6 +34,7 @@ from sfr_etl.dedup import (
     mix_candidates,
     recompute_merged_aggregates,
     render_dedup_review,
+    suspect_examples,
     unmerge_author,
 )
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
@@ -368,11 +369,21 @@ def etl_dedup(
             # склеенных, а агрегаты нужно восстанавливать и после повторного
             # ингеста авторов, который их перезаписывает.
             aggregate_stats = recompute_merged_aggregates(session)
-            detect_suspect_merges(session)
-        # Признаки смеси (#119) считаются и в --dry-run — только чтением
-        # (mix_candidates ничего не пишет); флаг suspect_merge в БД пишет лишь
-        # detect_suspect_merges выше, под --apply.
-        suspects, suspect_stats = mix_candidates(session)
+            suspect_stats = detect_suspect_merges(session)
+            suspects = suspect_examples(session, limit=max(examples, 20))
+        else:
+            # Флаги suspect_merge не пересчитываются без --apply, но уже лежат в БД
+            # с прошлого прогона — показываем их, а не «0 из 0».
+            suspect_stats = {
+                "checked": 0,
+                "suspect": session.execute(
+                    select(func.count()).select_from(Author).where(Author.suspect_merge.is_(True))
+                ).scalar_one(),
+            }
+            suspects = suspect_examples(session, limit=max(examples, 20))
+        # Признаки смеси (#119) — только чтением и только в review-файл: флаг
+        # suspect_merge они не ставят ни в --dry-run, ни с --apply.
+        mix, mix_stats = mix_candidates(session)
         # #123: оценки на склеенных id устаревают — список в review-файл.
         stale_judgments = judged_pairs_in_merges(merges)
         review_out.parent.mkdir(parents=True, exist_ok=True)
@@ -388,6 +399,8 @@ def etl_dedup(
                 decisions=findings.decisions,
                 initials_prefix=findings.initials_prefix,
                 stale_judgments=stale_judgments,
+                mix=mix,
+                n_mix=mix_stats["suspect"],
             ),
             encoding="utf-8",
         )
@@ -412,9 +425,10 @@ def etl_dedup(
         f"инициалы-префикс: {len(findings.initials_prefix)}; "
         f"оценок на склеенных id: {len(stale_judgments)}; "
         f"тёзок без сигнала: {len(namesakes)}; "
-        f"подозрительных профилей: {suspect_stats['suspect']} из {suspect_stats['checked']} ("
-        + ", ".join(f"{name} {suspect_stats[name]}" for name in MIX_SIGNALS)
-        + ("" if apply else "; dry-run — в БД не записано")
+        f"подозрительных профилей: {suspect_stats['suspect']}"
+        + (f" из {suspect_stats['checked']}" if apply else " (флаги прошлого --apply)")
+        + f"; признаки смеси, только review: {mix_stats['suspect']} из {mix_stats['checked']} ("
+        + ", ".join(f"{name} {mix_stats[name]}" for name in MIX_SIGNALS)
         + "); "
         f"агрегатов пересчитано: {aggregate_stats['changed']} из {aggregate_stats['canonical']}; "
         f"решений человека: {len(findings.decisions)} (не в каталоге {ignored}, "

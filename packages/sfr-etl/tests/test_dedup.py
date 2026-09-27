@@ -871,7 +871,7 @@ def test_review_file_puts_worst_suspects_first(engine: Engine) -> None:
         for i in range(1, 26)
     ]
     text = render_dedup_review([], [], suspects, n_suspects=len(suspects), n_examples=10000)
-    assert "### Топ-20 по числу признаков" in text
+    assert "### Топ-20 по размеру меньшей тематической группы" in text
     head = text.split("### Полный список")[0]
     # Первым в топе — профиль с самой большой меньшей группой (25), а не A001.
     assert head.index("`A025`") < head.index("`A006`")

@@ -96,3 +96,14 @@ def test_stamp_keeps_everything_else_and_old_meta_still_loads(tmp_path: Path) ->
     assert after.version == before.version
     assert after.built_at == before.built_at
     assert load_meta(tmp_path).data_updated_at == "2026-09-04"
+
+
+def test_unknown_meta_key_is_skipped_not_fatal(tmp_path: Path) -> None:
+    """Поле из будущей версии не роняет api при откате кода (ревью ветки, Medium)."""
+    (tmp_path / META_FILE).write_text(
+        json.dumps(_meta(data_updated_at="2026-09-04", field_from_the_future=1)),
+        encoding="utf-8",
+    )
+    meta = load_meta(tmp_path)
+    assert meta.data_updated_at == "2026-09-04"
+    assert not hasattr(meta, "field_from_the_future")

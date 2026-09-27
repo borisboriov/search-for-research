@@ -1432,17 +1432,24 @@ def mix_candidates(session: Session) -> tuple[list[dict[str, Any]], dict[str, in
 def detect_suspect_merges(session: Session) -> dict[str, int]:
     """Отметить профили, похожие на чужую склейку OpenAlex. Флаг, не расклейка.
 
-    Пишет `suspect_merge` — поэтому вызывается только с `--apply`; `--dry-run`
-    считает те же признаки через `mix_candidates`, ничего не записывая.
+    Правило флага — прежнее, «две группы тем»: #119 заказывал замер, а не смену
+    детектора («правило и топ-20 `suspect_merge` не трогать»). Остальные
+    признаки смеси считает `mix_candidates` — только для review-файла; делать
+    ли их флагом, решает человек. Пишет в БД — вызывается только с `--apply`.
     """
-    subfields = topic_subfields(session)
-    domains = field_domains(session)
+    mapping = topic_subfields(session)
     stats = {"checked": 0, "suspect": 0}
     for author in _catalogue_with_works(session):
+        works = list(author.works)
         stats["checked"] += 1
-        suspect = bool(
-            mix_signals(author, list(author.works), subfields=subfields, domains=domains)
-        )
+        suspect = False
+        if len(works) >= SUSPECT_MIN_WORKS:
+            _, second = suspect_clusters(works, mapping)
+            # Вторая по размеру группа — ровно «второй человек»; `largest >=
+            # second` проверять не надо: размеры уже отсортированы по убыванию
+            # (#11). `>=` в доле, а не `>`: группа ровно в четверть работ уже
+            # подозрительна, а профиль пополам (6 + 6 из 12) — тем более.
+            suspect = second >= SUSPECT_MIN_SHARE * len(works)
         author.suspect_merge = suspect
         if suspect:
             stats["suspect"] += 1
@@ -1535,6 +1542,8 @@ def render_dedup_review(
     decisions: Sequence[DecisionOutcome] = (),
     initials_prefix: Sequence[MergeGroup] = (),
     stale_judgments: Sequence[dict[str, Any]] = (),
+    mix: Sequence[dict[str, Any]] = (),
+    n_mix: int | None = None,
 ) -> str:
     """`eval/dedup_for_review.md` — что склеено и что осталось человеку.
 
@@ -1712,40 +1721,31 @@ def render_dedup_review(
         "",
         f"## Подозрение на чужую склейку — {_first(n_examples, n_suspects)}",
         "",
-        "Признаки того, что в профиле OpenAlex два человека (#119): работы "
-        "распадаются на две тематические группы без общей подобласти; сотня и больше "
-        "организаций; вуз каталога — случайная аффилиация; темы или работы в двух "
-        "доменах. Расклейка не делается: делить работы между людьми, которых мы не "
-        "знаем, нечем. Флаг — подсказка для ручной проверки, не приговор: каждый "
-        "признак срабатывает и на честных междисциплинарных профилях, поэтому "
-        "смотреть сначала тех, у кого признаков несколько. На фронте не показывается.",
+        "Работы профиля распадаются на две тематические группы без общей "
+        "подобласти. Расклейка не делается: делить работы между людьми, которых "
+        "мы не знаем, нечем. На фронте флаг пока не показывается.",
         "",
     ]
 
-    def table(rows: Sequence[dict[str, Any]]) -> list[str]:
-        out = [
-            "| Автор | Имя | Вуз | Работ | Группы | Признаки | Темы |",
-            "|---|---|---|---|---|---|---|",
-        ]
+    def table(rows: Sequence[dict[str, Any]], *, reasons: bool = False) -> list[str]:
+        head = "| Автор | Имя | Вуз | Работ | Группы |" + (" Признаки |" if reasons else "")
+        out = [head + " Темы |", "|---" * (7 if reasons else 6) + "|"]
         for item in rows:
+            why = f" {'; '.join(item['reasons'])} |" if reasons else ""
             out.append(
                 f"| `{item['author_id']}` | {item['name']} | {item['institution']} | "
-                f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} | "
-                f"{'; '.join(item.get('reasons') or ['две группы тем'])} | "
-                f"{'; '.join(item['topics'][:4])} |"
+                f"{item['n_works']} | {item['cluster_sizes'][0]}+{item['cluster_sizes'][1]} |"
+                f"{why} {'; '.join(item['topics'][:4])} |"
             )
         return out
 
-    # Сначала топ: больше независимых признаков — больше похоже на двух людей;
-    # при равенстве — размер *меньшей* тематической группы. Полный список ниже
-    # отсортирован по id и читается как справочник, а не как приоритет.
-    top = sorted(
-        suspects,
-        key=lambda s: (-len(s.get("reasons") or []), -s["cluster_sizes"][1], s["author_id"]),
-    )[:SUSPECT_TOP]
+    # Сначала топ по размеру *меньшей* группы: чем она больше, тем меньше похоже
+    # на шум и больше — на двух настоящих людей в одном профиле. Полный список
+    # ниже отсортирован по id и читается как справочник, а не как приоритет.
+    top = sorted(suspects, key=lambda s: (-s["cluster_sizes"][1], s["author_id"]))[:SUSPECT_TOP]
     if len(suspects) > len(top):
         lines += [
-            f"### Топ-{len(top)} по числу признаков — смотреть эти",
+            f"### Топ-{len(top)} по размеру меньшей тематической группы — смотреть эти",
             "",
             *table(top),
             "",
@@ -1753,4 +1753,22 @@ def render_dedup_review(
             "",
         ]
     lines += table(list(suspects)[:n_examples])
+    if mix:
+        # #119: признаки смеси — только здесь; флаг `suspect_merge` они не ставят.
+        # `mix` уже отсортирован по числу признаков (`mix_candidates`).
+        n_mix = len(mix) if n_mix is None else n_mix
+        lines += [
+            "",
+            f"## Признаки смеси двух людей (#119) — топ-{min(SUSPECT_TOP, len(mix))} "
+            f"из {n_mix}, только для просмотра",
+            "",
+            "Пять признаков: две группы тем (правило флага выше); сотня и больше "
+            "организаций; вуз каталога — случайная аффилиация; темы или работы в двух "
+            "доменах. **Флаг `suspect_merge` они не ставят** — делать ли их флагом, "
+            "решает человек. Каждый признак срабатывает и на честных "
+            "междисциплинарных профилях, поэтому смотреть сначала тех, у кого "
+            "признаков несколько.",
+            "",
+            *table(list(mix)[:SUSPECT_TOP], reasons=True),
+        ]
     return "\n".join(lines) + "\n"

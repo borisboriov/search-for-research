@@ -141,6 +141,7 @@ def test_borderline_interval_moves_every_disputed_pair_down_then_up(dm) -> None:
     alternatives = {("q01", "A1"): 2, ("q02", "A2"): 1, ("q05", "A5"): 2}
     interval = dm.borderline_interval(run, queries, judgments, alternatives)
     assert interval["borderline_pairs"] == 3
+    assert interval["golden_in_domain_24"]["borderline_pairs"] == 2, "q05 не в наборе"
     s1 = interval["golden_in_domain_24"]["success_at_1"]
     s5 = interval["golden_in_domain_24"]["success_at_5"]
     assert (s1["low"], s1["point"], s1["high"]) == (0.0, 0.0, 0.5), "вверх: q01/A1 → 2"

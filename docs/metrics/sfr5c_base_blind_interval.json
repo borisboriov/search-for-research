@@ -3,6 +3,7 @@
   "borderline": "packages/sfr-match/eval/judgments_borderline_base5538.md",
   "borderline_pairs": 50,
   "golden_in_domain_24": {
+    "borderline_pairs": 43,
     "success_at_1": {
       "low": 0.458,
       "point": 0.625,
@@ -15,6 +16,7 @@
     }
   },
   "golden_same_22": {
+    "borderline_pairs": 40,
     "success_at_1": {
       "low": 0.5,
       "point": 0.682,
@@ -27,6 +29,7 @@
     }
   },
   "golden_edge": {
+    "borderline_pairs": 7,
     "success_at_1": {
       "low": 0.5,
       "point": 0.5,

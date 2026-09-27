@@ -143,9 +143,15 @@ def borderline_interval(
     out: dict[str, Any] = {"borderline_pairs": len(alternatives)}
     for name, subset in sets_of(queries).items():
         point, lo, hi = (summarize(run, subset, j) for j in (judgments, low, high))
+        ids = {q.id for q in subset}
         out[name] = {
-            metric: {"low": lo[metric], "point": point[metric], "high": hi[metric]}
-            for metric in ("success_at_1", "success_at_5")
+            # Спорных пар в самом наборе: в защите — «37 из 120 пар этих 24
+            # запросов», а не общее число по всем 150 парам пула.
+            "borderline_pairs": sum(1 for query_id, _ in alternatives if query_id in ids),
+            **{
+                metric: {"low": lo[metric], "point": point[metric], "high": hi[metric]}
+                for metric in ("success_at_1", "success_at_5")
+            },
         }
     return out
 
@@ -238,7 +244,7 @@ def main() -> None:
             print(
                 f"интервал {name:22s} S@1 {s1['low']:.3f}–{s1['high']:.3f} "
                 f"(точка {s1['point']:.3f}) · S@5 {s5['low']:.3f}–{s5['high']:.3f} "
-                f"(точка {s5['point']:.3f})"
+                f"(точка {s5['point']:.3f}) · спорных пар {row['borderline_pairs']}"
             )
     for name, both in payload["sets"].items():
         for markup in ("blind", "accumulated"):

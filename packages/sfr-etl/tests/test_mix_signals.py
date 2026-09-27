@@ -13,8 +13,10 @@ from sfr_etl.dedup import (
     MIX_MARGINAL,
     MIX_TOPIC_DOMAINS,
     MIX_WORK_DOMAINS,
+    detect_suspect_merges,
     mix_candidates,
     mix_signals,
+    render_dedup_review,
 )
 from sfr_etl.ingest import upsert_author, upsert_institution
 
@@ -114,3 +116,25 @@ def test_mix_candidates_only_reads(engine: Engine) -> None:  # noqa: F811
         assert not session.dirty and not session.new
         stored = session.execute(select(Author.suspect_merge)).scalar_one()
         assert stored is False
+
+
+def test_new_signals_do_not_set_the_flag(engine: Engine) -> None:  # noqa: F811
+    """#119 — замер, а не смена детектора: флаг ставит только «две группы тем»."""
+    with session_scope(engine) as session:
+        inst = upsert_institution(session, INSTITUTION_RECORD)
+        author = upsert_author(session, record("A1", "Jianmin Wu", None, 1445), inst.id, SETTINGS)
+        author.raw = {
+            **(author.raw or {}),
+            "affiliations": [{"institution": {"id": f"I{i}"}} for i in range(526)],
+        }
+    with session_scope(engine) as session:
+        found, _ = mix_candidates(session)
+        assert [item["author_id"] for item in found] == ["A1"], "признак есть"
+        stats = detect_suspect_merges(session)
+        assert stats["suspect"] == 0
+        text = render_dedup_review([], [], [], n_suspects=0, mix=found)
+    with session_scope(engine) as session:
+        assert session.execute(select(Author.suspect_merge)).scalar_one() is False
+    assert "## Признаки смеси двух людей (#119) — топ-1 из 1, только для просмотра" in text
+    assert "**Флаг `suspect_merge` они не ставят**" in text
+    assert "организаций" in text.split("## Признаки смеси")[1]

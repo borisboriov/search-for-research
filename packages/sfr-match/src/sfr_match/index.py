@@ -6,7 +6,7 @@
 import hashlib
 import json
 import time
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -157,7 +157,12 @@ def load_meta(index_dir: Path) -> IndexMeta:
     path = index_dir / META_FILE
     if not path.exists():
         raise FileNotFoundError(f"{index_dir} has no index — run `sfr-match index` first")
-    return IndexMeta(**json.loads(path.read_text(encoding="utf-8")))
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    # Незнакомые ключи пропускаются: `meta.json` приезжает на сервер отдельно
+    # от кода (sync-artifacts.sh), и поле, дописанное новой версией, не должно
+    # ронять api старой — при откате или между rsync и пересборкой образа.
+    known = {f.name for f in fields(IndexMeta)}
+    return IndexMeta(**{key: value for key, value in raw.items() if key in known})
 
 
 def stamp_data_updated_at(index_dir: Path, value: str) -> IndexMeta:
