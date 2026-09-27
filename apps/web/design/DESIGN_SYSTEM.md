@@ -50,7 +50,7 @@ WCAG AA 4,5 и было единственным замечанием Lighthouse
 | Подписи, лейблы, ярлыки-пилюли | IBM Plex Sans 500 | 12–13px, uppercase, letter-spacing 0.08em |
 | Словесная часть лого | Literata 500 | 21–22px в шапке, letter-spacing −0.015em |
 
-Обе семьи — Google Fonts с кириллицей (`Literata`, `IBM_Plex_Sans` в `next/font/google`, subsets `latin` + `cyrillic`; Literata 500/600, Plex 400/500/600). Fallback: Georgia / system-ui. Внешних запросов при рендере нет (self-hosting через next/font).
+Обе семьи — из Google Fonts (SIL OFL), **лежат в репозитории**: `app/fonts/Literata.woff2` и `app/fonts/IBMPlexSans.woff2`, лицензии рядом, подключение — `next/font/local` в `app/layout.tsx`. Файлы вариативные по весу, символы — латиница, кириллица, греческий, вьетнамский с расширениями; собраны скриптом `scripts/build_fonts.py` и сверены с тем, что раздавал Google Fonts, глиф в глиф. Используются Literata 500/600, Plex 400/500/600. Fallback: Georgia / system-ui. Внешних запросов нет ни при рендере, ни при сборке (с 27.09, #125: раньше `next/font/google` качал шрифты на каждой сборке образа).
 
 ### Форма и пространство
 
