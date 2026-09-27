@@ -30,6 +30,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 import urllib.request
 from pathlib import Path
@@ -130,6 +131,21 @@ def to_int(text: str) -> int:
     return int(text.replace(" ", "").replace(" ", ""))
 
 
+def is_ignored(rel: str) -> bool:
+    """Путь в .gitignore — локальный файл (`settings.local.json`, `.env`): в CI его нет — не ошибка."""
+    try:
+        result = subprocess.run(
+            ["git", "check-ignore", "-q", rel],
+            cwd=ROOT,
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0
+
+
 def repo_basenames() -> set[str]:
     """Имена файлов репозитория — для путей, названных без каталога (`meta.json`, `brief.md`)."""
     names: set[str] = set()
@@ -180,7 +196,7 @@ def check_paths(findings: list[str]) -> None:
                     continue  # имя будущей итерации
                 if token.startswith(REPO_DIRS):
                     target = token.split("#", 1)[0].rstrip("/")
-                    if not (ROOT / target).exists():
+                    if not (ROOT / target).exists() and not is_ignored(target):
                         findings.append(f"{rel}:{lineno}: путь `{token}` не существует")
                 elif ROOT_FILES.match(token) and token not in basenames:
                     findings.append(f"{rel}:{lineno}: файла `{token}` нет нигде в репозитории")
