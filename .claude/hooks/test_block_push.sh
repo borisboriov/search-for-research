@@ -8,6 +8,15 @@ set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 hook="$here/block-push.sh"
 
+# Формы без явной ветки (`git push`, `git -C . push`) смотрят на ветку текущего
+# каталога, а списки ниже рассчитаны на main: гоняем их из временного репозитория
+# на main — из ветки сессии такой push разрешён, и тесты падали (28.09).
+main_repo=$(mktemp -d)
+trap 'rm -rf "$main_repo"' EXIT
+git -C "$main_repo" init -q -b main
+git -C "$main_repo" -c user.name=t -c user.email=t@t commit -q --allow-empty -m init
+cd "$main_repo" || exit 1
+
 blocked=(
     "git push"
     "git -C . push origin main"
@@ -53,6 +62,16 @@ blocked=(
     "gh pr merge --auto --squash 12"
     "gh api repos/o/r/pulls/1/merge -X PUT"
     "gh api -X PATCH repos/o/r/pulls/1 -f state=closed"
+    "make deploy"
+    "make -C . deploy"
+    "cd apps/web && make -C ../.. deploy"
+    "make web-lint deploy"
+    "uv run make deploy"
+    "timeout 900 make deploy"
+    "sh -c 'make deploy'"
+    "bash deploy/update.sh"
+    "./deploy/update.sh"
+    ". deploy/update.sh"
 )
 
 allowed=(
@@ -82,6 +101,12 @@ allowed=(
     "git -C . push origin sfr-7"
     "git -c alias.p=push p origin sfr-7"
     "git commit -m x && git push origin sfr-7 && gh pr create --fill"
+    "make deploy-local"
+    "make deploy-local-down"
+    "make -C deploy web-dev"
+    "cat deploy/update.sh"
+    "bash -n deploy/update.sh"
+    "echo \"make deploy\""
 )
 
 # Формы без явной ветки зависят от текущей ветки репозитория: проверяем во
@@ -198,6 +223,11 @@ msg=$(payload "git -c x=y push origin main" | bash "$hook" 2>&1 >/dev/null)
 case $msg in
     *"push в main и merge — только Борис"*"push своей ветки"*) ;;
     *) echo "FAIL текст отказа: $msg"; failures=$((failures + 1)) ;;
+esac
+msg=$(payload "make deploy" | bash "$hook" 2>&1 >/dev/null)
+case $msg in
+    *"выкладка на VPS — только Борис"*"make deploy"*) ;;
+    *) echo "FAIL текст отказа выкладки: $msg"; failures=$((failures + 1)) ;;
 esac
 
 if [ "$failures" -ne 0 ]; then

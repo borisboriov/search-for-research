@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# PreToolUse-хук для Bash: push в main, force/delete и merge — только Борис
-# (CLAUDE.md, DECISIONS 27.09, #129); push своей ветки сессии разрешён (27.09, #140).
+# PreToolUse-хук для Bash: push в main, force/delete, merge и выкладка — только Борис
+# (CLAUDE.md, DECISIONS 27.09 и 28.09, #129); push своей ветки сессии разрешён (27.09, #140).
 #
 # Запрет `Bash(git push *)` в settings.json — префиксное правило: `git -C . push`,
 # `git -c k=v push`, `cd x && git push` его обходят. Этот хук — граница: он
@@ -18,7 +18,11 @@
 #     `git push -u origin HEAD` не из `main`;
 #   * `gh pr merge`;
 #   * `gh api`, меняющий PR: эндпоинт `…/pulls/N/merge`, методы PUT/PATCH/DELETE
-#     на `…/pulls…`, GraphQL-мутации слияния.
+#     на `…/pulls…`, GraphQL-мутации слияния;
+#   * выкладку на VPS (с 28.09): `make deploy` (и `make -C … deploy`, через обёртки
+#     и `sh -c`) и запуск `deploy/update.sh` (`bash …`, `./…`, `source …`) — её
+#     запускает Борис из своего терминала. `make deploy-local` (репетиция на
+#     localhost) и `bash -n deploy/update.sh` (проверка синтаксиса) проходят.
 # Строки в кавычках — это строки: `echo "git push"` проходит; тело heredoc с
 # кавычками у разделителя (`<<'EOF'`) — литерал, тело без кавычек проверяется
 # только на подстановки `$(…)` / `` `…` ``, которые bash в нём выполнит.
@@ -82,6 +86,16 @@ PUSH_FORBIDDEN_OPTS = {
 }
 # Опции push, у которых значение — отдельным словом (если не через `=`).
 PUSH_OPTS_WITH_VALUE = {"-o", "--push-option", "--repo", "--receive-pack", "--exec"}
+# Выкладка на VPS (с 28.09): цель Makefile и скрипт, который она запускает.
+DEPLOY_PREFIX = "выкладка на VPS — только Борис (CLAUDE.md, DECISIONS 28.09)"
+DEPLOY_TARGET = "deploy"
+DEPLOY_SCRIPT = "deploy/update.sh"
+MAKES = {"make", "gmake"}
+# Опции make со значением отдельным словом: `make -C deploy web-dev` — не выкладка.
+MAKE_OPTS_WITH_VALUE = {
+    "-C", "-f", "-I", "-o", "-W", "--directory", "--file", "--makefile",
+    "--include-dir", "--old-file", "--assume-old", "--new-file", "--assume-new", "--what-if",
+}
 
 
 def tokenize(command: str) -> list[str]:
@@ -326,6 +340,23 @@ def check_gh(argv: list[str]) -> str | None:
     return None
 
 
+def is_deploy_script(word: str) -> bool:
+    return word == DEPLOY_SCRIPT or word.endswith("/" + DEPLOY_SCRIPT)
+
+
+def check_make(argv: list[str]) -> str | None:
+    """`make deploy` — выкладка; `make deploy-local` и прочие цели проходят."""
+    j = 1
+    while j < len(argv):
+        if argv[j] in MAKE_OPTS_WITH_VALUE:
+            j += 2
+            continue
+        if argv[j] == DEPLOY_TARGET:
+            return "make deploy"
+        j += 1
+    return None
+
+
 def check_argv(argv: list[str], cwd: str | None, depth: int) -> str | None:
     argv = strip_prefix(argv)
     if not argv:
@@ -335,17 +366,33 @@ def check_argv(argv: list[str], cwd: str | None, depth: int) -> str | None:
         return check_git(argv, cwd, depth)
     if name == "gh":
         return check_gh(argv)
+    if name in MAKES:
+        return check_make(argv)
+    if is_deploy_script(argv[0]):
+        return argv[0]
     if name in SHELLS:
         for k, arg in enumerate(argv[1:], start=1):
             if arg.startswith("-") and "c" in arg[1:] and not arg.startswith("--"):
                 if k + 1 < len(argv):
                     return check_command(argv[k + 1], cwd, depth + 1)
+        # `bash deploy/update.sh`; `bash -n …` — только проверка синтаксиса.
+        if "-n" not in argv[1:]:
+            for arg in argv[1:]:
+                if is_deploy_script(arg):
+                    return f"{name} {arg}"
         return None
+    if name in ("source", "."):
+        return f"{name} {argv[1]}" if len(argv) > 1 and is_deploy_script(argv[1]) else None
     if name == "eval":
         return check_command(" ".join(argv[1:]), cwd, depth + 1)
     if name in WRAPPERS:
         for k in range(1, len(argv)):
-            if os.path.basename(argv[k]) in ("git", "gh") or argv[k] in SHELLS:
+            word = argv[k]
+            if (
+                os.path.basename(word) in ("git", "gh", *MAKES)
+                or word in SHELLS
+                or is_deploy_script(word)
+            ):
                 return check_argv(argv[k:], cwd, depth)
     return None
 
@@ -385,6 +432,15 @@ def main() -> int:
             print(f"{PREFIX}: не удалось разобрать команду ({exc}), в ней есть push/merge", file=sys.stderr)
             return 2
         return 0
+    if found and (found == "make deploy" or DEPLOY_SCRIPT in found):
+        print(
+            f"{DEPLOY_PREFIX}: отклонено «{found}». Выкладку запускает Борис из своего "
+            "терминала: `make deploy` покажет, что уедет, и спросит подтверждение. Агент "
+            "пушит свою ветку, открывает PR (`gh pr create`) и говорит Борису, что PR "
+            "готов к merge и выкладке.",
+            file=sys.stderr,
+        )
+        return 2
     if found:
         print(
             f"{PREFIX}: отклонено «{found}». Разрешён только push своей ветки — "
