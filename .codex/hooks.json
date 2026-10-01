@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/boris/Projects/search-for-research/.codex/hooks/block-push.sh'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/boris/Projects/search-for-research/.codex/hooks/review-reminder.sh'",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

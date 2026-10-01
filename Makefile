@@ -561,7 +561,7 @@ audit: unhide
 # ---------------------------------------------------------------------------
 # Доска «SFR — задачи»: поля Status / Priority / Iteration — производные от
 # лейблов issues. Правила маппинга — в докстринге scripts/gh_board_sync.py и
-# в CLAUDE.md. Идемпотентно: повторный прогон ничего не меняет.
+# в AGENTS.md. Идемпотентно: повторный прогон ничего не меняет.
 # Нужен scope project у gh (gh auth refresh -s project).
 # ---------------------------------------------------------------------------
 board-sync: unhide
@@ -571,7 +571,7 @@ board-sync-dry: unhide
 	uv run python scripts/gh_board_sync.py --dry-run
 
 # Гигиена issues: лейблы, приоритеты, залежавшееся, кандидаты в дубли.
-# Ничего не чинит — печатает отчёт; правила таксономии — CLAUDE.md.
+# Ничего не чинит — печатает отчёт; правила таксономии — AGENTS.md.
 issues-audit: unhide
 	uv run python scripts/gh_issues_audit.py $(AUDIT_ISSUES_ARGS)
 

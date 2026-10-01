@@ -38,6 +38,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 LIVE_DOCS = [
+    "AGENTS.md",
     "CLAUDE.md",
     "README.md",
     "docs/README.md",
@@ -55,6 +56,8 @@ LIVE_DOCS = [
     ".claude/agents/sfr-judge.md",
     ".claude/commands/issues.md",
     ".claude/commands/review-iteration.md",
+    ".agents/skills/issues/SKILL.md",
+    ".agents/skills/review-iteration/SKILL.md",
 ]
 
 # Строка — история, старые адреса в ней стоят намеренно.
@@ -90,6 +93,8 @@ REPO_DIRS = (
     "deploy/",
     "security/",
     ".claude/",
+    ".agents/",
+    ".codex/",
     ".github/",
 )
 ROOT_FILES = re.compile(r"^[A-Za-z_][A-Za-z0-9_.-]*\.(md|py|sh|json|yml|yaml|toml|txt|example)$")

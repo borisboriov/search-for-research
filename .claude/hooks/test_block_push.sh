@@ -6,7 +6,14 @@
 set -uo pipefail
 
 here=$(cd "$(dirname "$0")" && pwd)
-hook="$here/block-push.sh"
+hook=${1:-"$here/block-push.sh"}  # абсолютный путь позволяет проверить и native Codex
+
+# Основной набор предполагает main. Ветка рабочего репозитория не должна
+# менять результат; реальные push-команды здесь никогда не исполняются.
+test_root=$(mktemp -d)
+trap 'rm -rf "$test_root"' EXIT
+git -C "$test_root" init -q -b main || exit 1
+cd "$test_root" || exit 1
 
 blocked=(
     "git push"
@@ -43,6 +50,14 @@ blocked=(
     "git push origin +sfr-7"
     "git push --force-with-lease origin sfr-7"
     "git push -f origin sfr-7"
+    "git push -u origin sfr-7 -vf"
+    "git push -u origin sfr-7 -vd"
+    "git push -u origin sfr-7 --del"
+    "git push -u origin sfr-7 --for"
+    "git push -u origin refs/heads/*:refs/heads/*"
+    "git push -u origin :"
+    "git push --repo origin main"
+    "git push --repo=origin master"
     "git push --all origin"
     "git push --tags origin"
     "git push --mirror origin"
@@ -53,6 +68,14 @@ blocked=(
     "gh pr merge --auto --squash 12"
     "gh api repos/o/r/pulls/1/merge -X PUT"
     "gh api -X PATCH repos/o/r/pulls/1 -f state=closed"
+    "make lint deploy-local"
+    "make lint -f /private/tmp/other.mk"
+    "make audit AUDIT_ARGS='--no-images; touch /private/tmp/bad'"
+    "env TEST=1 make lint deploy-local"
+    $'make lint deploy-local\nprintf "'
+    $'gh issue edit --repo borisboriov/search-for-research 170 --repo other/repo\nprintf "'
+    "gh issue edit --repo borisboriov/search-for-research 170 --repo other/repo"
+    "gh pr edit --repo borisboriov/search-for-research 170 -Rother/repo"
 )
 
 allowed=(
@@ -79,9 +102,15 @@ allowed=(
     "git push vm docs-diet"
     "git push origin sfr-7:sfr-7"
     "git push -o ci.skip origin sfr-7"
+    "git push -u origin sfr-7 -vn"
+    "git push -u origin sfr-7 -oci.flag"
+    "git push --repo origin sfr-7"
     "git -C . push origin sfr-7"
     "git -c alias.p=push p origin sfr-7"
     "git commit -m x && git push origin sfr-7 && gh pr create --fill"
+    "make lint typecheck"
+    "make audit AUDIT_ARGS='--no-images --strict'"
+    "gh issue edit --repo borisboriov/search-for-research 170 --body-file issue.md"
 )
 
 # Формы без явной ветки зависят от текущей ветки репозитория: проверяем во
@@ -169,6 +198,8 @@ if [ -x /bin/bash ] && ! PATH=/bin command -v python3 >/dev/null 2>&1; then
     [ $? -eq 2 ] || { echo "FAIL [без python3] git push должен отклоняться"; failures=$((failures + 1)); }
     printf '%s' '{"tool_input":{"command":"git status"}}' | PATH=/bin /bin/bash "$hook" >/dev/null 2>&1
     [ $? -eq 0 ] || { echo "FAIL [без python3] git status должен проходить"; failures=$((failures + 1)); }
+    printf '%s' '{"tool_input":{"command":"make lint deploy-local"}}' | PATH=/bin /bin/bash "$hook" >/dev/null 2>&1
+    [ $? -eq 2 ] || { echo "FAIL [без python3] make должен отклоняться без разбора"; failures=$((failures + 1)); }
     echo "[без python3] запасная проверка по словам push/merge"
 fi
 
