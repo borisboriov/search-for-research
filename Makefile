@@ -1,7 +1,7 @@
 .PHONY: setup lint typecheck test test-integration test-slow etl report format unhide \
 	index eval eval-sfr1 eval-report index-sfr2 eval-sfr2 api docker-build docker-up docker-down bench \
 	export-cards web-setup web-dev web-lint web-typecheck web-test web-build web-e2e \
-	deploy-local deploy-local-down audit \
+	deploy deploy-local deploy-local-down audit \
 	catalog-sfr5 index-sfr5 eval-sfr5 export-sfr5 board-sync board-sync-dry issues-audit \
 	catalog-sfr5b export-sfr5b index-sfr5b eval-sfr5b \
 	catalog-sfr5c export-sfr5c index-sfr5c eval-sfr5c metrics-sfr5c review-sfr5c \
@@ -548,6 +548,18 @@ deploy-local:
 deploy-local-down:
 	SITE_ADDRESS=http://localhost:8080 NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
 	$(DEPLOY_COMPOSE) down
+
+# ---------------------------------------------------------------------------
+# Выкладка кода на VPS одной командой (28.09.2026) — процедура «Обновление» из
+# deploy/README.md: покажет коммит на сервере и что уедет, спросит подтверждение
+# с терминала, затем pull → пересборка → ревалидация → проверки. Запускает только
+# Борис из своего терминала: агенту цель отклоняет хук block-push.sh, а без
+# /dev/tty скрипт не идёт дальше вопроса. Артефакты индекса не возит —
+# deploy/sync-artifacts.sh и чеклист «Смена индекса» в README. Адрес сервера —
+# deploy/target.local (в git не попадает).
+# ---------------------------------------------------------------------------
+deploy:
+	@bash deploy/update.sh
 
 # ---------------------------------------------------------------------------
 # SFR-4b: аудит безопасности (статический анализ + зависимости + секреты).

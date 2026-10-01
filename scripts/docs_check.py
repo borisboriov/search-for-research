@@ -55,6 +55,7 @@ LIVE_DOCS = [
     ".claude/agents/sfr-judge.md",
     ".claude/commands/issues.md",
     ".claude/commands/review-iteration.md",
+    ".claude/skills/ui-change/SKILL.md",
 ]
 
 # Строка — история, старые адреса в ней стоят намеренно.
