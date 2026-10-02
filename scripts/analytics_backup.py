@@ -102,7 +102,10 @@ def fingerprint(database: str | None = None) -> dict[str, Any]:
         database or "sfr_analytics",
         sql,
     )
-    return json.loads(output)
+    value = json.loads(output)
+    if not isinstance(value, dict):
+        raise ValueError("invalid fingerprint response")
+    return {str(key): item for key, item in value.items()}
 
 
 def verify(directory: Path, database: str, *, compare_source: bool = False) -> dict[str, Any]:
@@ -126,7 +129,7 @@ def verify(directory: Path, database: str, *, compare_source: bool = False) -> d
             source=stream,
         )
     restored = fingerprint(database)
-    result = {
+    result: dict[str, Any] = {
         "verified_at": datetime.now(UTC).isoformat(),
         "database": database,
         "restored": restored,
