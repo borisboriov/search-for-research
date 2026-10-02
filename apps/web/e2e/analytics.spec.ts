@@ -1,5 +1,5 @@
 import { writeFile } from "node:fs/promises";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "./fixtures";
 import type { ProductEvent } from "../lib/analytics-contract";
 import { KNOWN_AUTHOR_ID } from "./helpers";
 
