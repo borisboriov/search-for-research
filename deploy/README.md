@@ -340,14 +340,15 @@ Python CLI/Make-цели запускаются оператором, публи
 ```bash
 # Подготовить каталог с доступом uid приложения; не chmod 777.
 mkdir -p data/analytics && chmod 700 data/analytics
-# В контейнере каталог должен принадлежать uid приложения (10001).
+# check/replay используют uid приложения (10001) для постоянного журнала.
+# report/export запускаются uid оператора, чтобы локальные файлы принадлежали ему.
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
   analytics-operator check
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
-  analytics-operator report --start 2026-10-01T00:00:00 --end 2026-10-03T00:00:00 \
+  --user "$(id -u):$(id -g)" analytics-operator report --start 2026-10-01T00:00:00 --end 2026-10-03T00:00:00 \
   --timezone Europe/Moscow --out /output/report-20261001
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
-  analytics-operator export --out /output/research-20261001.json
+  --user "$(id -u):$(id -g)" analytics-operator export --out /output/research-20261001.json
 # После восстановления БД: догрузка тем же runtime-пользователем.
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
   analytics-operator replay
