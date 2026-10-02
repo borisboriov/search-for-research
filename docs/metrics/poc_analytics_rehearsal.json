@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "scope": "isolated local Docker Linux arm64; synthetic traffic, real FRIDA where explicit",
+  "persistence": {
+    "platform": "local Docker Linux",
+    "synthetic": true,
+    "started_at": "2026-10-02T21:00:10.964395+00:00",
+    "duplicate_and_late_delivery": {
+      "passed": true,
+      "events": 5,
+      "wrong_clock_year": 2036
+    },
+    "secrets_and_body_limits": true,
+    "force_recreate": {
+      "passed": true,
+      "retained": {
+        "searches": 8,
+        "events": 220,
+        "context": 8,
+        "event_context": 220,
+        "migration": "analytics_0003"
+      }
+    },
+    "search_during_db_outage_ms": 589.74,
+    "outage_restart_replay": {
+      "passed": true,
+      "retained": {
+        "searches": 9,
+        "events": 221,
+        "context": 9,
+        "event_context": 221,
+        "migration": "analytics_0003"
+      }
+    },
+    "finished_at": "2026-10-02T21:00:56.493607+00:00"
+  },
+  "write_overhead": {
+    "synthetic": true,
+    "fsynced_batches": 100,
+    "median_ms": 1.0866874999919673,
+    "p95_ms": 2.050250000138476,
+    "max_ms": 2.7169170002707688,
+    "volume": "Linux Docker analytics-journal",
+    "database_connection_in_write_path": false
+  },
+  "resource_snapshot": [
+    {
+      "BlockIO": "215MB / 2.27MB",
+      "CPUPerc": "18.29%",
+      "Container": "sfr-analytics-179-api",
+      "ID": "5042c32be71d",
+      "MemPerc": "43.43%",
+      "MemUsage": "3.323GiB / 7.651GiB",
+      "Name": "sfr-analytics-179-api",
+      "NetIO": "219kB / 494kB",
+      "PIDs": "29"
+    },
+    {
+      "BlockIO": "19.1MB / 1.68MB",
+      "CPUPerc": "0.07%",
+      "Container": "sfr-analytics-179-postgres-1",
+      "ID": "82b716494875",
+      "MemPerc": "4.11%",
+      "MemUsage": "21.05MiB / 512MiB",
+      "Name": "sfr-analytics-179-postgres-1",
+      "NetIO": "157kB / 63.9kB",
+      "PIDs": "7"
+    },
+    {
+      "BlockIO": "8.72MB / 434kB",
+      "CPUPerc": "19.77%",
+      "Container": "sfr-analytics-179-web",
+      "ID": "fac914b7ceb6",
+      "MemPerc": "1.36%",
+      "MemUsage": "106.3MiB / 7.651GiB",
+      "Name": "sfr-analytics-179-web",
+      "NetIO": "1.13MB / 17.1MB",
+      "PIDs": "11"
+    },
+    {
+      "BlockIO": "45.2MB / 213kB",
+      "CPUPerc": "8.95%",
+      "Container": "sfr-analytics-179-proxy",
+      "ID": "60bee6da800f",
+      "MemPerc": "0.33%",
+      "MemUsage": "25.68MiB / 7.651GiB",
+      "Name": "sfr-analytics-179-proxy",
+      "NetIO": "18.9MB / 19MB",
+      "PIDs": "13"
+    }
+  ],
+  "search_equivalence": {
+    "fixed_queries": 3,
+    "identical_results_order_scores_confidence": true,
+    "real_frida_extra_confidence": "weak",
+    "model_warmup": true,
+    "startup_included": false,
+    "baseline_search_miss_ms": [
+      1917.039417000069,
+      945.7314169999336,
+      1107.7014179999196
+    ],
+    "pipeline_search_miss_ms": [
+      832.3747090034885,
+      204.92770899727475,
+      253.56374999682885
+    ],
+    "pipeline_cache_hit_ms": [
+      9.605583007214591,
+      6.177500006742775,
+      7.661541996640153
+    ],
+    "comparability": "baseline direct service vs new HTTP pipeline; different runtime load; not an analytics speedup or cold-model benchmark"
+  },
+  "oracle": {
+    "start_utc": "2026-10-01T21:00:00+00:00",
+    "end_utc": "2026-10-02T21:00:00+00:00",
+    "visits": 2,
+    "searches": 2,
+    "funnel_visits": {
+      "visit": 2,
+      "attempt": 1,
+      "display": 1,
+      "profile": 1,
+      "letter_copy": 1
+    },
+    "funnel_attempts": {
+      "visit": 2,
+      "attempt": 2,
+      "display": 2,
+      "profile": 1,
+      "letter_copy": 1
+    },
+    "repeat_attempts": 1,
+    "direct_profiles": 1,
+    "excluded_visits": {
+      "suspected_bot": 1
+    },
+    "replay_lag_max_seconds": 60.0,
+    "clock_anomalies": 10
+  },
+  "restore": {
+    "source_matches": true,
+    "restored": {
+      "migration": "analytics_0003",
+      "searches": 33,
+      "events": 353,
+      "context": 33,
+      "event_context": 353,
+      "search_sha": "a0d368003dcc63e6c7c93bbda39b4fba",
+      "event_sha": "8efb67cf299ac88051af3b01be9885b9",
+      "context_sha": "91d3e0a7fb635d244b16e0d1ef533f5e",
+      "event_context_sha": "932ff04a4c0e52fc793d5d3d33291981"
+    },
+    "dump_sha256": "5839d49e23740ccd167e300422991a46cee296c88905e7ea0a19f0bcd33ddec4"
+  },
+  "mac_copy": {
+    "verified": true,
+    "files": [
+      {
+        "path": "analytics.dump",
+        "bytes": 55551,
+        "sha256": "9cfd63deb0577a7f6da6bded897bccba6d642c397843b3e05a35323f8102e046"
+      },
+      {
+        "path": "analytics-journal.tar",
+        "bytes": 583680,
+        "sha256": "2ab30f25ad9b57d009ff5da0fa62065828f8be116d69cde4dcf2b610d853adf2"
+      },
+      {
+        "path": "access-logs.tar",
+        "bytes": 43520,
+        "sha256": "96acf6f716de951b7cb057b4f30f13793f1d06227ef5419711043274b810e766"
+      }
+    ],
+    "consistency": "DB pg_dump transaction; active logs/journal may advance while streaming. This is an observed copy, not a common cross-file snapshot; rerun after replay for completeness."
+  },
+  "rate_limits": {
+    "analytics_requests": 125,
+    "status_counts": {
+      "200": 120,
+      "429": 5
+    },
+    "search_after_analytics_flood": 200,
+    "page_after_analytics_flood": 200,
+    "limits_unchanged": true
+  },
+  "browser": {
+    "schema_version": 1,
+    "live_receiver": true,
+    "scenarios": 4,
+    "counts": {
+      "visit_started": 5,
+      "search_attempt": 11,
+      "results_shown": 6,
+      "filters_applied": 1,
+      "profile_direct": 1,
+      "profile_opened": 1,
+      "work_selected": 1,
+      "work_confirmed": 1,
+      "letter_copy_success": 1,
+      "letter_copy_failed": 1,
+      "weak_shown": 3,
+      "topic_followed": 2,
+      "empty_shown": 1,
+      "search_error": 2,
+      "search_validation_failed": 1
+    },
+    "event_count": 38,
+    "visit_count": 5,
+    "postgres_confirmed_distinct_events": 38
+  }
+}

@@ -41,6 +41,10 @@ def main() -> None:
         "--project-name",
         project,
     ]
+    if env_file := os.environ.get("SFR_COMPOSE_ENV_FILE"):
+        compose[2:2] = ["--env-file", env_file]
+    if override := os.environ.get("SFR_COMPOSE_OVERRIDE"):
+        compose.extend(["-f", override])
     proofs: dict[str, Any] = {
         "platform": "local Docker Linux",
         "synthetic": True,
@@ -268,6 +272,21 @@ def main() -> None:
             time.sleep(1)
         else:
             raise AssertionError("restart recovery did not become ready")
+        # --no-deps lets Next start while FRIDA is still loading. A successful
+        # fallback landing is not proof that ISR catalogue data can be rebuilt.
+        deadline = time.monotonic() + 240
+        while time.monotonic() < deadline:
+            try:
+                command(["exec", "-T", "api", "curl", "-sf", "http://127.0.0.1:8000/api/health"])
+                break
+            except RuntimeError:
+                time.sleep(1)
+        else:
+            raise AssertionError("API did not recover before ISR revalidation")
+        revalidation = client.post(
+            "/api/revalidate", headers={"x-revalidate-secret": os.environ["REVALIDATE_SECRET"]}
+        )
+        assert revalidation.status_code == 200, "local ISR revalidation failed"
         assert (
             client.post("/api/events", json={"events": [outage_event]}, headers=headers).status_code
             == 200
