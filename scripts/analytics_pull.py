@@ -59,8 +59,10 @@ def pull(host: str | None, remote_path: str, directory: Path) -> dict[str, Any]:
             "proxy",
             "sh",
             "-c",
-            'cd /data && find . -maxdepth 2 -type f -name "access*" -print0 | '
-            "tar --null -T - -cf -",
+            "cd /data && set --; "
+            "for file in access* archive/access*; do "
+            '[ ! -f "$file" ] || set -- "$@" "$file"; done; '
+            '[ "$#" -gt 0 ] && exec tar -cf - "$@"',
         ],
     }
     files = []
