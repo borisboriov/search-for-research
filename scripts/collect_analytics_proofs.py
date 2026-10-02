@@ -19,7 +19,7 @@ def collect(source: Path) -> dict[str, Any]:
 
     baseline = read("baseline-linux.json")
     current = read("with-analytics-linux.json")
-    oracle = read("oracle-report/summary.json")
+    oracle = read("oracle-report-v2/summary.json")
     restored = read("backup/restore-sfr_restore_179_final.json")
     manifest = read("pull/manifest.json")
     result: dict[str, Any] = {
@@ -27,6 +27,14 @@ def collect(source: Path) -> dict[str, Any]:
         "scope": "isolated local Docker Linux arm64; synthetic traffic, real FRIDA where explicit",
         "persistence": read("persistence.json"),
         "write_overhead": read("write-overhead.json"),
+        "stalled_disk": {
+            variant: {
+                key: value
+                for key, value in read(f"stress/stress-{variant}.json").items()
+                if key not in ("responses",)
+            }
+            for variant in ("before", "after")
+        },
         "resource_snapshot": [
             json.loads(line)
             for line in (source / "docker-resources.jsonl").read_text().splitlines()
@@ -67,6 +75,8 @@ def collect(source: Path) -> dict[str, Any]:
                 "excluded_visits",
                 "replay_lag_max_seconds",
                 "clock_anomalies",
+                "observed_sequence_gap_count",
+                "visits_with_sequence_gaps",
             )
         },
         "restore": {
@@ -80,7 +90,11 @@ def collect(source: Path) -> dict[str, Any]:
             "consistency": manifest["consistency"],
         },
         "rate_limits": read("rate-limits.json"),
-        "browser": read("browser-counts.json"),
+        "diagnostic_exit_policy": read("check-live-reviewed.json"),
+        "postgres_initialization": read("pg-initialization.json"),
+        "caddy_regression": read("caddy-regression.json"),
+        "browser": read("browser-counts-v2.json"),
+        "full_browser_suite": read("full-browser-summary.json"),
     }
     for item in manifest["files"]:
         digest = hashlib.sha256()

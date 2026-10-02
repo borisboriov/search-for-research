@@ -43,6 +43,103 @@
     "volume": "Linux Docker analytics-journal",
     "database_connection_in_write_path": false
   },
+  "stalled_disk": {
+    "before": {
+      "schema_version": 1,
+      "variant": "before",
+      "revision": "a384386c9335348e90ecfdf8d9f6ae7abc22bbb7",
+      "measured_at_utc": "2026-10-02T21:36:58.782506+00:00",
+      "finished_at_utc": "2026-10-02T21:37:00.462809+00:00",
+      "synthetic": true,
+      "backend": "FakeBackend test fixture; no FRIDA measurement",
+      "postgres_used": false,
+      "compose_used": false,
+      "production_used": false,
+      "method": "3 waves of 16 concurrent HTTP requests; half search and half events; pending _atomic blocked on Event; finally always releases",
+      "source_sha256": "c88b6fa6b6caffb4da3f89f9e78efb57f568f16a0e8ea9f365322bac65a9a155",
+      "measurement_script_sha256": "2b9591d7537f14205d3917d2aa060f4726ef2e1404aa3b1e7f977b792c4e1f0f",
+      "waves": [
+        {
+          "wave": 1,
+          "http_requests_completed": 16,
+          "unfinished_physical_appends": 16,
+          "anyio_worker_threads": 16,
+          "http_max_response_ms": 512.0770000066841
+        },
+        {
+          "wave": 2,
+          "http_requests_completed": 32,
+          "unfinished_physical_appends": 32,
+          "anyio_worker_threads": 32,
+          "http_max_response_ms": 508.40437499573454
+        },
+        {
+          "wave": 3,
+          "http_requests_completed": 48,
+          "unfinished_physical_appends": 48,
+          "anyio_worker_threads": 48,
+          "http_max_response_ms": 519.7872090066085
+        }
+      ],
+      "max_unfinished_observed_during_calls": 48,
+      "http_total": 48,
+      "http_search_200": 24,
+      "http_events_503": 24,
+      "http_max_response_ms": 519.7872090066085,
+      "unfinished_after_release": 0,
+      "recovery_event_http_status": 200
+    },
+    "after": {
+      "schema_version": 1,
+      "variant": "after",
+      "revision": "9c077dce716ff718e5689d9791b5a63ba4a4c619",
+      "measured_at_utc": "2026-10-02T21:37:00.860709+00:00",
+      "finished_at_utc": "2026-10-02T21:37:01.468932+00:00",
+      "synthetic": true,
+      "backend": "FakeBackend test fixture; no FRIDA measurement",
+      "postgres_used": false,
+      "compose_used": false,
+      "production_used": false,
+      "method": "3 waves of 16 concurrent HTTP requests; half search and half events; pending _atomic blocked on Event; finally always releases",
+      "source_sha256": "b5115b083608aadc7ce4f4831e88f31109ccfe4593d3f0fc4622786ed2f7cab5",
+      "measurement_script_sha256": "2b9591d7537f14205d3917d2aa060f4726ef2e1404aa3b1e7f977b792c4e1f0f",
+      "waves": [
+        {
+          "wave": 1,
+          "http_requests_completed": 16,
+          "unfinished_physical_appends": 2,
+          "anyio_worker_threads": 9,
+          "http_max_response_ms": 509.70004200644325
+        },
+        {
+          "wave": 2,
+          "http_requests_completed": 32,
+          "unfinished_physical_appends": 2,
+          "anyio_worker_threads": 11,
+          "http_max_response_ms": 21.786917001008987
+        },
+        {
+          "wave": 3,
+          "http_requests_completed": 48,
+          "unfinished_physical_appends": 2,
+          "anyio_worker_threads": 11,
+          "http_max_response_ms": 11.129790989798494
+        }
+      ],
+      "max_unfinished_observed_during_calls": 3,
+      "http_total": 48,
+      "http_search_200": 24,
+      "http_events_503": 24,
+      "http_max_response_ms": 509.70004200644325,
+      "unfinished_after_release": 0,
+      "recovery_event_http_status": 200,
+      "append_diagnostics": {
+        "append_limit": 2,
+        "append_inflight": 0,
+        "append_rejected": 46
+      }
+    }
+  },
   "resource_snapshot": [
     {
       "BlockIO": "215MB / 2.27MB",
@@ -137,7 +234,9 @@
       "suspected_bot": 1
     },
     "replay_lag_max_seconds": 60.0,
-    "clock_anomalies": 10
+    "clock_anomalies": 10,
+    "observed_sequence_gap_count": 0,
+    "visits_with_sequence_gaps": 0
   },
   "restore": {
     "source_matches": true,
@@ -185,29 +284,71 @@
     "page_after_analytics_flood": 200,
     "limits_unchanged": true
   },
+  "diagnostic_exit_policy": {
+    "exit_code": 1,
+    "check_ok": false,
+    "check_reasons": [
+      "historical_errors",
+      "incomplete_observations"
+    ],
+    "database_available": true,
+    "migration_current": true,
+    "pending_count": 0,
+    "quarantine_count": 0,
+    "error_count": 1,
+    "incomplete": true
+  },
+  "postgres_initialization": {
+    "verified_at": "2026-10-02T21:14:28.899653+00:00",
+    "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+    "fresh_sql_initializer_observed": true,
+    "roles_both_minimal": true,
+    "idempotent_passwords_preserved": true,
+    "reader_read_only": true,
+    "restart_roles_preserved": true
+  },
+  "caddy_regression": {
+    "passed": true,
+    "rows": 3,
+    "paths_preserved": true,
+    "query_secrets_excluded": true,
+    "headers_excluded": true
+  },
   "browser": {
     "schema_version": 1,
     "live_receiver": true,
-    "scenarios": 4,
+    "scenario_count": 4,
+    "acknowledged_event_count": 47,
+    "observed_visits": 6,
     "counts": {
-      "visit_started": 5,
-      "search_attempt": 11,
-      "results_shown": 6,
-      "filters_applied": 1,
-      "profile_direct": 1,
+      "visit_started": 6,
+      "search_attempt": 12,
+      "results_shown": 7,
+      "sort_applied": 1,
       "profile_opened": 1,
       "work_selected": 1,
       "work_confirmed": 1,
       "letter_copy_success": 1,
       "letter_copy_failed": 1,
-      "weak_shown": 3,
+      "profile_direct": 2,
+      "address_copy_success": 1,
+      "address_copy_failed": 1,
+      "filters_applied": 1,
+      "weak_shown": 4,
       "topic_followed": 2,
+      "search_reformulated": 1,
       "empty_shown": 1,
       "search_error": 2,
       "search_validation_failed": 1
     },
-    "event_count": 38,
-    "visit_count": 5,
-    "postgres_confirmed_distinct_events": 38
+    "postgres_confirmed_distinct_events": 47
+  },
+  "full_browser_suite": {
+    "command": "SFR_WEB_URL=http://localhost:18080 SFR_ANALYTICS_LIVE_RECEIVER=1 SFR_E2E_MIN_TEST_INTERVAL_MS=15000 make web-e2e",
+    "passed": 42,
+    "skipped": 1,
+    "duration": "10.5m",
+    "production_limits_unchanged": true,
+    "models": "synthetic UI responses and real FRIDA scenarios explicitly separate"
   }
 }

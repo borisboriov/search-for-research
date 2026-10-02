@@ -37,6 +37,8 @@ Search.request_id идентифицирует запрос поиска, Event.
 
 Миграции `analytics_0001` создают таблицы, `0002` добавляет unique visit/sequence,
 `0003` — ingest_request_id. Новая и существующая БД обновляются оператором.
+Свежий том с SQL initializer проверен настоящим PostgreSQL 17.11: обе роли
+минимальны, reader read-only, повтор сохраняет прежние пароли, restart сохраняет роли.
 Runtime получает INSERT и SELECT только PK для RETURNING; нет UPDATE/DELETE/DDL
 или чтения полного контекста. Reader отдельно получает SELECT и read-only по
 умолчанию. Инициализация ролей — SQL через psql, повтор сохраняет существующие
@@ -135,7 +137,7 @@ API; Caddy перезаписывает входной клиентский IP, 
 
 Команды и rollout — [deploy/README](../../deploy/README.md#аналитика-poc-postgresql-журнал-и-доступ).
 Make-цели: analytics-migrate/check/replay/report/export/backup/restore-check/pull/
-rotate/test-postgres. HTTP-ручек выгрузки/отчёта нет.
+rotate/test-postgres/test-caddy. HTTP-ручек выгрузки/отчёта нет.
 
 Отчёт требует явные start/end/timezone (Europe/Moscow поддержан), выдаёт локальные
 HTML, summary.json и funnel/attempts/dimensions.csv. Последовательная воронка
@@ -209,8 +211,8 @@ analytics-db и analytics-journal, down -v и downgrade миграций не в
 
 ### Проверенные сценарии и результаты
 
-- `make lint`, `make typecheck`, `make test`: 380 Python-тестов, 37 операторских/
-  вспомогательных unittest; покрытие 94,27%. Пять PG-тестов в обычном запуске
+- `make lint`, `make typecheck`, `make test`: 381 Python-тест, 41 операторский/
+  вспомогательных unittest; покрытие 94,31%. Пять PG-тестов в обычном запуске
   пропускаются и выполняются отдельной обязательной целью с настоящим PostgreSQL.
 - `make analytics-test-postgres`: 5 тестов, включая новую/reentrant миграцию,
   seeded 0001 → 0003 без потери полей, outage/replay и минимальные runtime-права.
@@ -221,11 +223,16 @@ analytics-db и analytics-journal, down -v и downgrade миграций не в
   `git diff --check`: успешно. Аудит включает native gitleaks полной истории
   worktree; 0 Semgrep findings, зависимости/Trivy/Bandit/Hadolint прошли.
 - Четыре UI-сценария с синтетическим /match и настоящим приёмником:
-  38 подтверждённых event_id, 5 визитов; все 38 найдены в PostgreSQL.
+  47 подтверждённых event_id, 6 визитов; все 47 найдены в PostgreSQL.
   Проверены clipboard success/failure, weak/none/503, повтор, topic,
-  filter discard/apply, профиль/direct, reload/offline retry и отсутствие
-  ложного profile view от SSR/prefetch. Полный браузерный прогон дополнительно
-  проверяет действующие страницы с реальной FRIDA.
+  filter discard/apply, sort, reformulation, профиль/direct, reload/offline retry и отсутствие
+  ложного profile view от SSR/prefetch. Адресные Clipboard success/failure
+  проверены на реальном ContactCard в Playwright-only Vite bundle с
+  researcher@example.invalid и контролируемым Clipboard API; каталог и
+  production routes не менялись. События не содержат email. Полный `make web-e2e`:
+  42 passed/1 прежний dev-only skip (письмо без работ/неизвестный год), 10,5 минуты; проверяет
+  действующие страницы с реальной FRIDA. External Compose использует
+  SFR_E2E_MIN_TEST_INTERVAL_MS=15000 при неизменных боевых rate limits.
 - Compose force-recreate PG/API/Next сохраняет 8 searches/220 events.
   DB outage → fsync ACK → restart API/Next → PG recovery/replay сохраняет
   9 searches/221 events; повторный ACK не меняет counts. Временные клиентские
@@ -253,3 +260,23 @@ analytics-db и analytics-journal, down -v и downgrade миграций не в
 Проверки физического заполнения VPS/массовой нагрузки не выполнялись:
 ошибки диска воспроизведены точечно, исходные данные не заполняли и не удаляли.
 Production scheduling, миграции/backup/deploy в эту сессию не запускались.
+
+### Исправления независимого ревью
+
+Исходный проход sfr-reviewer подтвердил две Medium-находки, опубликованные
+[комментарием PR](https://github.com/borisboriov/search-for-research/pull/179#issuecomment-5961696381).
+Исправлены check exit policy и наблюдаемые sequence gaps; добавлены проверки
+legacy/current/queue/quarantine/history/lowdisk, late-fill/duplicates/period limits.
+Знаменатель попыток не смешивается с количеством визитов на первом шаге.
+
+Гипотеза длительного stalled disk воспроизведена отдельно от Compose: три волны
+по 16 HTTP-запросов накопили 16 → 32 → 48 незавершённых append/потоков, хотя
+ответы оставались bounded. После admission limit=2 незавершённые операции
+стабильны на 2; потоки 9 → 11 → 11, max HTTP 509,700 мс, поиск 200/события 503.
+После физического освобождения диска запись снова подтверждается 200.
+Фактические JSON/скрипт сохранены в `data/analytics-rehearsal/stress/`;
+безопасные агрегаты/ревизии/SHA-256 включены в артефакт.
+Stress regression не обращается к PG/исходным данным и освобождает блокировки
+в finally. Отдельно исправлен существующий флак теста SFR-1: запрет строки
+«30» случайно отвергал timestamp с минутой 30; проверки фактических размеров
+корпуса/golden set теперь явные, генератор и замороженные отчёты не менялись.
