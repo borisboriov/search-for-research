@@ -1,0 +1,32 @@
+{
+  "source": "http://127.0.0.1:8000/api/health",
+  "before": {
+    "model": "ai-forever/FRIDA",
+    "index_version": "frida_clean-9002p-35e591d4",
+    "profiles_count": 9002,
+    "institutions_count": 12,
+    "score_threshold": 0.33,
+    "score_weak": 0.4,
+    "score_high": 0.49,
+    "thresholds_match": true,
+    "search_backend": "numpy",
+    "compose": "full",
+    "built_at": "2026-09-26T18:09:55+00:00",
+    "data_updated_at": "2026-09-04"
+  },
+  "after": {
+    "model": "ai-forever/FRIDA",
+    "index_version": "frida_clean-9002p-35e591d4",
+    "profiles_count": 9002,
+    "institutions_count": 12,
+    "score_threshold": 0.33,
+    "score_weak": 0.4,
+    "score_high": 0.49,
+    "thresholds_match": true,
+    "search_backend": "numpy",
+    "compose": "full",
+    "built_at": "2026-09-26T18:09:55+00:00",
+    "data_updated_at": "2026-09-04"
+  },
+  "unchanged": true
+}
