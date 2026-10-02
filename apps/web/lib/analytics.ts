@@ -75,14 +75,13 @@ export async function flushEvents(): Promise<void> {
   if (timer) { clearTimeout(timer); timer = undefined; }
   active = true;
   let delivered = false;
+  let deadline: ReturnType<typeof setTimeout> | undefined;
   try {
     const events = current.queue.slice(0, 10);
     while (events.length > 1 && new TextEncoder().encode(JSON.stringify({ events })).length > 16000) events.pop();
     const controller = new AbortController();
-    const deadline = setTimeout(() => controller.abort(), 5000);
-    let response: Response;
-    try { response = await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ events }), keepalive: true, signal: controller.signal }); }
-    finally { clearTimeout(deadline); }
+    deadline = setTimeout(() => controller.abort(), 5000);
+    const response = await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ events }), keepalive: true, signal: controller.signal });
     if (response.ok) {
       const payload: unknown = await response.json();
       if (payload && typeof payload === "object" && "accepted" in payload && Array.isArray(payload.accepted)) {
@@ -95,6 +94,7 @@ export async function flushEvents(): Promise<void> {
     }
   } catch { /* Closed tabs/offline network cannot guarantee client observations. */ }
   finally {
+    if (deadline) clearTimeout(deadline);
     active = false;
     failures = delivered ? 0 : failures + 1;
     if (current.queue.length) timer = setTimeout(() => { void flushEvents(); }, delivered ? 100 : Math.min(60000, 1000 * 2 ** Math.min(failures, 6)));

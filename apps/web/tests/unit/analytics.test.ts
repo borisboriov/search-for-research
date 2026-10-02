@@ -17,6 +17,14 @@ describe("durable client event delivery", () => {
     await reloaded.flushEvents(); expect(stored().queue).toEqual([]);
     expect(JSON.parse(String(fetch.mock.calls.at(-1)![1].body)).events.map((e: { event_id: string }) => e.event_id)).toEqual(ids);
   });
+  it("bounds acknowledgement body parsing as well as connection time", async () => {
+    const fetch = vi.fn<(url: unknown, init: RequestInit) => Promise<Response>>().mockImplementation(async (_url, init) => ({ ok: true, json: () => new Promise((_resolve, reject) => init.signal!.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))) }) as Response);
+    vi.stubGlobal("fetch", fetch); const client = await import("@/lib/analytics");
+    client.emitEvent("letter_copy_success", { author_id: "A1234" }); await settle();
+    expect(stored().queue).toHaveLength(2); await vi.advanceTimersByTimeAsync(5000); await settle();
+    fetch.mockImplementation(async (_url, init) => Response.json({ accepted: JSON.parse(String(init.body)).events.map((e: { event_id: string }) => e.event_id) }));
+    await client.flushEvents(); expect(stored().queue).toEqual([]);
+  });
   it("a click or 200 without acknowledgement never clears durable queued events", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ ok: true })));
     const client = await import("@/lib/analytics"); client.emitEvent("address_copy_failed", { author_id: "A1234" }); await settle();
