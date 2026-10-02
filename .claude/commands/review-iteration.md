@@ -3,14 +3,6 @@ description: Независимое ревью итерации SFR-N субаг
 argument-hint: SFR-5
 ---
 
-Проведи независимое код-ревью итерации $ARGUMENTS с помощью субагента `sfr-reviewer`
-(он описан в `.claude/agents/sfr-reviewer.md`; передай ему название итерации и попроси
-записать отчёт в `docs/reports/REVIEW_$ARGUMENTS.md`). Сам код не правь.
-
-Когда отчёт готов: прочитай его, проверь, что каждая High/Critical находка подтверждена
-цитатой кода, и выведи мне краткую сводку: число находок по severity, три самые важные,
-и предложение — чинить мини-сессией сейчас или завести issues `from-review` в бэклог.
-
-Итог ревью (severity, находки → issues `from-review`, что исправлено) запиши разделом
-«Независимое ревью» в `docs/reports/SFR<N>_REPORT.md` — так его видит Stop-хук
-`.claude/hooks/review-reminder.sh`; файл `docs/reports/REVIEW_*.md` временный и в git не идёт.
+Прочитай и выполни общую процедуру `.agents/skills/review-iteration/SKILL.md`.
+Запрос пользователя: **$ARGUMENTS**.
+Правила проекта и согласованные разрешения — в `AGENTS.md`.

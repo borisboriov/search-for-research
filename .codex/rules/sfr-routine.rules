@@ -1,0 +1,64 @@
+# Boris approved this SFR routine command pool on 2026-10-01.
+# Load only from the trusted SFR project layer; do not install globally.
+# Protected pushes and merges remain blocked by hooks/block-push.sh.
+# Read-only commands normally run inside the sandbox and need no allow rule.
+
+prefix_rule(
+    pattern = ["make", ["lint", "typecheck", "test", "docs-check", "hooks-test", "audit", "web-lint", "web-typecheck", "web-test", "web-build", "board-sync-dry", "board-sync", "issues-audit"]],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["uv", "sync", "--locked"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["npm", "ci"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["git", "switch", "-c"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["git", "add"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["git", "commit"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["git", "push", "-u", "origin"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["gh", "issue", ["list", "view", "create", "edit", "comment", "close", "reopen"], "--repo", "borisboriov/search-for-research"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["gh", "pr", ["list", "view", "create", "edit", "comment", "checks", "diff"], "--repo", "borisboriov/search-for-research"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)
+
+prefix_rule(
+    pattern = ["gh", "repo", "view", "borisboriov/search-for-research"],
+    decision = "allow",
+    justification = "SFR routine command pool approved by Boris",
+)

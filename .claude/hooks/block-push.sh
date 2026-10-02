@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PreToolUse-хук для Bash: push в main, force/delete и merge — только Борис
-# (CLAUDE.md, DECISIONS 27.09, #129); push своей ветки сессии разрешён (27.09, #140).
+# (AGENTS.md, DECISIONS 27.09, #129); push своей ветки сессии разрешён (27.09, #140).
 #
 # Запрет `Bash(git push *)` в settings.json — префиксное правило: `git -C . push`,
 # `git -c k=v push`, `cd x && git push` его обходят. Этот хук — граница: он
@@ -18,7 +18,9 @@
 #     `git push -u origin HEAD` не из `main`;
 #   * `gh pr merge`;
 #   * `gh api`, меняющий PR: эндпоинт `…/pulls/N/merge`, методы PUT/PATCH/DELETE
-#     на `…/pulls…`, GraphQL-мутации слияния.
+#     на `…/pulls…`, GraphQL-мутации слияния;
+#   * дополнительная цель/Makefile у разрешённой make-команды либо повторный
+#     выбор репозитория в согласованной форме gh issue/pr.
 # Строки в кавычках — это строки: `echo "git push"` проходит; тело heredoc с
 # кавычками у разделителя (`<<'EOF'`) — литерал, тело без кавычек проверяется
 # только на подстановки `$(…)` / `` `…` ``, которые bash в нём выполнит.
@@ -26,20 +28,20 @@
 # Протокол Claude Code: отказ — код 2 и причина в stderr (её видит агент),
 # пропуск — код 0 без вывода. Разбор — python3 из системы; если его нет или
 # разбор упал, хук закрывается осторожно: блокирует любую команду, где есть
-# слова push или merge (лучше лишний отказ, чем тихий пропуск).
+# слова push/merge/make/gh (лучше лишний отказ, чем тихий пропуск).
 #
 # Тесты — .claude/hooks/test_block_push.sh (`make hooks-test`).
 set -uo pipefail
 
 payload=$(cat 2>/dev/null || true)
-reason_prefix="push в main и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
+reason_prefix="защищённая команда: push в main и merge — только Борис (AGENTS.md, DECISIONS 27.09)"
 
 # Осторожный отказ без разбора: только встроенные средства bash — без python3
 # может не оказаться и grep.
 fallback() {
     shopt -s nocasematch
-    if [[ $payload == *push* || $payload == *merge* ]]; then
-        echo "$reason_prefix: $1, команда с push/merge отклонена без разбора" >&2
+    if [[ $payload == *push* || $payload == *merge* || $payload == *make* || $payload == *gh* ]]; then
+        echo "$reason_prefix: $1, команда с push/merge/make/gh отклонена без разбора" >&2
         exit 2
     fi
     exit 0
@@ -60,7 +62,7 @@ import shlex
 import subprocess
 import sys
 
-PREFIX = "push в main и merge — только Борис (CLAUDE.md, DECISIONS 27.09)"
+PREFIX = "защищённая команда: push в main и merge — только Борис (AGENTS.md, DECISIONS 27.09)"
 SEPARATORS = {";", "&&", "||", "|", "&", "|&", ";;", "(", ")", "{", "}", "\n"}
 KEYWORDS = {"if", "then", "else", "elif", "fi", "do", "done", "while", "until", "!", "time"}
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
@@ -82,6 +84,17 @@ PUSH_FORBIDDEN_OPTS = {
 }
 # Опции push, у которых значение — отдельным словом (если не через `=`).
 PUSH_OPTS_WITH_VALUE = {"-o", "--push-option", "--repo", "--receive-pack", "--exec"}
+PUSH_ALLOWED_LONG = {
+    "--verbose", "--quiet", "--dry-run", "--porcelain", "--thin", "--no-thin",
+    "--set-upstream", "--progress", "--no-progress", "--signed", "--no-signed",
+    "--atomic", "--no-atomic", "--ipv4", "--ipv6", "--verify", "--no-verify",
+    "--recurse-submodules",
+}
+ROUTINE_MAKE_TARGETS = {
+    "lint", "typecheck", "test", "docs-check", "hooks-test", "audit", "web-lint",
+    "web-typecheck", "web-test", "web-build", "board-sync-dry", "board-sync", "issues-audit",
+}
+SFR_REPO = "borisboriov/search-for-research"
 
 
 def tokenize(command: str) -> list[str]:
@@ -92,7 +105,69 @@ def tokenize(command: str) -> list[str]:
     return list(lexer)
 
 
-HEREDOC = re.compile(r"(?<!<)<<-?\s*(['\"]?)([A-Za-z0-9_]+)\1(?!<)")
+HEREDOC = re.compile(r"<<(-?)[ \t]*(['\"]?)([A-Za-z0-9_]+)\2")
+
+
+def heredocs_on_line(line: str, contexts: list[tuple[str, int]]) -> list[tuple[str, bool, bool]]:
+    """Распознать операторы heredoc вне строк, escapes и shell-комментариев."""
+    found: list[tuple[str, bool, bool]] = []
+    i = 0
+    while i < len(line):
+        ch = line[i]
+        state, depth = contexts[-1]
+        if state == "single":
+            if ch == "'":
+                state = "plain"
+        elif ch == "\\":
+            i += 2
+            continue
+        elif line.startswith(("${", "$["), i):
+            # Вложенные quotes/default words этих expansions требуют полной
+            # shell-грамматики. Для защищённых команд main() откажет, вместо
+            # того чтобы ошибочно принять строковый << за оператор heredoc.
+            raise ValueError("неподдерживаемая parameter/arithmetic expansion")
+        elif line.startswith("$(", i):
+            # Кавычки внутри command substitution не закрывают кавычки
+            # родителя. Саму вложенную команду проверит substitutions().
+            contexts.append(("plain", 1))
+            i += 2
+            continue
+        elif ch == "`":
+            if depth == -1:
+                contexts.pop()
+            else:
+                contexts.append(("plain", -1))
+            i += 1
+            continue
+        elif state == "double":
+            if ch == '"':
+                state = "plain"
+        elif ch in ("'", '"'):
+            state = "single" if ch == "'" else "double"
+        elif ch == "#" and (i == 0 or line[i - 1] in " \t;&|()<>"):
+            break
+        elif depth > 0 and ch == "(":
+            depth += 1
+        elif depth > 0 and ch == ")":
+            depth -= 1
+            if depth == 0:
+                contexts.pop()
+                i += 1
+                continue
+        elif line.startswith("<<<", i):
+            i += 3  # here-string, а не heredoc
+            continue
+        elif len(contexts) == 1 and line.startswith("<<", i):
+            match = HEREDOC.match(line, i)
+            if not match or (
+                match.end() < len(line) and line[match.end()] not in " \t;&|()<>"):
+                raise ValueError("неподдерживаемый разделитель heredoc")
+            found.append((match.group(3), bool(match.group(2)), bool(match.group(1))))
+            i = match.end()
+            continue
+        contexts[-1] = (state, depth)
+        i += 1
+    return found
 
 
 def split_heredocs(command: str) -> tuple[str, list[str]]:
@@ -105,11 +180,13 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
     """
     code: list[str] = []
     bodies: list[str] = []
-    pending: list[tuple[str, bool, list[str]]] = []
+    pending: list[tuple[str, bool, bool, list[str]]] = []
+    contexts = [("plain", 0)]
     for line in command.split("\n"):
-        if pending:
-            delim, quoted, buf = pending[0]
-            if line.strip() == delim:
+        if pending and contexts == [("plain", 0)]:
+            delim, quoted, strip_tabs, buf = pending[0]
+            # <<- снимает только ведущие TAB; пробелы не завершают heredoc.
+            if (line.lstrip("\t") if strip_tabs else line) == delim:
                 pending.pop(0)
                 if not quoted:
                     bodies.append("\n".join(buf))
@@ -117,9 +194,10 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
                 buf.append(line)
             continue
         code.append(line)
-        for match in HEREDOC.finditer(line):
-            pending.append((match.group(2), bool(match.group(1)), []))
-    bodies.extend("\n".join(buf) for _, quoted, buf in pending if not quoted)
+        found = heredocs_on_line(line, contexts)
+        pending.extend((delim, quoted, strip_tabs, []) for delim, quoted, strip_tabs in found)
+    if pending or contexts != [("plain", 0)]:
+        raise ValueError("незавершённый heredoc или строка shell")
     return "\n".join(code), bodies
 
 
@@ -216,7 +294,12 @@ def check_push(args: list[str], cwd: str | None, git_global: list[str]) -> str |
     (`git push`, `git push -u origin`, `HEAD`) назначение — текущая ветка
     репозитория: из `main` или при detached HEAD — отказ.
     """
+    # shlex не выполняет shell expansion. Проверять её результат без запуска
+    # нельзя: переменная может стать main или --force. Требуем явные аргументы.
+    if any(re.search(r"[$`*?\[\]{}~]", arg) for arg in [*git_global, *args]):
+        return "git push с shell expansion (укажи явную ветку и опции)"
     positional: list[str] = []
+    remote_by_option = False
     j = 0
     while j < len(args):
         arg = args[j]
@@ -227,14 +310,36 @@ def check_push(args: list[str], cwd: str | None, git_global: list[str]) -> str |
             base = arg.split("=", 1)[0]
             if base in PUSH_FORBIDDEN_OPTS or base.startswith("--force"):
                 return f"git push {base}"
+            if base == "--repo":
+                remote_by_option = True
             if base in PUSH_OPTS_WITH_VALUE and "=" not in arg:
                 j += 2
                 continue
+            if arg.startswith("--"):
+                # Git accepts long-option abbreviations; do not let --del/--for
+                # bypass the exact forbidden-option checks above.
+                if base not in PUSH_ALLOWED_LONG and base not in PUSH_OPTS_WITH_VALUE:
+                    return f"git push {base} (неизвестная или сокращённая опция)"
+                if base == "--recurse-submodules" and "=" not in arg:
+                    j += 2
+                    continue
+            else:
+                # Short options can be grouped (-vf, -vd). -o consumes the rest
+                # of its argument as a value, so -oci.flag is not force.
+                for offset, flag in enumerate(arg[1:], start=1):
+                    if flag in "fd":
+                        return f"git push {arg} (force/delete)"
+                    if flag == "o":
+                        if offset == len(arg) - 1:
+                            j += 1
+                        break
+                    if flag not in "vqnu46":
+                        return f"git push {arg} (неизвестная опция)"
             j += 1
             continue
         positional.append(arg)
         j += 1
-    refspecs = positional[1:]
+    refspecs = positional if remote_by_option else positional[1:]
     if not refspecs:
         branch = current_branch(cwd, git_global)
         if not branch:
@@ -243,6 +348,8 @@ def check_push(args: list[str], cwd: str | None, git_global: list[str]) -> str |
             return f"git push из ветки {branch}"
         return None
     for spec in refspecs:
+        if "*" in spec or spec == ":":
+            return f"git push {spec} (несколько веток)"
         if spec.startswith("+"):
             return f"git push {spec} (принудительно)"
         src, sep, dst = spec.partition(":")
@@ -276,6 +383,8 @@ def check_git(argv: list[str], cwd: str | None, depth: int) -> str | None:
     if i >= len(argv):
         return None
     sub = argv[i]
+    if re.search(r"[$`*?\[\]{}~]", sub):
+        return "git с shell expansion в подкоманде"
     if sub == "send-pack":
         return "git send-pack"
     if sub == "push":
@@ -294,6 +403,12 @@ def check_git(argv: list[str], cwd: str | None, depth: int) -> str | None:
 
 
 def check_gh(argv: list[str]) -> str | None:
+    if (
+        len(argv) >= 5 and argv[1] in ("issue", "pr")
+        and argv[3:5] == ["--repo", SFR_REPO]
+        and any(a == "-R" or a.startswith("-R") or a == "--repo" or a.startswith("--repo=") for a in argv[5:])
+    ):
+        return "gh: повторный выбор репозитория вне согласованного пула"
     words = [a for a in argv[1:] if not a.startswith("-")]
     if words[:2] == ["pr", "merge"]:
         return "gh pr merge"
@@ -326,6 +441,20 @@ def check_gh(argv: list[str]) -> str | None:
     return None
 
 
+def check_make(argv: list[str]) -> str | None:
+    if len(argv) < 2 or argv[1] not in ROUTINE_MAKE_TARGETS:
+        return None  # other commands are not covered by the routine allow rule
+    for arg in argv[2:]:
+        if arg in ROUTINE_MAKE_TARGETS:
+            continue
+        if arg.startswith("AUDIT_ARGS=") and "audit" in argv[1:]:
+            value = arg.partition("=")[2]
+            if all(a in ("--no-images", "--strict") for a in value.split()):
+                continue
+        return f"make {argv[1]}: дополнительная цель/опция вне согласованного пула"
+    return None
+
+
 def check_argv(argv: list[str], cwd: str | None, depth: int) -> str | None:
     argv = strip_prefix(argv)
     if not argv:
@@ -335,6 +464,8 @@ def check_argv(argv: list[str], cwd: str | None, depth: int) -> str | None:
         return check_git(argv, cwd, depth)
     if name == "gh":
         return check_gh(argv)
+    if name == "make":
+        return check_make(argv)
     if name in SHELLS:
         for k, arg in enumerate(argv[1:], start=1):
             if arg.startswith("-") and "c" in arg[1:] and not arg.startswith("--"):
@@ -345,14 +476,14 @@ def check_argv(argv: list[str], cwd: str | None, depth: int) -> str | None:
         return check_command(" ".join(argv[1:]), cwd, depth + 1)
     if name in WRAPPERS:
         for k in range(1, len(argv)):
-            if os.path.basename(argv[k]) in ("git", "gh") or argv[k] in SHELLS:
+            if os.path.basename(argv[k]) in ("git", "gh", "make") or argv[k] in SHELLS:
                 return check_argv(argv[k:], cwd, depth)
     return None
 
 
 def check_command(command: str, cwd: str | None, depth: int = 0) -> str | None:
     if depth > 5:
-        return None
+        return "слишком глубокая вложенность команды для безопасного разбора"
     # Перенос строки с обратным слэшем — продолжение команды, как в bash.
     code, bodies = split_heredocs(command.replace("\\\n", " "))
     inner_commands = substitutions(code)
@@ -381,8 +512,8 @@ def main() -> int:
     try:
         found = check_command(command, payload.get("cwd"))
     except Exception as exc:  # noqa: BLE001 — хук-граница: при сбое разбора закрыться
-        if re.search(r"push|merge", command, re.IGNORECASE):
-            print(f"{PREFIX}: не удалось разобрать команду ({exc}), в ней есть push/merge", file=sys.stderr)
+        if re.search(r"push|merge|make|gh", command, re.IGNORECASE):
+            print(f"{PREFIX}: не удалось разобрать команду ({exc}), в ней есть push/merge/make/gh", file=sys.stderr)
             return 2
         return 0
     if found:

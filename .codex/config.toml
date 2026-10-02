@@ -1,0 +1,10 @@
+# Native Codex project layer; Claude configuration stays in .claude/settings.json.
+# Trusted-project allow rules are in rules/sfr-routine.rules.
+# Keep sandboxing and ask only for commands not covered by the approved pool.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+# The complete shared project guidance exceeds the default 32 KiB budget.
+project_doc_max_bytes = 65536
+
+[sandbox_workspace_write]
+network_access = false
