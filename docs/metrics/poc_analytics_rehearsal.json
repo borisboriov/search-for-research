@@ -4,7 +4,7 @@
   "persistence": {
     "platform": "local Docker Linux",
     "synthetic": true,
-    "started_at": "2026-10-02T21:00:10.964395+00:00",
+    "started_at": "2026-10-02T22:01:09.639846+00:00",
     "duplicate_and_late_delivery": {
       "passed": true,
       "events": 5,
@@ -14,25 +14,176 @@
     "force_recreate": {
       "passed": true,
       "retained": {
-        "searches": 8,
-        "events": 220,
-        "context": 8,
-        "event_context": 220,
+        "searches": 83,
+        "events": 764,
+        "context": 83,
+        "event_context": 764,
         "migration": "analytics_0003"
       }
     },
-    "search_during_db_outage_ms": 589.74,
+    "search_during_db_outage_ms": 572.5,
     "outage_restart_replay": {
       "passed": true,
       "retained": {
-        "searches": 9,
-        "events": 221,
-        "context": 9,
-        "event_context": 221,
+        "searches": 84,
+        "events": 765,
+        "context": 84,
+        "event_context": 765,
         "migration": "analytics_0003"
       }
     },
-    "finished_at": "2026-10-02T21:00:56.493607+00:00"
+    "finished_at": "2026-10-02T22:01:51.669016+00:00"
+  },
+  "invalid_unicode": {
+    "before": {
+      "schema_version": 1,
+      "variant": "before",
+      "revision": "9c077dce716ff718e5689d9791b5a63ba4a4c619",
+      "measured_at_utc": "2026-10-02T21:59:35.881563+00:00",
+      "synthetic": true,
+      "postgres": "dedicated local PostgreSQL; unique schemas; public records untouched",
+      "cases": [
+        {
+          "case": "event_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 0,
+            "quarantined": 0,
+            "errors": 1
+          },
+          "db_counts": {
+            "event_rows": 0,
+            "search_rows": 0
+          },
+          "pending_count": 2,
+          "quarantine_bytes_unchanged": null,
+          "incomplete": true
+        },
+        {
+          "case": "context_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 0,
+            "quarantined": 0,
+            "errors": 1
+          },
+          "db_counts": {
+            "event_rows": 0,
+            "search_rows": 0
+          },
+          "pending_count": 2,
+          "quarantine_bytes_unchanged": null,
+          "incomplete": true
+        },
+        {
+          "case": "search_text",
+          "exception_class": "DataError",
+          "driver_class": "DataError",
+          "sqlstate": null,
+          "replay": {
+            "persisted": 0,
+            "quarantined": 0,
+            "errors": 1
+          },
+          "db_counts": {
+            "event_rows": 0,
+            "search_rows": 0
+          },
+          "pending_count": 2,
+          "quarantine_bytes_unchanged": null,
+          "incomplete": true
+        }
+      ],
+      "surrogate_append_exception_class": "UnicodeEncodeError",
+      "nul_event_contract_exception_class": null,
+      "source_sha256": {
+        "contracts": "322e03ca6552324522038f40a891cddf4d2c07e0c370bae9ab35c7d67b244fc5",
+        "records": "77643eaacecb4bc7c8a1f3f2087c2893d2b5ef9a6cf2b9eff3d34a8130f764eb",
+        "store": "b5115b083608aadc7ce4f4831e88f31109ccfe4593d3f0fc4622786ed2f7cab5"
+      },
+      "measurement_script_sha256": "0dc43b5eeecbc5d312a387ee53fc398f0db486b6515c1ac2114738f3307801b1"
+    },
+    "after": {
+      "schema_version": 1,
+      "variant": "after",
+      "revision": "8bd8b0a9fe11e477a6f210d20fcc1ad9aa59d6ab",
+      "measured_at_utc": "2026-10-02T21:59:36.413254+00:00",
+      "synthetic": true,
+      "postgres": "dedicated local PostgreSQL; unique schemas; public records untouched",
+      "cases": [
+        {
+          "case": "event_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 1,
+            "quarantined": 1,
+            "errors": 0
+          },
+          "db_counts": {
+            "event_rows": 1,
+            "search_rows": 0
+          },
+          "pending_count": 0,
+          "quarantine_bytes_unchanged": true,
+          "incomplete": true
+        },
+        {
+          "case": "context_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 1,
+            "quarantined": 1,
+            "errors": 0
+          },
+          "db_counts": {
+            "event_rows": 1,
+            "search_rows": 0
+          },
+          "pending_count": 0,
+          "quarantine_bytes_unchanged": true,
+          "incomplete": true
+        },
+        {
+          "case": "search_text",
+          "exception_class": "DataError",
+          "driver_class": "DataError",
+          "sqlstate": null,
+          "replay": {
+            "persisted": 1,
+            "quarantined": 1,
+            "errors": 0
+          },
+          "db_counts": {
+            "event_rows": 1,
+            "search_rows": 0
+          },
+          "pending_count": 0,
+          "quarantine_bytes_unchanged": true,
+          "incomplete": true
+        }
+      ],
+      "surrogate_append_exception_class": "StorageUnavailable",
+      "nul_event_contract_exception_class": "ValidationError",
+      "source_sha256": {
+        "contracts": "58a3ca46337e5835386e440089d0edd7f825dd416e7441bb58d3d37c2aa3229f",
+        "records": "77643eaacecb4bc7c8a1f3f2087c2893d2b5ef9a6cf2b9eff3d34a8130f764eb",
+        "store": "bf6639d8e62f77560f484234639be11e6d441fe9a989999403daab9f5030ecfe"
+      },
+      "measurement_script_sha256": "0dc43b5eeecbc5d312a387ee53fc398f0db486b6515c1ac2114738f3307801b1"
+    },
+    "measurement_script_sha256": "0dc43b5eeecbc5d312a387ee53fc398f0db486b6515c1ac2114738f3307801b1",
+    "observability_limits": {
+      "encoding_failure": "Only the static encoding log category is emitted; a persistent error counter is not guaranteed for this failure. Exception text and payload are not logged.",
+      "quarantined_database_records": "Original bytes are retained in quarantine; operator diagnostics mark incompleteness. No successful replay of the unsupported record is claimed."
+    }
   },
   "write_overhead": {
     "synthetic": true,
@@ -242,34 +393,34 @@
     "source_matches": true,
     "restored": {
       "migration": "analytics_0003",
-      "searches": 33,
-      "events": 353,
-      "context": 33,
-      "event_context": 353,
-      "search_sha": "a0d368003dcc63e6c7c93bbda39b4fba",
-      "event_sha": "8efb67cf299ac88051af3b01be9885b9",
-      "context_sha": "91d3e0a7fb635d244b16e0d1ef533f5e",
-      "event_context_sha": "932ff04a4c0e52fc793d5d3d33291981"
+      "searches": 84,
+      "events": 765,
+      "context": 84,
+      "event_context": 765,
+      "search_sha": "f5fea6e958fa3785586b6c651f4d4d1e",
+      "event_sha": "007833227963bca6be72c8f50eb248b8",
+      "context_sha": "17544f3089cfa4af5c781a9ed6559d77",
+      "event_context_sha": "c3e1fb8b600c08a4a961f3fb32d622be"
     },
-    "dump_sha256": "5839d49e23740ccd167e300422991a46cee296c88905e7ea0a19f0bcd33ddec4"
+    "dump_sha256": "80b4797aa2457a8a02514b9beffc016be730aa1d582fb684d0c5f24c00d5e5ab"
   },
   "mac_copy": {
     "verified": true,
     "files": [
       {
         "path": "analytics.dump",
-        "bytes": 55551,
-        "sha256": "9cfd63deb0577a7f6da6bded897bccba6d642c397843b3e05a35323f8102e046"
+        "bytes": 110252,
+        "sha256": "789e116bb47b1585404409de752784e70b6fb911562515c50c65ef2562e1d7a9"
       },
       {
         "path": "analytics-journal.tar",
-        "bytes": 583680,
-        "sha256": "2ab30f25ad9b57d009ff5da0fa62065828f8be116d69cde4dcf2b610d853adf2"
+        "bytes": 1126400,
+        "sha256": "b54cfde1d4c0e39175838d40073ad6272cc3d5c19dc2089cfc5d5d684e93edda"
       },
       {
         "path": "access-logs.tar",
-        "bytes": 43520,
-        "sha256": "96acf6f716de951b7cb057b4f30f13793f1d06227ef5419711043274b810e766"
+        "bytes": 1046528,
+        "sha256": "fc703d41a778c0fd565d90dac7bd568476cbf10e51b93e0b8fed66457d17765e"
       }
     ],
     "consistency": "DB pg_dump transaction; active logs/journal may advance while streaming. This is an observed copy, not a common cross-file snapshot; rerun after replay for completeness."
@@ -295,7 +446,7 @@
     "migration_current": true,
     "pending_count": 0,
     "quarantine_count": 0,
-    "error_count": 1,
+    "error_count": 2,
     "incomplete": true
   },
   "postgres_initialization": {
@@ -349,6 +500,9 @@
     "skipped": 1,
     "duration": "10.5m",
     "production_limits_unchanged": true,
-    "models": "synthetic UI responses and real FRIDA scenarios explicitly separate"
+    "models": "synthetic UI responses and real FRIDA scenarios explicitly separate",
+    "log_file": "web-e2e-final-version.log",
+    "log_sha256": "9b538548ee4d76b6d0827ace851f4ffcbae2788be051cfe2c3fae52db3bd9a14",
+    "source_head": "18ad9e87391cc9a3e61fdc18a23e77514086fbef"
   }
 }

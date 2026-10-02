@@ -20,12 +20,13 @@ def collect(source: Path) -> dict[str, Any]:
     baseline = read("baseline-linux.json")
     current = read("with-analytics-linux.json")
     oracle = read("oracle-report-v2/summary.json")
-    restored = read("backup/restore-sfr_restore_179_final.json")
-    manifest = read("pull/manifest.json")
+    restored = read("backup-final/restore-sfr_restore_179_handoff.json")
+    manifest = read("pull-final/manifest.json")
     result: dict[str, Any] = {
         "schema_version": 1,
         "scope": "isolated local Docker Linux arm64; synthetic traffic, real FRIDA where explicit",
-        "persistence": read("persistence.json"),
+        "persistence": read("persistence-final.json"),
+        "invalid_unicode": read("invalid-unicode.json"),
         "write_overhead": read("write-overhead.json"),
         "stalled_disk": {
             variant: {
@@ -90,7 +91,7 @@ def collect(source: Path) -> dict[str, Any]:
             "consistency": manifest["consistency"],
         },
         "rate_limits": read("rate-limits.json"),
-        "diagnostic_exit_policy": read("check-live-reviewed.json"),
+        "diagnostic_exit_policy": read("check-live-final.json"),
         "postgres_initialization": read("pg-initialization.json"),
         "caddy_regression": read("caddy-regression.json"),
         "browser": read("browser-counts-v2.json"),
@@ -98,7 +99,7 @@ def collect(source: Path) -> dict[str, Any]:
     }
     for item in manifest["files"]:
         digest = hashlib.sha256()
-        with (source / "pull" / item["path"]).open("rb") as stream:
+        with (source / "pull-final" / item["path"]).open("rb") as stream:
             for chunk in iter(lambda: stream.read(1024 * 1024), b""):
                 digest.update(chunk)
         if digest.hexdigest() != item["sha256"]:

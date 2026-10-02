@@ -22,7 +22,7 @@ import httpx
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--url", default="http://127.0.0.1:18080")
+    parser.add_argument("--url", default="http://localhost:18080")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     project = os.environ.get("SFR_COMPOSE_PROJECT", "")
