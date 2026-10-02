@@ -291,6 +291,8 @@ PostgreSQL хранит `timestamptz`. Для переноса БД меняют
 Caddy заменяет входные X-Forwarded-For/X-Real-IP, Next доверяет только
 этой закрытой цепочке, API доверяет только фиксированному адресу Next
 (`SFR_COMPOSE_WEB_IP`); при изменении подсети IP и доверие меняются вместе.
+`SFR_COMPOSE_IP_RANGE` ограничивает динамические адреса верхней половиной
+/24-подсети, чтобы PostgreSQL/API/proxy не заняли фиксированный адрес Next.
 `/api/events` ограничен отдельно 120 POST/мин/IP; этот путь и `/api/match`
 исключены из зоны страниц. Предельное тело на прокси — 16 KiB; Next/API
 дополнительно проверяют схему, размеры полей и количество событий.
@@ -302,11 +304,13 @@ Caddy заменяет входные X-Forwarded-For/X-Real-IP, Next довер
 
 ```bash
 make deploy-local SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_PORT=18080 \
-  SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3
+  SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3 \
+  SFR_COMPOSE_IP_RANGE=172.29.179.128/25
 SFR_WEB_URL=http://localhost:18080 make web-e2e
 # down только своего проекта, БЕЗ -v: аналитические данные сохраняются
 make deploy-local-down SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_PORT=18080 \
-  SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3
+  SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3 \
+  SFR_COMPOSE_IP_RANGE=172.29.179.128/25
 ```
 
 `make deploy-local` задаёт безопасные пароли только для локальной репетиции,
