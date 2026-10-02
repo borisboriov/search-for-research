@@ -121,6 +121,11 @@ def heredocs_on_line(line: str, contexts: list[tuple[str, int]]) -> list[tuple[s
         elif ch == "\\":
             i += 2
             continue
+        elif line.startswith(("${", "$["), i):
+            # Вложенные quotes/default words этих expansions требуют полной
+            # shell-грамматики. Для защищённых команд main() откажет, вместо
+            # того чтобы ошибочно принять строковый << за оператор heredoc.
+            raise ValueError("неподдерживаемая parameter/arithmetic expansion")
         elif line.startswith("$(", i):
             # Кавычки внутри command substitution не закрывают кавычки
             # родителя. Саму вложенную команду проверит substitutions().
