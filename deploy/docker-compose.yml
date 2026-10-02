@@ -139,7 +139,7 @@ services:
               "-c", "log_min_error_statement=panic", "-c", "log_parameter_max_length_on_error=0"]
     volumes:
       - analytics-db:/var/lib/postgresql/data
-      - ./postgres/init-runtime.sh:/docker-entrypoint-initdb.d/10-runtime.sh:ro
+      - ./postgres/init-runtime.sql:/docker-entrypoint-initdb.d/10-runtime.sql:ro
     networks:
       analytics:
     healthcheck:

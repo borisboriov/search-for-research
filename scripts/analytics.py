@@ -20,7 +20,9 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, func, select, text
+
+from sfr_api.analytics.models import Context, EventContext, ProductEvent, Search
 
 TABLES = ("analytics_searches", "analytics_events", "analytics_context", "analytics_event_context")
 STAGES = ("visit", "attempt", "display", "profile", "letter_copy")
@@ -75,33 +77,28 @@ def read_database(
     try:
         with engine.connect() as connection, connection.begin():
             connection.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"))
-            for table in TABLES:
-                if not include_context and table in {
-                    "analytics_context",
-                    "analytics_event_context",
-                }:
+            for model in (Search, ProductEvent, Context, EventContext):
+                if not include_context and model in (Context, EventContext):
                     continue
-                predicate = ""
-                params: dict[str, Any] = {}
+                table = model.__table__
+                statement = select(table)
                 if start is not None and end is not None:
-                    params = {"start": start, "end": end}
-                    predicate = (
-                        " WHERE received_at >= :start AND received_at < :end"
-                        if table not in {"analytics_context", "analytics_event_context"}
-                        else (
-                            " WHERE search_id IN (SELECT search_id FROM analytics_searches"
-                            " WHERE received_at >= :start AND received_at < :end)"
-                            if table == "analytics_context"
-                            else " WHERE event_id IN (SELECT event_id FROM analytics_events"
-                            " WHERE received_at >= :start AND received_at < :end)"
+                    if model is Context:
+                        ids = select(Search.search_id).where(
+                            Search.received_at >= start, Search.received_at < end
                         )
-                    )
-                # table/predicate are fixed internal constants, never CLI/user text.
-                output[table] = [
-                    dict(row)
-                    for row in connection.execute(
-                        text("SELECT * FROM " + table + predicate), params
-                    ).mappings()
+                        statement = statement.where(table.c.search_id.in_(ids))
+                    elif model is EventContext:
+                        ids = select(ProductEvent.event_id).where(
+                            ProductEvent.received_at >= start, ProductEvent.received_at < end
+                        )
+                        statement = statement.where(table.c.event_id.in_(ids))
+                    else:
+                        statement = statement.where(
+                            table.c.received_at >= start, table.c.received_at < end
+                        )
+                output[model.__tablename__] = [
+                    dict(row) for row in connection.execute(statement).mappings()
                 ]
             output["migration"] = connection.execute(
                 text("SELECT version_num FROM analytics_alembic_version")
@@ -571,21 +568,13 @@ def main() -> int:
                             result["migration_current"] = (
                                 result["migration"] == result["expected_migration"]
                             )
-                            for table, label in (
-                                ("analytics_searches", "searches"),
-                                ("analytics_events", "events"),
-                            ):
-                                stats = (
-                                    connection.execute(
-                                        text(
-                                            "SELECT count(*) AS count, "
-                                            "max(received_at) AS last_received_at, "
-                                            "max(persisted_at) AS last_persisted_at FROM " + table
-                                        )
-                                    )
-                                    .mappings()
-                                    .one()
-                                )
+                            for model, label in ((Search, "searches"), (ProductEvent, "events")):
+                                statement = select(
+                                    func.count().label("count"),
+                                    func.max(model.received_at).label("last_received_at"),
+                                    func.max(model.persisted_at).label("last_persisted_at"),
+                                ).select_from(model)
+                                stats = connection.execute(statement).mappings().one()
                                 result[label] = dict(stats)
                         result["database_available"] = True
                     finally:

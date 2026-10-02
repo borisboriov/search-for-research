@@ -263,6 +263,25 @@ make deploy-local-down
 Для уже существующего тома init-скрипт повторно не выполняется: оператор
 создаёт/проверяет роли и применяет миграции, не пересоздаёт том. Обновление
 пароля в `.env` само по себе не меняет пароль существующей роли.
+Init выполняется через `psql -f` (`init-runtime.sql`), без исполнения
+host bind-скрипта: на некоторых macOS Docker mounts проверка `-x` истинна
+для 0644, но exec запрещён. При прерванном первом init PostgreSQL уже
+может содержать данные и пропустит init при рестарте. В этом случае
+сохранить том и явно выполнить идемпотентное создание отсутствующих ролей:
+
+```bash
+# Команда для оператора после проверки выбранного проекта/БД, без удаления тома.
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml exec -T postgres \
+  sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+  -f /docker-entrypoint-initdb.d/10-runtime.sql'
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm analytics-migrate
+```
+
+Существующие роли и пароли не заменяются. Неожиданные повышенные права
+или членство ролей приводят к явной ошибке; это требует решения оператора.
+Миграция после provisioning повторно выдаёт минимальные права runtime и
+SELECT для reader. Не исправлять прерванный init удалением тома.
+
 
 Начальные ограничения PostgreSQL: 512 MiB RAM, 1 CPU, `shared_buffers=64MB`,
 `work_mem=4MB`, `maintenance_work_mem=32MB`, `max_connections=20`;
