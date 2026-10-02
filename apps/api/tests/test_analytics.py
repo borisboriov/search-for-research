@@ -295,3 +295,89 @@ def test_fsync_failure_returns_http_503_and_preserves_search_availability(
         # pending record when fsync failed.
         assert not list((tmp_path / "spool" / "pending").glob("*.json"))
         assert list((tmp_path / "spool" / "pending").glob("*.tmp"))
+
+
+def test_stalled_journal_bounds_unfinished_append_operations(tmp_path: Path, monkeypatch):
+    """HTTP timeouts may cancel awaiters but must not release actual writer admission."""
+    import threading
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    release = threading.Event()
+    entered = threading.Event()
+    counter_lock = threading.Lock()
+    unfinished = 0
+    observations = []
+    durations = []
+    original_atomic = __import__("sfr_api.analytics.store", fromlist=["_atomic"])._atomic
+    monkeypatch.setattr(DurableStore, "replay", lambda self: {})
+    app = api(tmp_path)
+
+    def stalled_atomic(path, content):
+        if path.parent.name == "pending":
+            entered.set()
+            release.wait()
+        original_atomic(path, content)
+
+    monkeypatch.setattr("sfr_api.analytics.store._atomic", stalled_atomic)
+    with TestClient(app) as client:
+        original_append = app.state.analytics.append
+
+        def counted_append(kind, records):
+            nonlocal unfinished
+            with counter_lock:
+                unfinished += 1
+            try:
+                original_append(kind, records)
+            finally:
+                with counter_lock:
+                    unfinished -= 1
+
+        monkeypatch.setattr(app.state.analytics, "append", counted_append)
+
+        def send(index):
+            started = time.monotonic()
+            if index % 2:
+                response = client.post("/api/events", json={"events": [event()]})
+                assert response.status_code == 503 and "accepted" not in response.json()
+            else:
+                response = client.post("/api/match", json={"query": "synthetic stalled journal"})
+                assert response.status_code == 200
+            return time.monotonic() - started
+
+        try:
+            with ThreadPoolExecutor(max_workers=16, thread_name_prefix="synthetic-http") as callers:
+                for wave in range(3):
+                    futures = [callers.submit(send, wave * 16 + index) for index in range(16)]
+                    durations.extend(future.result(timeout=3) for future in futures)
+                    with counter_lock:
+                        outstanding = unfinished
+                    worker_threads = sum(
+                        thread.name == "AnyIO worker thread" for thread in threading.enumerate()
+                    )
+                    observations.append((outstanding, worker_threads))
+            assert entered.is_set(), "stress test never reached the blocked disk"
+            print({"unfinished_and_threads": observations, "max_http_seconds": max(durations)})
+            assert all(outstanding <= 2 for outstanding, threads in observations), observations
+            assert max(durations) < 1.2
+            diagnostics = app.state.analytics.diagnostics()
+            assert diagnostics["append_inflight"] == 2
+            assert diagnostics["append_limit"] == 2
+            assert diagnostics["append_rejected"] == 46
+            assert diagnostics["incomplete"]
+            assert all(threads <= 42 for outstanding, threads in observations), observations
+        finally:
+            # Never leave a synthetic blocked disk or its worker threads behind,
+            # including when the old implementation fails this regression.
+            release.set()
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline:
+                with counter_lock:
+                    if unfinished == 0:
+                        break
+                time.sleep(0.01)
+            assert unfinished == 0, "synthetic writers did not finish after release"
+        assert app.state.analytics.diagnostics()["append_inflight"] == 0
+        # Recovery reopens admission only after those physical writes completed.
+        response = client.post("/api/events", json={"events": [event()]})
+        assert response.status_code == 200 and response.json()["accepted"]

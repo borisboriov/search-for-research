@@ -93,6 +93,13 @@ class DurableStore:
         self.max_pending_files = 10000
         self.engine = engine_for(url)
         self._locks = {"journal": threading.Lock(), "replay": threading.Lock()}
+        # Awaiter cancellation does not stop a synchronous disk worker. Admission
+        # therefore belongs to the actual operation, not its HTTP awaiter/timeout.
+        self._append_limit = 2
+        self._append_admission = threading.BoundedSemaphore(self._append_limit)
+        self._append_state_lock = threading.Lock()
+        self._append_inflight = 0
+        self._append_rejected = 0
         for name in ("", "pending", "archive", "quarantine"):
             path = spool_dir / name
             path.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -110,6 +117,25 @@ class DurableStore:
                 fcntl.flock(lock, fcntl.LOCK_UN)
 
     def append(self, kind: str, records: list[dict[str, Any]]) -> None:
+        if not self._append_admission.acquire(blocking=False):
+            with self._append_state_lock:
+                self._append_rejected += 1
+            # Do not write diagnostics to the stalled disk on this rejection.
+            # The category is logged and the safe in-memory count is exposed.
+            log.error("analytics storage failure category=writer_busy")
+            raise StorageUnavailable("analytics writers are occupied")
+        with self._append_state_lock:
+            self._append_inflight += 1
+        try:
+            self._append(kind, records)
+        finally:
+            # This runs in the physical worker, even after its HTTP awaiter has
+            # timed out. No later request can reuse the slot prematurely.
+            with self._append_state_lock:
+                self._append_inflight -= 1
+            self._append_admission.release()
+
+    def _append(self, kind: str, records: list[dict[str, Any]]) -> None:
         envelope = {"version": 1, "kind": kind, "records": records}
         content = json.dumps(envelope, ensure_ascii=False, allow_nan=False).encode("utf-8")
         with self._exclusive():
@@ -149,6 +175,10 @@ class DurableStore:
 
     def diagnostics(self) -> dict[str, Any]:
         result = self._status()
+        with self._append_state_lock:
+            result["append_inflight"] = self._append_inflight
+            result["append_rejected"] = self._append_rejected
+            result["append_limit"] = self._append_limit
         for name in ("pending", "archive", "quarantine"):
             paths = list((self.root / name).iterdir())
             result[f"{name}_count"] = len(paths)
@@ -165,7 +195,9 @@ class DurableStore:
         result["max_pending_bytes"] = self.max_bytes
         result["reserve_bytes"] = self.reserve_bytes
         result["max_pending_files"] = self.max_pending_files
-        result["incomplete"] = bool(result["quarantine_count"] or result.get("error_count"))
+        result["incomplete"] = bool(
+            result["quarantine_count"] or result.get("error_count") or result["append_rejected"]
+        )
         return result
 
     def replay(self, limit: int = 100) -> dict[str, int]:
