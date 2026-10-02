@@ -108,17 +108,31 @@ def tokenize(command: str) -> list[str]:
 HEREDOC = re.compile(r"<<(-?)[ \t]*(['\"]?)([A-Za-z0-9_]+)\2")
 
 
-def heredocs_on_line(line: str, state: str) -> tuple[list[tuple[str, bool, bool]], str]:
+def heredocs_on_line(line: str, contexts: list[tuple[str, int]]) -> list[tuple[str, bool, bool]]:
     """Распознать операторы heredoc вне строк, escapes и shell-комментариев."""
     found: list[tuple[str, bool, bool]] = []
     i = 0
     while i < len(line):
         ch = line[i]
+        state, depth = contexts[-1]
         if state == "single":
             if ch == "'":
                 state = "plain"
         elif ch == "\\":
             i += 2
+            continue
+        elif line.startswith("$(", i):
+            # Кавычки внутри command substitution не закрывают кавычки
+            # родителя. Саму вложенную команду проверит substitutions().
+            contexts.append(("plain", 1))
+            i += 2
+            continue
+        elif ch == "`":
+            if depth == -1:
+                contexts.pop()
+            else:
+                contexts.append(("plain", -1))
+            i += 1
             continue
         elif state == "double":
             if ch == '"':
@@ -127,10 +141,18 @@ def heredocs_on_line(line: str, state: str) -> tuple[list[tuple[str, bool, bool]
             state = "single" if ch == "'" else "double"
         elif ch == "#" and (i == 0 or line[i - 1] in " \t;&|()<>"):
             break
+        elif depth > 0 and ch == "(":
+            depth += 1
+        elif depth > 0 and ch == ")":
+            depth -= 1
+            if depth == 0:
+                contexts.pop()
+                i += 1
+                continue
         elif line.startswith("<<<", i):
             i += 3  # here-string, а не heredoc
             continue
-        elif line.startswith("<<", i):
+        elif len(contexts) == 1 and line.startswith("<<", i):
             match = HEREDOC.match(line, i)
             if not match or (
                 match.end() < len(line) and line[match.end()] not in " \t;&|()<>"):
@@ -138,8 +160,9 @@ def heredocs_on_line(line: str, state: str) -> tuple[list[tuple[str, bool, bool]
             found.append((match.group(3), bool(match.group(2)), bool(match.group(1))))
             i = match.end()
             continue
+        contexts[-1] = (state, depth)
         i += 1
-    return found, state
+    return found
 
 
 def split_heredocs(command: str) -> tuple[str, list[str]]:
@@ -153,9 +176,9 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
     code: list[str] = []
     bodies: list[str] = []
     pending: list[tuple[str, bool, bool, list[str]]] = []
-    state = "plain"
+    contexts = [("plain", 0)]
     for line in command.split("\n"):
-        if pending and state == "plain":
+        if pending and contexts == [("plain", 0)]:
             delim, quoted, strip_tabs, buf = pending[0]
             # <<- снимает только ведущие TAB; пробелы не завершают heredoc.
             if (line.lstrip("\t") if strip_tabs else line) == delim:
@@ -166,9 +189,9 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
                 buf.append(line)
             continue
         code.append(line)
-        found, state = heredocs_on_line(line, state)
+        found = heredocs_on_line(line, contexts)
         pending.extend((delim, quoted, strip_tabs, []) for delim, quoted, strip_tabs in found)
-    if pending or state != "plain":
+    if pending or contexts != [("plain", 0)]:
         raise ValueError("незавершённый heredoc или строка shell")
     return "\n".join(code), bodies
 
