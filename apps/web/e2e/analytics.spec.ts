@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 import { expect, test, type Page } from "./fixtures";
 import type { ProductEvent } from "../lib/analytics-contract";
 import { KNOWN_AUTHOR_ID } from "./helpers";
+import { openContactEmailFixture } from "./contact-email-bundle";
 
 // Synthetic matches verify browser instrumentation, not FRIDA ranking.
 // Optional live receiver additionally verifies Next → API durable acknowledgements.
@@ -38,13 +39,15 @@ async function matches(page: Page, confidence: "none" | "weak" | "ok" = "ok") {
 }
 const names = (events: ProductEvent[]) => events.map(event => event.name);
 
-test("observed results → profile → successful/failed clipboard; SSR/prefetch produce no profile event", async ({ page }) => {
+test("observed results → profile → successful/failed clipboard; SSR/prefetch produce no profile event", async ({ page, context }) => {
   const events = await capture(page); await matches(page);
   await page.goto("/results?q=" + encodeURIComponent("  synthetic topic  "));
   await expect(page.getByRole("heading", { name: "Synthetic researcher" })).toBeVisible();
   await expect.poll(() => names(events)).toContain("results_shown");
   expect(events.filter(event => event.name === "search_attempt")).toHaveLength(1);
   const attempt = events.find(event => event.name === "search_attempt")!;
+  await page.getByRole("combobox", { name: "По совпадению", exact: true }).selectOption("h_index");
+  await expect.poll(() => events.some(event => event.name === "sort_applied" && event.data.sort === "h_index" && event.search_id === attempt.search_id)).toBe(true);
   // This technical GET does not mount a client observer; no inferred human view.
   await page.request.get(`/supervisor/${KNOWN_AUTHOR_ID}`);
   await page.getByRole("link", { name: "Открыть профиль", exact: true }).hover();
@@ -66,6 +69,30 @@ test("observed results → profile → successful/failed clipboard; SSR/prefetch
   expect(names(events)).toEqual(expect.arrayContaining(["work_selected", "work_confirmed"]));
   expect(JSON.stringify(events)).not.toContain("synthetic topic");
   expect(JSON.stringify(events)).not.toContain("Черновик");
+  // Current catalogue has no available email. Exercise the real ContactCard in
+  // a separate intercepted component fixture, with controlled Clipboard API.
+  const fixture = await context.newPage();
+  const addressEvents = await capture(fixture);
+  await openContactEmailFixture(fixture);
+  await expect(fixture.getByRole("heading", { name: "Synthetic contact component fixture" })).toBeVisible();
+  await expect.poll(() => names(addressEvents)).toContain("profile_direct");
+  await fixture.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async (text: string) => { document.documentElement.dataset.copiedAddress = text; } } });
+  });
+  await fixture.getByRole("button", { name: "Скопировать", exact: true }).click();
+  await expect.poll(() => names(addressEvents)).toContain("address_copy_success");
+  expect(await fixture.evaluate(() => document.documentElement.dataset.copiedAddress)).toBe("researcher@example.invalid");
+  await fixture.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: async () => { throw new Error("denied"); } } });
+    document.execCommand = () => false;
+  });
+  await fixture.getByRole("button", { name: "Скопировано", exact: true }).click();
+  await expect.poll(() => names(addressEvents)).toContain("address_copy_failed");
+  expect(addressEvents.filter(event => event.name.startsWith("address_copy"))).toHaveLength(2);
+  expect(addressEvents.filter(event => event.name.startsWith("address_copy")).every(event => event.data.author_id === "synthetic-contact-fixture" && event.search_id === null)).toBe(true);
+  expect(JSON.stringify(addressEvents)).not.toContain("researcher@example.invalid");
+  await fixture.unrouteAll({ behavior: "wait" });
+  await fixture.close();
 });
 
 test("weak and empty display, repeat/topic attempts, validation and technical error remain distinct", async ({ page }) => {
@@ -82,6 +109,14 @@ test("weak and empty display, repeat/topic attempts, validation and technical er
   await page.getByRole("list", { name: "Ключевые темы" }).first().getByRole("link").first().click();
   await expect.poll(() => events.filter(event => event.name === "search_attempt").length).toBe(3);
   expect(events.filter(event => event.name === "search_attempt")[2].data.source).toBe("topic");
+  const third = events.filter(event => event.name === "search_attempt")[2];
+  await page.getByRole("button", { name: /^Редактировать текущий запрос:/ }).click();
+  await page.getByRole("textbox", { name: "Описание научных интересов" }).fill("reformulated synthetic");
+  await page.getByRole("button", { name: "Подобрать научрука", exact: true }).click();
+  await expect.poll(() => events.filter(event => event.name === "search_attempt").length).toBe(4);
+  const reformulated = events.filter(event => event.name === "search_attempt")[3];
+  expect(reformulated.search_id).not.toBe(third.search_id);
+  await expect.poll(() => events.some(event => event.name === "search_reformulated" && event.search_id === reformulated.search_id && event.data.previous_search_id === third.search_id)).toBe(true);
   await page.unroute("**/api/match"); await matches(page, "none");
   await page.goto("/results?q=empty-synthetic"); await expect.poll(() => names(events)).toContain("empty_shown");
   await page.unroute("**/api/match"); await page.route("**/api/match", route => route.fulfill({ status: 503, body: "unavailable" }));
