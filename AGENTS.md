@@ -148,9 +148,11 @@ Stop-хук `.claude/hooks/review-reminder.sh`, PreToolUse-хук `.claude/hooks
 адаптация пути и отдельное доверие определениям. Общие процедуры лежат в
 `.agents/skills/`: `$issues` и `$review-iteration`; slash-команды Claude —
 короткие входы в те же skills. Формат Claude не подменяет нативную конфигурацию Codex.
-Роль `sfr-judge` в Codex наследует модель родителя: прежний backend Fable
-этим переносом не настроен. До новой разметки явно зафиксировать фактическую
-модель в запуске и отчёте; не выдавать новый eval за результат прежнего судьи.
+Роль `sfr-judge` в Codex закреплена на `gpt-6-astra` с reasoning `max`
+в `.codex/agents/sfr-judge.toml`; модель родителя не наследуется. Новые оценки
+помечаются `gpt-6-astra/max (sfr-judge)`, фактическая модель/effort фиксируются
+в отчёте запуска. Прежние оценки Fable не меняются; новый eval не выдаётся
+за результат прежнего судьи и не смешивается с ним без отдельного сравнения.
 **Граница — только хук `block-push.sh`** (#129, DECISIONS 27.09):
 он отклоняет push в `main`, force/delete и `gh pr merge` по разобранным аргументам и пропускает push своей ветки (с 27.09.2026), тесты — `make hooks-test`; **`make docs-check`** (`scripts/docs_check.py`, в CI) — согласованность живых документов: пути, старые адреса, блок «Состояние» против брифа, `meta.json` индекса и `ApiSettings`; `make docs-check-live` — плюс боевой `/api/health`;
 `allow`/`deny` в settings — гигиена и подсказка, а не защита.
