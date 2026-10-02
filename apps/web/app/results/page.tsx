@@ -43,7 +43,7 @@ function timeoutSignal(ms: number): AbortSignal | undefined {
 }
 
 export async function fetchMatch(text: string): Promise<State> {
-  // Границы те же, что у бэкенда: ручной ?q=ab — подсказка про запрос,
+  // Проверка интерфейса: ручной ?q=ab — подсказка про запрос,
   // а не поход в API и не ложное «Сервис недоступен» (REVIEW_SFR3 Medium).
   const invalid = validateQuery(text);
   if (invalid) return { kind: "invalid", message: invalid };
@@ -194,7 +194,9 @@ function ResultsForQuery({ query }: { query: string }) {
         {state.kind === "done" && state.response.confidence !== "none" && (
           <>
             {/* Серая зона: баннер над выдачей, сама выдача остаётся (§0.9) */}
-            {state.response.confidence === "weak" && <WeakBanner />}
+            {state.response.confidence === "weak" && (
+              <WeakBanner onEditQuery={() => setEditingQuery(true)} />
+            )}
             <FiltersRow filters={filters} institutions={institutions} onChange={setFilters} />
             <FiltersSheetRow filters={filters} institutions={institutions} onChange={setFilters} />
             {/* Счётчик — заголовком, под ним подпись о порядке выдачи (S-09) */}
@@ -205,7 +207,10 @@ function ResultsForQuery({ query }: { query: string }) {
               {/* Подпись про порядок выдачи бессмысленна над пустым списком */}
               {visible.length > 0 && (
                 <p className="text-[13.5px] text-fg-subtle">
-                  Отсортировано по совпадению с запросом · темы и работы — по публикациям OpenAlex
+                  {filters.sort === "h_index"
+                    ? "Отсортировано по h-index"
+                    : "Отсортировано по совпадению с запросом"}
+                  {" · темы и работы — по публикациям OpenAlex"}
                 </p>
               )}
             </div>

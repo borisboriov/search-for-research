@@ -7,7 +7,7 @@ import type { TopWork } from "@/lib/types";
 import { truncateTitle } from "@/lib/utils";
 
 /**
- * «<год> · <название последней работы>» с обрезкой ~64 знаков и раскрытием
+ * «Выбранная работа · <год> · <название>» с обрезкой ~64 знаков и раскрытием
  * (P-15): живые английские заголовки OpenAlex вытягивали карточку в три
  * строки мелкого текста (наблюдение 3 baseline 11.09). Короткое название
  * показывается целиком — тогда ни обрезки, ни ссылки нет.
@@ -21,7 +21,7 @@ export function LastWork({ work }: { work: TopWork }) {
   const year = work.year === null ? null : String(work.year);
   return (
     <div className="text-[13.5px] leading-[1.45] text-fg-muted">
-      {year !== null && <span className="text-fg-subtle">{year} · </span>}
+      <span className="text-fg-subtle">Выбранная работа · {year ?? "год не указан"} · </span>
       {short === work.title ? (
         work.title
       ) : (

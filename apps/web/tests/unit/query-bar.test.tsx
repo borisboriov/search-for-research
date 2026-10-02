@@ -9,6 +9,14 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("QueryBar", () => {
+  it("клик по тексту запроса непосредственно включает редактор", async () => {
+    const user = userEvent.setup();
+    render(<QueryBar query="графовые нейросети" onSubmitQuery={() => {}} />);
+    await user.click(screen.getByRole("button", { name: "Редактировать текущий запрос: графовые нейросети" }));
+    expect(screen.getByRole("textbox")).toHaveValue("графовые нейросети");
+    expect(screen.getByRole("textbox")).toHaveFocus();
+  });
+
   it("показывает текущий запрос", () => {
     render(<QueryBar query="графовые нейросети" onSubmitQuery={() => {}} />);
     expect(screen.getByText("графовые нейросети")).toBeInTheDocument();

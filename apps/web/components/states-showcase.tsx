@@ -2,6 +2,7 @@
 
 import { EmptyResults, ErrorState, QueryHint, WeakBanner } from "@/components/empty-results";
 import { MatchBadge } from "@/components/match-badge";
+import { ContactCard } from "@/components/contact-card";
 import { SupervisorCardSkeleton, SupervisorResultCard } from "@/components/supervisor-card";
 import type { MatchResult } from "@/lib/types";
 
@@ -34,6 +35,17 @@ export function StatesShowcase() {
   return (
     <main className="mx-auto flex w-full max-w-[1312px] flex-col gap-8 px-5 py-10 sm:px-16">
       <h1 className="font-display text-[28px] font-semibold">Состояния компонентов (dev)</h1>
+
+      <section aria-label="Письмо: без работ" className="max-w-lg">
+        <ContactCard card={{ ...SAMPLE, author_id: "A0000000004", top_works: [] }} />
+      </section>
+      <section aria-label="Письмо: неизвестный год" className="max-w-lg">
+        <ContactCard card={{
+          ...SAMPLE,
+          author_id: "A0000000005",
+          top_works: [{ title: "Undated sample publication", year: null }],
+        }} />
+      </section>
 
       <section className="flex flex-col gap-3.5">
         <h2 className="text-[16px] font-semibold">Карточка: обычная (грейд high)</h2>

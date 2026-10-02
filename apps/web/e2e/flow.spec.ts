@@ -74,7 +74,8 @@ test("запрос можно изменить прямо на результа�
   await expect(page.getByRole("heading", { name: /Нашли \d+ научрук/ })).toBeVisible({
     timeout: 15_000,
   });
-  await page.getByRole("button", { name: /Изменить запрос/ }).click();
+  // В слабой выдаче есть второе действие редактирования в баннере.
+  await page.getByRole("button", { name: "Изменить запрос", exact: true }).first().click();
   const textarea = page.getByRole("textbox");
   await textarea.fill("оптимизация маршрутов доставки");
   await page.getByRole("button", { name: "Подобрать научрука" }).click();

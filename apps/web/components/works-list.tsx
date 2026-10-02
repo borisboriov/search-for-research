@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import type { SupervisorCard } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
+import { worksByYear } from "@/lib/works";
 
 /**
  * Названия работ — в первую очередь, аннотация — свёрнуто/вторично: эксперимент
@@ -17,13 +18,13 @@ export function abstractFragments(profileText: string): Map<string, string> {
 }
 
 export function WorksList({ card }: { card: SupervisorCard }) {
-  const works = card.top_works.slice(0, 8);
+  const works = worksByYear(card.top_works).slice(0, 8);
   const fragments = abstractFragments(card.profile_text);
   if (works.length === 0) return null;
   return (
     <Card className="flex flex-col gap-1.5 p-[18px] sm:px-7 sm:py-[26px]">
-      <div className="flex items-center justify-between pb-2">
-        <h2 className="text-[16px] font-semibold sm:text-[18px]">Последние работы</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
+        <h2 className="text-[16px] font-semibold sm:text-[18px]">Выбранные работы</h2>
         {card.works_count !== null && (
           <a
             href={`https://openalex.org/authors/${card.author_id}`}
@@ -35,6 +36,10 @@ export function WorksList({ card }: { card: SupervisorCard }) {
           </a>
         )}
       </div>
+      <p className="pb-2 text-[13px] leading-relaxed text-fg-muted">
+        Часть публикаций из профиля, по году от новых к старым. Это не полный список
+        последних работ автора; работы без года — в конце.
+      </p>
       <ul>
         {works.map((work, index) => {
           const fragment = fragments.get(work.title);
@@ -61,7 +66,7 @@ export function WorksList({ card }: { card: SupervisorCard }) {
                   <span className="text-[14px] leading-snug font-medium sm:text-[15px]">
                     {work.title}
                   </span>
-                  {work.year !== null && <span className="text-[13px] text-fg-subtle">{work.year}</span>}
+                  <span className="text-[13px] text-fg-subtle">{work.year ?? "год не указан"}</span>
                 </div>
               )}
             </li>

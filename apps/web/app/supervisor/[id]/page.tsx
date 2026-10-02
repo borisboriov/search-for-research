@@ -11,6 +11,7 @@ import { SupervisorHeader } from "@/components/supervisor-header";
 import { Card } from "@/components/ui/card";
 import { WorksList } from "@/components/works-list";
 import { getHealth, getSupervisor } from "@/lib/api";
+import { topicLabel } from "@/lib/topics";
 import { catalogueDate, formatIndexDate, institutionShort } from "@/lib/utils";
 
 // ISR, а не SSG: страницы рендерятся по запросу и кэшируются на час, поэтому
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const title = university ? `${card.name} — ${university}` : card.name;
   const description = `Научный руководитель${university ? `, ${university}` : ""}${
     card.position ? `, ${card.position}` : ""
-  }. Ключевые темы: ${card.topics.slice(0, 5).join(", ")}.`;
+  }. Ключевые темы: ${card.topics.slice(0, 5).map(topicLabel).join(", ")}.`;
   return {
     title,
     description,
@@ -87,7 +88,7 @@ export default async function SupervisorPage({ params }: PageProps) {
               <h2 className="text-[16px] font-semibold lg:text-[18px]">Чем занимается</h2>
               <p className="text-[14px] leading-relaxed text-fg-muted lg:text-[15px]">
                 {card.topics.length > 0
-                  ? `Ключевые темы по публикациям: ${card.topics.slice(0, 7).join("; ")}.`
+                  ? `Ключевые темы по публикациям: ${card.topics.slice(0, 7).map(topicLabel).join("; ")}.`
                   : "Тем в открытых данных не нашлось — загляни в список работ ниже."}
               </p>
               {/* Происхождение тем — внутри блока, а не в футере (P-09):

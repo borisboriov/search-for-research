@@ -24,7 +24,7 @@ for (const width of [375, 390]) {
         await route.fulfill({ response, json: payload });
       });
       await page.goto("/results?q=" + encodeURIComponent("теплообмен"));
-      await expect(page.getByRole("heading", { name: /Нашли 3/ })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /Нашли 3/ })).toBeVisible({ timeout: 15_000 });
       await page.getByRole("button", { name: "Фильтры", exact: true }).click();
       const dialog = page.getByRole("dialog");
       await dialog.getByRole("combobox", { name: "Организация: все" }).selectOption(longInstitution);

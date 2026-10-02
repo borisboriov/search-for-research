@@ -35,7 +35,7 @@ function Chip({
   return (
     <label
       className={cn(
-        "relative flex min-h-11 min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 py-2 text-[14px]",
+        "relative flex min-h-11 min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 py-2 text-[14px] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent",
         active
           ? "border-accent-border bg-accent-soft font-medium text-accent"
           : "border-border bg-surface text-fg",

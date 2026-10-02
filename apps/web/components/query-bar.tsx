@@ -32,7 +32,14 @@ export function QueryBar({
   return (
     <div className="flex items-center gap-2.5 rounded-card border border-border bg-surface px-3.5 py-2.5 sm:gap-3 sm:px-[18px] sm:py-3.5">
       <Search className="size-[18px] shrink-0 text-fg-subtle" aria-hidden strokeWidth={2} />
-      <p className="grow truncate text-[15px] leading-[1.4]">{query}</p>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        aria-label={`Редактировать текущий запрос: ${query}`}
+        className="min-h-11 min-w-0 grow cursor-pointer truncate rounded-btn text-left text-[15px] leading-[1.4] hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+      >
+        {query}
+      </button>
       <button
         type="button"
         onClick={() => setEditing(true)}

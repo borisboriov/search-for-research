@@ -19,11 +19,11 @@ const STEPS = [
   },
   {
     title: "Получи подборку",
-    text: "Топ-10 научруков из разных вузов со степенью совпадения, темами и наукометрией — меньше чем за секунду.",
+    text: "До 10 научруков из разных вузов со степенью совпадения, темами исследований и наукометрией.",
   },
   {
-    title: "Напиши научруку",
-    text: "Открой профиль, посмотри последние работы и отправь письмо по готовому шаблону.",
+    title: "Подготовь письмо",
+    text: "Открой профиль, изучи выбранные работы и подготовь черновик письма по шаблону. Отправить его можно самостоятельно.",
   },
 ] as const;
 
@@ -62,7 +62,7 @@ export default async function LandingPage() {
         >
           <PillLabel>Кросс-вузовый подбор научных руководителей</PillLabel>
           <h1 className="max-w-[1100px] text-center font-display text-[42px] leading-[1.04] font-medium tracking-[-0.015em] text-balance sm:text-[76px]">
-            Научный руководитель под твою тему — за&nbsp;минуту
+            Научный руководитель под твою тему
           </h1>
           <p className="max-w-[640px] text-center text-[17px] leading-[1.5] text-fg-muted sm:text-[20px]">
             Опиши, что тебе интересно в науке, — и получи подборку научруков из разных вузов
@@ -142,10 +142,10 @@ export default async function LandingPage() {
         {/* CTA */}
         <section className="flex flex-col items-center gap-4 bg-accent-deep px-4 py-12 sm:gap-5 sm:px-16 sm:py-20">
           <h2 className="max-w-[720px] text-center font-display text-[30px] leading-[1.15] font-semibold text-balance text-white sm:text-[40px]">
-            Поиск научрука — <span className="whitespace-nowrap">3–12 недель.</span> Или минута.
+            Найди исследователей, близких к твоей теме
           </h2>
           <p className="max-w-[560px] text-center text-[15px] leading-[1.5] text-accent-deep-fg sm:text-[17px]">
-            Не ограничивайся своей кафедрой — выбирай из сотен исследователей разных вузов.
+            Не ограничивайся своей кафедрой — изучи исследователей из разных вузов.
           </p>
           <Link
             href="/#search"

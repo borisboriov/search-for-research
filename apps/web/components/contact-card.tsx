@@ -1,12 +1,13 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { buildLetter } from "@/lib/letter";
 import type { SupervisorCard } from "@/lib/types";
+import { worksByYear } from "@/lib/works";
 
 // Фолбэк для сред без Clipboard API (например, http без TLS — REVIEW_SFR3 Low:
 // кнопка молча не работала): скрытая textarea + execCommand("copy").
@@ -48,10 +49,19 @@ function useCopy(): [boolean, (text: string) => void] {
   return [copied, copy];
 }
 
-/** PoC контакта: email (если есть в данных) + шаблон письма + «Скопировать».
- * Отправка из сервиса — пилот (БФТ 2.2), здесь только copy-paste. */
+/** Черновик первого письма: студент выбирает работу и отдельно подтверждает её упоминание. */
 export function ContactCard({ card }: { card: SupervisorCard }) {
-  const letter = buildLetter(card);
+  return <ContactDraft key={card.author_id} card={card} />;
+}
+
+function ContactDraft({ card }: { card: SupervisorCard }) {
+  const works = worksByYear(card.top_works);
+  const [selectedIndex, setSelectedIndex] = useState(works.length ? "0" : "");
+  const [includeWork, setIncludeWork] = useState(false);
+  const selectedWork = selectedIndex === "" ? null : works[Number(selectedIndex)] ?? null;
+  const letter = buildLetter(card, includeWork ? selectedWork : null);
+  const selectId = useId();
+  const hintId = useId();
   const [emailCopied, copyEmail] = useCopy();
   const [letterCopied, copyLetter] = useCopy();
 
@@ -75,19 +85,62 @@ export function ContactCard({ card }: { card: SupervisorCard }) {
           Email не найден в открытых источниках — поищи на странице вуза или в последних статьях.
         </p>
       )}
+      {works.length > 0 ? (
+        <div className="flex min-w-0 flex-col gap-2">
+          <label htmlFor={selectId} className="text-[14px] font-medium">Работа для письма</label>
+          <select
+            id={selectId}
+            value={selectedIndex}
+            aria-describedby={hintId}
+            onChange={(event) => {
+              setSelectedIndex(event.target.value);
+              setIncludeWork(false);
+            }}
+            className="min-h-11 w-full min-w-0 rounded-btn border border-border bg-bg px-2 text-[14px] focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            <option value="">Без упоминания работы</option>
+            {works.map((work, index) => (
+              <option key={`${work.title}-${work.year}-${index}`} value={String(index)}>
+                {work.year ?? "год не указан"} · {work.title}
+              </option>
+            ))}
+          </select>
+          <p id={hintId} className="text-[12px] leading-normal text-fg-subtle">
+            {works[0]?.year !== null
+              ? "Предложена самая свежая из выбранных работ профиля."
+              : "Годы работ неизвестны — выбери подходящую по названию."}
+            {" "}Упомяни её, только если прочитал(а) и видишь связь со своей задачей.
+          </p>
+          {selectedWork && (
+            <label className="flex cursor-pointer items-start gap-2 text-[13px] leading-normal text-fg-muted">
+              <input
+                type="checkbox"
+                checked={includeWork}
+                onChange={(event) => setIncludeWork(event.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-accent"
+              />
+              Добавить выбранную работу в письмо
+            </label>
+          )}
+        </div>
+      ) : (
+        <p className="text-[13px] leading-normal text-fg-muted">
+          В профиле нет выбранных работ. Черновик подготовлен без упоминания публикации.
+        </p>
+      )}
       <div className="flex flex-col gap-2 rounded-btn border border-border bg-bg px-3.5 py-3">
         <p className="text-[12px] font-medium tracking-[0.06em] text-fg-subtle uppercase">
           Шаблон письма
         </p>
-        <p className="text-[14px] leading-normal whitespace-pre-line text-fg-muted">{letter}</p>
+        <p aria-label="Черновик письма" className="text-[14px] leading-normal whitespace-pre-line text-fg-muted">{letter}</p>
       </div>
       <Button type="button" size="compact" className="w-full" onClick={() => copyLetter(letter)}>
         {letterCopied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
         {letterCopied ? "Скопировано" : "Скопировать письмо"}
       </Button>
       <p className="text-[12px] leading-normal text-fg-subtle">
-        На этапе теста письмо отправляешь сам из своей почты. Отправка из сервиса и статусы
-        заявок — скоро.
+        Замени поля в квадратных скобках своими данными и отправь письмо из своей почты.
+        Копирование сохраняет черновик и не отправляет письмо научруку.
       </p>
     </Card>
   );
