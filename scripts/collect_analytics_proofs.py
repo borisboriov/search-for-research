@@ -94,7 +94,8 @@ def collect(source: Path) -> dict[str, Any]:
         "diagnostic_exit_policy": read("check-live-final.json"),
         "postgres_initialization": read("pg-initialization.json"),
         "caddy_regression": read("caddy-regression.json"),
-        "browser": read("browser-counts-v2.json"),
+        "browser": read("browser-counts-v3.json"),
+        "browser_ci_regression": read("browser-ci-regression.json"),
         "full_browser_suite": read("full-browser-summary.json"),
     }
     for item in manifest["files"]:

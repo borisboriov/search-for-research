@@ -226,7 +226,7 @@ analytics-db и analytics-journal, down -v и downgrade миграций не в
   seeded 0001 → 0003 без потери полей, outage/replay, недопустимые записи и минимальные runtime-права.
   CI checks поднимает настоящий postgres:17.11, требует этот запуск без skips.
 - `make web-lint`, `make web-typecheck`, `make web-test`, `make web-build`:
-  135 unit-тестов, один прежний skip; production Next build успешен.
+  137 unit-тестов, один прежний skip; production Next build успешен.
 - `make docs-check`, `make audit AUDIT_ARGS="--no-images --strict"`,
   `git diff --check`: успешно. Аудит включает native gitleaks полной истории
   worktree; 0 Semgrep findings, зависимости/Trivy/Bandit/Hadolint прошли.
@@ -237,10 +237,15 @@ analytics-db и analytics-journal, down -v и downgrade миграций не в
   ложного profile view от SSR/prefetch. Адресные Clipboard success/failure
   проверены на реальном ContactCard в Playwright-only Vite bundle с
   researcher@example.invalid и контролируемым Clipboard API; каталог и
-  production routes не менялись. События не содержат email. Полный `make web-e2e`:
+  production routes не менялись. События не содержат email. Полный `make web-e2e`
+  на `18ad9e8`:
   42 passed/1 прежний dev-only skip (письмо без работ/неизвестный год), 10,5 минуты; проверяет
   действующие страницы с реальной FRIDA. External Compose использует
   SFR_E2E_MIN_TEST_INTERVAL_MS=15000 при неизменных боевых rate limits.
+  После финального frontend-исправления повторены все четыре затронутых сценария
+  на `65fbb51`: 4 passed/47,3 секунды, снова 47 ACK и все 47 записей найдены в PG.
+  Исходные и повторные доказательства сохранены отдельно; source_head указан
+  в каждом агрегате.
 - Compose force-recreate PG/API/Next сохраняет 83 searches/764 events.
   DB outage → fsync ACK → restart API/Next → PG recovery/replay сохраняет
   84 searches/765 events; повторный ACK не меняет counts. Временные клиентские
@@ -300,3 +305,18 @@ append превращается в StorageUnavailable, ответ поиска �
 Последний случай виден статической категорией в логах, постоянный счётчик для
 него не гарантируется. Доказательства — `invalid_unicode` безопасного артефакта;
 ранжирование и валидация поискового запроса не менялись.
+
+Дополнительный проход CI обнаружил UnhandledRejection после 80-мс инициализации
+аналитики в уничтоженном jsdom-окружении. Исправлены проверка именно браузерного
+BroadcastChannel и прекращение отложенных действий после teardown; настоящие
+браузеры сохраняют 80-мс арбитраж вкладок и BFCache. Две регрессии проверяют
+Node-only API и уничтожение окружения до завершения: канал закрыт, очередь
+не пополняется, отправки/повторные доставки отсутствуют. Уточнение теста
+учитывает служебные таймеры jsdom через наблюдаемое поведение. Требования CI
+не ослаблялись; полный браузерный прогон и повтор затронутых сценариев различены
+выше.
+Исходный timer assertion воспроизведён в отдельном Linux arm64 с Node 24.21.0,
+как в CI (CI — x64): instrumentation показала `bound _dispatchStorageEvent`,
+delay=0. Исправленный полный unit-набор: 137 passed/1 прежний skip без
+UnhandledRejection. Тест наблюдает весь 60-секундный предел повторов и проверяет
+пустую очередь/отсутствие fetch, сохраняя требования к прекращению аналитики.

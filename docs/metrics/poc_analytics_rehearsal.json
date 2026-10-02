@@ -467,8 +467,12 @@
   },
   "browser": {
     "schema_version": 1,
+    "source_head": "65fbb51fa4bc9958622016004fd04adc11a0894d",
     "live_receiver": true,
     "scenario_count": 4,
+    "passed": 4,
+    "duration": "47.3s",
+    "log_sha256": "17c66a4838c5c1eba4f31bd38c262eca6a4fd3279b93d1ebc3b95df40425a4b4",
     "acknowledged_event_count": 47,
     "observed_visits": 6,
     "counts": {
@@ -493,6 +497,26 @@
       "search_validation_failed": 1
     },
     "postgres_confirmed_distinct_events": 47
+  },
+  "browser_ci_regression": {
+    "node_version": "24.21.0",
+    "architecture": "Linux arm64; CI Linux x64",
+    "before_failure_reproduced": true,
+    "observed_unrelated_timer": {
+      "name": "bound _dispatchStorageEvent",
+      "delay_ms": 0
+    },
+    "after_passed": 137,
+    "after_skipped": 1,
+    "unhandled_errors": 0,
+    "guard_checks": "Node-only channel unused; initialization resolves without 80ms advance; abandoned channel closed; no events or fetch over 60s",
+    "test_source_head": "6af8abd3a6a0f068860633027262412e11f6206c",
+    "product_source_head": "65fbb51fa4bc9958622016004fd04adc11a0894d",
+    "private_logs_sha256": {
+      "before": "f65f7f71cc0c8082590b49b163809969dc76da7546255f4bc788677f4b7935aa",
+      "timer-trace": "5fc556a46a98d7472c818a1e74d75af0223896b2d8821a85a74bed8895427ab4",
+      "after": "ae13274d3ef2c57688327d724fe1e01f77a11bc0b9d7c668c28d868731e1c84b"
+    }
   },
   "full_browser_suite": {
     "command": "SFR_WEB_URL=http://localhost:18080 SFR_ANALYTICS_LIVE_RECEIVER=1 SFR_E2E_MIN_TEST_INTERVAL_MS=15000 make web-e2e",
