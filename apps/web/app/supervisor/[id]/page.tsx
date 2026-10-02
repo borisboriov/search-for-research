@@ -1,3 +1,4 @@
+import { ProfileObserver } from "@/components/analytics-observer";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -78,6 +79,7 @@ export default async function SupervisorPage({ params }: PageProps) {
   // обёртки колонок схлопываются в display:contents, порядок задают order-классы.
   return (
     <>
+      <ProfileObserver authorId={card.author_id} />
       <SiteHeader />
       <main className="mx-auto flex w-full max-w-[1312px] flex-col gap-4 px-4 pt-[18px] pb-10 sm:gap-6 sm:px-16 sm:pt-7 sm:pb-16">
         <BackToResults />

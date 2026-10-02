@@ -1,9 +1,13 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { emitEvent } from "@/lib/analytics";
 import { ContactCard } from "@/components/contact-card";
 import type { SupervisorCard } from "@/lib/types";
+
+vi.mock("@/lib/analytics", () => ({ emitEvent: vi.fn() }));
+beforeEach(() => vi.mocked(emitEvent).mockClear());
 
 const CARD: SupervisorCard = {
   author_id: "A1", name: "Latin Name", institution: null, position: null,
@@ -84,5 +88,34 @@ describe("ContactCard", () => {
     rerender(<ContactCard card={{ ...CARD, author_id: "A2" }} />);
     expect(screen.getByRole("checkbox")).not.toBeChecked();
     expect(draft()).not.toHaveTextContent("Прочитал");
+  });
+});
+
+
+describe("clipboard analytics use resolved outcomes", () => {
+  it("address success records outcome without including email or letter text", async () => {
+    const user = userEvent.setup(); const write = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    render(<ContactCard card={{ ...CARD, email: "private@example.invalid" }} />);
+    await user.click(screen.getByRole("button", { name: "Скопировать" }));
+    expect(emitEvent).toHaveBeenCalledWith("address_copy_success", { author_id: CARD.author_id });
+    expect(JSON.stringify(vi.mocked(emitEvent).mock.calls)).not.toContain("private@example.invalid"); write.mockRestore();
+  });
+  it("failed clipboard and failed fallback record address/letter failures", async () => {
+    const user = userEvent.setup(); const write = vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("denied"));
+    Object.defineProperty(document, "execCommand", { configurable: true, value: () => false });
+    render(<ContactCard card={{ ...CARD, email: "private@example.invalid" }} />);
+    await user.click(screen.getByRole("button", { name: "Скопировать" }));
+    await user.click(screen.getByRole("button", { name: "Скопировать письмо" }));
+    expect(emitEvent).toHaveBeenCalledWith("address_copy_failed", { author_id: CARD.author_id });
+    expect(emitEvent).toHaveBeenCalledWith("letter_copy_failed", { author_id: CARD.author_id });
+    expect(vi.mocked(emitEvent).mock.calls.some(([name]) => name.endsWith("_success"))).toBe(false); write.mockRestore();
+  });
+  it("clicking before clipboard acknowledgement does not count as success", async () => {
+    const user = userEvent.setup(); let done!: () => void;
+    const write = vi.spyOn(navigator.clipboard, "writeText").mockImplementation(() => new Promise<void>(resolve => { done = resolve; }));
+    render(<ContactCard card={CARD} />); await user.click(screen.getByRole("button", { name: "Скопировать письмо" }));
+    expect(emitEvent).not.toHaveBeenCalled(); done();
+    expect(await screen.findByRole("button", { name: "Скопировано" })).toBeInTheDocument();
+    expect(emitEvent).toHaveBeenCalledWith("letter_copy_success", { author_id: CARD.author_id }); write.mockRestore();
   });
 });

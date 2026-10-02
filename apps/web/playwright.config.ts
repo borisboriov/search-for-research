@@ -12,7 +12,7 @@ export default defineConfig({
   use: {
     baseURL: process.env.SFR_WEB_URL ?? "http://localhost:3000",
   },
-  webServer: {
+  webServer: process.env.SFR_WEB_URL ? undefined : {
     command: "npm run dev",
     url: "http://localhost:3000",
     reuseExistingServer: true,

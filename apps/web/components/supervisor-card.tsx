@@ -1,5 +1,5 @@
 import { BarChart3, Building2, User } from "lucide-react";
-import Link from "next/link";
+import { TopicLink, ProfileLink } from "@/components/analytics-link";
 
 import { AvatarInitials } from "@/components/avatar-initials";
 import { MatchBadge } from "@/components/match-badge";
@@ -22,14 +22,12 @@ function TopicPills({ topics }: { topics: string[] }) {
     <ul className="flex flex-wrap gap-1.5" aria-label="Ключевые темы">
       {topics.slice(0, TOPICS_SHOWN).map((topic) => (
         <li key={topic} className="max-w-full">
-          <Link
-            href={`/results?q=${encodeURIComponent(topic)}`}
-            prefetch={false}
-            rel="nofollow"
+          <TopicLink
+            topic={topic}
             className="relative z-10 block rounded-full bg-bg-muted px-2.5 py-[3px] text-[12.5px] leading-[1.4] break-words text-fg-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
           >
             {topicLabel(topic)}
-          </Link>
+          </TopicLink>
         </li>
       ))}
     </ul>
@@ -78,7 +76,7 @@ function FactsRow({
  * слева, ярусы справа, кнопка «Открыть профиль» внизу справа; мобайл —
  * вертикальная, кликабельна целиком, кнопки нет.
  */
-export function SupervisorResultCard({ result, query }: { result: MatchResult; query: string }) {
+export function SupervisorResultCard({ result, query, searchId, position }: { result: MatchResult; query: string; searchId?: string; position?: number }) {
   const href = `/supervisor/${result.author_id}?score=${result.score.toFixed(4)}&grade=${
     result.serendipity ? "serendipity" : result.grade
   }&q=${encodeURIComponent(query)}`;
@@ -132,16 +130,19 @@ export function SupervisorResultCard({ result, query }: { result: MatchResult; q
         <TopicPills topics={result.topics} />
         {lastWork && <LastWork work={lastWork} />}
         <div className="hidden justify-end pt-0.5 sm:flex">
-          <Link
+          <ProfileLink
             href={href}
+            author={result.author_id}
+            search={searchId}
+            position={position}
             className="relative z-10 inline-flex min-h-11 items-center rounded-btn border border-border bg-surface px-[18px] py-2.5 text-[15px] font-medium whitespace-nowrap hover:bg-bg focus-visible:outline-2 focus-visible:outline-accent"
           >
             Открыть профиль
-          </Link>
+          </ProfileLink>
         </div>
       </div>
       {/* Мобайл: кликабельна вся карточка (растянутая ссылка поверх). */}
-      <Link href={href} aria-label={`Открыть профиль: ${result.name}`} className="absolute inset-0 sm:hidden" />
+      <ProfileLink href={href} author={result.author_id} search={searchId} position={position} label={`Открыть профиль: ${result.name}`} className="absolute inset-0 sm:hidden" />
     </Card>
   );
 }
@@ -165,9 +166,10 @@ export function SupervisorPreviewCard({ card }: { card: SupervisorCardData }) {
       <FactsRow institution={card.institution} position={card.position} hIndex={card.h_index} />
       <TopicPills topics={card.topics} />
       {lastWork && <LastWork work={lastWork} />}
-      <Link
+      <ProfileLink
         href={`/supervisor/${card.author_id}`}
-        aria-label={`Открыть профиль: ${card.name}`}
+        author={card.author_id}
+        label={`Открыть профиль: ${card.name}`}
         className="absolute inset-0 rounded-card focus-visible:outline-2 focus-visible:outline-accent"
       />
     </Card>

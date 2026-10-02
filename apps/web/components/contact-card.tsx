@@ -1,5 +1,6 @@
 "use client";
 
+import { emitEvent } from "@/lib/analytics";
 import { Check, Copy } from "lucide-react";
 import { useId, useState } from "react";
 
@@ -28,24 +29,19 @@ function legacyCopy(text: string): boolean {
   }
 }
 
-function useCopy(): [boolean, (text: string) => void] {
+function useCopy(kind: "letter" | "address", author: string): [boolean, (text: string) => void] {
   const [copied, setCopied] = useState(false);
-  function copy(text: string) {
-    const done = () => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    };
-    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(done)
-        .catch(() => {
-          if (legacyCopy(text)) done();
-        });
-    } else if (legacyCopy(text)) {
-      done();
-    }
+  async function copy(text: string) {
+    let success = false;
+    try {
+      if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(text); success = true; }
+      else success = legacyCopy(text);
+    } catch { success = legacyCopy(text); }
+    emitEvent(kind === "letter" ? (success ? "letter_copy_success" : "letter_copy_failed") : (success ? "address_copy_success" : "address_copy_failed"), { author_id: author });
+    setCopied(success);
+    if (success) setTimeout(() => setCopied(false), 2000);
   }
+
   return [copied, copy];
 }
 
@@ -62,8 +58,8 @@ function ContactDraft({ card }: { card: SupervisorCard }) {
   const letter = buildLetter(card, includeWork ? selectedWork : null);
   const selectId = useId();
   const hintId = useId();
-  const [emailCopied, copyEmail] = useCopy();
-  const [letterCopied, copyLetter] = useCopy();
+  const [emailCopied, copyEmail] = useCopy("address", card.author_id);
+  const [letterCopied, copyLetter] = useCopy("letter", card.author_id);
 
   return (
     <Card className="flex flex-col gap-3.5 p-[18px] sm:p-[22px]">
@@ -93,6 +89,7 @@ function ContactDraft({ card }: { card: SupervisorCard }) {
             value={selectedIndex}
             aria-describedby={hintId}
             onChange={(event) => {
+              emitEvent("work_selected", { author_id: card.author_id, ...(event.target.value !== "" ? { work_position: Number(event.target.value) } : {}) });
               setSelectedIndex(event.target.value);
               setIncludeWork(false);
             }}
@@ -116,7 +113,10 @@ function ContactDraft({ card }: { card: SupervisorCard }) {
               <input
                 type="checkbox"
                 checked={includeWork}
-                onChange={(event) => setIncludeWork(event.target.checked)}
+                onChange={(event) => {
+                  emitEvent("work_confirmed", { author_id: card.author_id, work_position: Number(selectedIndex), included: event.target.checked });
+                  setIncludeWork(event.target.checked);
+                }}
                 className="mt-0.5 size-4 shrink-0 accent-accent"
               />
               Добавить выбранную работу в письмо

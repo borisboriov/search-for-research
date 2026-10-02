@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Link from "next/link";
+import { TopicLink } from "@/components/analytics-link";
 
 import { AvatarInitials } from "@/components/avatar-initials";
 import { Card } from "@/components/ui/card";
@@ -34,14 +34,12 @@ export function SupervisorHeader({ card }: { card: SupervisorCard }) {
           <ul className="flex flex-wrap gap-2" aria-label="Ключевые темы">
             {card.topics.slice(0, 5).map((topic) => (
               <li key={topic} className="max-w-full">
-                <Link
-                  href={`/results?q=${encodeURIComponent(topic)}`}
-                  prefetch={false}
-                  rel="nofollow"
+                <TopicLink
+                  topic={topic}
                   className="block rounded-full bg-bg-muted px-3 py-1 text-[12.5px] leading-[1.4] break-words text-fg-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent sm:text-[13px]"
                 >
                   {topicLabel(topic)}
-                </Link>
+                </TopicLink>
               </li>
             ))}
           </ul>

@@ -36,7 +36,7 @@ describe("QueryBar", () => {
     expect(screen.getByRole("textbox")).toHaveValue("графовые нейросети");
   });
 
-  it("сабмит отдаёт наружу обрезанный запрос", async () => {
+  it("сабмит сохраняет исходный поисковый текст", async () => {
     const user = userEvent.setup();
     const onSubmitQuery = vi.fn();
     render(<QueryBar query="старый" onSubmitQuery={onSubmitQuery} />);
@@ -45,7 +45,7 @@ describe("QueryBar", () => {
     await user.clear(textarea);
     await user.type(textarea, "  сверхпроводимость  ");
     await user.click(screen.getByRole("button", { name: "Подобрать научрука" }));
-    expect(onSubmitQuery).toHaveBeenCalledWith("сверхпроводимость");
+    expect(onSubmitQuery).toHaveBeenCalledWith("  сверхпроводимость  ");
   });
 
   it("слишком короткий запрос не уходит — показывается ошибка", async () => {
