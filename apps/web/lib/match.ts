@@ -47,7 +47,7 @@ export async function fetchMatch(text: string, trace?: { visit: string; search: 
     // «слишком часто» — отдельное сообщение (#23).
     if (!response.ok && trace) {
       const error = `http_${response.status}`;
-      emitEvent("search_error", { error: ["http_422", "http_429", "http_502", "http_503", "http_504"].includes(error) ? error as EventData["error"] : "network" }, trace.search, trace.request);
+      emitEvent("search_error", { error: ["http_422", "http_429", "http_502", "http_503", "http_504"].includes(error) ? error as EventData["error"] : "http_other" }, trace.search, trace.request);
     }
     if (response.status === 429) return { kind: "rate_limited" };
     if (response.status === 422) {

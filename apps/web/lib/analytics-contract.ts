@@ -5,7 +5,7 @@ export type EventData = {
   author_id?: string; position?: number; work_id?: string; work_position?: number;
   previous_search_id?: string; source?: "submitted" | "repeat" | "reformulated" | "topic" | "direct" | "results";
   confidence?: "none" | "weak" | "ok";
-  error?: "validation" | "http_422" | "http_429" | "http_502" | "http_503" | "http_504" | "timeout" | "network" | "receiver";
+  error?: "validation" | "http_422" | "http_429" | "http_502" | "http_503" | "http_504" | "http_other" | "timeout" | "network" | "receiver";
   filter_count?: number; filters?: { institution: string[]; min_h_index: number };
   sort?: "relevance" | "h_index" | "citations"; viewport?: "mobile" | "desktop";
   elapsed_ms?: number; release?: string; included?: boolean; query_length?: number;
@@ -36,7 +36,7 @@ export function isProductEvent(value: unknown): value is ProductEvent {
     previous_search_id: v => typeof v === "string" && UUID.test(v),
     source: v => enumeration(v, ["submitted", "repeat", "reformulated", "topic", "direct", "results"]),
     confidence: v => enumeration(v, ["none", "weak", "ok"]),
-    error: v => enumeration(v, ["validation", "http_422", "http_429", "http_502", "http_503", "http_504", "timeout", "network", "receiver"]),
+    error: v => enumeration(v, ["validation", "http_422", "http_429", "http_502", "http_503", "http_504", "http_other", "timeout", "network", "receiver"]),
     filter_count: v => Number.isInteger(v) && number(v, 0, 100),
     filters: v => object(v) && keys(v, ["institution", "min_h_index"]) && Array.isArray(v.institution) && v.institution.length <= 20 && v.institution.every(x => typeof x === "string" && x.length <= 200) && number(v.min_h_index, 0, 10000),
     sort: v => enumeration(v, ["relevance", "h_index", "citations"]),

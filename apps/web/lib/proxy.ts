@@ -8,7 +8,7 @@ export async function readBody(request: NextRequest, limit: number): Promise<unk
   if (Number.isFinite(declared) && declared > limit) throw new RangeError("body size");
   const reader = request.body?.getReader();
   if (!reader) throw new SyntaxError("body missing");
-  const deadline = setTimeout(() => { void reader.cancel(); }, 5000);
+  const deadline = setTimeout(() => { void reader.cancel().catch(() => {}); }, 5000);
   let size = 0;
   const chunks: Uint8Array[] = [];
   try {
@@ -48,7 +48,7 @@ export function proxyHeaders(request: NextRequest): Headers {
   headers.set("X-SFR-Page-URL", `${request.nextUrl.origin}${request.nextUrl.pathname}`.slice(0, 2048));
   const referer = request.headers.get("referer");
   if (referer) {
-    try { const url = new URL(referer); headers.set("X-SFR-Referer", `${url.origin}${url.pathname}`.slice(0, 2048)); } catch {}
+    try { const url = new URL(referer); if (["http:", "https:"].includes(url.protocol)) headers.set("X-SFR-Referer", `${url.origin}${url.pathname}`.slice(0, 2048)); } catch {}
   }
   return headers;
 }
