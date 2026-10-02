@@ -13,6 +13,8 @@ describe("EmptyResults", () => {
   it("заголовок, объяснение и три примера удачных запросов", () => {
     render(<EmptyResults onEditQuery={() => {}} onExample={() => {}} />);
     expect(screen.getByText("Уверенных совпадений нет")).toBeInTheDocument();
+    expect(screen.getByText(/В текущем каталоге не нашлось уверенных совпадений/)).toBeInTheDocument();
+    expect(screen.queryByText(/запрос не про научную тему/)).not.toBeInTheDocument();
     expect(EXAMPLE_QUERIES).toHaveLength(3);
     for (const example of EXAMPLE_QUERIES) {
       expect(screen.getByText(example)).toBeInTheDocument();

@@ -7,6 +7,8 @@ export default defineConfig({
   testDir: "./e2e",
   timeout: 60_000,
   retries: 0,
+  // Один локальный CPU API с FRIDA: этот прогон проверяет UI, а не нагрузку.
+  workers: 1,
   use: {
     baseURL: process.env.SFR_WEB_URL ?? "http://localhost:3000",
   },

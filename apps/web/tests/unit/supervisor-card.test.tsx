@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import type { ComponentProps } from "react";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   SupervisorCardSkeleton,
@@ -8,6 +9,12 @@ import {
   SupervisorResultCard,
 } from "@/components/supervisor-card";
 import type { MatchResult } from "@/lib/types";
+import { topicLabel } from "@/lib/topics";
+
+vi.mock("next/link", () => ({
+  default: ({ prefetch, ...props }: ComponentProps<"a"> & { prefetch?: boolean }) =>
+    <a {...props} data-prefetch={String(prefetch)} />,
+}));
 
 const LONG_TITLE =
   "RussianSuperGLUE: A Russian Language Understanding Evaluation Benchmark for Neural Models";
@@ -45,13 +52,13 @@ describe("SupervisorResultCard: обычное состояние", () => {
     render(<SupervisorResultCard result={RESULT} query="nlp" />);
     const pills = screen.getByRole("list", { name: "Ключевые темы" });
     expect(pills.children).toHaveLength(4);
-    expect(screen.getByText("Mental Health via Writing")).toBeInTheDocument();
+    expect(screen.getByText(topicLabel("Mental Health via Writing"))).toBeInTheDocument();
     expect(screen.queryByText("пятая тема")).not.toBeInTheDocument();
   });
 
   it("ссылки ведут на профиль и передают score, грейд и запрос", () => {
     render(<SupervisorResultCard result={RESULT} query="анализ текстов" />);
-    const links = screen.getAllByRole("link");
+    const links = screen.getAllByRole("link", { name: /Открыть профиль/ });
     expect(links.length).toBeGreaterThan(0);
     for (const link of links) {
       expect(link).toHaveAttribute(
@@ -60,6 +67,21 @@ describe("SupervisorResultCard: обычное состояние", () => {
       );
       expect(link.getAttribute("href")).toContain(encodeURIComponent("анализ текстов"));
     }
+  });
+
+  it("темы ведут на поиск с исходным названием, даже если отображается перевод", () => {
+    render(<SupervisorResultCard result={RESULT} query="nlp" />);
+    const topic = screen.getByRole("link", { name: topicLabel("Topic Modeling") });
+    expect(topic).toHaveAttribute("href", `/results?q=${encodeURIComponent("Topic Modeling")}`);
+    expect(topic).toHaveAttribute("rel", "nofollow");
+    expect(topic).toHaveAttribute("data-prefetch", "false");
+    expect(topic).toHaveClass("relative", "z-10");
+  });
+
+  it("неизвестная тема сохраняет исходное название и корректно кодируется в URL", () => {
+    render(<SupervisorResultCard result={{ ...RESULT, topics: ["Unknown / A&B"] }} query="nlp" />);
+    const topic = screen.getByRole("link", { name: "Unknown / A&B" });
+    expect(topic).toHaveAttribute("href", "/results?q=Unknown%20%2F%20A%26B");
   });
 
   it("должность не показывается, когда поля нет, и появляется, когда есть", () => {
@@ -72,6 +94,15 @@ describe("SupervisorResultCard: обычное состояние", () => {
 });
 
 describe("SupervisorResultCard: последняя работа (P-15)", () => {
+  it("показывает самую свежую среди выбранных с честной подписью", () => {
+    render(<SupervisorResultCard result={{ ...RESULT, top_works: [
+      { title: "Old highly cited work", year: 2001 },
+      { title: "Fresh selected work", year: 2025 },
+    ] }} query="nlp" />);
+    expect(screen.getByText(/Fresh selected work/)).toBeInTheDocument();
+    expect(screen.getByText(/Выбранная работа · 2025/)).toBeInTheDocument();
+    expect(screen.queryByText(/Old highly cited work/)).not.toBeInTheDocument();
+  });
   it("короткое название показывается целиком, ссылки «раскрыть» нет", () => {
     render(<SupervisorResultCard result={RESULT} query="nlp" />);
     expect(screen.getByText(/Depression detection/)).toBeInTheDocument();
@@ -104,6 +135,12 @@ describe("SupervisorResultCard: serendipity", () => {
 });
 
 describe("SupervisorPreviewCard (компактный вариант лендинга)", () => {
+  it("ссылка темы доступна поверх растянутой ссылки профиля", () => {
+    render(<SupervisorPreviewCard card={RESULT} />);
+    const topic = screen.getByRole("link", { name: topicLabel("NLP") });
+    expect(topic).toHaveClass("relative", "z-10");
+    expect(topic).toHaveAttribute("href", "/results?q=NLP");
+  });
   it("без бейджа и без полосы совпадения — запроса нет, считать нечего", () => {
     render(<SupervisorPreviewCard card={RESULT} />);
     expect(screen.getByText("Ivan Smirnov")).toBeInTheDocument();

@@ -11,6 +11,9 @@ test("HTML профиля содержит имя, вуз, темы и мета�
   expect(html).toContain(KNOWN_AUTHOR_NAME);
   expect(html).toContain("МФТИ");
   expect(html).toContain("Topic Modeling");
+  expect(html).toContain('href="/results?q=Topic%20Modeling"');
+  expect(html).toContain(">Тематическое моделирование</a>");
+  expect(html).toContain("Ключевые темы по публикациям: Тематическое моделирование");
   expect(html).toMatch(/<title>Konstantin Vorontsov — МФТИ \| Search for Research<\/title>/);
   expect(html).toContain('rel="canonical"');
   expect(html).toContain('property="og:title"');

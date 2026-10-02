@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MatchResult, SupervisorCard as SupervisorCardData } from "@/lib/types";
 import { cn, institutionShort } from "@/lib/utils";
+import { topicLabel } from "@/lib/topics";
+import { worksByYear } from "@/lib/works";
 
 /** Темы — серые пилюли с переносом, текст внутри пилюли не обрезается (P-06).
  * Показываем до четырёх: столько же в самой плотной карточке макета B. */
@@ -19,11 +21,15 @@ function TopicPills({ topics }: { topics: string[] }) {
   return (
     <ul className="flex flex-wrap gap-1.5" aria-label="Ключевые темы">
       {topics.slice(0, TOPICS_SHOWN).map((topic) => (
-        <li
-          key={topic}
-          className="max-w-full rounded-full bg-bg-muted px-2.5 py-[3px] text-[12.5px] leading-[1.4] text-fg-muted"
-        >
-          {topic}
+        <li key={topic} className="max-w-full">
+          <Link
+            href={`/results?q=${encodeURIComponent(topic)}`}
+            prefetch={false}
+            rel="nofollow"
+            className="relative z-10 block rounded-full bg-bg-muted px-2.5 py-[3px] text-[12.5px] leading-[1.4] break-words text-fg-muted hover:text-accent focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            {topicLabel(topic)}
+          </Link>
         </li>
       ))}
     </ul>
@@ -76,7 +82,7 @@ export function SupervisorResultCard({ result, query }: { result: MatchResult; q
   const href = `/supervisor/${result.author_id}?score=${result.score.toFixed(4)}&grade=${
     result.serendipity ? "serendipity" : result.grade
   }&q=${encodeURIComponent(query)}`;
-  const lastWork = result.top_works[0];
+  const lastWork = worksByYear(result.top_works)[0];
   return (
     <Card
       className={cn(
@@ -147,7 +153,7 @@ export function SupervisorResultCard({ result, query }: { result: MatchResult; q
  * (расхождение с макетом зафиксировано ещё в SFR3_REPORT).
  */
 export function SupervisorPreviewCard({ card }: { card: SupervisorCardData }) {
-  const lastWork = card.top_works[0];
+  const lastWork = worksByYear(card.top_works)[0];
   return (
     <Card className="relative flex flex-col gap-2.5 p-4">
       <div className="flex items-center gap-3">

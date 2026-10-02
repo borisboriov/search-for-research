@@ -38,8 +38,8 @@ export function EmptyResults({
         Уверенных совпадений нет
       </h2>
       <p className="max-w-[560px] text-center text-[15px] leading-relaxed text-fg-muted sm:text-[16px]">
-        Похоже, запрос не про научную тему — или сформулирован слишком широко. Опиши область,
-        методы и что хочется исследовать: так подбор работает точнее.
+        В текущем каталоге не нашлось уверенных совпадений с твоим запросом. Уточни тему,
+        метод или объект исследования — или попробуй близкую область.
       </p>
       <div className="mt-1.5 flex w-full max-w-[620px] flex-col gap-2.5">
         <p className="text-[13px] font-medium tracking-[0.06em] text-fg-subtle uppercase">
@@ -66,7 +66,7 @@ export function EmptyResults({
 /** Серая зона порога (confidence == "weak", SPEC_SFR4 §0.9): top-1 выше
  * «уверенных совпадений нет», но ниже минимума живых попаданий. Выдача
  * остаётся видимой — баннер над ней, а не пустое состояние. */
-export function WeakBanner() {
+export function WeakBanner({ onEditQuery }: { onEditQuery?: () => void }) {
   return (
     <Card className="mt-2 flex items-start gap-3 rounded-search px-5 py-4 sm:items-center sm:gap-3.5 sm:px-7 sm:py-5">
       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-accent-soft">
@@ -83,10 +83,20 @@ export function WeakBanner() {
           <circle cx="30" cy="24" r="12" />
         </svg>
       </span>
-      <p className="text-[14px] leading-relaxed text-fg-muted sm:text-[15px]">
-        Совпадения слабые — похоже, в базе пока нет специалистов по этой теме. Попробуй
-        переформулировать или уточнить запрос.
-      </p>
+      <div className="min-w-0 text-[14px] leading-relaxed text-fg-muted sm:text-[15px]">
+        <p>Совпадения слабые: запрос мало похож на описания исследователей в каталоге.</p>
+        <p className="mt-1">Попробуй уточнить запрос:</p>
+        <ul className="mt-1 list-disc pl-5">
+          <li>Назови конкретную тему: например, анализ текстов вместо «машинное обучение».</li>
+          <li>Добавь метод, который хочешь использовать: например, нейросети.</li>
+          <li>Укажи объект исследования: например, тексты соцсетей.</li>
+        </ul>
+        {onEditQuery && (
+          <Button type="button" variant="secondary" onClick={onEditQuery} className="mt-3">
+            Изменить запрос
+          </Button>
+        )}
+      </div>
     </Card>
   );
 }

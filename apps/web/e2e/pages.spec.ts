@@ -51,7 +51,7 @@ for (const [label, viewport] of [
       await expect(page.getByRole("heading", { level: 1 })).toContainText(KNOWN_AUTHOR_NAME);
       await expect(page.getByText("Наукометрия")).toBeVisible();
       // Пришли «с результатов»: грейд словом, процента на профиле нет (решение 11.09)
-      await expect(page.getByText("высокое совпадение")).toBeVisible();
+      await expect(page.getByText("высокое совпадение", { exact: true })).toBeVisible();
       await expect(page.getByText("62%")).toHaveCount(0);
       // Плашка происхождения данных над метриками (P-08): дата — из /health
       await expect(page.getByRole("button", { name: /Данные: OpenAlex · обновлено/ })).toBeVisible();

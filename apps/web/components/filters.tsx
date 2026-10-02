@@ -3,6 +3,7 @@
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,7 @@ function Chip({
   return (
     <label
       className={cn(
-        "relative flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-[14px] whitespace-nowrap",
+        "relative flex min-h-11 min-w-0 max-w-full cursor-pointer items-center gap-1.5 rounded-full border px-3 py-2 text-[14px] focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-accent",
         active
           ? "border-accent-border bg-accent-soft font-medium text-accent"
           : "border-border bg-surface text-fg",
@@ -45,13 +46,13 @@ function Chip({
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 cursor-pointer appearance-none opacity-0"
+        className="absolute inset-0 w-full min-w-0 cursor-pointer appearance-none opacity-0"
         aria-label={label}
       >
         {children}
       </select>
-      <span aria-hidden>{label}</span>
-      <ChevronDown className="size-3.5 text-fg-muted" aria-hidden strokeWidth={2} />
+      <span className="min-w-0 [overflow-wrap:anywhere]" aria-hidden>{label}</span>
+      <ChevronDown className="size-3.5 shrink-0 text-fg-muted" aria-hidden strokeWidth={2} />
     </label>
   );
 }
@@ -151,17 +152,29 @@ export function FiltersSheetRow({
   onChange: (filters: FilterState) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState(filters);
   return (
     <div className="flex sm:hidden">
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={(next) => {
+        if (next) setDraft(filters);
+        setOpen(next);
+      }}>
         <SheetTrigger className="flex min-h-11 cursor-pointer items-center gap-2 rounded-btn border border-border bg-surface px-[18px] text-[15px] font-medium">
           <SlidersHorizontal className="size-4" aria-hidden strokeWidth={2} />
           Фильтры
         </SheetTrigger>
         <SheetContent title="Фильтры">
+          <div className="flex min-w-0 flex-wrap gap-2.5">
+            <FilterChips filters={draft} institutions={institutions} onChange={setDraft} />
+            <SortChip filters={draft} onChange={setDraft} />
+          </div>
           <div className="flex flex-wrap gap-2.5">
-            <FilterChips filters={filters} institutions={institutions} onChange={onChange} />
-            <SortChip filters={filters} onChange={onChange} />
+            <Button type="button" onClick={() => { onChange(draft); setOpen(false); }}>
+              Применить
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => setDraft(DEFAULT_FILTERS)}>
+              Сбросить
+            </Button>
           </div>
         </SheetContent>
       </Sheet>
