@@ -5,4 +5,4 @@
 services:
   proxy:
     ports: !override
-      - "8080:8080"
+      - "${SFR_LOCAL_PORT:-8080}:8080"

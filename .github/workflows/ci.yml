@@ -8,6 +8,22 @@ on:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.11-bookworm
+        env:
+          POSTGRES_USER: sfr_migrator
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: sfr_analytics
+          TZ: UTC
+          PGTZ: UTC
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sfr_migrator -d sfr_analytics"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      SFR_ANALYTICS_TEST_DATABASE_URL: postgresql+psycopg://sfr_migrator:ci-only@127.0.0.1:5432/sfr_analytics
     steps:
       - uses: actions/checkout@v4
 
@@ -29,6 +45,9 @@ jobs:
 
       - name: Test
         run: make test
+
+      - name: Real PostgreSQL migrations and durability
+        run: make analytics-test-postgres
 
       - name: Docs check
         # Живые документы согласованы: пути, бриф против метрик и ApiSettings.

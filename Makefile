@@ -530,25 +530,61 @@ web-e2e:
 # Прокси слушает http://localhost:8080, API наружу не публикуется вовсе.
 # e2e против неё: SFR_WEB_URL=http://localhost:8080 make web-e2e
 # ---------------------------------------------------------------------------
-DEPLOY_COMPOSE := docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.local.yml
+SFR_COMPOSE_PROJECT ?= sfr-local
+SFR_LOCAL_PORT ?= 8080
+SFR_COMPOSE_SUBNET ?= 172.29.162.0/24
+SFR_COMPOSE_WEB_IP ?= 172.29.162.3
+DEPLOY_COMPOSE := docker compose -p $(SFR_COMPOSE_PROJECT) -f deploy/docker-compose.yml -f deploy/docker-compose.local.yml
+DEPLOY_ENV = SFR_COMPOSE_PROJECT=$(SFR_COMPOSE_PROJECT) SFR_LOCAL_PORT=$(SFR_LOCAL_PORT) \
+	SFR_COMPOSE_SUBNET=$(SFR_COMPOSE_SUBNET) SFR_COMPOSE_WEB_IP=$(SFR_COMPOSE_WEB_IP) \
+	SFR_HF_CACHE=$$HOME/.cache/huggingface SITE_ADDRESS=http://localhost:8080 \
+	NEXT_PUBLIC_SITE_URL=http://localhost:$(SFR_LOCAL_PORT) REVALIDATE_SECRET=local-rehearsal \
+	SFR_ANALYTICS_MIGRATION_PASSWORD=$${SFR_ANALYTICS_MIGRATION_PASSWORD:-local-rehearsal-migration} \
+	SFR_ANALYTICS_RUNTIME_PASSWORD=$${SFR_ANALYTICS_RUNTIME_PASSWORD:-local-rehearsal-runtime} \
+	SFR_ANALYTICS_READER_PASSWORD=$${SFR_ANALYTICS_READER_PASSWORD:-local-rehearsal-reader} \
+	SFR_ANALYTICS_RELEASE=$(shell git rev-parse HEAD)
 
 deploy-local:
-	SFR_HF_CACHE=$$HOME/.cache/huggingface \
-	SITE_ADDRESS=http://localhost:8080 \
-	NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
-	REVALIDATE_SECRET=local-rehearsal \
-	$(DEPLOY_COMPOSE) up -d --build
-	@# Пересозданный контейнер web теряет рантайм-кэш ISR: без ревалидации
-	@# sitemap и лендинг отдают билд-снапшот (собранный без API). На бою этот
-	@# шаг — часть процедуры деплоя (deploy/README.md).
-	@until curl -sf -o /dev/null http://localhost:8080/; do sleep 1; done
-	@curl -s -X POST -H "x-revalidate-secret: local-rehearsal" \
-		http://localhost:8080/api/revalidate && echo
-	@echo "прокси: http://localhost:8080 · api снаружи недоступен (проверка: docker port sfr-api -> пусто)"
+	$(DEPLOY_ENV) $(DEPLOY_COMPOSE) up -d --build
+	$(DEPLOY_ENV) $(DEPLOY_COMPOSE) run --rm analytics-migrate
+	@for n in $$(seq 1 240); do curl -sf -o /dev/null http://localhost:$(SFR_LOCAL_PORT)/ && break; sleep 1; done
+	@curl -sf -o /dev/null http://localhost:$(SFR_LOCAL_PORT)/
+	@curl -sf -X POST -H "x-revalidate-secret: local-rehearsal" \
+		http://localhost:$(SFR_LOCAL_PORT)/api/revalidate
+	@echo "прокси: http://localhost:$(SFR_LOCAL_PORT) · проект: $(SFR_COMPOSE_PROJECT)"
 
 deploy-local-down:
-	SITE_ADDRESS=http://localhost:8080 NEXT_PUBLIC_SITE_URL=http://localhost:8080 \
-	$(DEPLOY_COMPOSE) down
+	$(DEPLOY_ENV) $(DEPLOY_COMPOSE) down
+
+# Operator-only private analytics. Credentials from environment, never arguments.
+.PHONY: analytics-report analytics-check analytics-export analytics-replay analytics-migrate \
+	analytics-backup analytics-restore-check analytics-pull analytics-test-postgres
+analytics-report: unhide
+	uv run python scripts/analytics.py report $(ANALYTICS_ARGS)
+
+analytics-check: unhide
+	uv run python scripts/analytics.py check $(ANALYTICS_ARGS)
+
+analytics-export: unhide
+	uv run python scripts/analytics.py export $(ANALYTICS_ARGS)
+
+analytics-replay: unhide
+	uv run python scripts/analytics.py replay $(ANALYTICS_ARGS)
+
+analytics-migrate: unhide
+	uv run python -m sfr_api.analytics.migrate --runtime-role sfr_runtime --reader-role sfr_reader
+
+analytics-backup: unhide
+	uv run python scripts/analytics_backup.py backup $(ANALYTICS_ARGS)
+
+analytics-restore-check: unhide
+	uv run python scripts/analytics_backup.py verify $(ANALYTICS_ARGS)
+
+analytics-pull: unhide
+	uv run python scripts/analytics_pull.py $(ANALYTICS_ARGS)
+
+analytics-test-postgres: unhide
+	uv run pytest apps/api/tests/test_analytics_postgres.py --no-cov
 
 # ---------------------------------------------------------------------------
 # SFR-4b: аудит безопасности (статический анализ + зависимости + секреты).
@@ -596,3 +632,7 @@ docs-check-live:
 handoff-check: export SFR_HANDOFF_PR=$(PR)
 handoff-check:
 	python3 scripts/check_handoff.py --pr "$$SFR_HANDOFF_PR"
+
+.PHONY: analytics-rotate
+analytics-rotate: unhide
+	uv run python scripts/analytics_rotate.py

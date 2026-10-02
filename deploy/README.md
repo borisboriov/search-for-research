@@ -198,11 +198,11 @@ make deploy-local-down
 
 ## Наблюдаемость
 
-- **Логи /match** (материал калибровки порога): JSON-строки в stdout api —
-  `docker logs sfr-api | grep '"query"'`; ротация настроена в compose
-  (json-file, 20 МБ × 5).
-- **Access-лог proxy** (воронка «выдача → профиль»): `/data/access.log`
-  внутри тома caddy-data, JSON с uri и Referer.
+- **История /match**: PostgreSQL и постоянный аналитический журнал;
+  закрытый `analytics-export` для data science. Не печатать raw stdout в терминал.
+- **Access-лог proxy**: закрытая HTTP-диагностика `/data/access.log`,
+  headers и query-параметры исключены; архивирование оператором сохраняет историю.
+- **Продуктовая воронка**: `analytics-report`, явные события по visit/search ID.
 - **Health**: `docker compose exec api curl -s localhost:8000/api/health` —
   модель, версия индекса, пороги, hit-rate кэша.
 - **Uptime**: crontab на сервере —
@@ -241,12 +241,191 @@ make deploy-local-down
 2. **Тома `caddy-data` и `caddy-config`.** Владельца docker снимает с каталога
    образа в момент **создания** тома. Тома, созданные до SFR-4b, остались
    root'овыми, и Caddy в них не запишет ни сертификат, ни access-лог. На
-   работающем стенде их надо пересоздать:
+   работающем стенде поправить владельца с сохранением томов и журналов:
 
    ```bash
-   docker compose down
-   docker volume rm sfr-deploy_caddy-data sfr-deploy_caddy-config
-   docker compose up -d --build     # TLS-сертификат будет выпущен заново
+   docker compose run --rm --user root --entrypoint chown proxy -R 10001:10001 /data /config
+   docker compose up -d --build proxy
    ```
 
    На чистом сервере ничего делать не нужно.
+
+## Аналитика PoC: PostgreSQL, журнал и доступ
+
+Аналитический слой отделён от ETL: SQLite, каталог, индекс, модель и пороги
+остаются прежними. PostgreSQL **17.11-bookworm** находится в том же Compose,
+без опубликованного порта; `analytics-db` сохраняется при пересоздании.
+`analytics-journal` хранит fsync-журнал, ожидающие записи, закрытые gzip-архивы
+и карантин. Приложение работает от `sfr_runtime` с INSERT и чтением только ID
+для устранения дублей. Миграции выполняет отдельный `sfr_migrator`; закрытые
+выгрузки и отчёты читает `sfr_reader` с SELECT и read-only транзакциями.
+Пароли — три разных hex-секрета в `deploy/.env`, не в командной строке/git.
+Для уже существующего тома init-скрипт повторно не выполняется: оператор
+создаёт/проверяет роли и применяет миграции, не пересоздаёт том. Обновление
+пароля в `.env` само по себе не меняет пароль существующей роли.
+
+Начальные ограничения PostgreSQL: 512 MiB RAM, 1 CPU, `shared_buffers=64MB`,
+`work_mem=4MB`, `maintenance_work_mem=32MB`, `max_connections=20`;
+пул API — 2 соединения без overflow, ограниченные connect/statement/lock
+таймауты. Это исходная конфигурация для репетиции рядом с FRIDA, а не
+доказательство запаса под нагрузкой. Снимок VPS 01.10 (4 CPU, 7,76 GiB RAM,
+43,77 GiB свободно) измерен в спокойный момент. Измерения и ограничения
+репетиции передаются в техническом отчёте. Все компоненты — UTC;
+PostgreSQL хранит `timestamptz`. Для переноса БД меняются
+`SFR_API_ANALYTICS_DATABASE_URL`, `SFR_ANALYTICS_MIGRATION_DATABASE_URL` и
+`SFR_ANALYTICS_OPERATOR_DATABASE_URL`; приложение не зависит от адреса VPS.
+
+Сырые запросы, имена/контакты внутри них, результаты, raw IP и разрешённый
+контекст — чувствительные исследовательские данные. Они **не обезличены**.
+Не пересылать raw логи в issue/PR/чат; публичный отчёт содержит только
+агрегаты. Воронка — явные события одной `search_id`, не IP/Referer.
+Наблюдаемые визиты не являются уникальными людьми. Копирование письма
+не доказывает отправку/ответ/качество подбора. Внешние часы клиента не
+задают порядок: логический `client_seq` внутри визита, серверное время
+приёма для периода, монотонное время для задержек. Повторная доставка
+идемпотентна; отсутствие события не доказывает причину ухода.
+
+На Caddy полностью удалены request/response headers из access/error логов
+и вся query-строка URL; разрешённые diagnostic headers и очищенные URL
+хранятся отдельно приложением. Секретные headers не попадают в этот слой.
+Caddy заменяет входные X-Forwarded-For/X-Real-IP, Next доверяет только
+этой закрытой цепочке, API доверяет только фиксированному адресу Next
+(`SFR_COMPOSE_WEB_IP`); при изменении подсети IP и доверие меняются вместе.
+`/api/events` ограничен отдельно 120 POST/мин/IP; этот путь и `/api/match`
+исключены из зоны страниц. Предельное тело на прокси — 16 KiB; Next/API
+дополнительно проверяют схему, размеры полей и количество событий.
+
+### Изолированная репетиция и миграции
+
+Не останавливать существующий локальный стенд. Выбрать свободный порт,
+имя проекта и не пересекающуюся подсеть:
+
+```bash
+make deploy-local SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_PORT=18080 \
+  SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3
+SFR_WEB_URL=http://localhost:18080 make web-e2e
+# down только своего проекта, БЕЗ -v: аналитические данные сохраняются
+make deploy-local-down SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_PORT=18080 \
+  SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3
+```
+
+`make deploy-local` задаёт безопасные пароли только для локальной репетиции,
+версию релиза из текущего git SHA, собирает образы с именем своего проекта,
+применяет миграции и ревалидирует Next. В production сначала заполнить
+три секрета и `SFR_ANALYTICS_RELEASE` текущим SHA. Из корня проекта:
+
+```bash
+# Команды подготовлены для последующей выкладки; в этой сессии не выполнять на VPS.
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d postgres
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml build api web proxy
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm analytics-migrate
+# Проверить migration/check/backup до пересоздания приложения.
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d api web proxy
+```
+
+Миграции Alembic живут в пакете аналитики API, отдельно от ETL; применяются
+к новой и существующей БД. Перед миграцией — логический backup и внешняя
+копия. Откат приложения не удаляет `analytics-db`/`analytics-journal` и не
+запускает downgrade/delete. Старый код может перестать собирать новые
+события, поэтому зафиксировать границу версии и неполноту.
+
+### Отчёт, диагностика и закрытая выгрузка
+
+Python CLI/Make-цели запускаются оператором, публичных HTTP-экспортов нет.
+Для локального Python подключение передаётся через
+`SFR_ANALYTICS_OPERATOR_DATABASE_URL` (роль читателя); runtime DSN не
+подходит для чтения полного слоя. Для внутренней сети Compose есть
+`analytics-operator` с выходным приватным каталогом `data/analytics:/output`:
+
+```bash
+# Подготовить каталог с доступом uid приложения; не chmod 777.
+mkdir -p data/analytics && chmod 700 data/analytics
+# В контейнере каталог должен принадлежать uid приложения (10001).
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
+  analytics-operator check
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
+  analytics-operator report --start 2026-10-01T00:00:00 --end 2026-10-03T00:00:00 \
+  --timezone Europe/Moscow --out /output/report-20261001
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
+  analytics-operator export --out /output/research-20261001.json
+# После восстановления БД: догрузка тем же runtime-пользователем.
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
+  analytics-operator replay
+```
+
+Эквиваленты с доступным внутренним DSN: `make analytics-check`,
+`make analytics-replay`, `make analytics-export ANALYTICS_ARGS="--out ..."`,
+`make analytics-report ANALYTICS_ARGS="--start ... --end ... --timezone Europe/Moscow --out ..."`.
+Отчёт можно пересчитать из закрытого schema-v1 JSON через `--export FILE`.
+Период полуоткрытый `[start,end)`; без offset время трактуется в указанной
+зоне, затем обе границы переводятся в UTC. Неоднозначные DST-времена требуют
+явного offset. Отчёт содержит HTML, JSON и CSV воронки/попыток/разрезов,
+абсолютные количества и знаменатели, отдельно server latency и browser
+elapsed до показа, confidence/errors, повторные попытки, версии, устройства,
+прямые профили, объявленные технические прогоны и предполагаемых ботов.
+Основная воронка исключает эти два класса трафика; классификация UA не
+доказывает, кто отправил запрос. Полнота/догрузка и неверные часы указаны
+отдельно. Когорта ограничена серверным временем приёма событий в периоде:
+визиты, начавшиеся до периода, не включаются в последовательную воронку.
+Позднюю доставку после закрытия периода видно после повторного расчёта.
+HTML не включает raw query/context; строки экранированы. JSON-экспорт
+содержит полные запросы и связанные результаты, это **закрытый** файл.
+Файлы создаются с 0600, каталоги — 0700; существующие файлы не затираются.
+
+`analytics-check` проверяет доступность БД, актуальность миграций, число
+записей, последнюю запись/приём/догрузку, очередь/архив/карантин, ошибки и
+свободное место. Неполнота, очередь или карантин дают ненулевой статус.
+Сбой БД оставляет fsync-запись в журнале, поиск продолжает работу. При
+переполнении буфера/диска приёмник не подтверждает событие; оператор видит
+категориальную ошибку и неполноту. Клиентская сеть/закрытие вкладки могут
+потерять события до доставки — абсолютная полнота не обещается.
+
+### Архивы, место, backup и внешняя копия
+
+Автоматического удаления по возрасту нет. Закрытые файлы fsync-журнала
+сжимаются и сохраняются; повреждённые записи остаются в карантине.
+Для Caddy 2.11.4 `roll_keep_for 0` означает default 90 дней
+([tagged source](https://github.com/caddyserver/caddy/blob/v2.11.4/modules/logging/filewriter.go#L240)),
+поэтому `roll_disabled` исключает скрытую потерю истории. Операторская
+`make analytics-rotate` атомарно переименовывает access.log на том же томе,
+перезапускает **только выбранный proxy**, затем сжимает закрытый файл;
+архив остаётся в `/data/archive`. Это явная эксплуатационная операция
+с коротким перезапуском proxy, её не выполняют фоновые отчёты.
+
+Сначала контролировать `analytics-check`, `docker compose exec postgres df -h`
+и размер томов/архивов. При нехватке места — прекратить технические
+прогоны, выгрузить на Mac и проверить манифест, добавить диск/вынести БД;
+не удалять историю автоматически. Рост БД/архивов остаётся ответственностью
+оператора. Runtime Docker stdout ротируется как диагностика; источником
+истории поиска являются PostgreSQL/постоянный журнал, не stdout.
+
+```bash
+# Логический pg_dump, согласованный snapshot, custom format. Живой PGDATA не копировать.
+make analytics-backup ANALYTICS_ARGS="--directory data/backups/analytics-20261002"
+# NEW отдельная тестовая БД; не перезаписывает существующую, не удаляет данные.
+make analytics-restore-check \
+  ANALYTICS_ARGS="--directory data/backups/analytics-20261002 --database sfr_restore_20261002"
+# Восстановленная БД сохранена; JSON содержит counts/row fingerprints/версию миграции.
+# Сравнение source/restore в репетиции выполняется на неизменяемом synthetic наборе.
+
+# Внешний экземпляр на Mac: сервер только читает, pg_dump/tar передаются потоками.
+make analytics-pull ANALYTICS_ARGS="--host deploy@135.106.208.233 --out data/backups/vps-20261002"
+# Та же проверка в изолированном локальном Compose, без SSH:
+SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal \
+SFR_COMPOSE_OVERRIDE=deploy/docker-compose.local.yml \
+make analytics-pull ANALYTICS_ARGS="--local --out data/backups/local-20261002"
+```
+
+Все backup/pull/rotation команды используют выбранный `SFR_COMPOSE_PROJECT`,
+`SFR_COMPOSE_OVERRIDE` и `SFR_COMPOSE_ENV_FILE` (default `deploy/.env` если
+файл существует). Локальные переменные Compose нужно передать совместно,
+как при старте стенда. Манифест SHA-256 фиксирует каждый dump/tar;
+выгрузка содержит БД, постоянный журнал, access-лог и архивы. Активные
+журналы могут дописываться: это наблюдаемая копия, а не единый snapshot
+всех файлов. БД в `pg_dump` согласована транзакционно. Повторная выгрузка
+после догрузки устраняет отставание. Копия на том же VPS не защищает от
+потери VPS; подтверждённый внешний экземпляр — на Mac. Перед выкладкой
+сделать внешнюю копию и проверочное восстановление, затем миграции.
+`deploy/analytics/backup.cron.example` — подготовленное расписание и
+инструкция; **на production в этой сессии не установлено**. Локальные
+backup/exports не публиковать, не включать в git или web static.
