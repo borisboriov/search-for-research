@@ -19,11 +19,18 @@ describe("durable client event delivery", () => {
     }));
     expect(globalThis.BroadcastChannel).toBe(nodeChannel);
     expect(window.BroadcastChannel).toBeUndefined();
-    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ accepted: [] })));
+    const fetch = vi.fn(async () => Response.json({ accepted: [] }));
+    vi.stubGlobal("fetch", fetch);
     const client = await import("@/lib/analytics");
-    await client.analyticsSession();
+    // Resolves without advancing the 80ms ownership clock. jsdom may separately
+    // schedule a storage-event timer when persistence writes sessionStorage.
+    const current = await client.analyticsSession();
     expect(nodeChannel).not.toHaveBeenCalled();
-    expect(vi.getTimerCount()).toBe(0);
+    expect(current).toMatchObject({ started: false, queue: [] });
+    await vi.advanceTimersByTimeAsync(60000);
+    expect(nodeChannel).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(current.queue).toEqual([]);
   });
   it("abandons delayed initialization safely when its browser document is destroyed", async () => {
     const close = vi.fn();
@@ -40,11 +47,15 @@ describe("durable client event delivery", () => {
     expect(channel).toHaveBeenCalledOnce();
     vi.stubGlobal("window", undefined);
     await vi.advanceTimersByTimeAsync(80);
-    await expect(pending).resolves.toMatchObject({ started: false, queue: [] });
+    const current = await pending;
+    expect(current).toMatchObject({ started: false, queue: [] });
     await settle();
     expect(close).toHaveBeenCalledOnce();
+    // Observe the entire maximum retry window rather than counting timers owned
+    // by unrelated DOM machinery. No deferred event or delivery may appear.
+    await vi.advanceTimersByTimeAsync(60000);
     expect(fetch).not.toHaveBeenCalled();
-    expect(vi.getTimerCount()).toBe(0);
+    expect(current).toMatchObject({ started: false, queue: [] });
   });
   it("keeps event IDs across failed delivery and reload, removes only explicit acknowledgements", async () => {
     const fetch = vi.fn<(url: unknown, init: RequestInit) => Promise<Response>>().mockResolvedValue(Response.json({ detail: "offline" }, { status: 503 })); vi.stubGlobal("fetch", fetch);
