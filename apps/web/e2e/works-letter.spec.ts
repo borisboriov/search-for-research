@@ -46,6 +46,7 @@ test.describe("работы и подготовка письма", () => {
   });
 
   test("копирование без работ и с неизвестным годом", async ({ page }) => {
+    test.skip(Boolean(process.env.SFR_WEB_URL), "Dev-only состояния недоступны в локальном production-стеке; 404 проверяет pages.spec.ts");
     await page.goto("/dev/states");
     const noWorks = page.getByRole("region", { name: "Письмо: без работ" });
     await expect(noWorks.getByRole("combobox")).toHaveCount(0);
