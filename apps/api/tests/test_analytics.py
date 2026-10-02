@@ -161,7 +161,18 @@ def test_quarantine_preserves_corrupt_record(tmp_path: Path):
 def test_success_archives_without_losing_history(tmp_path: Path, monkeypatch):
     journal = store(tmp_path)
     item = event()
-    item.update(received_at=datetime.now(UTC).isoformat(), app_version="synthetic")
+    item.update(
+        received_at=datetime.now(UTC).isoformat(),
+        app_version="synthetic",
+        traffic_type="unclassified",
+        private_context={
+            "event_id": item["event_id"],
+            "raw_ip": None,
+            "url": None,
+            "referer": None,
+            "diagnostic_headers": {},
+        },
+    )
     journal.append("events", [item])
     monkeypatch.setattr(journal, "_persist", lambda envelope: None)
     assert journal.replay()["persisted"] == 1
@@ -188,3 +199,43 @@ def test_contract_does_not_accept_unknown_secrets():
         EventBatch.model_validate({"events": [event(Authorization="synthetic")]})
     assert safe_url("https://user:pw@example.test/a?token=x#secret") == "https://example.test/a"
     assert safe_url("javascript:alert(1)") is None
+
+
+@pytest.mark.parametrize(
+    "content",
+    ["null", "[]", "{}", '{"version":1,"kind":"search","records":[{"search":{},"context":{}}]}'],
+)
+def test_invalid_shapes_do_not_block_replay(tmp_path: Path, content: str):
+    journal = store(tmp_path)
+    (tmp_path / "spool" / "pending" / "invalid.json").write_text(content)
+    assert journal.replay()["quarantined"] == 1
+    assert journal.diagnostics()["pending_count"] == 0
+
+
+def test_stalled_disk_does_not_hold_search_or_falsely_ack_events(tmp_path: Path, monkeypatch):
+    import time
+
+    app = api(tmp_path)
+    with TestClient(app) as client:
+        original = app.state.analytics.append
+
+        def slow_append(kind, records):
+            time.sleep(0.8)
+            original(kind, records)
+
+        monkeypatch.setattr(app.state.analytics, "append", slow_append)
+        started = time.monotonic()
+        assert client.post("/api/match", json={"query": "synthetic physics"}).status_code == 200
+        assert time.monotonic() - started < 0.6
+        started = time.monotonic()
+        assert client.post("/api/events", json={"events": [event()]}).status_code == 503
+        assert time.monotonic() - started < 0.75
+
+
+def test_analytics_invalid_configuration_does_not_disable_search(tmp_path: Path):
+    settings = ApiSettings(
+        warmup=False, analytics_database_url="invalid://", analytics_spool_dir=tmp_path / "spool"
+    )
+    with TestClient(create_app(settings, MatchService(FakeBackend(), settings))) as client:
+        assert client.post("/api/match", json={"query": "synthetic physics"}).status_code == 200
+        assert client.post("/api/events", json={"events": [event()]}).status_code == 503

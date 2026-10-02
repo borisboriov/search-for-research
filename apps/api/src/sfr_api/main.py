@@ -132,7 +132,10 @@ async def events(request: Request) -> dict[str, list[str]]:
         record.setdefault("search_id", None)
         record.setdefault("request_id", None)
         record["traffic_type"] = traffic_type(request)
-        record["private_context"] = private_context(request) | {"event_id": record["event_id"]}
+        record["private_context"] = private_context(request) | {
+            "event_id": record["event_id"],
+            "ingest_request_id": request.state.request_id,
+        }
     try:
         await asyncio.wait_for(run_in_threadpool(store.append, "events", records), timeout=0.5)
     except (StorageUnavailable, OSError, TimeoutError):
@@ -275,7 +278,9 @@ def create_app(settings: ApiSettings | None = None, service: MatchService | None
                         await asyncio.sleep(settings.analytics_replay_seconds)
 
                 task = asyncio.create_task(replay())
-            except OSError:
+            except Exception:
+                # Analytics misconfiguration must not take the model/API down;
+                # never include connection URLs or driver exception messages.
                 logging.getLogger("sfr_api.analytics").error(
                     "analytics journal startup unavailable"
                 )

@@ -57,7 +57,7 @@ def test_migration_reentrant_and_real_postgres_types(database_url):
             connection.execute(
                 text("SELECT version_num FROM analytics_alembic_version")
             ).scalar_one()
-            == "analytics_0002"
+            == "analytics_0003"
         )
         assert connection.execute(text("SHOW timezone")).scalar_one() == "UTC"
         actual = dict(
@@ -180,7 +180,7 @@ def test_late_client_events_do_not_replace_server_time(database_url, tmp_path: P
     store.engine.dispose()
 
 
-def test_runtime_role_minimal_permissions(database_url):
+def test_runtime_role_minimal_permissions(database_url, tmp_path: Path):
     """A real PG role can write facts but cannot read private queries or mutate history."""
     import psycopg
     from psycopg import sql
@@ -220,3 +220,33 @@ def test_runtime_role_minimal_permissions(database_url):
             text("SELECT has_table_privilege(:role,'analytics_context','INSERT')"), {"role": reader}
         ).scalar_one()
     engine.dispose()
+    # Exercise the real replay SQL under the restricted role, including RETURNING
+    # and private-context foreign keys, rather than merely inspecting GRANTs.
+    from sqlalchemy import event as sqlalchemy_event
+
+    runtime_store = DurableStore(database_url, tmp_path / "runtime-spool", reserve_bytes=0)
+
+    @sqlalchemy_event.listens_for(runtime_store.engine, "connect")
+    def set_runtime_role(connection, record):
+        connection.execute(sql.SQL("SET ROLE {}").format(sql.Identifier(runtime)))
+        connection.commit()
+
+    record = synthetic_event(uuid4(), uuid4())
+    record |= {
+        "received_at": datetime.now(UTC).isoformat(),
+        "app_version": "synthetic",
+        "traffic_type": "unclassified",
+        "schema_version": 1,
+        "request_id": None,
+        "private_context": {
+            "event_id": record["event_id"],
+            "raw_ip": None,
+            "url": None,
+            "referer": None,
+            "diagnostic_headers": {},
+        },
+    }
+    runtime_store.append("events", [record])
+    assert runtime_store.replay()["persisted"] == 1
+    assert runtime_store.diagnostics()["pending_count"] == 0
+    runtime_store.engine.dispose()

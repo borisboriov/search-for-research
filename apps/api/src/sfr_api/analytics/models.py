@@ -74,6 +74,7 @@ class ProductEvent(Base):
 
 class EventContext(Base):
     __tablename__ = "analytics_event_context"
+    ingest_request_id: Mapped[UUID | None] = mapped_column(PGUUID)
     event_id: Mapped[UUID] = mapped_column(
         ForeignKey("analytics_events.event_id"), primary_key=True
     )

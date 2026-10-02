@@ -61,6 +61,7 @@ class EventData(BaseModel):
             "http_502",
             "http_503",
             "http_504",
+            "http_other",
             "timeout",
             "network",
             "receiver",

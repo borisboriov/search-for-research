@@ -22,8 +22,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
 
-from sfr_api.analytics.contracts import EventBatch
 from sfr_api.analytics.models import Context, EventContext, ProductEvent, Search
+from sfr_api.analytics.records import JournalEvent, SearchRecord
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +33,8 @@ class StorageUnavailable(OSError):
 
 
 def engine_for(url: str) -> Engine:
+    if not url.startswith("postgresql+psycopg://"):
+        raise ValueError("Analytics requires PostgreSQL with Psycopg 3")
     return create_engine(
         url,
         pool_size=2,
@@ -58,16 +60,21 @@ def _sync_dir(path: Path) -> None:
 def _atomic(path: Path, content: bytes) -> None:
     temporary = path.with_name(f".{path.name}.{uuid4()}.tmp")
     fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    # A partially written file is retained for operator diagnosis.
+    with os.fdopen(fd, "wb") as file:
+        file.write(content)
+        file.flush()
+        os.fsync(file.fileno())
+    os.replace(temporary, path)
+    _sync_dir(path.parent)
+
+
+def _stat(path: Path) -> os.stat_result:
     try:
-        with os.fdopen(fd, "wb") as file:
-            file.write(content)
-            file.flush()
-            os.fsync(file.fileno())
-        os.replace(temporary, path)
-        _sync_dir(path.parent)
-    except BaseException:
-        # A partially written file is retained for operator diagnosis.
-        raise
+        return path.stat()
+    except FileNotFoundError:
+        # Replay may have archived this file between directory snapshot/stat.
+        return os.stat_result((0,) * 10)
 
 
 class DurableStore:
@@ -82,6 +89,7 @@ class DurableStore:
         self.root = spool_dir
         self.max_bytes = max_bytes
         self.reserve_bytes = reserve_bytes
+        self.max_pending_files = 10000
         self.engine = engine_for(url)
         self._locks = {"journal": threading.Lock(), "replay": threading.Lock()}
         for name in ("", "pending", "archive", "quarantine"):
@@ -104,9 +112,14 @@ class DurableStore:
         envelope = {"version": 1, "kind": kind, "records": records}
         content = json.dumps(envelope, ensure_ascii=False, allow_nan=False).encode("utf-8")
         with self._exclusive():
-            pending = sum(p.stat().st_size for p in (self.root / "pending").iterdir())
+            paths = list((self.root / "pending").iterdir())
+            pending = sum(_stat(p).st_size for p in paths)
             free = shutil.disk_usage(self.root).free
-            if pending + len(content) > self.max_bytes or free - len(content) < self.reserve_bytes:
+            if (
+                pending + len(content) > self.max_bytes
+                or len(paths) >= self.max_pending_files
+                or free - len(content) < self.reserve_bytes
+            ):
                 self._failure("capacity")
                 raise StorageUnavailable("analytics journal capacity exhausted")
             try:
@@ -138,9 +151,9 @@ class DurableStore:
         for name in ("pending", "archive", "quarantine"):
             paths = list((self.root / name).iterdir())
             result[f"{name}_count"] = len(paths)
-            result[f"{name}_bytes"] = sum(path.stat().st_size for path in paths)
+            result[f"{name}_bytes"] = sum(_stat(path).st_size for path in paths)
         pending_paths = list((self.root / "pending").iterdir())
-        oldest = min((p.stat().st_mtime for p in pending_paths), default=None)
+        oldest = min((_stat(p).st_mtime for p in pending_paths), default=None)
         result["oldest_pending_at"] = (
             datetime.fromtimestamp(oldest, UTC).isoformat() if oldest else None
         )
@@ -150,12 +163,23 @@ class DurableStore:
         result["free_bytes"] = shutil.disk_usage(self.root).free
         result["max_pending_bytes"] = self.max_bytes
         result["reserve_bytes"] = self.reserve_bytes
+        result["max_pending_files"] = self.max_pending_files
         result["incomplete"] = bool(result["quarantine_count"] or result.get("error_count"))
         return result
 
     def replay(self, limit: int = 100) -> dict[str, int]:
         result = {"persisted": 0, "quarantined": 0, "errors": 0}
         with self._exclusive("replay"):
+            # A crashed unacknowledged write remains evidence; do not parse a
+            # file that another writer may still be filling. Quarantine stale
+            # temporary files after a minute, without losing their bytes.
+            for temporary in (self.root / "pending").glob("*.tmp"):
+                if datetime.now(UTC).timestamp() - _stat(temporary).st_mtime > 60:
+                    os.replace(temporary, self.root / "quarantine" / temporary.name)
+                    _sync_dir(self.root / "pending")
+                    _sync_dir(self.root / "quarantine")
+                    self._failure("unfinished_write")
+                    result["quarantined"] += 1
             paths = sorted(
                 (self.root / "pending").glob("*.json"), key=lambda p: p.stat().st_mtime_ns
             )
@@ -203,33 +227,14 @@ class DurableStore:
         records = envelope["records"]
         if not isinstance(records, list) or not records or len(records) > 10:
             raise ValueError("invalid journal batch")
-        if envelope["kind"] == "events":
-            for record in records:
-                EventBatch.model_validate(
-                    {
-                        "events": [
-                            {
-                                key: value
-                                for key, value in record.items()
-                                if key
-                                not in {
-                                    "received_at",
-                                    "app_version",
-                                    "traffic_type",
-                                    "private_context",
-                                }
-                            }
-                        ]
-                    }
-                )
-                datetime.fromisoformat(record["received_at"])
-        else:
-            for record in records:
-                if set(record) != {"search", "context"}:
-                    raise ValueError("invalid search envelope")
-                if len(record["context"]["raw_query"]) > 2000:
-                    raise ValueError("query limit")
-                datetime.fromisoformat(record["search"]["received_at"])
+        for record in records:
+            parsed = (
+                JournalEvent.model_validate(record)
+                if envelope["kind"] == "events"
+                else SearchRecord.model_validate(record)
+            )
+            if not parsed.consistent():
+                raise ValueError("journal identifier mismatch")
 
     def _persist(self, envelope: dict[str, Any]) -> None:
         with self.engine.begin() as connection:
