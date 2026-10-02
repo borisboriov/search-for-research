@@ -2,13 +2,20 @@ import { expect, test, type Page } from "@playwright/test";
 import type { ProductEvent } from "../lib/analytics-contract";
 import { KNOWN_AUTHOR_ID } from "./helpers";
 
-// Synthetic match/ack responses verify browser instrumentation, not FRIDA ranking or persistence.
+// Synthetic matches verify browser instrumentation, not FRIDA ranking.
+// Optional live receiver additionally verifies Next → API durable acknowledgements.
 async function capture(page: Page): Promise<ProductEvent[]> {
   const events: ProductEvent[] = [];
   await page.route("**/api/events", async route => {
     const batch = route.request().postDataJSON().events as ProductEvent[];
     for (const event of batch) if (!events.some(previous => previous.event_id === event.event_id)) events.push(event);
-    await route.fulfill({ json: { accepted: batch.map(event => event.event_id) } });
+    if (process.env.SFR_ANALYTICS_LIVE_RECEIVER === "1") {
+      const response = await route.fetch();
+      expect(response.ok(), "real receiver must confirm durable persistence").toBe(true);
+      const payload = await response.json();
+      expect(payload.accepted).toEqual(expect.arrayContaining(batch.map(event => event.event_id)));
+      await route.fulfill({ response, json: payload });
+    } else await route.fulfill({ json: { accepted: batch.map(event => event.event_id) } });
   });
   return events;
 }
