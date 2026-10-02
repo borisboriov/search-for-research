@@ -4,6 +4,7 @@ import gzip
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -39,12 +40,14 @@ def store(tmp_path: Path, **kwargs) -> DurableStore:
 
 def api(tmp_path: Path, **changes):
     settings = ApiSettings(
-        warmup=False,
-        analytics_database_url=DEAD_URL,
-        analytics_spool_dir=tmp_path / "spool",
-        analytics_disk_reserve_bytes=0,
-        analytics_replay_seconds=3600,
-        **changes,
+        **{
+            "warmup": False,
+            "analytics_database_url": DEAD_URL,
+            "analytics_spool_dir": tmp_path / "spool",
+            "analytics_disk_reserve_bytes": 0,
+            "analytics_replay_seconds": 3600,
+            **changes,
+        }
     )
     return create_app(settings, MatchService(FakeBackend(), settings))
 
@@ -185,7 +188,7 @@ def test_success_archives_without_losing_history(tmp_path: Path, monkeypatch):
     assert journal.replay()["persisted"] == 0
 
 
-def test_disk_full_keeps_search_available_and_events_unacknowledged(tmp_path: Path, monkeypatch):
+def test_disk_write_oserror_raises_storage_unavailable(tmp_path: Path, monkeypatch):
     journal = store(tmp_path)
     monkeypatch.setattr(
         "sfr_api.analytics.store._atomic", lambda *args: (_ for _ in ()).throw(OSError("synthetic"))
@@ -239,3 +242,56 @@ def test_analytics_invalid_configuration_does_not_disable_search(tmp_path: Path)
     with TestClient(create_app(settings, MatchService(FakeBackend(), settings))) as client:
         assert client.post("/api/match", json={"query": "synthetic physics"}).status_code == 200
         assert client.post("/api/events", json={"events": [event()]}).status_code == 503
+
+
+def test_disk_free_below_reserve_rejects_events_but_keeps_search(tmp_path: Path, monkeypatch):
+    app = api(tmp_path, analytics_disk_reserve_bytes=1024)
+    with TestClient(app) as client:
+        monkeypatch.setattr(
+            "sfr_api.analytics.store.shutil.disk_usage",
+            lambda path: SimpleNamespace(total=8192, used=8191, free=1),
+        )
+        response = client.post("/api/events", json={"events": [event()]})
+        assert response.status_code == 503
+        assert "accepted" not in response.json()
+        assert client.post("/api/match", json={"query": "synthetic reserve"}).status_code == 200
+        assert app.state.analytics.diagnostics()["pending_count"] == 0
+        assert app.state.analytics.diagnostics()["last_error"] == "capacity"
+
+
+def test_ten_thousand_pending_files_reject_new_record_without_losing_history(tmp_path: Path):
+    journal = store(tmp_path)
+    pending = tmp_path / "spool" / "pending"
+    for index in range(10000):
+        (pending / f"synthetic-{index:05d}.json").touch()
+    preserved = pending / "synthetic-09999.json"
+    preserved.write_text("synthetic buffered evidence")
+    assert journal.diagnostics()["max_pending_files"] == 10000
+    with pytest.raises(StorageUnavailable):
+        journal.append("events", [event()])
+    assert len(list(pending.iterdir())) == 10000
+    assert preserved.read_text() == "synthetic buffered evidence"
+    assert journal.diagnostics()["last_error"] == "capacity"
+
+
+def test_fsync_failure_returns_http_503_and_preserves_search_availability(
+    tmp_path: Path, monkeypatch
+):
+    app = api(tmp_path)
+    fsync_calls = []
+    with TestClient(app) as client:
+
+        def fail_fsync(fd):
+            fsync_calls.append(fd)
+            raise OSError("synthetic fsync failure")
+
+        monkeypatch.setattr("sfr_api.analytics.store.os.fsync", fail_fsync)
+        response = client.post("/api/events", json={"events": [event()]})
+        assert response.status_code == 503
+        assert "accepted" not in response.json()
+        assert client.post("/api/match", json={"query": "synthetic fsync"}).status_code == 200
+        assert fsync_calls
+        # Unacknowledged partial files are retained; none becomes a committed
+        # pending record when fsync failed.
+        assert not list((tmp_path / "spool" / "pending").glob("*.json"))
+        assert list((tmp_path / "spool" / "pending").glob("*.tmp"))

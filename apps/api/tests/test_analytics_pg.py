@@ -10,9 +10,11 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from conftest import FakeBackend
 from fastapi.testclient import TestClient
-from sqlalchemy import select, text
+from sqlalchemy import insert, inspect, select, text
 
 from sfr_api.analytics.migrate import migrate
 from sfr_api.analytics.models import Context, ProductEvent, Search
@@ -250,3 +252,94 @@ def test_runtime_role_minimal_permissions(database_url, tmp_path: Path):
     assert runtime_store.replay()["persisted"] == 1
     assert runtime_store.diagnostics()["pending_count"] == 0
     runtime_store.engine.dispose()
+
+
+def test_upgrade_existing_0001_preserves_seeded_search_and_private_context(database_url):
+    # Keep the current public DB and all of its data intact. This schema contains
+    # only this test's synthetic legacy database and is retained as evidence.
+    import sfr_api.analytics.migrate as migration_module
+
+    schema = "sfr_legacy_upgrade_" + uuid4().hex
+    search_id, request_id, visit_id = uuid4(), uuid4(), uuid4()
+    engine = engine_for(database_url)
+    with engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+        connection.execute(text(f'SET LOCAL search_path TO "{schema}"'))
+        config = Config()
+        config.set_main_option(
+            "script_location", str(Path(migration_module.__file__).parent / "alembic")
+        )
+        config.attributes["connection"] = connection
+        command.upgrade(config, "analytics_0001")
+        assert (
+            connection.execute(
+                text("SELECT version_num FROM analytics_alembic_version")
+            ).scalar_one()
+            == "analytics_0001"
+        )
+        now = datetime.now(UTC)
+        connection.execute(
+            insert(Search.__table__).values(
+                search_id=search_id,
+                request_id=request_id,
+                visit_id=visit_id,
+                received_at=now,
+                completed_at=now,
+                status=200,
+                outcome="success",
+                payload={
+                    "schema_version": 1,
+                    "app_version": "legacy-test",
+                    "model": "synthetic",
+                    "index_version": "synthetic-v1",
+                    "cache_hit": False,
+                    "confidence": "ok",
+                    "k": 1,
+                    "results": [{"author_id": "A1", "rank": 1, "score": 0.5, "grade": "high"}],
+                },
+            )
+        )
+        connection.execute(
+            insert(Context.__table__).values(
+                search_id=search_id,
+                raw_query="  synthetic legacy contact user@example.test  ",
+                normalized_query="synthetic legacy contact user@example.test",
+                raw_ip="192.0.2.1",
+                url="https://example.test/results",
+                referer=None,
+                diagnostic_headers={"user-agent": "SFR-Technical migration-test"},
+            )
+        )
+        before_search = dict(connection.execute(select(Search.__table__)).mappings().one())
+        before_context = dict(connection.execute(select(Context.__table__)).mappings().one())
+        assert "ingest_request_id" not in {
+            column["name"]
+            for column in inspect(connection).get_columns("analytics_event_context", schema=schema)
+        }
+        command.upgrade(config, "head")
+        assert (
+            connection.execute(
+                text("SELECT version_num FROM analytics_alembic_version")
+            ).scalar_one()
+            == "analytics_0003"
+        )
+        after_search = dict(connection.execute(select(Search.__table__)).mappings().one())
+        after_context = dict(connection.execute(select(Context.__table__)).mappings().one())
+        assert after_search == before_search
+        assert after_context == before_context
+        inspector = inspect(connection)
+        assert "uq_analytics_visit_seq" in {
+            item["name"]
+            for item in inspector.get_unique_constraints("analytics_events", schema=schema)
+        }
+        assert "ingest_request_id" in {
+            column["name"]
+            for column in inspector.get_columns("analytics_event_context", schema=schema)
+        }
+        # Upgrade is also safe when invoked again with retained legacy records.
+        command.upgrade(config, "head")
+        assert dict(connection.execute(select(Search.__table__)).mappings().one()) == before_search
+        assert (
+            dict(connection.execute(select(Context.__table__)).mappings().one()) == before_context
+        )
+    engine.dispose()
