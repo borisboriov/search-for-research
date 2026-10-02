@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import shutil
+import stat
 import threading
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -95,7 +96,7 @@ class DurableStore:
         for name in ("", "pending", "archive", "quarantine"):
             path = spool_dir / name
             path.mkdir(parents=True, exist_ok=True, mode=0o700)
-            os.chmod(path, 0o700)
+            os.chmod(path, stat.S_IRWXU)
         self.status_path = self.root / "status.json"
 
     @contextmanager
