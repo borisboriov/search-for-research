@@ -16,6 +16,7 @@ import shutil
 import statistics
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -26,6 +27,38 @@ from sfr_api.analytics.models import Context, EventContext, ProductEvent, Search
 
 TABLES = ("analytics_searches", "analytics_events", "analytics_context", "analytics_event_context")
 STAGES = ("visit", "attempt", "display", "profile", "letter_copy")
+
+
+def diagnostic_problems(result: dict[str, Any]) -> list[str]:
+    """Exit zero only for verified current DB and a clean delivery history.
+
+    Replay may remove the backlog, but it does not erase historical errors or
+    prove that every attempted observation survived. Never clear that history
+    to produce a green check. Reasons are categorical, without private payloads.
+    """
+    problems = []
+    if result.get("database_available") is not True:
+        problems.append("database_unavailable")
+    if not (
+        result.get("migration_current") is True
+        and result.get("expected_migration")
+        and result.get("migration") == result["expected_migration"]
+    ):
+        problems.append("migration_not_current")
+    for field, reason in (
+        ("pending_count", "pending_records"),
+        ("quarantine_count", "quarantined_records"),
+        ("error_count", "historical_errors"),
+    ):
+        if result.get(field, 0):
+            problems.append(reason)
+    if result.get("incomplete") is not False:
+        problems.append("incomplete_observations")
+    if result.get("last_error"):
+        problems.append("unresolved_storage_error")
+    if result.get("disk_free_bytes", result.get("free_bytes", 0)) < result.get("reserve_bytes", 0):
+        problems.append("disk_below_reserve")
+    return problems
 
 
 def private_dir(path: Path) -> None:
@@ -132,6 +165,22 @@ def copied_after_profile(
     )
 
 
+def observed_sequence_gaps(events: list[dict[str, Any]]) -> dict[str, tuple[int, int]]:
+    """Missing internal seq values and gap intervals, bounded by observations.
+
+    No assertion about a missing prefix/tail or loss cause. Late delivery can
+    fill these gaps when the report period includes its server reception time.
+    """
+    sequences: dict[str, set[int]] = defaultdict(set)
+    for event in events:
+        sequences[str(event["visit_id"])].add(int(event["client_seq"]))
+    gaps = {}
+    for visit, values in sequences.items():
+        missing = [right - left - 1 for left, right in pairwise(sorted(values)) if right > left + 1]
+        gaps[visit] = (sum(missing), len(missing))
+    return gaps
+
+
 def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str, Any]:
     events = [e for e in data["analytics_events"] if start <= time_value(e, "received_at") < end]
     events = list({str(e["event_id"]): e for e in events}.values())
@@ -152,6 +201,7 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
             else "unclassified"
         )
     all_events, all_searches = events, searches
+    sequence_gaps = observed_sequence_gaps(all_events)
     visit_traffic: dict[str, str] = {}
     for row in searches:
         kind = row.get("payload", {}).get("traffic_type") or traffic_by_search.get(
@@ -325,7 +375,15 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
             == category
         ]
         group_events = [e for e in all_events if e.get("traffic_type", "unclassified") == category]
+        group_gaps = [
+            values
+            for visit, values in sequence_gaps.items()
+            if visit_traffic.get(visit, "unclassified") == category
+        ]
         traffic_groups[category] = {
+            "observed_sequence_gap_count": sum(values[0] for values in group_gaps),
+            "observed_sequence_gap_intervals": sum(values[1] for values in group_gaps),
+            "visits_with_sequence_gaps": sum(values[0] > 0 for values in group_gaps),
             "server_searches": len(group_searches),
             "events": len(group_events),
             "visits": len(
@@ -343,6 +401,9 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
         }
     return {
         "traffic_groups": traffic_groups,
+        "observed_sequence_gap_count": sum(values[0] for values in sequence_gaps.values()),
+        "observed_sequence_gap_intervals": sum(values[1] for values in sequence_gaps.values()),
+        "visits_with_sequence_gaps": sum(values[0] > 0 for values in sequence_gaps.values()),
         "schema_version": 1,
         "start_utc": start.isoformat(),
         "end_utc": end.isoformat(),
@@ -421,7 +482,9 @@ def write_report(summary: dict[str, Any], directory: Path, timezone: str) -> Non
     for row in rows:
         previous = STAGES[max(0, STAGES.index(row["stage"]) - 1)]
         row["denominator_attempts"] = (
-            summary["funnel_attempts"][previous] if row["stage"] != "visit" else None
+            summary["funnel_attempts"][previous]
+            if row["stage"] not in {"visit", "attempt"}
+            else None
         )
     for name, table in (
         ("funnel", rows),
@@ -453,6 +516,10 @@ pre{{white-space:pre-wrap}}</style>
 боты выделяются явно; UA не доказывает личность. Отчёт отражает только полученные записи;
 после догрузки период нужно пересчитать. Воронка ограничена событиями, принятыми в периоде:
 визит, начавшийся до периода, не включается в последовательную воронку.</p>
+<p>Разрывы client_seq — ненаблюдаемые номера между двумя принятыми событиями одного визита.
+Начало и хвост последовательности не объявляются потерянными. Разрыв может заполниться
+поздней доставкой при пересчёте периода, включающего её серверное время приёма.
+Это отсутствие наблюдений, а не доказанная причина ухода или безвозвратной потери.</p>
 <pre>{body}</pre></html>"""
     write_private(directory / "report.html", content)
 
@@ -582,10 +649,11 @@ def main() -> int:
                 except Exception as exc:
                     result["database_available"] = False
                     result["database_error_class"] = type(exc).__name__
+                problems = diagnostic_problems(result)
+                result["check_ok"] = not problems
+                result["check_reasons"] = problems
                 print(json.dumps(result, default=str))
-                return (
-                    0 if result["database_available"] and not result.get("quarantine_count") else 1
-                )
+                return 1 if problems else 0
     except Exception as exc:
         # SQL errors can contain parameters/full queries/credentials. Keep diagnostic categorical.
         print(json.dumps({"ok": False, "error_class": type(exc).__name__}))
