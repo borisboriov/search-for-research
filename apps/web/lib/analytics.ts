@@ -4,7 +4,7 @@ import { isProductEvent, UUID, type EventData, type EventName, type ProductEvent
 
 const KEY = "sfr.analytics.v1";
 const LIMIT = 100;
-type Session = { visit: string; seq: number; queue: ProductEvent[]; started: boolean; search: string | null; pending?: { query: string; search: string; source: EventData["source"]; previous: string | null }; profile?: { author: string; search: string; position: number } };
+type Session = { visit: string; seq: number; queue: ProductEvent[]; started: boolean; search: string | null; query?: string; pending?: { query: string; search: string; source: EventData["source"]; previous: string | null }; profile?: { author: string; search: string; position: number } };
 let session: Session | undefined;
 let initialization: Promise<Session> | undefined;
 let active = false;
@@ -106,9 +106,9 @@ export async function prepareSearch(query: string, source: EventData["source"] =
 }
 export async function beginSearch(query: string, source?: EventData["source"]): Promise<{ visit: string; search: string; request: string }> {
   const current = await analyticsSession();
-  if (source || current.pending?.query !== query) await prepareSearch(query, source ?? (current.search ? "repeat" : "direct"));
+  if (source || current.pending?.query !== query) await prepareSearch(query, source ?? (current.query === query ? "repeat" : "direct"));
   const pending = current.pending!;
-  current.search = pending.search; delete current.pending; delete current.profile; persist();
+  current.search = pending.search; current.query = query; delete current.pending; delete current.profile; persist();
   const request = crypto.randomUUID();
   emitEvent("search_attempt", { source: pending.source, ...(pending.previous ? { previous_search_id: pending.previous } : {}) }, current.search, request);
   return { visit: current.visit, search: current.search, request };

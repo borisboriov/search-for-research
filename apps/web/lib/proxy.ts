@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import type { NextRequest } from "next/server";
 import { UUID } from "./analytics-contract";
 
@@ -33,8 +34,11 @@ export function proxyHeaders(request: NextRequest): Headers {
   if (!headers.has("X-Request-ID")) headers.set("X-Request-ID", crypto.randomUUID());
   // Enabled only for the isolated Caddy → Next private network deployment.
   if (process.env.SFR_TRUST_PROXY === "1") {
-    const forwarded = request.headers.get("x-forwarded-for");
-    if (forwarded && forwarded.length <= 256 && /^[0-9a-fA-F:., ]+$/.test(forwarded)) headers.set("X-Forwarded-For", forwarded);
+    const forwarded = request.headers.get("x-sfr-client-ip") ?? request.headers.get("x-forwarded-for");
+    if (forwarded && forwarded.length <= 64 && isIP(forwarded)) {
+      headers.set("X-SFR-Client-IP", forwarded);
+      headers.set("X-Forwarded-For", forwarded);
+    }
   }
   for (const name of ["User-Agent", "Accept-Language"]) {
     const value = request.headers.get(name);

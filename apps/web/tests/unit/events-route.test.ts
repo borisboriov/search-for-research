@@ -44,10 +44,12 @@ describe("closed sensitive-context forwarding", () => {
     const req = request({}, { Authorization: "SECRET_AUTH", Cookie: "SECRET_COOKIE", "Set-Cookie": "SECRET_SET", "X-Revalidate-Secret": "SECRET_REVALIDATE", "X-API-Key": "SECRET_KEY", "X-Forwarded-For": "1.2.3.4", "User-Agent": "test", Referer: "https://site.invalid/results?q=PRIVATE&token=SECRET_URL#secret", "X-SFR-Visit-ID": event.visit_id });
     const forwarded = proxyHeaders(req);
     expect(forwarded.has("X-Forwarded-For")).toBe(false);
+    expect(forwarded.has("X-SFR-Client-IP")).toBe(false);
     expect(forwarded.get("X-SFR-Visit-ID")).toBe(event.visit_id);
     expect(forwarded.get("X-SFR-Referer")).toBe("https://site.invalid/results");
     expect(JSON.stringify([...forwarded])).not.toMatch(/SECRET|PRIVATE/);
     vi.stubEnv("SFR_TRUST_PROXY", "1"); expect(proxyHeaders(req).get("X-Forwarded-For")).toBe("1.2.3.4");
+    expect(proxyHeaders(req).get("X-SFR-Client-IP")).toBe("1.2.3.4");
   });
   it("match carries correlation and preserves original submitted text", async () => {
     const fetch = vi.fn<(url: unknown, init: RequestInit) => Promise<Response>>().mockResolvedValue(Response.json({ confidence: "none", results: [] })); vi.stubGlobal("fetch", fetch);
