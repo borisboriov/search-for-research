@@ -5,16 +5,15 @@
 1. Пути в обратных кавычках в живых md существуют в репозитории.
 2. В живых документах нет старых адресов (`docs/SFR<N>_REPORT.md` без `reports/`,
    `docs/product/edits/`, копии в проекте Claude, `SFR_TODO.md`, `GITHUB_WORKFLOW.md`).
-3. Блок «Состояние» в начале `docs/DECISIONS.md` и бриф «Где мы сейчас» называют
-   одни и те же каталог, пороги, индекс и Success@5/@1 — это два единственных
-   места с боевыми цифрами (DECISIONS 27.09, диета документов).
-4. Блок «Состояние» совпадает с `meta.json` боевого индекса (локально,
+3. Бриф «Где мы сейчас» — единственное принятое состояние; его факты обязательны.
+4. Бриф совпадает с `meta.json` боевого индекса (локально,
    `data/indexes_sfr5c/frida_clean/meta.json` или `SFR_INDEX_META`) и с порогами
    в `ApiSettings` (`apps/api/src/sfr_api/settings.py`).
 5. «Открытой итерации нет» ↔ в корне нет `SPEC_*.md`; если открыта — спека названа и лежит в корне.
 6. Версия спеки MVP в её шапке совпадает с версией, названной в брифе.
-7. `--live`: `/api/health` боевого сервиса — profiles_count, institutions_count,
-   index_version, пороги — против блока «Состояние».
+7. Success@k сверяется с указанным в брифе JSON слепого измерения.
+8. `--live`: `/api/health` боевого сервиса — profiles_count, institutions_count,
+   index_version, пороги — против брифа.
 
 Только стандартная библиотека. Расхождения печатаются списком, код возврата 1.
 Строки с пометкой истории (удалён, снят, до дд.мм, `git show`, «старые пути»)
@@ -44,6 +43,7 @@ LIVE_DOCS = [
     "docs/README.md",
     "docs/product/README.md",
     "docs/product/brief.md",
+    "docs/DECISIONS.md",
     "docs/product/mvp_spec.md",
     "docs/product/grants_tracker_2026-2027.md",
     "docs/product/market_stretch_map_2026-08-08.md",
@@ -58,6 +58,9 @@ LIVE_DOCS = [
     ".claude/commands/review-iteration.md",
     ".agents/skills/issues/SKILL.md",
     ".agents/skills/review-iteration/SKILL.md",
+    ".agents/skills/sfr-session-prompt/SKILL.md",
+    ".agents/skills/sfr-verify-session/SKILL.md",
+    ".agents/skills/sfr-close-round/SKILL.md",
 ]
 
 # Строка — история, старые адреса в ней стоят намеренно.
@@ -210,14 +213,6 @@ def check_paths(findings: list[str]) -> None:
                     findings.append(f"{rel}:{lineno}: {why}: {line.strip()[:100]}")
 
 
-def state_block() -> str:
-    text = read("docs/DECISIONS.md")
-    m = re.search(r"^## Состояние.*?(?=^## )", text, re.M | re.S)
-    if not m:
-        raise SystemExit("docs/DECISIONS.md: не найден блок «## Состояние» в начале файла")
-    return m.group(0)
-
-
 def brief_screen() -> str:
     text = read("docs/product/brief.md")
     m = re.search(r"^## Где мы сейчас.*?(?=^## )", text, re.M | re.S)
@@ -246,7 +241,7 @@ def facts(text: str, where: str, findings: list[str]) -> dict[str, object]:
     m = re.search(r"Success@1\s*=?\s*" + PCT + r"\s*%", text)
     if m:
         out["s1"] = m.group(1)
-    for key in ("profiles", "thresholds", "s5", "s1"):
+    for key in ("profiles", "institutions", "index_version", "thresholds", "s5", "s1"):
         if key not in out:
             findings.append(
                 f"{where}: не удалось прочитать «{key}» — формулировку изменили? "
@@ -261,11 +256,30 @@ def compare(a: dict[str, object], b: dict[str, object], where: str, findings: li
             findings.append(f"{where}: {key} — {a[key]} против {b[key]}")
 
 
-def check_state_vs_brief(findings: list[str]) -> dict[str, object]:
-    state = facts(state_block(), "DECISIONS «Состояние»", findings)
-    brief = facts(brief_screen(), "бриф «Где мы сейчас»", findings)
-    compare(state, brief, "DECISIONS «Состояние» ≠ бриф «Где мы сейчас»", findings)
-    return state
+def check_brief(findings: list[str]) -> dict[str, object]:
+    return facts(brief_screen(), "бриф «Где мы сейчас»", findings)
+
+
+def check_brief_metrics(state: dict[str, object], findings: list[str]) -> None:
+    """Check the accepted quality claims against their linked evidence, not another summary."""
+    links = re.findall(r"\]\((\.\./metrics/[A-Za-z0-9_.-]+\.json)\)", brief_screen())
+    if len(links) != 1:
+        findings.append("бриф: нужна одна ссылка на JSON канонического измерения качества")
+        return
+    path = (ROOT / "docs/product" / links[0]).resolve()
+    try:
+        metrics = json.loads(path.read_text(encoding="utf-8"))
+        measured = metrics["sets"]["golden_in_domain_24"]["blind"]
+        expected = {
+            "profiles": metrics["n_profiles"],
+            "index_version": metrics["index_version"],
+            "s5": f"{measured['success_at_5'] * 100:.1f}".replace(".", ","),
+            "s1": f"{measured['success_at_1'] * 100:.1f}".replace(".", ","),
+        }
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        findings.append(f"бриф: не удалось проверить измерение {links[0]} ({exc})")
+        return
+    compare(state, expected, "бриф «Где мы сейчас» ≠ измерение слепого судьи", findings)
 
 
 def check_state_vs_index(state: dict[str, object], findings: list[str]) -> None:
@@ -291,7 +305,7 @@ def check_state_vs_index(state: dict[str, object], findings: list[str]) -> None:
         compare(
             state,
             local,
-            f"DECISIONS «Состояние» ≠ {shown}",
+            f"бриф «Где мы сейчас» ≠ {shown}",
             findings,
         )
     settings = read("apps/api/src/sfr_api/settings.py")
@@ -301,29 +315,29 @@ def check_state_vs_index(state: dict[str, object], findings: list[str]) -> None:
         values.append(float(m.group(1)) if m else None)
     if "thresholds" in state and tuple(values) != state["thresholds"]:
         findings.append(
-            f"DECISIONS «Состояние» ≠ ApiSettings: пороги {state['thresholds']} "
+            f"бриф «Где мы сейчас» ≠ ApiSettings: пороги {state['thresholds']} "
             f"против {tuple(values)}"
         )
 
 
 def check_iteration(findings: list[str]) -> None:
-    state = state_block()
+    state = brief_screen()
     specs = sorted(p.name for p in ROOT.glob("SPEC_*.md"))
     says_none = "Открытой итерации нет" in state
     if says_none and specs:
         findings.append(
-            f"DECISIONS «Состояние»: «открытой итерации нет», но в корне лежит {', '.join(specs)}"
+            f"бриф «Где мы сейчас»: «открытой итерации нет», но в корне лежит {', '.join(specs)}"
         )
     if not says_none:
         named = re.findall(r"SPEC_SFR[\w-]+\.md", state)
         if not named:
             findings.append(
-                "DECISIONS «Состояние»: открытая итерация не названа спекой `SPEC_SFR<N>*.md`"
+                "бриф «Где мы сейчас»: открытая итерация не названа спекой `SPEC_SFR<N>*.md`"
             )
         for name in named:
             if name not in specs:
                 findings.append(
-                    f"DECISIONS «Состояние»: спека {name} названа открытой, но в корне её нет"
+                    f"бриф «Где мы сейчас»: спека {name} названа открытой, но в корне её нет"
                 )
 
 
@@ -357,7 +371,7 @@ def check_live(state: dict[str, object], findings: list[str], url: str) -> None:
             health.get("score_high"),
         ),
     }
-    compare(state, live, "DECISIONS «Состояние» ≠ боевой /api/health", findings)
+    compare(state, live, "бриф «Где мы сейчас» ≠ боевой /api/health", findings)
     if health.get("thresholds_match") is False:
         findings.append(
             "боевой /api/health: thresholds_match = false — пороги индекса и сервиса разошлись"
@@ -366,14 +380,13 @@ def check_live(state: dict[str, object], findings: list[str], url: str) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument(
-        "--live", action="store_true", help="сверить блок «Состояние» с боевым /api/health"
-    )
+    parser.add_argument("--live", action="store_true", help="сверить бриф с боевым /api/health")
     parser.add_argument("--url", default="https://search-for-research.ru/api/health")
     args = parser.parse_args()
     findings: list[str] = []
     check_paths(findings)
-    state = check_state_vs_brief(findings)
+    state = check_brief(findings)
+    check_brief_metrics(state, findings)
     check_state_vs_index(state, findings)
     check_iteration(findings)
     check_spec_version(findings)

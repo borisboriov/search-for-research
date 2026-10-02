@@ -32,6 +32,7 @@ typecheck: unhide
 		packages/sfr-match/src/sfr_match apps/api/src/sfr_api scripts
 
 test: unhide
+	uv run python -m unittest discover -s scripts -p 'test_*.py'
 	uv run pytest -m "not integration and not slow"
 
 test-integration: unhide
@@ -588,3 +589,10 @@ docs-check:
 
 docs-check-live:
 	python3 scripts/docs_check.py --live
+
+# Только чтение PR: текущее подтверждение ревью и checks/web/audit.
+# Номер обязателен; это готовность к передаче, не разрешение на merge.
+.PHONY: handoff-check
+handoff-check: export SFR_HANDOFF_PR=$(PR)
+handoff-check:
+	python3 scripts/check_handoff.py --pr "$$SFR_HANDOFF_PR"

@@ -25,9 +25,10 @@
 `Backlog` в правилах не описан. Скрипт считает такие переходы отдельно и печатает
 их числом — если `Backlog` используется осознанно, правило надо будет дописать.
 
-**Iteration** — только для issues с лейблом `agent` и milestone из
-`ITERATION_MILESTONES` → опция текущей итерации (`SFR-7`, поиск по префиксу).
-Остальным Iteration не ставить.
+**Iteration** — только после явного решения открыть итерацию и задания её
+префикса в `CURRENT_ITERATION_PREFIX`. Пока значение `None`, поле не менять.
+При открытой итерации её получают только открытые issues с лейблом `agent`
+и milestone из `ITERATION_MILESTONES`. Закрытым и остальным Iteration не ставить.
 
 Поле, для которого правило говорит «не трогать», остаётся как есть: скрипт ничего
 не сбрасывает и пишет только отличающиеся значения, поэтому повторный запуск —
@@ -52,8 +53,8 @@ OWNER = "borisboriov"
 PROJECT_NUMBER = "5"
 REPO = "borisboriov/search-for-research"
 
-#: Префикс опции поля Iteration для текущей итерации.
-CURRENT_ITERATION_PREFIX = "SFR-7"
+#: Задаётся после явного решения открыть итерацию; будущий план не разрешает старт.
+CURRENT_ITERATION_PREFIX: str | None = None
 
 #: Milestones, задачи которых относятся к текущей итерации.
 ITERATION_MILESTONES = {"Пилот 5 тестеров", "Аттестация НИР 3"}
@@ -116,6 +117,8 @@ def target_priority(issue: dict[str, Any]) -> str | None:
 
 
 def target_iteration(issue: dict[str, Any]) -> str | None:
+    if CURRENT_ITERATION_PREFIX is None or issue["state"] != "OPEN":
+        return None
     if "agent" not in issue["label_names"]:
         return None
     if issue["milestone"] not in ITERATION_MILESTONES:
