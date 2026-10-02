@@ -1,14 +1,26 @@
+import { writeFile } from "node:fs/promises";
 import { expect, test, type Page } from "@playwright/test";
 import type { ProductEvent } from "../lib/analytics-contract";
 import { KNOWN_AUTHOR_ID } from "./helpers";
 
 // Synthetic matches verify browser instrumentation, not FRIDA ranking.
 // Optional live receiver additionally verifies Next → API durable acknowledgements.
+let captures: ProductEvent[][] = [];
+test.beforeEach(() => { captures = []; });
+test.afterEach(async ({ page }, info) => {
+  await page.unrouteAll({ behavior: "wait" });
+  const events = [...new Map(captures.flat().map(event => [event.event_id, event])).values()];
+  const counts: Record<string, number> = {};
+  for (const event of events) counts[event.name] = (counts[event.name] ?? 0) + 1;
+  const proof = info.outputPath("analytics-acknowledged-events.json");
+  await writeFile(proof, JSON.stringify({ schema_version: 1, live_receiver: process.env.SFR_ANALYTICS_LIVE_RECEIVER === "1", counts, events: events.map(({ event_id, visit_id, search_id, name, client_seq }) => ({ event_id, visit_id, search_id, name, client_seq })) }, null, 2), { mode: 0o600 });
+  await info.attach("analytics-acknowledged-events", { contentType: "application/json", path: proof });
+});
 async function capture(page: Page): Promise<ProductEvent[]> {
   const events: ProductEvent[] = [];
+  captures.push(events);
   await page.route("**/api/events", async route => {
     const batch = route.request().postDataJSON().events as ProductEvent[];
-    for (const event of batch) if (!events.some(previous => previous.event_id === event.event_id)) events.push(event);
     if (process.env.SFR_ANALYTICS_LIVE_RECEIVER === "1") {
       const response = await route.fetch();
       expect(response.ok(), "real receiver must confirm durable persistence").toBe(true);
@@ -16,6 +28,8 @@ async function capture(page: Page): Promise<ProductEvent[]> {
       expect(payload.accepted).toEqual(expect.arrayContaining(batch.map(event => event.event_id)));
       await route.fulfill({ response, json: payload });
     } else await route.fulfill({ json: { accepted: batch.map(event => event.event_id) } });
+    // Test observations are acknowledged durable facts in live mode.
+    for (const event of batch) if (!events.some(previous => previous.event_id === event.event_id)) events.push(event);
   });
   return events;
 }
