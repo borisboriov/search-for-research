@@ -1,0 +1,257 @@
+"""Fsync-first disk journal and idempotent PostgreSQL replay.
+
+An accepted event is a durable file, not a promise about an in-memory queue.
+Completed files become retained compressed archives; corrupt files are quarantined.
+No raw payload/driver exception is logged (driver messages can contain parameters).
+"""
+
+import fcntl
+import gzip
+import json
+import logging
+import os
+import shutil
+import threading
+from contextlib import contextmanager
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+from uuid import uuid4
+
+from sqlalchemy import create_engine
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.engine import Engine
+
+from sfr_api.analytics.contracts import EventBatch
+from sfr_api.analytics.models import Context, EventContext, ProductEvent, Search
+
+log = logging.getLogger(__name__)
+
+
+class StorageUnavailable(OSError):
+    """No durable acknowledgement is possible."""
+
+
+def engine_for(url: str) -> Engine:
+    return create_engine(
+        url,
+        pool_size=2,
+        max_overflow=0,
+        pool_timeout=1,
+        pool_recycle=300,
+        hide_parameters=True,
+        connect_args={
+            "connect_timeout": 1,
+            "options": "-c timezone=UTC -c statement_timeout=1000 -c lock_timeout=500",
+        },
+    )
+
+
+def _sync_dir(path: Path) -> None:
+    fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _atomic(path: Path, content: bytes) -> None:
+    temporary = path.with_name(f".{path.name}.{uuid4()}.tmp")
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "wb") as file:
+            file.write(content)
+            file.flush()
+            os.fsync(file.fileno())
+        os.replace(temporary, path)
+        _sync_dir(path.parent)
+    except BaseException:
+        # A partially written file is retained for operator diagnosis.
+        raise
+
+
+class DurableStore:
+    def __init__(
+        self,
+        url: str,
+        spool_dir: Path,
+        *,
+        max_bytes: int = 512 * 1024 * 1024,
+        reserve_bytes: int = 64 * 1024 * 1024,
+    ) -> None:
+        self.root = spool_dir
+        self.max_bytes = max_bytes
+        self.reserve_bytes = reserve_bytes
+        self.engine = engine_for(url)
+        self._locks = {"journal": threading.Lock(), "replay": threading.Lock()}
+        for name in ("", "pending", "archive", "quarantine"):
+            path = spool_dir / name
+            path.mkdir(parents=True, exist_ok=True, mode=0o700)
+            os.chmod(path, 0o700)
+        self.status_path = self.root / "status.json"
+
+    @contextmanager
+    def _exclusive(self, name: str = "journal"):  # type: ignore[no-untyped-def]
+        with self._locks[name], (self.root / f"{name}.lock").open("a", encoding="utf-8") as lock:
+            os.chmod(lock.name, 0o600)
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock, fcntl.LOCK_UN)
+
+    def append(self, kind: str, records: list[dict[str, Any]]) -> None:
+        envelope = {"version": 1, "kind": kind, "records": records}
+        content = json.dumps(envelope, ensure_ascii=False, allow_nan=False).encode("utf-8")
+        with self._exclusive():
+            pending = sum(p.stat().st_size for p in (self.root / "pending").iterdir())
+            free = shutil.disk_usage(self.root).free
+            if pending + len(content) > self.max_bytes or free - len(content) < self.reserve_bytes:
+                self._failure("capacity")
+                raise StorageUnavailable("analytics journal capacity exhausted")
+            try:
+                _atomic(self.root / "pending" / f"{uuid4()}.json", content)
+            except OSError:
+                self._failure("disk_write")
+                raise StorageUnavailable("analytics journal write failed") from None
+
+    def _status(self) -> dict[str, Any]:
+        try:
+            value = json.loads(self.status_path.read_text(encoding="utf-8"))
+            return value if isinstance(value, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def _failure(self, category: str) -> None:
+        log.error("analytics storage failure category=%s", category)
+        status = self._status()
+        status["last_error"] = category
+        status["last_error_at"] = datetime.now(UTC).isoformat()
+        status["error_count"] = status.get("error_count", 0) + 1
+        try:
+            _atomic(self.status_path, json.dumps(status).encode())
+        except OSError:
+            log.error("analytics diagnostics write failed")
+
+    def diagnostics(self) -> dict[str, Any]:
+        result = self._status()
+        for name in ("pending", "archive", "quarantine"):
+            paths = list((self.root / name).iterdir())
+            result[f"{name}_count"] = len(paths)
+            result[f"{name}_bytes"] = sum(path.stat().st_size for path in paths)
+        pending_paths = list((self.root / "pending").iterdir())
+        oldest = min((p.stat().st_mtime for p in pending_paths), default=None)
+        result["oldest_pending_at"] = (
+            datetime.fromtimestamp(oldest, UTC).isoformat() if oldest else None
+        )
+        result["oldest_pending_age_seconds"] = (
+            (datetime.now(UTC).timestamp() - oldest) if oldest else 0
+        )
+        result["free_bytes"] = shutil.disk_usage(self.root).free
+        result["max_pending_bytes"] = self.max_bytes
+        result["reserve_bytes"] = self.reserve_bytes
+        result["incomplete"] = bool(result["quarantine_count"] or result.get("error_count"))
+        return result
+
+    def replay(self, limit: int = 100) -> dict[str, int]:
+        result = {"persisted": 0, "quarantined": 0, "errors": 0}
+        with self._exclusive("replay"):
+            paths = sorted(
+                (self.root / "pending").glob("*.json"), key=lambda p: p.stat().st_mtime_ns
+            )
+            for path in paths[:limit]:
+                try:
+                    envelope = json.loads(path.read_text(encoding="utf-8"))
+                    self._validate(envelope)
+                except (OSError, ValueError, TypeError, KeyError, AttributeError):
+                    os.replace(path, self.root / "quarantine" / path.name)
+                    _sync_dir(self.root / "pending")
+                    _sync_dir(self.root / "quarantine")
+                    self._failure("corrupt_record")
+                    result["quarantined"] += 1
+                    continue
+                try:
+                    self._persist(envelope)
+                except Exception:
+                    self._failure("database")
+                    result["errors"] += 1
+                    break
+                try:
+                    # Archive is durable BEFORE removing the pending copy. A crash in
+                    # between simply replays the same PKs and replaces the same archive.
+                    archive = self.root / "archive" / f"{path.stem}.json.gz"
+                    _atomic(archive, gzip.compress(path.read_bytes(), mtime=0))
+                    path.unlink()
+                    _sync_dir(path.parent)
+                    status = self._status()
+                    status["last_success"] = datetime.now(UTC).isoformat()
+                    status["last_error"] = None
+                    _atomic(self.status_path, json.dumps(status).encode())
+                    result["persisted"] += len(envelope["records"])
+                except OSError:
+                    self._failure("archive_write")
+                    result["errors"] += 1
+                    break
+        return result
+
+    @staticmethod
+    def _validate(envelope: dict[str, Any]) -> None:
+        if not isinstance(envelope, dict):
+            raise ValueError("invalid journal envelope")
+        if envelope.get("version") != 1 or envelope.get("kind") not in {"search", "events"}:
+            raise ValueError("unknown journal contract")
+        records = envelope["records"]
+        if not isinstance(records, list) or not records or len(records) > 10:
+            raise ValueError("invalid journal batch")
+        if envelope["kind"] == "events":
+            for record in records:
+                EventBatch.model_validate(
+                    {
+                        "events": [
+                            {
+                                key: value
+                                for key, value in record.items()
+                                if key
+                                not in {
+                                    "received_at",
+                                    "app_version",
+                                    "traffic_type",
+                                    "private_context",
+                                }
+                            }
+                        ]
+                    }
+                )
+                datetime.fromisoformat(record["received_at"])
+        else:
+            for record in records:
+                if set(record) != {"search", "context"}:
+                    raise ValueError("invalid search envelope")
+                if len(record["context"]["raw_query"]) > 2000:
+                    raise ValueError("query limit")
+                datetime.fromisoformat(record["search"]["received_at"])
+
+    def _persist(self, envelope: dict[str, Any]) -> None:
+        with self.engine.begin() as connection:
+            for record in envelope["records"]:
+                if envelope["kind"] == "events":
+                    event = {
+                        key: value for key, value in record.items() if key != "private_context"
+                    }
+                    inserted = connection.execute(
+                        insert(ProductEvent)
+                        .values(**event)
+                        .on_conflict_do_nothing()
+                        .returning(ProductEvent.event_id)
+                    ).first()
+                    if inserted:
+                        connection.execute(insert(EventContext).values(**record["private_context"]))
+                else:
+                    inserted = connection.execute(
+                        insert(Search)
+                        .values(**record["search"])
+                        .on_conflict_do_nothing()
+                        .returning(Search.search_id)
+                    ).first()
+                    if inserted:
+                        connection.execute(insert(Context).values(**record["context"]))

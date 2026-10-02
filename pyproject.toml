@@ -112,6 +112,7 @@ addopts = "--cov=sfr_core --cov=sfr_etl --cov=sfr_match --cov=sfr_api --cov-repo
 markers = [
     "integration: live OpenAlex API smoke tests (excluded in CI)",
     "slow: downloads/runs a real embedding model (excluded in CI)",
+    "analytics_pg: requires a dedicated real PostgreSQL analytics database",
 ]
 
 [tool.coverage.run]
