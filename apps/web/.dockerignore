@@ -4,3 +4,10 @@ test-results
 e2e/screenshots
 tsconfig.tsbuildinfo
 .env*
+# Tests refer to repository fixtures outside the web build context. They are
+# checked on the host/CI; production image contains application sources only.
+tests
+e2e
+vitest.config.mts
+vitest.setup.ts
+playwright.config.ts
