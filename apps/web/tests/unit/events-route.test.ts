@@ -19,8 +19,7 @@ describe("event receiver proxy", () => {
   it.each([{}, { accepted: [] }, { accepted: ["unknown"] }])("cannot fabricate persistence from malformed upstream ack %j", async payload => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json(payload)));
     const response = await POST(request({ events: [event] }));
-    if ("accepted" in payload && payload.accepted?.length === 0) expect(await response.json()).toEqual({ accepted: [] });
-    else expect(response.status).toBe(503);
+    expect(response.status).toBe(503);
   });
   it("refuses unknown fields, oversized batches, timezone-less clocks and text in events", async () => {
     const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);

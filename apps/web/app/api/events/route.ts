@@ -23,7 +23,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (upstream.ok) {
         const payload: unknown = await upstream.json();
         const accepted = payload !== null && typeof payload === "object" && "accepted" in payload ? payload.accepted : null;
-        if (Array.isArray(accepted) && accepted.every(id => typeof id === "string" && events.some(e => e.event_id === id))) return NextResponse.json({ accepted }, { status: upstream.status });
+        if (Array.isArray(accepted) && accepted.every(id => typeof id === "string" && events.some(e => e.event_id === id)) && events.every(event => accepted.includes(event.event_id))) return NextResponse.json({ accepted }, { status: upstream.status });
       } else if (upstream.status < 500) return NextResponse.json({ detail: "Event receiver rejected delivery" }, { status: upstream.status });
     } catch { /* No exception payload: it can include sensitive headers or URLs. */ }
   }
