@@ -35,8 +35,27 @@ describe("durable client event delivery", () => {
   it("separates direct profile entry from displayed result attribution", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ accepted: [] })));
     const client = await import("@/lib/analytics"); const search = await client.beginSearch("query", "submitted");
-    await client.linkProfile("A1234", search.search, 2); await client.observeProfile("A1234"); await client.observeProfile("A9999"); await settle();
+    await client.linkProfile("A1234", search.search, 2); await client.observeProfile("A1234"); await client.observeProfile("A9999"); await client.observeProfile("A1234"); await settle();
     const events = stored().queue; expect(events.find((e: { name: string }) => e.name === "profile_opened")).toMatchObject({ search_id: search.search, data: { position: 2 } });
-    expect(events.find((e: { name: string }) => e.name === "profile_direct").search_id).toBeNull();
+    expect(events.filter((e: { name: string }) => e.name === "profile_direct")).toHaveLength(2);
+    expect(events.filter((e: { name: string }) => e.name === "profile_direct").every((e: { search_id: string | null }) => e.search_id === null)).toBe(true);
+  });
+});
+
+
+describe("actual document visibility", () => {
+  it("hidden documents wait, repeated visibility changes do not duplicate a view", async () => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+    const frame = vi.fn((callback: FrameRequestCallback) => { callback(0); return 1; }); vi.stubGlobal("requestAnimationFrame", frame);
+    const client = await import("@/lib/analytics"); const observed = vi.fn(); const cleanup = client.whenVisible(observed);
+    expect(observed).not.toHaveBeenCalled();
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" }); document.dispatchEvent(new Event("visibilitychange")); document.dispatchEvent(new Event("visibilitychange"));
+    expect(observed).toHaveBeenCalledTimes(1); cleanup();
+  });
+  it("abandoned profile navigation context expires rather than attributing future direct entries", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ accepted: [] })));
+    const client = await import("@/lib/analytics"); const search = await client.beginSearch("query", "submitted");
+    await client.linkProfile("A1234", search.search, 1); vi.setSystemTime(Date.now() + 31000); await client.observeProfile("A1234"); await settle();
+    expect(stored().queue.find((e: { name: string }) => e.name === "profile_direct")).toMatchObject({ search_id: null });
   });
 });

@@ -4,12 +4,13 @@ import { isProductEvent, UUID, type EventData, type EventName, type ProductEvent
 
 const KEY = "sfr.analytics.v1";
 const LIMIT = 100;
-type Session = { visit: string; seq: number; queue: ProductEvent[]; started: boolean; search: string | null; query?: string; pending?: { query: string; search: string; source: EventData["source"]; previous: string | null }; profile?: { author: string; search: string; position: number } };
+type Session = { visit: string; seq: number; queue: ProductEvent[]; started: boolean; search: string | null; query?: string; pending?: { query: string; search: string; source: EventData["source"]; previous: string | null }; profile?: { author: string; search: string; position: number; linkedAt: number }; activeProfile?: { author: string; search: string; position: number } };
 let session: Session | undefined;
 let initialization: Promise<Session> | undefined;
 let active = false;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let failures = 0;
+let observedProfileDocument = false;
 function fresh(): Session { return { visit: crypto.randomUUID(), seq: 0, queue: [], started: false, search: null }; }
 function persist() {
   try { sessionStorage.setItem(KEY, JSON.stringify(session)); }
@@ -77,7 +78,11 @@ export async function flushEvents(): Promise<void> {
   try {
     const events = current.queue.slice(0, 10);
     while (events.length > 1 && new TextEncoder().encode(JSON.stringify({ events })).length > 16000) events.pop();
-    const response = await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ events }), keepalive: true, signal: AbortSignal.timeout(5000) });
+    const controller = new AbortController();
+    const deadline = setTimeout(() => controller.abort(), 5000);
+    let response: Response;
+    try { response = await fetch("/api/events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ events }), keepalive: true, signal: controller.signal }); }
+    finally { clearTimeout(deadline); }
     if (response.ok) {
       const payload: unknown = await response.json();
       if (payload && typeof payload === "object" && "accepted" in payload && Array.isArray(payload.accepted)) {
@@ -108,24 +113,36 @@ export async function beginSearch(query: string, source?: EventData["source"]): 
   const current = await analyticsSession();
   if (source || current.pending?.query !== query) await prepareSearch(query, source ?? (current.query === query ? "repeat" : "direct"));
   const pending = current.pending!;
-  current.search = pending.search; current.query = query; delete current.pending; delete current.profile; persist();
+  current.search = pending.search; current.query = query; delete current.pending; delete current.profile; delete current.activeProfile; persist();
   const request = crypto.randomUUID();
   emitEvent("search_attempt", { source: pending.source, ...(pending.previous ? { previous_search_id: pending.previous } : {}) }, current.search, request);
   return { visit: current.visit, search: current.search, request };
 }
 export async function linkProfile(author: string, search: string, position: number): Promise<void> {
-  const current = await analyticsSession(); current.profile = { author, search, position }; persist();
+  const current = await analyticsSession(); current.profile = { author, search, position, linkedAt: Date.now() }; persist();
 }
 export async function observeProfile(author: string): Promise<void> {
   const current = await analyticsSession();
-  const context = current.profile?.author === author ? current.profile : null;
+  const reload = !observedProfileDocument && typeof performance.getEntriesByType === "function" && performance.getEntriesByType("navigation").some(entry => (entry as PerformanceNavigationTiming).type === "reload");
+  const context = current.profile?.author === author && Date.now() - current.profile.linkedAt >= 0 && Date.now() - current.profile.linkedAt <= 30000 ? current.profile : reload && current.activeProfile?.author === author ? current.activeProfile : null;
+  observedProfileDocument = true;
+  delete current.profile;
+  current.activeProfile = context ?? undefined;
   current.search = context?.search ?? null; persist();
   emitEvent(context ? "profile_opened" : "profile_direct", { author_id: author, source: context ? "results" : "direct", ...(context ? { position: context.position } : {}) }, context?.search ?? null);
 }
 /** Call only after committed UI and a visible document, never from SSR/prefetch. */
 export function whenVisible(callback: () => void): () => void {
   let frame: number | undefined;
-  const show = () => { if (document.visibilityState !== "hidden") { document.removeEventListener("visibilitychange", show); frame = requestAnimationFrame(callback); } };
-  show(); document.addEventListener("visibilitychange", show);
+  let fired = false;
+  const show = () => {
+    if (!fired && document.visibilityState !== "hidden") {
+      fired = true;
+      document.removeEventListener("visibilitychange", show);
+      frame = requestAnimationFrame(callback);
+    }
+  };
+  if (document.visibilityState === "hidden") document.addEventListener("visibilitychange", show);
+  else show();
   return () => { document.removeEventListener("visibilitychange", show); if (frame !== undefined) cancelAnimationFrame(frame); };
 }

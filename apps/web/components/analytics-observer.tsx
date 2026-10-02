@@ -11,7 +11,7 @@ export function VisitObserver() {
   return null;
 }
 export function ProfileObserver({ authorId }: { authorId: string }) {
-  const seen = useRef(false);
-  useEffect(() => whenVisible(() => { if (!seen.current) { seen.current = true; void observeProfile(authorId); } }), [authorId]);
+  const seen = useRef<string | null>(null);
+  useEffect(() => whenVisible(() => { if (seen.current !== authorId) { seen.current = authorId; void observeProfile(authorId); } }), [authorId]);
   return null;
 }
