@@ -23,7 +23,7 @@
 			wrap json
 			request>headers delete
 			resp_headers delete
-			request>uri regexp "\\?.*$" ""
+			request>uri regexp \?.*$ ""
 		}
 	}
 }
@@ -63,7 +63,7 @@
 			request>headers delete
 			resp_headers delete
 			# No query parameter is safe by default (arbitrary secret names).
-			request>uri regexp "\\?.*$" ""
+			request>uri regexp \?.*$ ""
 		}
 	}
 

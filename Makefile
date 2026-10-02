@@ -547,7 +547,7 @@ DEPLOY_ENV = SFR_COMPOSE_PROJECT=$(SFR_COMPOSE_PROJECT) SFR_LOCAL_PORT=$(SFR_LOC
 	SFR_ANALYTICS_RELEASE=$(shell git rev-parse HEAD)
 
 deploy-local:
-	$(DEPLOY_ENV) $(DEPLOY_COMPOSE) up -d --build
+	$(DEPLOY_ENV) $(DEPLOY_COMPOSE) up -d --build --wait --wait-timeout 300
 	$(DEPLOY_ENV) $(DEPLOY_COMPOSE) run --rm analytics-migrate
 	@for n in $$(seq 1 240); do curl -sf -o /dev/null http://localhost:$(SFR_LOCAL_PORT)/ && break; sleep 1; done
 	@curl -sf -o /dev/null http://localhost:$(SFR_LOCAL_PORT)/
@@ -638,3 +638,7 @@ handoff-check:
 .PHONY: analytics-rotate
 analytics-rotate: unhide
 	uv run python scripts/analytics_rotate.py
+
+.PHONY: analytics-test-caddy
+analytics-test-caddy: unhide
+	uv run python scripts/check_caddy_logging.py $(CADDY_TEST_ARGS)

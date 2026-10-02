@@ -334,7 +334,8 @@ make deploy-local-down SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_POR
 
 `make deploy-local` задаёт безопасные пароли только для локальной репетиции,
 версию релиза из текущего git SHA, собирает образы с именем своего проекта,
-применяет миграции и ревалидирует Next. В production сначала заполнить
+ожидает healthy у всех сервисов (до 300 секунд), затем применяет миграции и
+ревалидирует Next. Не считать ответ `up -d` доказательством готовности API. В production сначала заполнить
 три секрета и `SFR_ANALYTICS_RELEASE` текущим SHA. Из корня проекта:
 
 ```bash
@@ -457,3 +458,16 @@ make analytics-pull ANALYTICS_ARGS="--local --out data/backups/local-20261002"
 `deploy/analytics/backup.cron.example` — подготовленное расписание и
 инструкция; **на production в этой сессии не установлено**. Локальные
 backup/exports не публиковать, не включать в git или web static.
+
+Для регрессии логирования на реальном Caddy после сборки proxy:
+
+```bash
+make analytics-test-caddy CADDY_TEST_ARGS="--image sfr-analytics-rehearsal-proxy:latest"
+```
+
+Проверка запускает отдельный контейнер без сети и host ports с синтетическим
+loopback backend: пути `/api/match`, `/results`, `/supervisor/A123` сохраняются,
+произвольные query-параметры и secret headers отсутствуют в access/runtime
+логах. Двойное экранирование regexp в Caddyfile может ошибочно удалить весь
+URI; проверяется фактический Go/Caddy encoder, а не Python-аналог regex.
+После проверки контейнер остановлен, его синтетический том сохраняется.
