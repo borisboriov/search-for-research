@@ -79,7 +79,7 @@ docs/
 | `SFR3_REPORT.md` … `SFR6_REPORT.md`, `SFR4b_REPORT.md`, `SFR5b_REPORT.md`, `SFR5c_REPORT.md` | отчёты итераций | пишутся руками, числа — из `metrics/` и прогонов |
 | `BACKLOG_2026-09_REPORT.md` | сессии 27.09: бэклог ревью 12–13.09 и дедупликация-2 (PR #139); чистка eval (#143) | руками |
 | `GH_MIGRATION_REPORT.md` | перенос задач из markdown в GitHub Issues (12.09) | руками |
-| [pilot-ui-validation.md](reports/pilot-ui-validation.md) | UI-пакет #155–161: проверки, снимки, предложенные тексты; [top-100 переводов](reports/pilot-ui-topics-top100.md) для человека | технические доказательства PR #178, приёмка открыта |
+| [pilot-ui-validation.md](reports/pilot-ui-validation.md) | UI-пакет #155–161: проверки, снимки, принятые тексты; [проверка top-100 переводов с источниками](reports/pilot-ui-topics-top100.md) | принято Борисом в PR #178; merge и выкладка не выполнены |
 
 Независимый ревьюер возвращает результат координатору; тот сохраняет итог
 в PR с проверенными base/head и ссылками на оставшиеся находки. Отдельный
