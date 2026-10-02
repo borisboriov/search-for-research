@@ -28,7 +28,8 @@ STAGES = ("visit", "attempt", "display", "profile", "letter_copy")
 
 def private_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True, mode=0o700)
-    path.chmod(0o700)
+    if path.is_symlink() or path.stat().st_mode & 0o077:
+        raise PermissionError("output directory must be private (0700)")
 
 
 def write_private(path: Path, value: str) -> None:
@@ -36,6 +37,8 @@ def write_private(path: Path, value: str) -> None:
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as stream:
         stream.write(value)
+        stream.flush()
+        os.fsync(stream.fileno())
 
 
 def instant(value: str, timezone: str) -> datetime:
@@ -119,6 +122,19 @@ def event_order(row: dict[str, Any]) -> tuple[int, str]:
     return int(row["client_seq"]), str(row["event_id"])
 
 
+def copied_after_profile(
+    event: dict[str, Any], events: list[dict[str, Any]], displayed: dict[str, Any]
+) -> bool:
+    author = event.get("data", {}).get("author_id")
+    return bool(author) and any(
+        row["name"] == "profile_opened"
+        and str(row["visit_id"]) == str(event["visit_id"])
+        and row.get("data", {}).get("author_id") == author
+        and event_order(displayed) < event_order(row) < event_order(event)
+        for row in events
+    )
+
+
 def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str, Any]:
     events = [e for e in data["analytics_events"] if start <= time_value(e, "received_at") < end]
     events = list({str(e["event_id"]): e for e in events}.values())
@@ -188,6 +204,7 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
             )
             stages["attempt"] = stages["visit"]
             previous = attempted
+            displayed = attempted
             expected = (
                 ("results_shown", "weak_shown", "empty_shown"),
                 ("profile_opened",),
@@ -201,14 +218,7 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
                         if e["name"] in names
                         and str(e["visit_id"]) == visit_id
                         and event_order(e) > event_order(previous)
-                        and (
-                            stage != "letter_copy"
-                            or (
-                                e.get("data", {}).get("author_id")
-                                and e["data"]["author_id"]
-                                == previous.get("data", {}).get("author_id")
-                            )
-                        )
+                        and (stage != "letter_copy" or copied_after_profile(e, rows, displayed))
                     ),
                     None,
                 )
@@ -218,6 +228,8 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
                 if not stages[STAGES[STAGES.index(stage) - 1]] or not match or not server_ok:
                     break
                 stages[stage] = True
+                if stage == "display":
+                    displayed = match
                 previous = match
             for stage in STAGES[1:]:
                 if stages[stage]:
@@ -304,7 +316,36 @@ def summarize(data: dict[str, Any], start: datetime, end: datetime) -> dict[str,
         for row in events + searches
         if row.get("persisted_at")
     ]
+    traffic_groups: dict[str, Any] = {}
+    for category in ("unclassified", "declared_technical", "suspected_bot"):
+        group_searches = [
+            s
+            for s in all_searches
+            if (
+                s.get("payload", {}).get("traffic_type")
+                or traffic_by_search.get(str(s["search_id"]), "unclassified")
+            )
+            == category
+        ]
+        group_events = [e for e in all_events if e.get("traffic_type", "unclassified") == category]
+        traffic_groups[category] = {
+            "server_searches": len(group_searches),
+            "events": len(group_events),
+            "visits": len(
+                {str(e["visit_id"]) for e in group_events if e["name"] == "visit_started"}
+            ),
+            "server_status": dict(Counter(str(s["status"]) for s in group_searches)),
+            "confidence": dict(
+                Counter(
+                    str(s["payload"].get("confidence", "unknown"))
+                    for s in group_searches
+                    if s["outcome"] == "success"
+                )
+            ),
+            "event": dict(Counter(e["name"] for e in group_events)),
+        }
     return {
+        "traffic_groups": traffic_groups,
         "schema_version": 1,
         "start_utc": start.isoformat(),
         "end_utc": end.isoformat(),
@@ -433,6 +474,7 @@ def main() -> int:
     report.add_argument("--out", type=Path, required=True)
     export = commands.add_parser("export")
     export.add_argument("--out", type=Path, required=True)
+    export.add_argument("--format", choices=("json", "match-jsonl"), default="json")
     export.add_argument("--start")
     export.add_argument("--end")
     export.add_argument("--timezone", default="UTC")
@@ -470,12 +512,19 @@ def main() -> int:
             if export_start and export_end and export_start >= export_end:
                 raise ValueError("start must precede end")
             private_dir(args.out.parent)
-            write_private(
-                args.out,
-                json.dumps(
-                    read_database(export_start, export_end), ensure_ascii=False, default=str
-                ),
-            )
+            data = read_database(export_start, export_end)
+            if args.format == "match-jsonl":
+                contexts = {str(row["search_id"]): row for row in data["analytics_context"]}
+                lines = []
+                for row in sorted(data["analytics_searches"], key=lambda r: str(r["received_at"])):
+                    if row["outcome"] == "success":
+                        legacy = dict(row["payload"]["legacy"])
+                        legacy["query"] = contexts[str(row["search_id"])]["normalized_query"]
+                        lines.append(json.dumps(legacy, ensure_ascii=False, default=str))
+                content = "\n".join(lines) + ("\n" if lines else "")
+            else:
+                content = json.dumps(data, ensure_ascii=False, default=str)
+            write_private(args.out, content)
             print(json.dumps({"private_export": str(args.out)}))
         else:
             from sfr_api.analytics.store import DurableStore

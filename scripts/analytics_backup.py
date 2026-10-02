@@ -80,7 +80,32 @@ def backup(directory: Path) -> dict[str, Any]:
     return manifest
 
 
-def verify(directory: Path, database: str) -> dict[str, Any]:
+def fingerprint(database: str | None = None) -> dict[str, Any]:
+    # Aggregate fixed-size row hashes, not full corpus text in string_agg.
+    sql = """SELECT json_build_object(
+    'migration',(SELECT version_num FROM analytics_alembic_version),
+    'searches',(SELECT count(*) FROM analytics_searches),
+    'events',(SELECT count(*) FROM analytics_events),
+    'context',(SELECT count(*) FROM analytics_context),
+    'event_context',(SELECT count(*) FROM analytics_event_context),
+    'search_sha',(SELECT md5(coalesce(string_agg(md5(row_to_json(t)::text),
+    E'\\n' ORDER BY search_id),'')) FROM analytics_searches t),
+    'event_sha',(SELECT md5(coalesce(string_agg(md5(row_to_json(t)::text),
+    E'\\n' ORDER BY event_id),'')) FROM analytics_events t),
+    'context_sha',(SELECT md5(coalesce(string_agg(md5(row_to_json(t)::text),
+    E'\\n' ORDER BY search_id),'')) FROM analytics_context t),
+    'event_context_sha',(SELECT md5(coalesce(string_agg(md5(row_to_json(t)::text),
+    E'\\n' ORDER BY event_id),'')) FROM analytics_event_context t));"""
+    output = command(
+        'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql -U "$POSTGRES_USER" '
+        '-d "$1" -v ON_ERROR_STOP=1 -Atc "$2"',
+        database or "sfr_analytics",
+        sql,
+    )
+    return json.loads(output)
+
+
+def verify(directory: Path, database: str, *, compare_source: bool = False) -> dict[str, Any]:
     if not re.fullmatch(r"sfr_restore_[a-z0-9_]{1,40}", database):
         raise ValueError(
             "test database name must begin sfr_restore_ with lowercase alphanumeric suffix"
@@ -100,34 +125,17 @@ def verify(directory: Path, database: str) -> dict[str, Any]:
             database,
             source=stream,
         )
-    # Canonical aggregate and row hashes contain no raw fields. Repeated restoration
-    # from one dump can compare these fingerprints, including all sensitive context.
-    sql = """SELECT json_build_object(
-    'migration',(SELECT version_num FROM analytics_alembic_version),
-    'searches',(SELECT count(*) FROM analytics_searches),
-    'events',(SELECT count(*) FROM analytics_events),
-    'context',(SELECT count(*) FROM analytics_context),
-    'event_context',(SELECT count(*) FROM analytics_event_context),
-    'search_sha',(SELECT md5(coalesce(string_agg(row_to_json(t)::text,
-    E'\\n' ORDER BY search_id),'')) FROM analytics_searches t),
-    'event_sha',(SELECT md5(coalesce(string_agg(row_to_json(t)::text,
-    E'\\n' ORDER BY event_id),'')) FROM analytics_events t),
-    'context_sha',(SELECT md5(coalesce(string_agg(row_to_json(t)::text,
-    E'\\n' ORDER BY search_id),'')) FROM analytics_context t),
-    'event_context_sha',(SELECT md5(coalesce(string_agg(row_to_json(t)::text,
-    E'\\n' ORDER BY event_id),'')) FROM analytics_event_context t));"""
-    output = command(
-        'export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql -U "$POSTGRES_USER" '
-        '-d "$1" -v ON_ERROR_STOP=1 -Atc "$2"',
-        database,
-        sql,
-    )
+    restored = fingerprint(database)
     result = {
         "verified_at": datetime.now(UTC).isoformat(),
         "database": database,
-        "restored": json.loads(output),
+        "restored": restored,
         "dump_sha256": digest(path),
     }
+    if compare_source:
+        result["source"] = fingerprint()
+        result["source_matches"] = result["source"] == restored
+        result["comparison_scope"] = "current source; valid equality proof only on quiesced dataset"
     write_private(directory / f"restore-{database}.json", json.dumps(result, indent=2))
     return result
 
@@ -137,6 +145,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["backup", "verify"])
     parser.add_argument("--directory", type=Path, required=True)
+    parser.add_argument(
+        "--compare-source",
+        action="store_true",
+        help="compare current source fingerprints; requires unchanged source",
+    )
     parser.add_argument("--database", help="NEW test database; retained after verification")
     args = parser.parse_args()
     try:
@@ -144,14 +157,21 @@ def main() -> int:
             result = backup(args.directory)
             print(json.dumps({"ok": True, "files": len(result["files"])}))
         elif args.database:
-            result = verify(args.directory, args.database)
+            result = verify(args.directory, args.database, compare_source=args.compare_source)
             print(
                 json.dumps(
-                    {"ok": True, "database": result["database"], "restored": result["restored"]}
+                    {
+                        "ok": result.get("source_matches", True),
+                        "database": result["database"],
+                        "restored": result["restored"],
+                        "source_matches": result.get("source_matches"),
+                    }
                 )
             )
         else:
             raise ValueError("--database is required for verify")
+        if result.get("source_matches") is False:
+            return 1
     except Exception as exc:
         print(json.dumps({"ok": False, "error_class": type(exc).__name__}))
         return 1

@@ -105,6 +105,29 @@ class ReportTests(unittest.TestCase):
             self.assertIn("&lt;script&gt;", page)
             self.assertEqual((path / "summary.json").stat().st_mode & 0o777, 0o600)
 
+    def test_copy_requires_same_profile_but_allows_second_opened_profile(self) -> None:
+        data = self.fixture()
+        for row in data["analytics_events"]:
+            if row["name"] == "letter_copy_success" and row["search_id"] == "s1":
+                row["data"]["author_id"] = "A2"
+        start, end = instant("2026-10-02", "UTC"), instant("2026-10-03", "UTC")
+        self.assertEqual(summarize(data, start, end)["funnel_attempts"]["letter_copy"], 0)
+        # Change first profile to a second selected author (same attempt).
+        for row in data["analytics_events"]:
+            if row["name"] == "profile_opened" and row["search_id"] == "s1":
+                row["data"]["author_id"] = "A2"
+        self.assertEqual(summarize(data, start, end)["funnel_attempts"]["letter_copy"], 1)
+
+    def test_private_directory_does_not_change_shared_permissions(self) -> None:
+        from analytics import private_dir
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            path.chmod(0o755)
+            with self.assertRaises(PermissionError):
+                private_dir(path)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o755)
+
     def test_timezone_boundaries(self) -> None:
         self.assertEqual(
             instant("2026-10-02T00:00:00", "Europe/Moscow"), datetime(2026, 10, 1, 21, tzinfo=UTC)

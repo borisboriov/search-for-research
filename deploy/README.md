@@ -353,6 +353,10 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm \
   analytics-operator replay
 ```
 
+Совместимый JSONL успешных `/match` доступен через `export --format match-jsonl`;
+прежние поля и нормализованный `query` берутся из сохранённых серверных фактов.
+Полный исходный текст остаётся в закрытом schema-v1 JSON.
+
 Эквиваленты с доступным внутренним DSN: `make analytics-check`,
 `make analytics-replay`, `make analytics-export ANALYTICS_ARGS="--out ..."`,
 `make analytics-report ANALYTICS_ARGS="--start ... --end ... --timezone Europe/Moscow --out ..."`.
@@ -406,7 +410,7 @@ make analytics-backup ANALYTICS_ARGS="--directory data/backups/analytics-2026100
 make analytics-restore-check \
   ANALYTICS_ARGS="--directory data/backups/analytics-20261002 --database sfr_restore_20261002"
 # Восстановленная БД сохранена; JSON содержит counts/row fingerprints/версию миграции.
-# Сравнение source/restore в репетиции выполняется на неизменяемом synthetic наборе.
+# Сравнение source/restore в репетиции: добавить --compare-source на неизменяемом наборе.
 
 # Внешний экземпляр на Mac: сервер только читает, pg_dump/tar передаются потоками.
 make analytics-pull ANALYTICS_ARGS="--host deploy@135.106.208.233 --out data/backups/vps-20261002"

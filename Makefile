@@ -584,7 +584,7 @@ analytics-pull: unhide
 	uv run python scripts/analytics_pull.py $(ANALYTICS_ARGS)
 
 analytics-test-postgres: unhide
-	uv run pytest apps/api/tests/test_analytics_postgres.py --no-cov
+	uv run pytest apps/api/tests/test_analytics_pg.py --no-cov
 
 # ---------------------------------------------------------------------------
 # SFR-4b: аудит безопасности (статический анализ + зависимости + секреты).
