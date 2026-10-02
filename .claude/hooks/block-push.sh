@@ -105,7 +105,41 @@ def tokenize(command: str) -> list[str]:
     return list(lexer)
 
 
-HEREDOC = re.compile(r"(?<!<)<<-?\s*(['\"]?)([A-Za-z0-9_]+)\1(?!<)")
+HEREDOC = re.compile(r"<<(-?)[ \t]*(['\"]?)([A-Za-z0-9_]+)\2")
+
+
+def heredocs_on_line(line: str, state: str) -> tuple[list[tuple[str, bool, bool]], str]:
+    """Распознать операторы heredoc вне строк, escapes и shell-комментариев."""
+    found: list[tuple[str, bool, bool]] = []
+    i = 0
+    while i < len(line):
+        ch = line[i]
+        if state == "single":
+            if ch == "'":
+                state = "plain"
+        elif ch == "\\":
+            i += 2
+            continue
+        elif state == "double":
+            if ch == '"':
+                state = "plain"
+        elif ch in ("'", '"'):
+            state = "single" if ch == "'" else "double"
+        elif ch == "#" and (i == 0 or line[i - 1] in " \t;&|()<>"):
+            break
+        elif line.startswith("<<<", i):
+            i += 3  # here-string, а не heredoc
+            continue
+        elif line.startswith("<<", i):
+            match = HEREDOC.match(line, i)
+            if not match or (
+                match.end() < len(line) and line[match.end()] not in " \t;&|()<>"):
+                raise ValueError("неподдерживаемый разделитель heredoc")
+            found.append((match.group(3), bool(match.group(2)), bool(match.group(1))))
+            i = match.end()
+            continue
+        i += 1
+    return found, state
 
 
 def split_heredocs(command: str) -> tuple[str, list[str]]:
@@ -118,11 +152,13 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
     """
     code: list[str] = []
     bodies: list[str] = []
-    pending: list[tuple[str, bool, list[str]]] = []
+    pending: list[tuple[str, bool, bool, list[str]]] = []
+    state = "plain"
     for line in command.split("\n"):
-        if pending:
-            delim, quoted, buf = pending[0]
-            if line.strip() == delim:
+        if pending and state == "plain":
+            delim, quoted, strip_tabs, buf = pending[0]
+            # <<- снимает только ведущие TAB; пробелы не завершают heredoc.
+            if (line.lstrip("\t") if strip_tabs else line) == delim:
                 pending.pop(0)
                 if not quoted:
                     bodies.append("\n".join(buf))
@@ -130,9 +166,10 @@ def split_heredocs(command: str) -> tuple[str, list[str]]:
                 buf.append(line)
             continue
         code.append(line)
-        for match in HEREDOC.finditer(line):
-            pending.append((match.group(2), bool(match.group(1)), []))
-    bodies.extend("\n".join(buf) for _, quoted, buf in pending if not quoted)
+        found, state = heredocs_on_line(line, state)
+        pending.extend((delim, quoted, strip_tabs, []) for delim, quoted, strip_tabs in found)
+    if pending or state != "plain":
+        raise ValueError("незавершённый heredoc или строка shell")
     return "\n".join(code), bodies
 
 
@@ -229,6 +266,10 @@ def check_push(args: list[str], cwd: str | None, git_global: list[str]) -> str |
     (`git push`, `git push -u origin`, `HEAD`) назначение — текущая ветка
     репозитория: из `main` или при detached HEAD — отказ.
     """
+    # shlex не выполняет shell expansion. Проверять её результат без запуска
+    # нельзя: переменная может стать main или --force. Требуем явные аргументы.
+    if any(re.search(r"[$`*?\[\]{}~]", arg) for arg in [*git_global, *args]):
+        return "git push с shell expansion (укажи явную ветку и опции)"
     positional: list[str] = []
     remote_by_option = False
     j = 0
@@ -314,6 +355,8 @@ def check_git(argv: list[str], cwd: str | None, depth: int) -> str | None:
     if i >= len(argv):
         return None
     sub = argv[i]
+    if re.search(r"[$`*?\[\]{}~]", sub):
+        return "git с shell expansion в подкоманде"
     if sub == "send-pack":
         return "git send-pack"
     if sub == "push":

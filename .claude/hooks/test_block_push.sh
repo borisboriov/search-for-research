@@ -58,6 +58,19 @@ blocked=(
     "git push -u origin :"
     "git push --repo origin main"
     "git push --repo=origin master"
+    'branch=main; git push -u origin "$branch"'
+    'git push -u origin "${branch}"'
+    'opts=-f; git push -u origin sfr-7 $opts'
+    'git push -u origin {sfr-7,main}'
+    'git push -u origin ma?n'
+    'sub=push; git "$sub" -u origin main'
+    $'printf \'%s\\n\' "<<\'EOF\'"\ngit push -u origin main'
+    $'printf \'%s\\n\' \\<\\<\\\'EOF\\\'\ngit push -u origin main'
+    $'# <<\'EOF\'\ngit push -u origin main'
+    $'printf \'%s\\n\' "text\n<<\'EOF\'"\ngit push -u origin main'
+    $'cat <<EOF\n EOF\n$(git push origin main)\nEOF'
+    $'cat <<-EOF\n EOF\n$(git push origin main)\nEOF'
+    $'cat <<\'EOF\'\ntext\nEOF\ngit push -u origin main'
     "git push --all origin"
     "git push --tags origin"
     "git push --mirror origin"
@@ -95,6 +108,12 @@ allowed=(
     "echo '\`git push\`'"
     $'cat > f.md <<\'EOF\'\nничего не пушим: `git push` — только Борис\ngit push origin main\n$(git push)\nEOF'
     $'python3 - <<"PY"\nprint("git push")\nPY\ngit status'
+    $'printf \'%s\\n\' "<<\'EOF\'"\ngit push -u origin sfr-7'
+    $'printf \'%s\\n\' "text\n<<\'EOF\'"\ngit push -u origin sfr-7'
+    $'# <<\'EOF\'\ngit push -u origin sfr-7'
+    $'cat <<-\'EOF\'\n\tgit push origin main\n\tEOF\ngit status'
+    $'cat <<\'EOF\'\n EOF\ngit push origin main\nEOF\ngit status'
+    $'cat <<-\'EOF\'\n EOF\ngit push origin main\n\tEOF\ngit status'
     "make hooks-test"
     "git push origin sfr-7"
     "git push -u origin sfr-7"
