@@ -78,6 +78,15 @@ function ResultsForQuery({ query }: { query: string }) {
     setState({ kind: "loading" });
     void run("repeat").then(next => { if (next.generation === generation.current) setState(next.state); });
   }, [run]);
+  useEffect(() => {
+    const repeatTopic = (event: Event) => {
+      if ((event as CustomEvent<{ query: string }>).detail?.query !== query) return;
+      setState({ kind: "loading" });
+      void run().then(next => { if (next.generation === generation.current) setState(next.state); });
+    };
+    window.addEventListener("sfr:repeat-topic", repeatTopic);
+    return () => window.removeEventListener("sfr:repeat-topic", repeatTopic);
+  }, [query, run]);
   const submitQuery = useCallback((next: string) => {
     setEditingQuery(false);
     if (next === query) { retry(); return; }

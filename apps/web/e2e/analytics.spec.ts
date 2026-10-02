@@ -57,6 +57,10 @@ test("weak and empty display, repeat/topic attempts, validation and technical er
   const second = events.filter(event => event.name === "search_attempt")[1];
   expect(second.search_id).not.toBe(first.search_id);
   expect(events.find(event => event.name === "topic_followed")?.search_id).toBe(second.search_id);
+  // A topic equal to the current query still executes a fresh attempt.
+  await page.getByRole("list", { name: "Ключевые темы" }).first().getByRole("link").first().click();
+  await expect.poll(() => events.filter(event => event.name === "search_attempt").length).toBe(3);
+  expect(events.filter(event => event.name === "search_attempt")[2].data.source).toBe("topic");
   await page.unroute("**/api/match"); await matches(page, "none");
   await page.goto("/results?q=empty-synthetic"); await expect.poll(() => names(events)).toContain("empty_shown");
   await page.unroute("**/api/match"); await page.route("**/api/match", route => route.fulfill({ status: 503, body: "unavailable" }));

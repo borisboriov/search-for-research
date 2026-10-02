@@ -111,8 +111,10 @@ export async function prepareSearch(query: string, source: EventData["source"] =
 }
 export async function beginSearch(query: string, source?: EventData["source"]): Promise<{ visit: string; search: string; request: string }> {
   const current = await analyticsSession();
-  if (source || current.pending?.query !== query) await prepareSearch(query, source ?? (current.query === query ? "repeat" : "direct"));
-  const pending = current.pending!;
+  // Allocate atomically after initialization: simultaneous retries must not
+  // overwrite/consume one another's pending navigation IDs.
+  let pending = current.pending;
+  if (source || pending?.query !== query) pending = { query, search: crypto.randomUUID(), source: source ?? (current.query === query ? "repeat" : "direct"), previous: current.search };
   current.search = pending.search; current.query = query; delete current.pending; delete current.profile; delete current.activeProfile; persist();
   const request = crypto.randomUUID();
   emitEvent("search_attempt", { source: pending.source, ...(pending.previous ? { previous_search_id: pending.previous } : {}) }, current.search, request);

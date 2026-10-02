@@ -6,7 +6,10 @@ export function TopicLink({ topic, children, className }: { topic: string; child
   const href = `/results?q=${encodeURIComponent(topic)}`;
   return <Link href={href} prefetch={false} rel="nofollow" className={className} onClick={event => {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    void prepareSearch(topic, "topic");
+    if (location.pathname === "/results" && new URLSearchParams(location.search).get("q") === topic) {
+      event.preventDefault();
+      void prepareSearch(topic, "topic").then(() => window.dispatchEvent(new CustomEvent("sfr:repeat-topic", { detail: { query: topic } })));
+    } else void prepareSearch(topic, "topic");
   }}>{children}</Link>;
 }
 export function ProfileLink({ href, author, search, position, children, className, label }: { href: string; author: string; search?: string; position?: number; children?: React.ReactNode; className?: string; label?: string }) {

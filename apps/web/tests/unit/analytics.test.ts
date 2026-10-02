@@ -40,6 +40,13 @@ describe("durable client event delivery", () => {
     expect(events.filter((e: { name: string }) => e.name === "visit_started")).toHaveLength(1);
     expect(events.map((e: { client_seq: number }) => e.client_seq)).toEqual([1, 2, 3, 4]);
   });
+  it("concurrent retry attempts allocate distinct IDs without consuming another pending search", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ accepted: [] })));
+    const client = await import("@/lib/analytics");
+    const attempts = await Promise.all([client.beginSearch("query", "repeat"), client.beginSearch("query", "repeat")]); await settle();
+    expect(attempts[0].search).not.toBe(attempts[1].search);
+    expect(stored().queue.filter((e: { name: string }) => e.name === "search_attempt")).toHaveLength(2);
+  });
   it("separates direct profile entry from displayed result attribution", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Response.json({ accepted: [] })));
     const client = await import("@/lib/analytics"); const search = await client.beginSearch("query", "submitted");
