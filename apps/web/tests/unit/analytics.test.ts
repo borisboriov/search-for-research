@@ -5,6 +5,47 @@ afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals()
 const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 const stored = () => JSON.parse(sessionStorage.getItem("sfr.analytics.v1")!);
 describe("durable client event delivery", () => {
+  it("uses browser tab channels, not a Node-only BroadcastChannel", async () => {
+    const nodeChannel = vi.fn();
+    vi.stubGlobal("BroadcastChannel", nodeChannel);
+    // Vitest aliases many window/global properties. A separate browser view
+    // recreates Node-only availability without removing the global API itself.
+    vi.stubGlobal("window", new Proxy(window, {
+      get(target, key) {
+        if (key === "BroadcastChannel") return undefined;
+        const value = Reflect.get(target, key, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    }));
+    expect(globalThis.BroadcastChannel).toBe(nodeChannel);
+    expect(window.BroadcastChannel).toBeUndefined();
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ accepted: [] })));
+    const client = await import("@/lib/analytics");
+    await client.analyticsSession();
+    expect(nodeChannel).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("abandons delayed initialization safely when its browser document is destroyed", async () => {
+    const close = vi.fn();
+    const channel = vi.fn(class {
+      onmessage = null;
+      postMessage = vi.fn();
+      close = close;
+    });
+    vi.stubGlobal("BroadcastChannel", channel);
+    const fetch = vi.fn(); vi.stubGlobal("fetch", fetch);
+    const client = await import("@/lib/analytics");
+    client.emitEvent("search_validation_failed", { error: "validation" });
+    const pending = client.analyticsSession();
+    expect(channel).toHaveBeenCalledOnce();
+    vi.stubGlobal("window", undefined);
+    await vi.advanceTimersByTimeAsync(80);
+    await expect(pending).resolves.toMatchObject({ started: false, queue: [] });
+    await settle();
+    expect(close).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
   it("keeps event IDs across failed delivery and reload, removes only explicit acknowledgements", async () => {
     const fetch = vi.fn<(url: unknown, init: RequestInit) => Promise<Response>>().mockResolvedValue(Response.json({ detail: "offline" }, { status: 503 })); vi.stubGlobal("fetch", fetch);
     const first = await import("@/lib/analytics");

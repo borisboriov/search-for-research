@@ -11,6 +11,7 @@ let active = false;
 let timer: ReturnType<typeof setTimeout> | undefined;
 let failures = 0;
 let observedProfileDocument = false;
+function browserWindow() { return typeof window !== "undefined" && typeof document !== "undefined" ? window : undefined; }
 function fresh(): Session { return { visit: crypto.randomUUID(), seq: 0, queue: [], started: false, search: null }; }
 function persist() {
   try { sessionStorage.setItem(KEY, JSON.stringify(session)); }
@@ -20,6 +21,8 @@ function page(): ProductEvent["page"] { return location.pathname.startsWith("/su
 
 /** sessionStorage survives reload; BroadcastChannel separates cloned/duplicated tabs. */
 export async function analyticsSession(): Promise<Session> {
+  const browser = browserWindow();
+  if (!browser) return session ?? fresh();
   if (initialization) return initialization;
   initialization = (async () => {
     try {
@@ -27,21 +30,26 @@ export async function analyticsSession(): Promise<Session> {
       if (saved && typeof saved === "object" && "visit" in saved && typeof saved.visit === "string" && UUID.test(saved.visit) && "seq" in saved && Number.isSafeInteger(saved.seq) && Number(saved.seq) >= 0 && "queue" in saved && Array.isArray(saved.queue) && saved.queue.length <= LIMIT && saved.queue.every(isProductEvent)) session = saved as Session;
     } catch {}
     session ??= fresh();
-    if (typeof BroadcastChannel !== "undefined") {
-      const channel = new BroadcastChannel("sfr.visit.v1");
+    // Node can expose BroadcastChannel without a browser implementation (jsdom,
+    // SSR). Tab ownership belongs to this document's browser namespace only.
+    if (typeof browser.BroadcastChannel !== "undefined") {
+      const channel = new browser.BroadcastChannel("sfr.visit.v1");
       const instance = crypto.randomUUID();
       let claiming = true;
       channel.onmessage = ({ data }: MessageEvent) => {
+        if (browserWindow() !== browser) return;
         if (!data || data.instance === instance || data.visit !== session?.visit) return;
         if (data.kind === "probe") channel.postMessage({ kind: "owner", visit: session?.visit, instance, target: data.instance });
         if (claiming && ((data.kind === "owner" && data.target === instance) || (data.kind === "probe" && instance > data.instance))) { session = fresh(); persist(); }
       };
       channel.postMessage({ kind: "probe", visit: session.visit, instance });
       await new Promise(resolve => setTimeout(resolve, 80));
+      if (browserWindow() !== browser) { channel.close(); return session; }
       claiming = false;
       // A hidden-but-live tab remains an owner; actual closure releases channel.
       // Browser teardown closes the channel; leave it active for BFCache restores.
     }
+    if (browserWindow() !== browser) return session;
     persist();
     window.addEventListener("online", () => { failures = 0; void flushEvents(); });
     window.addEventListener("pagehide", () => { void flushEvents(); });
@@ -51,7 +59,10 @@ export async function analyticsSession(): Promise<Session> {
   return initialization;
 }
 export function emitEvent(name: EventName, data: EventData = {}, searchId?: string | null, requestId: string | null = null): void {
+  const browser = browserWindow();
+  if (!browser) return;
   void analyticsSession().then(current => {
+    if (browserWindow() !== browser) return;
     if (!current.started) {
       current.started = true;
       enqueue(current, "visit_started", { viewport: window.innerWidth < 768 ? "mobile" : "desktop", release: process.env.NEXT_PUBLIC_SFR_RELEASE ?? "unknown" }, null, null);
@@ -70,7 +81,10 @@ function enqueue(current: Session, name: EventName, data: EventData, search: str
   persist();
 }
 export async function flushEvents(): Promise<void> {
+  const browser = browserWindow();
+  if (!browser) return;
   const current = await analyticsSession();
+  if (browserWindow() !== browser) return;
   if (active || !current.queue.length) return;
   if (timer) { clearTimeout(timer); timer = undefined; }
   active = true;
@@ -97,7 +111,7 @@ export async function flushEvents(): Promise<void> {
     if (deadline) clearTimeout(deadline);
     active = false;
     failures = delivered ? 0 : failures + 1;
-    if (current.queue.length) timer = setTimeout(() => { void flushEvents(); }, delivered ? 100 : Math.min(60000, 1000 * 2 ** Math.min(failures, 6)));
+    if (browserWindow() === browser && current.queue.length) timer = setTimeout(() => { void flushEvents(); }, delivered ? 100 : Math.min(60000, 1000 * 2 ** Math.min(failures, 6)));
   }
 }
 export async function prepareSearch(query: string, source: EventData["source"] = "submitted"): Promise<string> {
