@@ -69,6 +69,7 @@ def test_event_ack_is_durable_before_database_available(tmp_path: Path):
     assert restarted.diagnostics()["pending_count"] == 1
     assert restarted.replay()["errors"] == 1
     assert restarted.diagnostics()["pending_count"] == 1
+    assert restarted.diagnostics()["quarantine_count"] == 0
 
 
 def test_no_false_ack_on_capacity_or_disabled_receiver(tmp_path: Path):
@@ -381,3 +382,50 @@ def test_stalled_journal_bounds_unfinished_append_operations(tmp_path: Path, mon
         # Recovery reopens admission only after those physical writes completed.
         response = client.post("/api/events", json={"events": [event()]})
         assert response.status_code == 200 and response.json()["accepted"]
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"author_id": "synthetic\x00invalid"},
+        {"work_id": "synthetic\x00invalid"},
+        {"release": "synthetic\x00invalid"},
+        {"filters": {"institution": ["synthetic\x00invalid"]}},
+        {"author_id": "synthetic\ud800invalid"},
+    ],
+)
+def test_unsupported_event_text_is_rejected_before_ack(tmp_path: Path, data):
+    with TestClient(api(tmp_path)) as client:
+        response = client.post("/api/events", content=json.dumps({"events": [event(data=data)]}))
+        assert response.status_code == 422 and "accepted" not in response.json()
+        assert not list((tmp_path / "spool" / "pending").glob("*.json"))
+
+
+def test_unicode_encoding_failure_becomes_storage_unavailable_without_payload(
+    tmp_path: Path, caplog
+):
+    journal = store(tmp_path)
+    marker = "SYNTHETIC_PRIVATE_MARKER"
+    with pytest.raises(StorageUnavailable) as caught:
+        journal.append("events", [{"private": marker + chr(0xD800)}])
+    assert marker not in str(caught.value) and marker not in caplog.text
+    assert journal.diagnostics()["append_inflight"] == 0
+
+
+def test_encoding_failure_in_writer_returns_503_and_keeps_search(
+    tmp_path: Path, monkeypatch, caplog
+):
+    app = api(tmp_path)
+    with TestClient(app) as client:
+
+        def fail_encoding(*args):
+            raise UnicodeEncodeError("utf-8", "SYNTHETIC_PRIVATE_MARKER", 0, 1, "synthetic")
+
+        monkeypatch.setattr("sfr_api.analytics.store._atomic", fail_encoding)
+        response = client.post("/api/events", json={"events": [event()]})
+        assert response.status_code == 503 and "accepted" not in response.json()
+        assert (
+            client.post("/api/match", json={"query": "synthetic encoding failure"}).status_code
+            == 200
+        )
+        assert "SYNTHETIC_PRIVATE_MARKER" not in caplog.text

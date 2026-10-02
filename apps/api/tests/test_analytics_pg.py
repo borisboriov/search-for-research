@@ -343,3 +343,116 @@ def test_upgrade_existing_0001_preserves_seeded_search_and_private_context(datab
             dict(connection.execute(select(Context.__table__)).mappings().one()) == before_context
         )
     engine.dispose()
+
+
+@pytest.mark.parametrize("bad_kind", ["event_jsonb", "context_jsonb", "search_text"])
+def test_permanent_nul_record_is_preserved_and_does_not_block_valid_replay(
+    database_url, tmp_path: Path, bad_kind
+):
+    from sqlalchemy import event as sqlalchemy_event
+
+    import sfr_api.analytics.migrate as migration_module
+
+    schema = "sfr_nul_replay_" + uuid4().hex
+    journal = DurableStore(database_url, tmp_path / "isolated-spool", reserve_bytes=0)
+    with journal.engine.begin() as connection:
+        connection.execute(text(f'CREATE SCHEMA "{schema}"'))
+        connection.execute(text(f'SET LOCAL search_path TO "{schema}"'))
+        config = Config()
+        config.set_main_option(
+            "script_location", str(Path(migration_module.__file__).parent / "alembic")
+        )
+        config.attributes["connection"] = connection
+        command.upgrade(config, "head")
+    journal.engine.dispose()
+
+    @sqlalchemy_event.listens_for(journal.engine, "connect")
+    def select_isolated_schema(connection, record):
+        from psycopg import sql
+
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        connection.commit()
+
+    valid = synthetic_event(uuid4(), uuid4())
+    valid |= {
+        "received_at": datetime.now(UTC).isoformat(),
+        "app_version": "synthetic",
+        "traffic_type": "unclassified",
+        "schema_version": 1,
+        "request_id": None,
+        "private_context": {
+            "event_id": valid["event_id"],
+            "raw_ip": None,
+            "url": None,
+            "referer": None,
+            "diagnostic_headers": {},
+        },
+    }
+    if bad_kind in {"event_jsonb", "context_jsonb"}:
+        bad = {
+            **valid,
+            "event_id": str(uuid4()),
+            "visit_id": str(uuid4()),
+            "data": {"author_id": "synthetic\x00unsupported"},
+        }
+        bad["private_context"] = {**valid["private_context"], "event_id": bad["event_id"]}
+        if bad_kind == "context_jsonb":
+            bad["data"] = {}
+            bad["private_context"]["diagnostic_headers"] = {
+                "user-agent": "synthetic\x00unsupported"
+            }
+        kind = "events"
+    else:
+        sid = str(uuid4())
+        now = datetime.now(UTC).isoformat()
+        bad = {
+            "search": {
+                "search_id": sid,
+                "request_id": str(uuid4()),
+                "visit_id": None,
+                "received_at": now,
+                "completed_at": now,
+                "status": 200,
+                "outcome": "success",
+                "payload": {"schema_version": 1},
+            },
+            "context": {
+                "search_id": sid,
+                "raw_query": "synthetic\x00unsupported",
+                "normalized_query": "synthetic\x00unsupported",
+                "raw_ip": None,
+                "url": None,
+                "referer": None,
+                "diagnostic_headers": {},
+            },
+        }
+        kind = "search"
+    # Probe only safe exception classification, without SQL/parameters/message.
+    try:
+        journal._persist({"version": 1, "kind": kind, "records": [bad]})
+    except Exception as error:
+        original = getattr(error, "orig", None)
+        print(
+            {
+                "kind": bad_kind,
+                "exception_class": type(error).__name__,
+                "driver_class": type(original).__name__,
+                "sqlstate": getattr(original, "sqlstate", None),
+            }
+        )
+    else:
+        pytest.fail("PostgreSQL unexpectedly accepted unsupported NUL")
+    journal.append(kind, [bad])
+    bad_path = next((journal.root / "pending").glob("*.json"))
+    bad_bytes = bad_path.read_bytes()
+    journal.append("events", [valid])
+    result = journal.replay()
+    assert result == {"persisted": 1, "quarantined": 1, "errors": 0}
+    assert (journal.root / "quarantine" / bad_path.name).read_bytes() == bad_bytes
+    assert journal.diagnostics()["incomplete"]
+    assert journal.diagnostics()["pending_count"] == 0
+    with journal.engine.connect() as connection:
+        assert connection.execute(text("SELECT count(*) FROM analytics_events")).scalar_one() == 1
+        assert connection.execute(text("SELECT count(*) FROM analytics_searches")).scalar_one() == 0
+    assert journal.replay() == {"persisted": 0, "quarantined": 0, "errors": 0}
+    journal.engine.dispose()

@@ -29,6 +29,16 @@ EventName = Literal[
 ]
 
 
+def supported_text(value: str) -> str:
+    if "\x00" in value:
+        raise ValueError("unsupported text character")
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError("unsupported text encoding") from None
+    return value
+
+
 class Filters(BaseModel):
     model_config = ConfigDict(extra="forbid")
     institution: list[str] = Field(default_factory=list, max_length=20)
@@ -39,6 +49,8 @@ class Filters(BaseModel):
     def lengths(cls, values: list[str]) -> list[str]:
         if any(len(value) > 200 for value in values):
             raise ValueError("institution exceeds limit")
+        for value in values:
+            supported_text(value)
         return values
 
 
@@ -76,6 +88,11 @@ class EventData(BaseModel):
     release: str | None = Field(default=None, max_length=100)
     included: bool | None = None
     query_length: int | None = Field(default=None, ge=0, le=100000)
+
+    @field_validator("author_id", "work_id", "release")
+    @classmethod
+    def strings_supported(cls, value: str | None) -> str | None:
+        return supported_text(value) if value is not None else None
 
 
 class Event(BaseModel):

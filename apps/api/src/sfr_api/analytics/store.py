@@ -22,6 +22,7 @@ from uuid import uuid4
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import DataError, IntegrityError
 
 from sfr_api.analytics.models import Context, EventContext, ProductEvent, Search
 from sfr_api.analytics.records import JournalEvent, SearchRecord
@@ -128,6 +129,11 @@ class DurableStore:
             self._append_inflight += 1
         try:
             self._append(kind, records)
+        except UnicodeEncodeError:
+            # Encoding failure is not a durable write and must not leak the
+            # offending string through exception chaining or diagnostics.
+            log.error("analytics storage failure category=encoding")
+            raise StorageUnavailable("analytics record encoding failed") from None
         finally:
             # This runs in the physical worker, even after its HTTP awaiter has
             # timed out. No later request can reuse the slot prematurely.
@@ -229,6 +235,16 @@ class DurableStore:
                     continue
                 try:
                     self._persist(envelope)
+                except (DataError, IntegrityError):
+                    # PG data/integrity errors cannot heal by retrying the same
+                    # immutable bytes (e.g. NUL in Text/JSONB). Preserve the full
+                    # record and allow later independent records to proceed.
+                    os.replace(path, self.root / "quarantine" / path.name)
+                    _sync_dir(self.root / "pending")
+                    _sync_dir(self.root / "quarantine")
+                    self._failure("database_record")
+                    result["quarantined"] += 1
+                    continue
                 except Exception:
                     self._failure("database")
                     result["errors"] += 1
