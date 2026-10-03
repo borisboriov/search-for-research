@@ -1,0 +1,29 @@
+{
+  "author": {
+    "session_id": "01a102e9-5158-7d03-9cfa-25d7b6bfee35",
+    "evidence": "Filtered native rollout turn_context metadata; conversation/tool outputs omitted.",
+    "turn_context": {
+      "timestamp": "2026-10-03T18:01:40.958Z",
+      "model": "gpt-6.1-sol",
+      "effort": "medium"
+    }
+  },
+  "sfr-judge": {
+    "session_id": "01a102f4-ca36-7112-b07b-7403d645d3fa",
+    "evidence": "Filtered native rollout turn_context metadata; conversation/tool outputs omitted.",
+    "turn_context": {
+      "timestamp": "2026-10-03T18:17:03.656Z",
+      "model": "gpt-6-astra",
+      "effort": "max"
+    }
+  },
+  "harness-agent": {
+    "session_id": "01a102eb-5446-7470-8779-858a783f4d24",
+    "evidence": "Filtered native rollout turn_context metadata; conversation/tool outputs omitted.",
+    "turn_context": {
+      "timestamp": "2026-10-03T18:02:14.962Z",
+      "model": "gpt-6.1-sol",
+      "effort": "medium"
+    }
+  }
+}

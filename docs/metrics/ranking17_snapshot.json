@@ -1,0 +1,406 @@
+{
+  "snapshot": {
+    "code_commit": "16cca82096f94521189f719182011c34bae8d3c1",
+    "python": "3.12.13 (main, May 10 2026, 19:20:41) [Clang 22.1.3 ]",
+    "platform": "macOS-26.7-arm64-arm-64bit",
+    "versions": {
+      "numpy": "2.5.2",
+      "torch": "2.13.0",
+      "sentence-transformers": "6.0.0",
+      "transformers": "5.16.1",
+      "rank-bm25": "0.2.2"
+    },
+    "input_sha256": {
+      "/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean/docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+      "/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean/index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+      "/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean/meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+      "/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean/vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0",
+      "/Users/boris/Projects/search-for-research/.worktrees/ranking-17-20261003/packages/sfr-match/eval/queries.jsonl": "09a560c8c8cab7b59f79ea13724e73aba93290b099768f0bd8415d83c18c30d1",
+      "/Users/boris/Projects/search-for-research/.worktrees/ranking-17-20261003/packages/sfr-match/eval/ood_queries.jsonl": "42870789aa81062205e4d7e0787f9bdceedd1e75e2611069a129d541f71e582a",
+      "/Users/boris/Projects/search-for-research/.worktrees/ranking-17-20261003/packages/sfr-match/eval/external_queries.jsonl": "b02f2c64222d2de39869a155f62001911772b3cdb5780ec98a8a5e4671c09960",
+      "/Users/boris/Projects/search-for-research/.worktrees/ranking-17-20261003/packages/sfr-match/eval/pilot_queries_ranking17_20261003.jsonl": "614f52790e926fabcf9f88348661f2b8955026bbec1c36a3ad1a1265a2c774fb",
+      "/Users/boris/Projects/search-for-research/.worktrees/ranking-17-20261003/scripts/ranking_experiment.py": "27b1c1584eee55dfc6badd926ddbe1edae5afc6ee877ed165f4bae43962858c0",
+      "/Users/boris/Projects/search-for-research/.worktrees/ranking-17-20261003/uv.lock": "a1dcc71ac6fc8086c572462ec6e7c95c211eb8a18a50e6ccc6d99f6180b8576f"
+    },
+    "rrf_k": 60,
+    "criterion_sha256": "d313af82d191ed862da8991f2636157336bd412d903098c94e576979f93abfb3",
+    "dense_depth": 50,
+    "bm25_depth": 50,
+    "weights": [
+      1,
+      1
+    ],
+    "offline": true,
+    "repeat": 3,
+    "latency_scope": "API validate + uncached backend encode/search; no HTTP/cards",
+    "rss_scope": "fresh process peak before separate baseline top50 diagnostics",
+    "order": [
+      [
+        "baseline",
+        "hybrid"
+      ],
+      [
+        "hybrid",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "hybrid"
+      ]
+    ],
+    "environment": {
+      "SFR_SEARCH_BACKEND": null,
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "TOKENIZERS_PARALLELISM": "false"
+    }
+  },
+  "runs": {
+    "baseline-1": {
+      "sha256": "146c32a8ff52f76988b9b062bbcc4a136a3bf99dbf9329d6b143e44616a866d1",
+      "index_meta": {
+        "model_key": "frida",
+        "hf_id": "ai-forever/FRIDA",
+        "kind": "dense",
+        "clean": true,
+        "n_profiles": 9002,
+        "dim": 1536,
+        "build_seconds": 7680.048,
+        "query_prefix": "search_query: ",
+        "document_prefix": "search_document: ",
+        "compose": "full",
+        "built_at": "2026-09-26T18:09:55+00:00",
+        "corpus_sha": "35e591d495023e7e5bb0f7f672443bb40763fdfa36755d2b0eb0068a1cce290f",
+        "thresholds": {
+          "none": 0.33,
+          "weak": 0.4,
+          "high": 0.49
+        },
+        "data_updated_at": "2026-09-04"
+      },
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "search_backend": "numpy",
+      "api_validation": {
+        "min_query_chars": 3,
+        "max_query_chars": 500,
+        "k": 5
+      },
+      "n_queries": 55,
+      "errors": 0,
+      "build_seconds": 0.13680866701179184,
+      "warmup_seconds": 8.604219708999153,
+      "peak_rss_bytes": 3389046784,
+      "index_input_sha256": {
+        "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+        "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+        "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+        "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+      }
+    },
+    "hybrid-1": {
+      "sha256": "6f8529dafade6dbdd4cd7230f9f239a9a0cbc6ef7976ee349870b2c25fa006cf",
+      "index_meta": {
+        "model_key": "frida",
+        "hf_id": "ai-forever/FRIDA",
+        "kind": "dense",
+        "clean": true,
+        "n_profiles": 9002,
+        "dim": 1536,
+        "build_seconds": 7680.048,
+        "query_prefix": "search_query: ",
+        "document_prefix": "search_document: ",
+        "compose": "full",
+        "built_at": "2026-09-26T18:09:55+00:00",
+        "corpus_sha": "35e591d495023e7e5bb0f7f672443bb40763fdfa36755d2b0eb0068a1cce290f",
+        "thresholds": {
+          "none": 0.33,
+          "weak": 0.4,
+          "high": 0.49
+        },
+        "data_updated_at": "2026-09-04"
+      },
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "search_backend": "numpy",
+      "api_validation": {
+        "min_query_chars": 3,
+        "max_query_chars": 500,
+        "k": 5
+      },
+      "n_queries": 55,
+      "errors": 0,
+      "build_seconds": 0.7950520419981331,
+      "warmup_seconds": 3.768618709000293,
+      "peak_rss_bytes": 3629891584,
+      "index_input_sha256": {
+        "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+        "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+        "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+        "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+      }
+    },
+    "hybrid-2": {
+      "sha256": "79c7665554698ab51498d482a54bb3ac08b1162c328e26c9cbde2f038e76c36c",
+      "index_meta": {
+        "model_key": "frida",
+        "hf_id": "ai-forever/FRIDA",
+        "kind": "dense",
+        "clean": true,
+        "n_profiles": 9002,
+        "dim": 1536,
+        "build_seconds": 7680.048,
+        "query_prefix": "search_query: ",
+        "document_prefix": "search_document: ",
+        "compose": "full",
+        "built_at": "2026-09-26T18:09:55+00:00",
+        "corpus_sha": "35e591d495023e7e5bb0f7f672443bb40763fdfa36755d2b0eb0068a1cce290f",
+        "thresholds": {
+          "none": 0.33,
+          "weak": 0.4,
+          "high": 0.49
+        },
+        "data_updated_at": "2026-09-04"
+      },
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "search_backend": "numpy",
+      "api_validation": {
+        "min_query_chars": 3,
+        "max_query_chars": 500,
+        "k": 5
+      },
+      "n_queries": 55,
+      "errors": 0,
+      "build_seconds": 0.7919663750217296,
+      "warmup_seconds": 3.3174731670005713,
+      "peak_rss_bytes": 3606216704,
+      "index_input_sha256": {
+        "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+        "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+        "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+        "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+      }
+    },
+    "baseline-2": {
+      "sha256": "7e4c9014d6add2aea234fb9999ee6620eeb5e96435cc7e0169b67a04c6354953",
+      "index_meta": {
+        "model_key": "frida",
+        "hf_id": "ai-forever/FRIDA",
+        "kind": "dense",
+        "clean": true,
+        "n_profiles": 9002,
+        "dim": 1536,
+        "build_seconds": 7680.048,
+        "query_prefix": "search_query: ",
+        "document_prefix": "search_document: ",
+        "compose": "full",
+        "built_at": "2026-09-26T18:09:55+00:00",
+        "corpus_sha": "35e591d495023e7e5bb0f7f672443bb40763fdfa36755d2b0eb0068a1cce290f",
+        "thresholds": {
+          "none": 0.33,
+          "weak": 0.4,
+          "high": 0.49
+        },
+        "data_updated_at": "2026-09-04"
+      },
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "search_backend": "numpy",
+      "api_validation": {
+        "min_query_chars": 3,
+        "max_query_chars": 500,
+        "k": 5
+      },
+      "n_queries": 55,
+      "errors": 0,
+      "build_seconds": 0.13725945900660008,
+      "warmup_seconds": 2.7804479170008563,
+      "peak_rss_bytes": 3516219392,
+      "index_input_sha256": {
+        "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+        "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+        "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+        "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+      }
+    },
+    "baseline-3": {
+      "sha256": "b5fdce6c3ceedcfcb4947ae138ad6db3b8bd6b63daab58fcfa1585eea22a533c",
+      "index_meta": {
+        "model_key": "frida",
+        "hf_id": "ai-forever/FRIDA",
+        "kind": "dense",
+        "clean": true,
+        "n_profiles": 9002,
+        "dim": 1536,
+        "build_seconds": 7680.048,
+        "query_prefix": "search_query: ",
+        "document_prefix": "search_document: ",
+        "compose": "full",
+        "built_at": "2026-09-26T18:09:55+00:00",
+        "corpus_sha": "35e591d495023e7e5bb0f7f672443bb40763fdfa36755d2b0eb0068a1cce290f",
+        "thresholds": {
+          "none": 0.33,
+          "weak": 0.4,
+          "high": 0.49
+        },
+        "data_updated_at": "2026-09-04"
+      },
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "search_backend": "numpy",
+      "api_validation": {
+        "min_query_chars": 3,
+        "max_query_chars": 500,
+        "k": 5
+      },
+      "n_queries": 55,
+      "errors": 0,
+      "build_seconds": 0.1389705409819726,
+      "warmup_seconds": 3.2008663339947816,
+      "peak_rss_bytes": 3385589760,
+      "index_input_sha256": {
+        "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+        "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+        "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+        "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+      }
+    },
+    "hybrid-3": {
+      "sha256": "06648aa712acad874217dfefb568d798566f14813ab5f6940b5e999fba88ce11",
+      "index_meta": {
+        "model_key": "frida",
+        "hf_id": "ai-forever/FRIDA",
+        "kind": "dense",
+        "clean": true,
+        "n_profiles": 9002,
+        "dim": 1536,
+        "build_seconds": 7680.048,
+        "query_prefix": "search_query: ",
+        "document_prefix": "search_document: ",
+        "compose": "full",
+        "built_at": "2026-09-26T18:09:55+00:00",
+        "corpus_sha": "35e591d495023e7e5bb0f7f672443bb40763fdfa36755d2b0eb0068a1cce290f",
+        "thresholds": {
+          "none": 0.33,
+          "weak": 0.4,
+          "high": 0.49
+        },
+        "data_updated_at": "2026-09-04"
+      },
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "search_backend": "numpy",
+      "api_validation": {
+        "min_query_chars": 3,
+        "max_query_chars": 500,
+        "k": 5
+      },
+      "n_queries": 55,
+      "errors": 0,
+      "build_seconds": 0.8917287079966627,
+      "warmup_seconds": 3.721444041992072,
+      "peak_rss_bytes": 3628777472,
+      "index_input_sha256": {
+        "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+        "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+        "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+        "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+      }
+    }
+  },
+  "blind_pool": {
+    "sha256": "3291b17b2c7cc12791323ec3d0b00ecd8c6191b0c9000198cddc26bde67fb963",
+    "pairs": 386,
+    "profile_fp": "sha256(exact judged profile_text)[:16]",
+    "profile_hash": "sha256(exact judged profile_text)"
+  },
+  "judge_launch": {
+    "tool": "collaboration.spawn_agent",
+    "task": "sfr_judge",
+    "fork_turns": "none",
+    "model": "gpt-6-astra",
+    "reasoning_effort": "max",
+    "role": "sfr-judge",
+    "verification": "Explicit tool override accepted and native rollout turn_context confirms actual gpt-6-astra/max. See ranking17_agent_configuration.json."
+  },
+  "diagnosis": {
+    "stage": "before_comparison",
+    "harness_commit": "df8e346",
+    "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+    "index_version": "frida_clean-9002p-35e591d4",
+    "diagnostic_baseline_sha256": "d4d108621faf2046cbb8504a8616ece570a012122fed740bec6c6d5c901b53df",
+    "notes": {
+      "q08": "В пятёрке NLP и русскоязыковые языковые исследования; главное пересечение NLP+GNN работами не подтверждено. Лексический scan всего каталога не исчерпывающий и не доказывает отсутствие. Вероятно ограничение данных/покрытия многосоставного запроса, а не установленный дефект порядка.",
+      "q28": "В пятёрке конституционное право и нерелевантные дисциплины; в top50 нет очевидного подтверждения гражданского/договорного права по просмотренным названиям. Ограничение поиска/данных не разделено; отсутствие человека в каталоге не доказано.",
+      "q29": "В top50 есть A5006736805 на ранге 8 с работой Investigations of Bread Production with Postponed Staling; кандидат выглядит предметным, но профиль многотемный. Это свидетельство возможного дефекта порядка, а не новая оценка 2. Top5 содержит дрожжи/пищевые технологии и физику; полнота хлебопечения по текстам ограничена.",
+      "q30": "В top5 маркетинг соседствует с политической коммуникацией; в top50 есть B2B/потребительский маркетинг, но сочетание social media+brand не гарантируется названиями. Неполные/смежные работы и порядок могут влиять одновременно."
+    },
+    "alternative_rationale": "Одна заранее заданная RRF FRIDA+BM25 проверяет, помогает ли существующий lexical сигнал смешанным языкам/точным терминам. Диагностика не обосновывает гарантию исправления всех четырёх случаев. Нет перевода, второго варианта или параметрического подбора."
+  },
+  "lexical_inventory": {
+    "docs_sha256": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+    "scope": "Lexical co-occurrence in display_text, including automatic topics. Diagnostic clue only, not relevance or proof of corpus absence. English patterns cannot exhaust Russian or paraphrased works.",
+    "queries": {
+      "q08": {
+        "patterns": [
+          "\\b(nlp|natural language|language model|text classification|machine translation)\\b",
+          "\\b(graph neural|graph convolution|gnn)\\b"
+        ],
+        "candidate_ids": [],
+        "count": 0
+      },
+      "q29": {
+        "patterns": [
+          "\\b(bread|baking|bakery|dough)\\b"
+        ],
+        "candidate_ids": [
+          "A5006736805",
+          "A5033640300",
+          "A5042200208",
+          "A5050910947",
+          "A5078254205",
+          "A5087643647"
+        ],
+        "count": 6
+      },
+      "q30": {
+        "patterns": [
+          "\\b(marketing|brand)\\b",
+          "\\b(social media|social network)\\b"
+        ],
+        "candidate_ids": [
+          "A5003350728",
+          "A5006757486",
+          "A5011298864",
+          "A5013984564",
+          "A5014447567",
+          "A5020694770",
+          "A5025339262",
+          "A5030795507",
+          "A5032562921",
+          "A5039322039",
+          "A5045759413",
+          "A5046796946",
+          "A5056696904",
+          "A5058555774",
+          "A5067638051",
+          "A5076595923",
+          "A5085653114",
+          "A5112646470"
+        ],
+        "count": 18
+      },
+      "q28": {
+        "patterns": [
+          "\\b(civil law|contract law|contractual)\\b"
+        ],
+        "candidate_ids": [],
+        "count": 0
+      }
+    }
+  },
+  "rerun": {
+    "reason": "Unknown hybrid OOD gate now null instead of zero; parameters, ranking and scores unchanged. Both variants fully rerun after verified harness fix.",
+    "v1_code": "df8e34654fe7714596e9f257e6423141cd3fe91d",
+    "v2_code": "16cca82096f94521189f719182011c34bae8d3c1",
+    "blind_pool_byte_identical": true,
+    "rankings_and_scores_identical_to_v1": true,
+    "judgments_reused": "Same fresh Astra labels on byte-identical common blind pool, not historical Fable labels."
+  }
+}

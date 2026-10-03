@@ -100,6 +100,51 @@ uv run sfr-match eval --queries external --models frida \
 и сравнит с golden set. Расхождение и будет честной оценкой того, насколько
 завышены нынешние цифры.
 
+## Локальный эксперимент ранжирования #17
+
+Протокол — [CRITERIA_RANKING17_20261003.md](CRITERIA_RANKING17_20261003.md).
+Новый обезличенный набор
+[pilot_queries_ranking17_20261003.jsonl](pilot_queries_ranking17_20261003.jsonl)
+содержит записи пилота с происхождением/преобразованиями. Он диагностический,
+не независимый holdout; frozen-наборы выше не меняются. Предполагаемый ответ
+команды исключён, влияние гайда и число независимых участников не подтверждены.
+
+`scripts/ranking_experiment.py` запускает только локальный uncached поиск:
+baseline FRIDA и явный эксперимент RRF FRIDA+BM25, три повтора в отдельных
+процессах. API, confidence, production и исходный индекс не меняются.
+Пути входов задаются явно; все выходы требуют нового имени. Полный путь
+включает API validation и embedding, без HTTP, карточек, очереди и кэша.
+
+```bash
+OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
+TOKENIZERS_PARALLELISM=false uv run --locked python scripts/ranking_experiment.py run \
+  --index-dir /absolute/path/to/data/indexes_sfr5c/frida_clean \
+  --queries packages/sfr-match/eval/queries.jsonl \
+    packages/sfr-match/eval/ood_queries.jsonl \
+    packages/sfr-match/eval/external_queries.jsonl \
+    packages/sfr-match/eval/pilot_queries_ranking17_20261003.jsonl \
+  --out-dir /absolute/path/to/new-comparison
+```
+
+Пул `blind_pool.jsonl` сортируется по query_id/author_id и скрывает вариант,
+rank, score, expect и прежнюю разметку. Судья — отдельный Astra/max по рубрике;
+author не заменяет его. В новую оценку переносится отпечаток **судимого текста**
+`profile_fp` и полный `profile_hash` из пула. Это отличается от отпечатка
+исходного profile_text индекса, если display_text очищен/дополнен: сравнение
+проводится с тем же слепым снимком, а не с другим представлением профиля.
+Поле `alternate_grade` хранит только сомнение самого судьи по той же шкале.
+
+```bash
+uv run --locked python scripts/ranking_experiment.py measure \
+  --out-dir /absolute/path/to/comparison \
+  --judgments /absolute/path/to/new-judgments.jsonl \
+  --out /absolute/path/to/new-metrics.json
+```
+
+Неоценённые/устаревшие пары, иной судья, различающиеся входы или нестабильные
+повторы блокируют расчёт. Success@k и спорные интервалы выводятся отдельно
+по группам; RRF score не интерпретируется по прежним cosine-порогам.
+
 ## Отпечаток профиля в оценках (#123)
 
 Оценка стоит на паре (запрос, `author_id`) и относится к профилю **на момент

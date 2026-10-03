@@ -1,0 +1,27 @@
+{
+  "scope": "One additional no-query startup per variant, including Python/imports/warmup/file output. No parameter tuning or quality comparison; local file cache already warm.",
+  "order": [
+    "baseline",
+    "hybrid"
+  ],
+  "rows": [
+    {
+      "variant": "baseline",
+      "wall_seconds_fresh_process_no_queries": 9.626164707995486,
+      "build_seconds": 0.19141191599192098,
+      "warmup_seconds": 8.746890291018644,
+      "peak_rss_bytes": 3357065216,
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "output_sha256": "ffe09a0d9df432fb0bcbc2723eb13702378ac4f03f936cfd36e7f05a0710e59e"
+    },
+    {
+      "variant": "hybrid",
+      "wall_seconds_fresh_process_no_queries": 5.259069833991816,
+      "build_seconds": 0.8448224999883678,
+      "warmup_seconds": 3.790322791028302,
+      "peak_rss_bytes": 3485073408,
+      "model_revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+      "output_sha256": "ac3fb0428f98c434a85167b11759353dc6de8459b92d32470f2c06b4838ae242"
+    }
+  ]
+}

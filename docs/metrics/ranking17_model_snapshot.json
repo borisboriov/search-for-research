@@ -1,0 +1,55 @@
+{
+  "hf_id": "ai-forever/FRIDA",
+  "revision": "850455b605544a944739b25f81ddf812b6e3d0d5",
+  "scope": "Available local HF snapshot, matches model config _commit_hash in all runs; historical index build revision is not recorded.",
+  "files": {
+    "1_Pooling/config.json": {
+      "bytes": 297,
+      "sha256": "1aa71bda3d1d8eea7e361a472849dda1961f3b960b4d62a37f2b1cc04faad529"
+    },
+    "README.md": {
+      "bytes": 7652,
+      "sha256": "63c14860029244a4aedb6f3172ffd24b3998148d0abbd405645c406208512588"
+    },
+    "config.json": {
+      "bytes": 823,
+      "sha256": "c5d80c5870aa65a25b81191369a7c89a4c200c40f6be944aa04edb02a5775468"
+    },
+    "config_sentence_transformers.json": {
+      "bytes": 509,
+      "sha256": "532f893bc4255c167cf7f6290365d96a6dadcdf4be587382057f77c4ee0072ea"
+    },
+    "merges.txt": {
+      "bytes": 1677769,
+      "sha256": "6c9a6817693a5fe4a0f8b0f8f972e5eb6e949848788e58a17f9f99a1bd1a46ce"
+    },
+    "model.safetensors": {
+      "bytes": 3293631728,
+      "sha256": "f48a05972031f3e9b4799b548a148215097f148332c8a68c3bf575497d6a0d43"
+    },
+    "modules.json": {
+      "bytes": 349,
+      "sha256": "84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf"
+    },
+    "sentence_bert_config.json": {
+      "bytes": 53,
+      "sha256": "ec8e29d6dcb61b611b7d3fdd2982c4524e6ad985959fa7194eacfb655a8d0d51"
+    },
+    "special_tokens_map.json": {
+      "bytes": 958,
+      "sha256": "f23c8e6099631c233c16d9bf8dab198f610826cdd1b358f270f6d55c1863e857"
+    },
+    "tokenizer.json": {
+      "bytes": 5592981,
+      "sha256": "fad60ebecad875f146cac79ab7774047b9896a050bd6a1ed4362bfbdb0ffb503"
+    },
+    "tokenizer_config.json": {
+      "bytes": 1187,
+      "sha256": "cb24bba0d239f59144ae91cbf509e4a3142ddfd90f78a62a7a9ab210596039ca"
+    },
+    "vocab.json": {
+      "bytes": 2697150,
+      "sha256": "c232c6bbb6b98625ff95050808345d935f8831c7a0d75c3186816f0c738ce748"
+    }
+  }
+}
