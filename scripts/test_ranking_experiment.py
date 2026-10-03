@@ -207,6 +207,22 @@ class RankingExperimentTests(unittest.TestCase):
             self.assertFalse(metrics["per_query"][0]["success@1_lower"])
             self.assertTrue(metrics["per_query"][0]["success@1_upper"])
             self.assertEqual(metrics["groups"]["baseline/external/in-domain"]["n"], 1)
+            self.assertIsNone(
+                metrics["groups"]["baseline/external/in-domain"]["ood_false_accept_count"]
+            )
+            queries[0].update(group="ood_queries", expect="out-of-domain")
+            (root / "queries.json").write_text(json.dumps(queries))
+            measure(root, labels, root / "ood-metrics.json")
+            ood_metrics = json.loads((root / "ood-metrics.json").read_text())
+            self.assertEqual(
+                ood_metrics["groups"]["baseline/ood_queries/out-of-domain"][
+                    "ood_false_accept_count"
+                ],
+                1,
+            )
+            self.assertIsNone(
+                ood_metrics["groups"]["hybrid/ood_queries/out-of-domain"]["ood_false_accept_count"]
+            )
             with self.assertRaises(FileExistsError):
                 measure(root, labels, root / "metrics.json")
             changed_path = root / "hybrid-3.json"

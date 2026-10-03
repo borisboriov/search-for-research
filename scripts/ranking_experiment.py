@@ -418,7 +418,11 @@ def measure(out_dir: Path, judgments_path: Path, output: Path) -> None:
                 "total": len(rows),
                 "rate": sum(row[metric] for row in rows) / len(rows),
             }
-        summary["ood_false_accept_count"] = sum(row["ood_false_accept"] is True for row in rows)
+        summary["ood_false_accept_count"] = (
+            sum(row["ood_false_accept"] is True for row in rows)
+            if any(row["ood_false_accept"] is not None for row in rows)
+            else None
+        )
         summaries[group_key] = summary
     query_changes = []
     for qid in by_query:
