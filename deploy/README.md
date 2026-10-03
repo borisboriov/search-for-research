@@ -1,12 +1,16 @@
-# Деплой Search For Research (SFR-4)
+# Эксплуатация и деплой Search For Research
 
 Компоновка: `api` (FastAPI + FRIDA) + `web` (Next.js standalone) + `proxy`
-(Caddy с rate limiting и авто-TLS). Наружу опубликован только proxy;
+(Caddy с rate limiting и авто-TLS) + `postgres` (закрытая аналитика).
+Наружу опубликован только proxy;
 API из интернета недостижим — браузер ходит `proxy → web → api` по
 внутренней сети compose.
 
-Требования к серверу измерены в SFR-2: **8 ГБ RAM, ≥2 vCPU, ≥20 ГБ диска**,
-Ubuntu 24.04, хостинг в РФ. DNS A-запись домена должна указывать на сервер
+Исторический ориентир SFR-2 без PostgreSQL: **8 ГБ RAM, ≥2 vCPU, ≥20 ГБ диска**.
+Снимок VPS 01.10.2026 — 4 CPU и 7,76 GiB RAM; запас рядом с FRIDA/PostgreSQL под
+нагрузкой ещё не доказан. Нужны наблюдение RAM/CPU/свободного диска и проверка
+буфера после выкладки. Ubuntu 24.04, хостинг в РФ.
+DNS A-запись домена должна указывать на сервер
 **до** первого запуска (Caddy выпускает TLS при старте).
 
 ## Развёртывание с нуля
@@ -25,7 +29,7 @@ sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli container
 sudo usermod -aG docker $USER && newgrp docker
 
 # 2. Код
-git clone https://github.com/<owner>/search-for-research.git
+git clone https://github.com/borisboriov/search-for-research.git
 cd search-for-research
 
 # 3. Окружение
@@ -34,13 +38,15 @@ cd deploy && cp env.example .env
 #   REDIRECT_TO (301 www → апекс, #21; имя из REDIRECT_FROM в SITE_ADDRESS
 #   не ставить — Caddy не стартует), NEXT_PUBLIC_SITE_URL (канонический адрес, один),
 # REVALIDATE_SECRET=$(openssl rand -hex 32), SFR_API_LOG_SALT=$(openssl rand -hex 16),
-# NEXT_PUBLIC_CLAIM_EMAIL (или оставить пустым — ссылка «Это вы?» скрыта)
+# NEXT_PUBLIC_CLAIM_EMAIL (или оставить пустым — ссылка «Это вы?» скрыта),
+# три РАЗНЫХ SFR_ANALYTICS_MIGRATION_PASSWORD / RUNTIME_PASSWORD / READER_PASSWORD
+# (каждый openssl rand -hex 32); SFR_ANALYTICS_RELEASE — полный SHA выбранной версии
 cd ..
 
-# 4. Артефакты — с машины разработчика (на сервере ничего не собирается):
+# 4. Индекс/cards — с машины разработчика (ETL и индекс на сервере не строятся):
 #    (локально) deploy/sync-artifacts.sh user@host search-for-research
 
-# 5. Проверить DNS и запустить
+# 5. Проверить DNS
 #    SITE_ADDRESS может содержать несколько имён через запятую (Caddy выпустит
 #    сертификат на каждое), поэтому в командах ниже используется канонический
 #    адрес из NEXT_PUBLIC_SITE_URL — одно имя, пригодное для curl и dig.
@@ -52,23 +58,13 @@ cd ..
 source deploy/.env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}   # мы ещё в корне репо
 for name in $(echo "$SITE_ADDRESS" | tr ',' ' ') ${REDIRECT_FROM:-}; do dig +short "$name"; done
 # каждое имя должно вернуть IP этого сервера
-cd deploy && docker compose up -d --build
-# первый старт api качает веса FRIDA (~2 ГБ) в том hf-cache — единожды;
-# healthcheck api ждёт до 3 минут (start-period)
-
-# 6. Пост-деплойная ревалидация: сборка web шла без живого API, поэтому
-#    снапшоты лендинга и sitemap деградированы — обновить их:
-source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
-curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
-
-# 7. Проверки
-docker exec sfr-proxy id                              # uid=10001(caddy), не root (SFR-4b)
-curl -s https://$DOMAIN/api/health || true      # 404 — так и должно быть (API закрыт)
-curl -s -o /dev/null -w '%{http_code}\n' https://$DOMAIN/            # 200, лендинг
-n=$(curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/')
-echo "sitemap: $n профилей"   # должно равняться profiles_count (9 002)
-curl -s https://$DOMAIN/robots.txt | grep sitemap
+# 6. Запуск — только по единому порядку ниже: роли/миграции до приложения,
+#    затем ревалидация, диагностика и smoke.
 ```
+
+Продолжить по [единому порядку production-выкладки](#порядок-production-выкладки).
+Первый старт API качает веса FRIDA (~2 ГБ) в том `hf-cache` один раз;
+healthcheck API включает прогрев. Один `up -d --build` не заменяет миграции.
 
 **Переход на 301 `www` → апекс (#21, при первом обновлении после 27.09).** В
 `deploy/.env` на сервере: `SITE_ADDRESS="search-for-research.ru"` (без `www`),
@@ -80,20 +76,19 @@ curl -s https://$DOMAIN/robots.txt | grep sitemap
 
 ## Обновление
 
-```bash
-cd search-for-research
-git pull
-# если менялись артефакты — с машины разработчика: deploy/sync-artifacts.sh user@host
-cd deploy
-docker compose up -d --build        # пересборка только изменившихся образов
-docker compose restart api          # если привозились артефакты: api читает их на старте
-# --build здесь не только про наш код: пересборка подтягивает патчи базовых
-# образов и `apk upgrade` в прокси. Это единственный способ закрывать CVE
-# базы — CI их не видит (docs/reports/SFR4b_REPORT.md).
-source .env && DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
-curl -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" https://$DOMAIN/api/revalidate
-curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_count
-```
+Использовать тот же [порядок production-выкладки](#порядок-production-выкладки),
+что и для первого запуска. До обновления кода/контейнеров сохранить внешний
+экземпляр данных и проверить восстановление существующей БД. Затем выбрать
+принятый коммит, обновить `SFR_ANALYTICS_RELEASE`, собрать образы, выполнить
+миграции и только после этого пересоздать приложение. Артефакты при изменении
+каталога доставляет `deploy/sync-artifacts.sh` с машины разработчика.
+
+`--build` подтягивает патчи базовых образов и `apk upgrade` в proxy;
+CI исходного кода не проверяет установленную базу VPS. Если `cards` заменялись
+без изменения образа/config, после запуска явно перезапустить API: bind одного
+файла может удерживать прежний inode. Затем дождаться здорового состояния и
+повторить ревалидацию/smoke. Не заменять проверенную версию произвольным
+`git pull` во время выкладки.
 
 ### Смена индекса (переезд на новый каталог)
 
@@ -189,7 +184,8 @@ curl -s https://$DOMAIN/sitemap.xml | grep -c '/supervisor/'   # == profiles_cou
 
 ```bash
 make deploy-local     # из корня репо: прокси на http://localhost:8080, без TLS
-SFR_WEB_URL=http://localhost:8080 make web-e2e   # e2e против боевой компоновки
+SFR_WEB_URL=http://localhost:8080 SFR_E2E_MIN_TEST_INTERVAL_MS=15000 make web-e2e
+# e2e против Caddy с pacing, чтобы не исчерпать реальные rate limits
 make deploy-local-down
 ```
 
@@ -325,7 +321,7 @@ Caddy заменяет входные X-Forwarded-For/X-Real-IP, Next довер
 make deploy-local SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_PORT=18080 \
   SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3 \
   SFR_COMPOSE_IP_RANGE=172.29.179.128/25
-SFR_WEB_URL=http://localhost:18080 make web-e2e
+SFR_WEB_URL=http://localhost:18080 SFR_E2E_MIN_TEST_INTERVAL_MS=15000 make web-e2e
 # down только своего проекта, БЕЗ -v: аналитические данные сохраняются
 make deploy-local-down SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_PORT=18080 \
   SFR_COMPOSE_SUBNET=172.29.179.0/24 SFR_COMPOSE_WEB_IP=172.29.179.3 \
@@ -335,21 +331,96 @@ make deploy-local-down SFR_COMPOSE_PROJECT=sfr-analytics-rehearsal SFR_LOCAL_POR
 `make deploy-local` задаёт безопасные пароли только для локальной репетиции,
 версию релиза из текущего git SHA, собирает образы с именем своего проекта,
 ожидает healthy у всех сервисов (до 300 секунд), затем применяет миграции и
-ревалидирует Next. Не считать ответ `up -d` доказательством готовности API. В production сначала заполнить
-три секрета и `SFR_ANALYTICS_RELEASE` текущим SHA. Из корня проекта:
+ревалидирует Next. Не считать ответ `up -d` доказательством готовности API.
+Локальные пароли репетиции не использовать в production.
+
+### Порядок production-выкладки
+
+Выкладка требует отдельного решения Бориса; эти команды — инструкция,
+а не свидетельство выполненного деплоя. Работать из корня репозитория,
+с текущим именем Compose-проекта и его существующими томами. При замене
+имени проекта Compose создаст другие тома вместо сохранённых данных.
+
+Перед любым запуском `analytics-operator`, включая первый `check`, создать
+его host-каталог под пользователем оператора из корня репозитория. Иначе
+Docker автоматически создаст отсутствующий short-bind каталог от root:
 
 ```bash
-# Команды подготовлены для последующей выкладки; в этой сессии не выполнять на VPS.
-docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d postgres
-docker compose --env-file deploy/.env -f deploy/docker-compose.yml build api web proxy
-docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm analytics-migrate
-# Проверить migration/check/backup до пересоздания приложения.
-docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d api web proxy
+mkdir -p data/analytics
+chmod 700 data/analytics
 ```
 
+Если каталог уже был создан Docker как `root:root`, проверить, что это именно
+`data/analytics` выбранного проекта, и вернуть владельца только этого каталога:
+`sudo chown "$(id -u):$(id -g)" data/analytics`, затем `chmod 700 data/analytics`.
+Не менять владельца томов БД/журнала и не применять `chmod 777`.
+
+1. **Сохранить исходное состояние до обновления.** Для существующей аналитики —
+   [backup, внешняя копия на Mac и проверочное восстановление](#архивы-место-backup-и-внешняя-копия).
+   Проверить SHA-256 и результат restore-check. При первой выкладке аналитики
+   БД ещё нет: сначала сохранить доступные прежние журналы и проверить внешнюю
+   копию (исторический сбор — #165); не объявлять несуществующий pg_dump
+   проверенным. До первой записи новой БД её восстановление проверяется на
+   мигрированном тестовом наборе в изолированной репетиции.
+2. **Подготовить выбранную принятую версию и окружение.** Полный SHA в
+   `SFR_ANALYTICS_RELEASE`, три разных парольных секрета из `env.example`,
+   секрет ревалидации и соль legacy IP-хеша. Секреты не выводить в терминал,
+   отчёт или `docker compose config`. Для существующей БД пароль роли не
+   меняется от правки `.env`; смена требует отдельной операторской процедуры.
+3. **Роли и миграции перед приложением.** Ожидание PostgreSQL и сборка новых
+   образов ещё не пересоздают работающий API. Новый том получает роли через
+   init; для существующего/прерванного init проверить роли по инструкции выше.
+
+```bash
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --wait --wait-timeout 300 postgres
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml build api web proxy
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm analytics-migrate
+# Миграция должна завершиться успешно. При ошибке приложение не обновлять.
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml up -d --wait --wait-timeout 300 api web proxy
+# Если привезён новый cards-файл, но API не пересоздан — явный restart api,
+# затем повторный up --wait для ожидания healthy.
+```
+
+4. **Ревалидация и smoke после готовности.** Сборка Next выполняется без живого
+   API, поэтому обновить landing/sitemap. Проверить внутренний health, сайт,
+   выбранный реальный профиль, синтетический поиск и приём событий; убедиться,
+   что они появились в закрытой диагностике/отчёте без вывода текстов.
+
+```bash
+source deploy/.env
+DOMAIN=${NEXT_PUBLIC_SITE_URL#https://}
+curl -sf -X POST -H "x-revalidate-secret: $REVALIDATE_SECRET" "https://$DOMAIN/api/revalidate"
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml exec -T api \
+  curl -sf localhost:8000/api/health
+# health: выбранные index_version, profiles_count, institutions_count, пороги,
+# thresholds_match=true. Release сверить по сохранённым фактам smoke в отчёте.
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml exec -T proxy id
+# uid=10001; публичный API health закрыт (404), landing — 200.
+curl -s -o /dev/null -w '%{http_code}\n' "https://$DOMAIN/api/health"
+curl -sf -o /dev/null "https://$DOMAIN/"
+n=$(curl -sf "https://$DOMAIN/sitemap.xml" | grep -c '/supervisor/')
+echo "sitemap: $n профилей"   # совпадает с внутренним profiles_count
+curl -sf "https://$DOMAIN/robots.txt" | grep -i sitemap
+docker compose --env-file deploy/.env -f deploy/docker-compose.yml run --rm analytics-operator check
+```
+
+`analytics-check` может оставаться ненулевым из-за сохранённой истории сбоев:
+прочитать `check_reasons`, а не очищать историю. Для готовности аналитики
+убедиться, что миграция актуальна, очередь догружается, карантин разобран и
+достаточно диска. Если внутренний health/smoke неверен, остановить выкладку и
+применить подготовленный откат приложения с сохранением томов/журнала.
+
+5. **После старта наблюдать ресурсы.** RAM/CPU PostgreSQL и API, свободный диск,
+   очереди и ошибки аналитики, задержки реальных поисков. Локальная репетиция
+   не доказывает нагрузочный запас VPS. Регулярные backup и внешние копии
+   назначаются оператором; наличие `backup.cron.example` не означает
+   установленного расписания. Полный e2e сначала выполнять на изолированной
+   репетиции с pacing 15 секунд; production smoke ограничить явными
+   синтетическими проверками, отмеченными `SFR-Technical` User-Agent.
+
 Миграции Alembic живут в пакете аналитики API, отдельно от ETL; применяются
-к новой и существующей БД. Перед миграцией — логический backup и внешняя
-копия. Откат приложения не удаляет `analytics-db`/`analytics-journal` и не
+к новой и существующей БД. Для существующей БД перед миграцией — логический
+backup и внешняя копия. Откат приложения не удаляет `analytics-db`/`analytics-journal` и не
 запускает downgrade/delete. Старый код может перестать собирать новые
 события, поэтому зафиксировать границу версии и неполноту.
 
@@ -362,7 +433,8 @@ Python CLI/Make-цели запускаются оператором, публи
 `analytics-operator` с выходным приватным каталогом `data/analytics:/output`:
 
 ```bash
-# Подготовить каталог с доступом uid приложения; не chmod 777.
+# Подготовить приватный host-каталог под пользователем оператора ДО первого
+# analytics-operator; при root:root см. порядок production-выкладки выше.
 mkdir -p data/analytics && chmod 700 data/analytics
 # check/replay используют uid приложения (10001) для постоянного журнала.
 # report/export запускаются uid оператора, чтобы локальные файлы принадлежали ему.

@@ -4,9 +4,13 @@ Next.js (App Router) + TypeScript + Tailwind v4 + компоненты в сти
 Три страницы поверх API `apps/api`: лендинг `/`, выдача `/results?q=…`,
 открытая страница НР `/supervisor/[id]` (SSR + ISR, sitemap по каталогу).
 
-Дизайн — источник истины: `design/DESIGN_HANDOFF.md`, `design/DESIGN_SYSTEM.md`
-**v2.1** (направление B «Академичная свежесть»; токены §1 лежат в
-`app/globals.css`, шрифты Literata + IBM Plex Sans — в `app/layout.tsx`).
+Действующие визуальные правила — `design/DESIGN_SYSTEM.md` **v2.1**;
+`design/DESIGN_HANDOFF.md` — история передач SFR-3/SFR-6. Изменения поведения
+и текстов после пилота — в коде, [отчёте UI](../../docs/reports/pilot-ui-validation.md)
+и [спеке MVP](../../docs/product/mvp_spec.md). Направление B — «Академичная свежесть»;
+токены §1 лежат в
+`app/globals.css`, шрифты Literata + IBM Plex Sans — локальные файлы `app/fonts/`,
+подключённые через `next/font/local` в `app/layout.tsx`.
 Макеты B — в папке документов
 (`~/Desktop/Search for Research`/`02_research/2026-09_дизайн_референсы/directions_2026-09-12/`), в репо
 их не копируем; `design/mockups/*` — макеты v1, оставлены как история SFR-3 и
@@ -21,7 +25,7 @@ make web-lint    # eslint
 make web-typecheck
 make web-test    # юнит-тесты (Vitest)
 make web-build   # прод-сборка; живой API не требуется
-make web-e2e     # Playwright против живого API; скриншоты в e2e/screenshots/
+make web-e2e     # Playwright против dev и живого API; скриншоты в e2e/screenshots/
 ```
 
 Конфиг: `SFR_API_URL` — адрес API для SSR и прокси (по умолчанию
@@ -74,7 +78,8 @@ prefetch и повторный render не создают просмотров. 
 доверенный адрес непосредственного прокси. Эксплуатация и закрытые выгрузки —
 [deploy/README.md](../../deploy/README.md).
 
-`SFR_WEB_URL=http://127.0.0.1:18080 make web-e2e` проверяет изолированный стенд,
+`SFR_WEB_URL=http://127.0.0.1:18080 SFR_E2E_MIN_TEST_INTERVAL_MS=15000 make web-e2e`
+проверяет изолированный стенд за Caddy,
 не запускает второй dev-сервер. `e2e/analytics.spec.ts` использует синтетические
 ответы подбора/приёмника для проверки интерфейса и доставки; эти проверки не
 доказывают качество FRIDA или сохранность PostgreSQL.
