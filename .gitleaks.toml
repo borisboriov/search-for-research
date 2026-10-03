@@ -49,3 +49,16 @@ paths = ['''(^|/)\.env$''']
 # GitHub Push Protection отклоняет пуш с ним, а исключение в gitleaks только
 # спрятало бы это до момента пуша. Если обновление правил принесёт такой файл
 # снова — пусть `make audit` станет красным сразу (docs/reports/SFR4b_REPORT.md).
+
+# 03.10.2026: generic-api-key принял поле sfr-api_release за ключ.
+# Значение — принятый Git commit SHA (PR #182), сверенный Git refs API;
+# это идентификатор исходников, не credential. Исключение — только эта
+# точная строка в одном артефакте и только это правило; остальные значения
+# и вся git-история продолжают сканироваться. Пересмотр при смене релиза.
+[[allowlists]]
+description = "SHA принятого релиза в эксплуатационном артефакте (03.10.2026)"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^docs/metrics/ui_analytics_deploy_20261003\.json$''']
+regexTarget = "match"
+regexes = ['''^sfr-api_release": "78e87de8759ca5bb1fd70cdeef3e24cde766f608"$''']

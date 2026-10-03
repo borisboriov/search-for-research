@@ -1,0 +1,287 @@
+{
+  "generated_at": "2026-10-03T13:28:39.942121+00:00",
+  "synthetic": true,
+  "runtime": {
+    "checked_at": "2026-10-03T13:27:02.312415+00:00",
+    "git_sha": "78e87de8759ca5bb1fd70cdeef3e24cde766f608",
+    "git_clean": true,
+    "services": [
+      {
+        "name": "sfr-api",
+        "image": "sha256:622ab3ba35c1698744216a637487d239769db3fc132a3fce39123a9586d24944",
+        "health": "healthy",
+        "project": "sfr-deploy",
+        "started_at": "2026-10-03T13:13:54.258051443Z",
+        "mounted_volumes": [
+          "sfr-deploy_analytics-journal",
+          "sfr-deploy_hf-cache"
+        ],
+        "published_port_names": []
+      },
+      {
+        "name": "sfr-web",
+        "image": "sha256:4241b3e1204de82c14cf21e60dd4a801ec311cfd52e1011a9229dcd4300b273b",
+        "health": "healthy",
+        "project": "sfr-deploy",
+        "started_at": "2026-10-03T13:14:14.9016991Z",
+        "mounted_volumes": [],
+        "published_port_names": []
+      },
+      {
+        "name": "sfr-proxy",
+        "image": "sha256:e464695484454f8d340f23d29a164383b782b647ae6a9178b663f75044da14c7",
+        "health": "healthy",
+        "project": "sfr-deploy",
+        "started_at": "2026-10-03T13:14:20.547216774Z",
+        "mounted_volumes": [
+          "sfr-deploy_caddy-config",
+          "sfr-deploy_caddy-data"
+        ],
+        "published_port_names": [
+          "443/tcp",
+          "80/tcp"
+        ]
+      },
+      {
+        "name": "sfr-deploy-postgres-1",
+        "image": "sha256:639ab7ceb90e13123085b741fb31ef493fba25463002f6da665352e7b534b652",
+        "health": "healthy",
+        "project": "sfr-deploy",
+        "started_at": "2026-10-03T13:07:21.367852618Z",
+        "mounted_volumes": [
+          "sfr-deploy_analytics-db"
+        ],
+        "published_port_names": []
+      }
+    ],
+    "health": {
+      "status": "ok",
+      "model": "ai-forever/FRIDA",
+      "index_version": "frida_clean-9002p-35e591d4",
+      "profiles_count": 9002,
+      "institutions_count": 12,
+      "score_threshold": 0.33,
+      "score_weak": 0.4,
+      "score_high": 0.49,
+      "thresholds_match": true,
+      "search_backend": "faiss",
+      "compose": "full",
+      "built_at": "2026-09-26T18:09:55+00:00",
+      "data_updated_at": null,
+      "cache_hits": 8,
+      "cache_misses": 4,
+      "cache_hit_rate": 0.667
+    }
+  },
+  "browser_pg": {
+    "at": "2026-10-03T13:21:26.238294+00:00",
+    "matched_browser_acks": 12,
+    "matching_contexts": 12,
+    "technical": 12,
+    "names": [
+      "letter_copy_success",
+      "profile_opened",
+      "results_shown",
+      "search_attempt",
+      "visit_started",
+      "work_confirmed"
+    ],
+    "visits": 2
+  },
+  "observed": {
+    "started_at": "2026-10-03T13:16:10.546493+00:00",
+    "finished_at": "2026-10-03T13:17:38.541308+00:00",
+    "http_latencies_ms": [
+      43.94,
+      20.21,
+      246.0,
+      21.04,
+      245.22,
+      17.76
+    ],
+    "pg_searches": {
+      "searches": 6,
+      "technical": 6,
+      "release_count": 6,
+      "cache_hits": 4
+    },
+    "pg_client_skew": {
+      "technical": "declared_technical",
+      "client_at": "2036-01-01T00:00:00+00:00",
+      "received_at": "2026-10-03T13:17:38.537284+00:00",
+      "app_version": "78e87de8759ca5bb1fd70cdeef3e24cde766f608"
+    },
+    "resources": {
+      "sfr-api": {
+        "memory_min_mib": 3257.34,
+        "memory_max_mib": 3263.49,
+        "cpu_max_sample_percent": 3.96
+      },
+      "sfr-web": {
+        "memory_min_mib": 102.7,
+        "memory_max_mib": 103.3,
+        "cpu_max_sample_percent": 17.04
+      },
+      "sfr-proxy": {
+        "memory_min_mib": 59.81,
+        "memory_max_mib": 60.75,
+        "cpu_max_sample_percent": 3.15
+      },
+      "sfr-deploy-postgres-1": {
+        "memory_min_mib": 33.85,
+        "memory_max_mib": 33.95,
+        "cpu_max_sample_percent": 6.54
+      }
+    },
+    "mem_available_min_mib": 6268.96875,
+    "swap_used_max_mib": 47.40625,
+    "disk_free_min_gib": 30.528812408447266
+  },
+  "diagnostics": {
+    "migration": "analytics_0003",
+    "migration_current": true,
+    "check_ok": true,
+    "check_reasons": [],
+    "pending_count": 0,
+    "quarantine_count": 0,
+    "incomplete": false,
+    "last_error": null,
+    "searches": {
+      "count": 12,
+      "last_received_at": "2026-10-03 13:19:35.414484+00:00",
+      "last_persisted_at": "2026-10-03 13:19:39.565261+00:00"
+    },
+    "events": {
+      "count": 47,
+      "last_received_at": "2026-10-03 13:19:36.312193+00:00",
+      "last_persisted_at": "2026-10-03 13:19:39.587415+00:00"
+    }
+  },
+  "report": {
+    "start_utc": "2026-10-03T13:14:00+00:00",
+    "end_utc": "2026-10-03T13:21:26.238596+00:00",
+    "all_searches": 12,
+    "all_events": 47,
+    "visits": 0,
+    "searches": 0,
+    "events": 0,
+    "traffic_server_searches": {
+      "declared_technical": 12
+    },
+    "excluded_visits": {
+      "declared_technical": 11
+    },
+    "clock_anomalies": 0,
+    "observed_sequence_gap_count": 0,
+    "migration": "analytics_0003"
+  },
+  "security": {
+    "at": "2026-10-03T13:18:08.473307+00:00",
+    "containers": {
+      "sfr-api": {
+        "bytes": 11193,
+        "exact_secret_matches": 0,
+        "tracebacks": 0,
+        "permission_errors": 0
+      },
+      "sfr-web": {
+        "bytes": 147,
+        "exact_secret_matches": 0,
+        "tracebacks": 0,
+        "permission_errors": 0
+      },
+      "sfr-proxy": {
+        "bytes": 10243,
+        "exact_secret_matches": 0,
+        "tracebacks": 0,
+        "permission_errors": 0
+      },
+      "sfr-deploy-postgres-1": {
+        "bytes": 4105,
+        "exact_secret_matches": 0,
+        "tracebacks": 0,
+        "permission_errors": 1
+      }
+    },
+    "sfr-api_release": "78e87de8759ca5bb1fd70cdeef3e24cde766f608",
+    "sfr-web_release": "78e87de8759ca5bb1fd70cdeef3e24cde766f608",
+    "container_times": {
+      "sfr-api": "2026-10-03T13:18:08Z",
+      "sfr-web": "2026-10-03T13:18:08Z",
+      "sfr-proxy": "2026-10-03T13:18:08Z",
+      "sfr-deploy-postgres-1": "2026-10-03T13:18:08Z"
+    },
+    "clock_synced": "yes",
+    "www_redirect": {
+      "status": 301,
+      "location": "https://search-for-research.ru/supervisor/A5050048876"
+    }
+  },
+  "access_redaction": {
+    "new_access_rows": 300,
+    "headers_present": 0,
+    "query_strings_present": 0
+  },
+  "caddy_isolated": {
+    "passed": true,
+    "rows": 3,
+    "paths_preserved": true,
+    "query_secrets_excluded": true,
+    "headers_excluded": true,
+    "container": "sfr-caddy-log-test-f22bd38d2610",
+    "retained_volume": "sfr-caddy-log-test-f22bd38d2610-logs"
+  },
+  "db_access_and_schedule": {
+    "db": {
+      "runtime_insert": true,
+      "runtime_private_select": false,
+      "reader_select": true,
+      "reader_insert": false,
+      "reader_settings": [
+        "TimeZone=UTC",
+        "default_transaction_read_only=on",
+        "statement_timeout=5000ms"
+      ],
+      "runtime_memberships": 0,
+      "db_bytes": 8148659,
+      "connections": 2,
+      "active_connections": 1
+    },
+    "deploy_cron_analytics_entries": 0,
+    "deploy_cron_uptime_entries": 1,
+    "system_schedule_scan": {
+      "root_crontab_present": false,
+      "backup_command_mentions": 0,
+      "schedule_files_checked": 61
+    },
+    "regular_backups_installed_by_session": false
+  },
+  "restore": {
+    "migration": "analytics_0003",
+    "counts": {
+      "searches": 12,
+      "events": 47,
+      "context": 12,
+      "event_context": 47
+    },
+    "source_matches": true,
+    "verified_at": "2026-10-03T13:22:35.855935+00:00",
+    "database": "sfr_restore_deploy_20261003"
+  },
+  "external_manifests": {
+    "analytics-deploy-20261003": {
+      "verified_files": 1,
+      "created_at": "2026-10-03T13:22:32.732075+00:00"
+    },
+    "vps-ui-analytics-20261003": {
+      "verified_files": 3,
+      "created_at": "2026-10-03T13:22:41.814743+00:00"
+    }
+  },
+  "limitations": [
+    "Short sequential smoke; no load capacity conclusion.",
+    "External TCP handshake accepted even on control unused port; no protocol reply. Host socket/Compose inspection proves ports unpublished/unbound.",
+    "No scheduled analytics backups or offsite pull installed.",
+    "Technical skew event excluded from main report; clock_anomalies=0 in main funnel."
+  ]
+}
