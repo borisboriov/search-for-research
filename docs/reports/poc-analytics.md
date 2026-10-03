@@ -15,19 +15,33 @@ PostgreSQL, устойчивую запись полных поисковых з
 решений. Финальные ревью/CI и вердикт с base/head фиксируются в PR после
 проверок продуктовых правок; merge и выкладка требуют отдельных решений.
 
-**Блокер итоговой передачи, 03.10.** На продуктовом коммите `149c7a0`
-checks/web успешны, но [свежий security CI](https://github.com/borisboriov/search-for-research/actions/runs/37100774857/job/111139709248)
-обнаружил High [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
-в `braces@3.0.3`: eslint-config-next → @next/eslint-plugin-next → fast-glob →
-micromatch → braces. На 03.10 GitHub Advisory не указывает исправленной версии;
-npm registry подтверждает latest braces 3.0.3, micromatch 4.0.8 и
-@next/eslint-plugin-next 16.3.8. Это инструменты разработки;
-`npm audit --omit=dev --json` отдельно показал ноль runtime-уязвимостей,
-но не заменяет обязательный полный аудит. Предложенный npm откат
-eslint-config-next до 14.2.35 не применялся. Зависимости и правила аудита
-не изменялись; исключения не добавлялись. Исправление цепочки и успешный
-актуальный audit обязательны до готовности к merge. Ниже результаты
-проверок технической сессии относятся к её версиям, а не отменяют этот блокер.
+**Блокер аудита устранён, 03.10.** После первой передачи
+[security CI на `149c7a0`](https://github.com/borisboriov/search-for-research/actions/runs/37100774857/job/111139709248)
+выявил High [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+в цепочке eslint-config-next → @next/eslint-plugin-next → fast-glob →
+micromatch → braces 3.0.3. Исправление `fd7729e047c8096ecc36d18c6937585f9e31233d`
+удалило исходные Micromatch/braces из дерева зависимостей: scoped override
+fast-glob использует отдельный локальный `@sfr/fast-glob-patterns` с Picomatch
+2.3.2 и brace-expansion 5.0.12. Next/config/plugin 16.3.8, fast-glob 3.3.1 и
+113 настроек правил ESLint сохранены. Откат Next, исключение devDependencies,
+подавление advisory и подмена версии уязвимого кода не применялись.
+
+[Независимое ревью исправления](https://github.com/borisboriov/search-for-research/pull/179#issuecomment-5966499911)
+— PASS/0; checks/web/audit и handoff-check на этом head прошли.
+Полный npm audit показал 0 уязвимостей. Чистая установка, дерево зависимостей
+и 27 новых regression/security тестов подтверждены также в Docker build-stage
+на Linux Node 24.21.0. Web suite: 164 PASS и 1 прежний skip. Совместимость
+проверена на 21 варианте каталогов, 113 настройках правил и реальных нарушениях
+Next в синтетических App/Pages roots. Это конечный набор, не доказательство
+эквивалентности всех glob.
+
+Адаптер поддерживает только три нынешних метода fast-glob. Ограничения длины,
+вложенности и раскрытия шаблонов вызывают явную ошибку вместо потери каталогов;
+при обновлении потребителя нужны повторные проверки. Подробности —
+[в README адаптера](../../apps/web/tooling/fast-glob-patterns/README.md).
+Код аналитики и прежние артефакты не менялись; полные Compose/backup/FRIDA-
+репетиции в этом исправлении не повторялись. Финальные ревью/CI после
+продуктовых правок и вердикт с полными base/head фиксируются в PR.
 
 ## Архитектура и хранение
 
