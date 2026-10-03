@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { VisitObserver } from "@/components/analytics-observer";
 
 // Шрифтовая пара направления B (design/DESIGN_SYSTEM.md §1): сериф Literata
 // для всего, что говорит от лица сервиса и для имён НР; гротеск IBM Plex Sans
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ru">
-      <body className={`${literata.variable} ${plex.variable} antialiased`}>{children}</body>
+      <body className={`${literata.variable} ${plex.variable} antialiased`}><VisitObserver />{children}</body>
     </html>
   );
 }

@@ -13,15 +13,15 @@
 # NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_CLAIM_EMAIL, REVALIDATE_SECRET,
 # SFR_API_LOG_SALT. Локальная репетиция — make deploy-local (см. Makefile).
 
-name: sfr-deploy
+name: ${SFR_COMPOSE_PROJECT:-sfr-deploy}
 
 services:
   api:
     build:
       context: ..
       dockerfile: apps/api/Dockerfile
-    image: sfr-api:latest
-    container_name: sfr-api
+    image: ${SFR_COMPOSE_PROJECT:-sfr-deploy}-api:latest
+    container_name: ${SFR_COMPOSE_PROJECT:-sfr}-api
     restart: unless-stopped
     environment:
       SFR_API_MODEL: ${SFR_API_MODEL:-frida}
@@ -31,6 +31,12 @@ services:
       # (перекалиброваны при выкладке SFR-5c), дублировать их здесь — рассинхрон.
       SFR_SEARCH_BACKEND: ${SFR_SEARCH_BACKEND:-auto}
       SFR_API_LOG_SALT: ${SFR_API_LOG_SALT:-}
+      TZ: UTC
+      SFR_API_ANALYTICS_DATABASE_URL: ${SFR_API_ANALYTICS_DATABASE_URL:-postgresql+psycopg://sfr_runtime:${SFR_ANALYTICS_RUNTIME_PASSWORD:?set runtime password}@postgres:5432/sfr_analytics}
+      SFR_API_ANALYTICS_SPOOL_DIR: /analytics/spool
+      SFR_API_ANALYTICS_RELEASE: ${SFR_ANALYTICS_RELEASE:-unknown}
+      # Only Next has this fixed internal address. Caddy replaces inbound XFF.
+      SFR_API_ANALYTICS_TRUSTED_PROXY_CIDRS: '["${SFR_COMPOSE_WEB_IP:-172.29.162.3}/32"]'
       HF_HOME: /models
       OMP_NUM_THREADS: ${OMP_NUM_THREADS:-4}
     volumes:
@@ -45,6 +51,9 @@ services:
         bind:
           create_host_path: false
       - ${SFR_HF_CACHE:-hf-cache}:/models
+      - analytics-journal:/analytics
+    networks:
+      analytics:
     logging: &logging
       driver: json-file
       options:
@@ -57,13 +66,20 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?задай в deploy/.env — канонический адрес сайта}
+        NEXT_PUBLIC_SFR_RELEASE: ${SFR_ANALYTICS_RELEASE:-unknown}
         NEXT_PUBLIC_CLAIM_EMAIL: ${NEXT_PUBLIC_CLAIM_EMAIL:-}
-    image: sfr-web:latest
-    container_name: sfr-web
+    image: ${SFR_COMPOSE_PROJECT:-sfr-deploy}-web:latest
+    container_name: ${SFR_COMPOSE_PROJECT:-sfr}-web
     restart: unless-stopped
     environment:
+      TZ: UTC
       SFR_API_URL: http://api:8000
       REVALIDATE_SECRET: ${REVALIDATE_SECRET:-}
+      SFR_TRUST_PROXY: "1"
+      SFR_ANALYTICS_RELEASE: ${SFR_ANALYTICS_RELEASE:-unknown}
+    networks:
+      analytics:
+        ipv4_address: ${SFR_COMPOSE_WEB_IP:-172.29.162.3}
     depends_on:
       api:
         condition: service_healthy
@@ -72,13 +88,14 @@ services:
   proxy:
     build:
       context: proxy
-    image: sfr-proxy:latest
-    container_name: sfr-proxy
+    image: ${SFR_COMPOSE_PROJECT:-sfr-deploy}-proxy:latest
+    container_name: ${SFR_COMPOSE_PROJECT:-sfr}-proxy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     environment:
+      TZ: UTC
       SITE_ADDRESS: ${SITE_ADDRESS:?задай в deploy/.env — домен или http://localhost:8080}
       # 301 второго имени на канонический адрес (#21); пусто — блок редиректа
       # слушает неопубликованный localhost:8081 и ни на что не влияет.
@@ -90,6 +107,8 @@ services:
     depends_on:
       web:
         condition: service_healthy
+    networks:
+      analytics:
     healthcheck:
       # admin-endpoint Caddy слушает 127.0.0.1:2019 внутри контейнера
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
@@ -99,7 +118,76 @@ services:
       start_period: 10s
     logging: *logging
 
+  postgres:
+    image: postgres:17.11-bookworm
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 1.0
+    shm_size: 128m
+    environment:
+      TZ: UTC
+      PGTZ: UTC
+      POSTGRES_DB: sfr_analytics
+      POSTGRES_USER: sfr_migrator
+      POSTGRES_PASSWORD: ${SFR_ANALYTICS_MIGRATION_PASSWORD:?set migration password}
+      SFR_ANALYTICS_RUNTIME_PASSWORD: ${SFR_ANALYTICS_RUNTIME_PASSWORD:?set runtime password}
+      SFR_ANALYTICS_READER_PASSWORD: ${SFR_ANALYTICS_READER_PASSWORD:?set reader password}
+    command: ["postgres", "-c", "timezone=UTC", "-c", "max_connections=20",
+              "-c", "shared_buffers=64MB", "-c", "work_mem=4MB",
+              "-c", "maintenance_work_mem=32MB", "-c", "statement_timeout=5s",
+              "-c", "idle_in_transaction_session_timeout=10s", "-c", "log_statement=none",
+              "-c", "log_min_error_statement=panic", "-c", "log_parameter_max_length_on_error=0"]
+    volumes:
+      - analytics-db:/var/lib/postgresql/data
+      - ./postgres/init-runtime.sql:/docker-entrypoint-initdb.d/10-runtime.sql:ro
+    networks:
+      analytics:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sfr_migrator -d sfr_analytics"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    logging: *logging
+
+  analytics-migrate:
+    profiles: ["operator"]
+    image: ${SFR_COMPOSE_PROJECT:-sfr-deploy}-api:latest
+    entrypoint: ["python", "-m", "sfr_api.analytics.migrate", "--runtime-role", "sfr_runtime", "--reader-role", "sfr_reader"]
+    environment:
+      TZ: UTC
+      SFR_ANALYTICS_MIGRATION_DATABASE_URL: ${SFR_ANALYTICS_MIGRATION_DATABASE_URL:-postgresql+psycopg://sfr_migrator:${SFR_ANALYTICS_MIGRATION_PASSWORD:?set migration password}@postgres:5432/sfr_analytics}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      analytics:
+
+  analytics-operator:
+    profiles: ["operator"]
+    image: ${SFR_COMPOSE_PROJECT:-sfr-deploy}-api:latest
+    entrypoint: ["python", "/app/scripts/analytics.py"]
+    environment:
+      TZ: UTC
+      SFR_ANALYTICS_OPERATOR_DATABASE_URL: ${SFR_ANALYTICS_OPERATOR_DATABASE_URL:-postgresql+psycopg://sfr_reader:${SFR_ANALYTICS_READER_PASSWORD:?set reader password}@postgres:5432/sfr_analytics}
+      SFR_API_ANALYTICS_DATABASE_URL: ${SFR_API_ANALYTICS_DATABASE_URL:-postgresql+psycopg://sfr_runtime:${SFR_ANALYTICS_RUNTIME_PASSWORD:?set runtime password}@postgres:5432/sfr_analytics}
+      SFR_API_ANALYTICS_SPOOL_DIR: /analytics/spool
+    volumes:
+      - analytics-journal:/analytics
+      - ../data/analytics:/output
+    networks:
+      analytics:
+
+networks:
+  analytics:
+    ipam:
+      config:
+        - subnet: ${SFR_COMPOSE_SUBNET:-172.29.162.0/24}
+          # Keep fixed Next address .3 outside dynamic allocation.
+          ip_range: ${SFR_COMPOSE_IP_RANGE:-172.29.162.128/25}
+
 volumes:
+  analytics-db:
+  analytics-journal:
   hf-cache:
   caddy-data:
   caddy-config:

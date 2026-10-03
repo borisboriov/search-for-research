@@ -1,0 +1,199 @@
+{
+  "source": "fast-glob@3.3.1 / micromatch@4.0.8 / braces@3.0.3; dfbb950",
+  "directories": [
+    "packages/alpha/app",
+    "packages/alpha/deep/child",
+    "packages/beta/pages",
+    "packages/web-01/app",
+    "packages/web-02/app",
+    "packages/web-03/app",
+    "packages/.hidden/app",
+    "other/space project/app",
+    "other/real[bracket]/pages"
+  ],
+  "cases": [
+    {
+      "pattern": "packages/alpha",
+      "results": [
+        "packages/alpha"
+      ]
+    },
+    {
+      "pattern": "packages/*",
+      "results": [
+        "packages/alpha",
+        "packages/beta",
+        "packages/web-01",
+        "packages/web-02",
+        "packages/web-03"
+      ]
+    },
+    {
+      "pattern": "packages/**",
+      "results": [
+        "packages/alpha",
+        "packages/alpha/app",
+        "packages/alpha/deep",
+        "packages/alpha/deep/child",
+        "packages/beta",
+        "packages/beta/pages",
+        "packages/web-01",
+        "packages/web-01/app",
+        "packages/web-02",
+        "packages/web-02/app",
+        "packages/web-03",
+        "packages/web-03/app"
+      ]
+    },
+    {
+      "pattern": "packages/**/*",
+      "results": [
+        "packages/alpha",
+        "packages/alpha/app",
+        "packages/alpha/deep",
+        "packages/alpha/deep/child",
+        "packages/beta",
+        "packages/beta/pages",
+        "packages/web-01",
+        "packages/web-01/app",
+        "packages/web-02",
+        "packages/web-02/app",
+        "packages/web-03",
+        "packages/web-03/app"
+      ]
+    },
+    {
+      "pattern": "**/app",
+      "results": [
+        "linked/app",
+        "other/space project/app",
+        "packages/alpha/app",
+        "packages/web-01/app",
+        "packages/web-02/app",
+        "packages/web-03/app"
+      ]
+    },
+    {
+      "pattern": "./packages/*",
+      "results": [
+        "./packages/alpha",
+        "./packages/beta",
+        "./packages/web-01",
+        "./packages/web-02",
+        "./packages/web-03"
+      ]
+    },
+    {
+      "pattern": "packages/{alpha,beta}",
+      "results": [
+        "packages/alpha",
+        "packages/beta"
+      ]
+    },
+    {
+      "pattern": "packages/{alpha,{beta,web-01}}",
+      "results": [
+        "packages/alpha",
+        "packages/beta",
+        "packages/web-01"
+      ]
+    },
+    {
+      "pattern": "packages/web-{01..03}",
+      "results": [
+        "packages/web-01",
+        "packages/web-02",
+        "packages/web-03"
+      ]
+    },
+    {
+      "pattern": "packages/web-{03..01..2}",
+      "results": [
+        "packages/web-01",
+        "packages/web-03"
+      ]
+    },
+    {
+      "pattern": "packages/@(alpha|beta)",
+      "results": [
+        "packages/alpha",
+        "packages/beta"
+      ]
+    },
+    {
+      "pattern": "packages/!(alpha)",
+      "results": [
+        "packages/.hidden",
+        "packages/beta",
+        "packages/web-01",
+        "packages/web-02",
+        "packages/web-03"
+      ]
+    },
+    {
+      "pattern": "packages/[ab]*",
+      "results": [
+        "packages/alpha",
+        "packages/beta"
+      ]
+    },
+    {
+      "pattern": "!packages/alpha",
+      "results": []
+    },
+    {
+      "pattern": "missing/*",
+      "results": []
+    },
+    {
+      "pattern": "other/*",
+      "results": [
+        "other/real[bracket]",
+        "other/space project"
+      ]
+    },
+    {
+      "pattern": "linked",
+      "results": [
+        "linked"
+      ]
+    },
+    {
+      "pattern": "linked/**",
+      "results": [
+        "linked/app",
+        "linked/deep",
+        "linked/deep/child"
+      ]
+    },
+    {
+      "pattern": [
+        "packages/*",
+        "!packages/beta"
+      ],
+      "results": [
+        "packages/alpha",
+        "packages/web-01",
+        "packages/web-02",
+        "packages/web-03"
+      ]
+    },
+    {
+      "pattern": "<ROOT>/packages/*",
+      "results": [
+        "<ROOT>/packages/alpha",
+        "<ROOT>/packages/beta",
+        "<ROOT>/packages/web-01",
+        "<ROOT>/packages/web-02",
+        "<ROOT>/packages/web-03"
+      ]
+    },
+    {
+      "pattern": "<ROOT>/packages/{alpha,beta}",
+      "results": [
+        "<ROOT>/packages/alpha",
+        "<ROOT>/packages/beta"
+      ]
+    }
+  ]
+}

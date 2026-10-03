@@ -1,0 +1,6 @@
+# Prepared configuration only: DO NOT install on production in this session.
+# Private local VPS backup is NOT a substitute for analytics-pull onto Mac.
+# Root checkout; uv environment and docker permissions must already exist.
+# stdout contains aggregate status only; umask protects dumps/manifests.
+# Credentials are read by Compose from deploy/.env. No automatic expiry/delete.
+0 3 * * * cd /home/deploy/search-for-research && umask 077 && /usr/local/bin/uv run python scripts/analytics_backup.py backup --directory "data/backups/analytics-$(date -u +\%Y\%m\%dT\%H\%M\%SZ)" >> data/backups/analytics-status.log 2>&1

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 import { DESKTOP, KNOWN_AUTHOR_ID, screenshot } from "./helpers";
 

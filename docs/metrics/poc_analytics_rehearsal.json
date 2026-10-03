@@ -1,0 +1,532 @@
+{
+  "schema_version": 1,
+  "scope": "isolated local Docker Linux arm64; synthetic traffic, real FRIDA where explicit",
+  "persistence": {
+    "platform": "local Docker Linux",
+    "synthetic": true,
+    "started_at": "2026-10-02T22:01:09.639846+00:00",
+    "duplicate_and_late_delivery": {
+      "passed": true,
+      "events": 5,
+      "wrong_clock_year": 2036
+    },
+    "secrets_and_body_limits": true,
+    "force_recreate": {
+      "passed": true,
+      "retained": {
+        "searches": 83,
+        "events": 764,
+        "context": 83,
+        "event_context": 764,
+        "migration": "analytics_0003"
+      }
+    },
+    "search_during_db_outage_ms": 572.5,
+    "outage_restart_replay": {
+      "passed": true,
+      "retained": {
+        "searches": 84,
+        "events": 765,
+        "context": 84,
+        "event_context": 765,
+        "migration": "analytics_0003"
+      }
+    },
+    "finished_at": "2026-10-02T22:01:51.669016+00:00"
+  },
+  "invalid_unicode": {
+    "before": {
+      "schema_version": 1,
+      "variant": "before",
+      "revision": "9c077dce716ff718e5689d9791b5a63ba4a4c619",
+      "measured_at_utc": "2026-10-02T21:59:35.881563+00:00",
+      "synthetic": true,
+      "postgres": "dedicated local PostgreSQL; unique schemas; public records untouched",
+      "cases": [
+        {
+          "case": "event_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 0,
+            "quarantined": 0,
+            "errors": 1
+          },
+          "db_counts": {
+            "event_rows": 0,
+            "search_rows": 0
+          },
+          "pending_count": 2,
+          "quarantine_bytes_unchanged": null,
+          "incomplete": true
+        },
+        {
+          "case": "context_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 0,
+            "quarantined": 0,
+            "errors": 1
+          },
+          "db_counts": {
+            "event_rows": 0,
+            "search_rows": 0
+          },
+          "pending_count": 2,
+          "quarantine_bytes_unchanged": null,
+          "incomplete": true
+        },
+        {
+          "case": "search_text",
+          "exception_class": "DataError",
+          "driver_class": "DataError",
+          "sqlstate": null,
+          "replay": {
+            "persisted": 0,
+            "quarantined": 0,
+            "errors": 1
+          },
+          "db_counts": {
+            "event_rows": 0,
+            "search_rows": 0
+          },
+          "pending_count": 2,
+          "quarantine_bytes_unchanged": null,
+          "incomplete": true
+        }
+      ],
+      "surrogate_append_exception_class": "UnicodeEncodeError",
+      "nul_event_contract_exception_class": null,
+      "source_sha256": {
+        "contracts": "322e03ca6552324522038f40a891cddf4d2c07e0c370bae9ab35c7d67b244fc5",
+        "records": "77643eaacecb4bc7c8a1f3f2087c2893d2b5ef9a6cf2b9eff3d34a8130f764eb",
+        "store": "b5115b083608aadc7ce4f4831e88f31109ccfe4593d3f0fc4622786ed2f7cab5"
+      },
+      "measurement_script_sha256": "0dc43b5eeecbc5d312a387ee53fc398f0db486b6515c1ac2114738f3307801b1"
+    },
+    "after": {
+      "schema_version": 1,
+      "variant": "after",
+      "revision": "8bd8b0a9fe11e477a6f210d20fcc1ad9aa59d6ab",
+      "measured_at_utc": "2026-10-02T21:59:36.413254+00:00",
+      "synthetic": true,
+      "postgres": "dedicated local PostgreSQL; unique schemas; public records untouched",
+      "cases": [
+        {
+          "case": "event_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 1,
+            "quarantined": 1,
+            "errors": 0
+          },
+          "db_counts": {
+            "event_rows": 1,
+            "search_rows": 0
+          },
+          "pending_count": 0,
+          "quarantine_bytes_unchanged": true,
+          "incomplete": true
+        },
+        {
+          "case": "context_jsonb",
+          "exception_class": "DataError",
+          "driver_class": "UntranslatableCharacter",
+          "sqlstate": "22P05",
+          "replay": {
+            "persisted": 1,
+            "quarantined": 1,
+            "errors": 0
+          },
+          "db_counts": {
+            "event_rows": 1,
+            "search_rows": 0
+          },
+          "pending_count": 0,
+          "quarantine_bytes_unchanged": true,
+          "incomplete": true
+        },
+        {
+          "case": "search_text",
+          "exception_class": "DataError",
+          "driver_class": "DataError",
+          "sqlstate": null,
+          "replay": {
+            "persisted": 1,
+            "quarantined": 1,
+            "errors": 0
+          },
+          "db_counts": {
+            "event_rows": 1,
+            "search_rows": 0
+          },
+          "pending_count": 0,
+          "quarantine_bytes_unchanged": true,
+          "incomplete": true
+        }
+      ],
+      "surrogate_append_exception_class": "StorageUnavailable",
+      "nul_event_contract_exception_class": "ValidationError",
+      "source_sha256": {
+        "contracts": "58a3ca46337e5835386e440089d0edd7f825dd416e7441bb58d3d37c2aa3229f",
+        "records": "77643eaacecb4bc7c8a1f3f2087c2893d2b5ef9a6cf2b9eff3d34a8130f764eb",
+        "store": "bf6639d8e62f77560f484234639be11e6d441fe9a989999403daab9f5030ecfe"
+      },
+      "measurement_script_sha256": "0dc43b5eeecbc5d312a387ee53fc398f0db486b6515c1ac2114738f3307801b1"
+    },
+    "measurement_script_sha256": "0dc43b5eeecbc5d312a387ee53fc398f0db486b6515c1ac2114738f3307801b1",
+    "observability_limits": {
+      "encoding_failure": "Only the static encoding log category is emitted; a persistent error counter is not guaranteed for this failure. Exception text and payload are not logged.",
+      "quarantined_database_records": "Original bytes are retained in quarantine; operator diagnostics mark incompleteness. No successful replay of the unsupported record is claimed."
+    }
+  },
+  "write_overhead": {
+    "synthetic": true,
+    "fsynced_batches": 100,
+    "median_ms": 1.0866874999919673,
+    "p95_ms": 2.050250000138476,
+    "max_ms": 2.7169170002707688,
+    "volume": "Linux Docker analytics-journal",
+    "database_connection_in_write_path": false
+  },
+  "stalled_disk": {
+    "before": {
+      "schema_version": 1,
+      "variant": "before",
+      "revision": "a384386c9335348e90ecfdf8d9f6ae7abc22bbb7",
+      "measured_at_utc": "2026-10-02T21:36:58.782506+00:00",
+      "finished_at_utc": "2026-10-02T21:37:00.462809+00:00",
+      "synthetic": true,
+      "backend": "FakeBackend test fixture; no FRIDA measurement",
+      "postgres_used": false,
+      "compose_used": false,
+      "production_used": false,
+      "method": "3 waves of 16 concurrent HTTP requests; half search and half events; pending _atomic blocked on Event; finally always releases",
+      "source_sha256": "c88b6fa6b6caffb4da3f89f9e78efb57f568f16a0e8ea9f365322bac65a9a155",
+      "measurement_script_sha256": "2b9591d7537f14205d3917d2aa060f4726ef2e1404aa3b1e7f977b792c4e1f0f",
+      "waves": [
+        {
+          "wave": 1,
+          "http_requests_completed": 16,
+          "unfinished_physical_appends": 16,
+          "anyio_worker_threads": 16,
+          "http_max_response_ms": 512.0770000066841
+        },
+        {
+          "wave": 2,
+          "http_requests_completed": 32,
+          "unfinished_physical_appends": 32,
+          "anyio_worker_threads": 32,
+          "http_max_response_ms": 508.40437499573454
+        },
+        {
+          "wave": 3,
+          "http_requests_completed": 48,
+          "unfinished_physical_appends": 48,
+          "anyio_worker_threads": 48,
+          "http_max_response_ms": 519.7872090066085
+        }
+      ],
+      "max_unfinished_observed_during_calls": 48,
+      "http_total": 48,
+      "http_search_200": 24,
+      "http_events_503": 24,
+      "http_max_response_ms": 519.7872090066085,
+      "unfinished_after_release": 0,
+      "recovery_event_http_status": 200
+    },
+    "after": {
+      "schema_version": 1,
+      "variant": "after",
+      "revision": "9c077dce716ff718e5689d9791b5a63ba4a4c619",
+      "measured_at_utc": "2026-10-02T21:37:00.860709+00:00",
+      "finished_at_utc": "2026-10-02T21:37:01.468932+00:00",
+      "synthetic": true,
+      "backend": "FakeBackend test fixture; no FRIDA measurement",
+      "postgres_used": false,
+      "compose_used": false,
+      "production_used": false,
+      "method": "3 waves of 16 concurrent HTTP requests; half search and half events; pending _atomic blocked on Event; finally always releases",
+      "source_sha256": "b5115b083608aadc7ce4f4831e88f31109ccfe4593d3f0fc4622786ed2f7cab5",
+      "measurement_script_sha256": "2b9591d7537f14205d3917d2aa060f4726ef2e1404aa3b1e7f977b792c4e1f0f",
+      "waves": [
+        {
+          "wave": 1,
+          "http_requests_completed": 16,
+          "unfinished_physical_appends": 2,
+          "anyio_worker_threads": 9,
+          "http_max_response_ms": 509.70004200644325
+        },
+        {
+          "wave": 2,
+          "http_requests_completed": 32,
+          "unfinished_physical_appends": 2,
+          "anyio_worker_threads": 11,
+          "http_max_response_ms": 21.786917001008987
+        },
+        {
+          "wave": 3,
+          "http_requests_completed": 48,
+          "unfinished_physical_appends": 2,
+          "anyio_worker_threads": 11,
+          "http_max_response_ms": 11.129790989798494
+        }
+      ],
+      "max_unfinished_observed_during_calls": 3,
+      "http_total": 48,
+      "http_search_200": 24,
+      "http_events_503": 24,
+      "http_max_response_ms": 509.70004200644325,
+      "unfinished_after_release": 0,
+      "recovery_event_http_status": 200,
+      "append_diagnostics": {
+        "append_limit": 2,
+        "append_inflight": 0,
+        "append_rejected": 46
+      }
+    }
+  },
+  "resource_snapshot": [
+    {
+      "BlockIO": "215MB / 2.27MB",
+      "CPUPerc": "18.29%",
+      "Container": "sfr-analytics-179-api",
+      "ID": "5042c32be71d",
+      "MemPerc": "43.43%",
+      "MemUsage": "3.323GiB / 7.651GiB",
+      "Name": "sfr-analytics-179-api",
+      "NetIO": "219kB / 494kB",
+      "PIDs": "29"
+    },
+    {
+      "BlockIO": "19.1MB / 1.68MB",
+      "CPUPerc": "0.07%",
+      "Container": "sfr-analytics-179-postgres-1",
+      "ID": "82b716494875",
+      "MemPerc": "4.11%",
+      "MemUsage": "21.05MiB / 512MiB",
+      "Name": "sfr-analytics-179-postgres-1",
+      "NetIO": "157kB / 63.9kB",
+      "PIDs": "7"
+    },
+    {
+      "BlockIO": "8.72MB / 434kB",
+      "CPUPerc": "19.77%",
+      "Container": "sfr-analytics-179-web",
+      "ID": "fac914b7ceb6",
+      "MemPerc": "1.36%",
+      "MemUsage": "106.3MiB / 7.651GiB",
+      "Name": "sfr-analytics-179-web",
+      "NetIO": "1.13MB / 17.1MB",
+      "PIDs": "11"
+    },
+    {
+      "BlockIO": "45.2MB / 213kB",
+      "CPUPerc": "8.95%",
+      "Container": "sfr-analytics-179-proxy",
+      "ID": "60bee6da800f",
+      "MemPerc": "0.33%",
+      "MemUsage": "25.68MiB / 7.651GiB",
+      "Name": "sfr-analytics-179-proxy",
+      "NetIO": "18.9MB / 19MB",
+      "PIDs": "13"
+    }
+  ],
+  "search_equivalence": {
+    "fixed_queries": 3,
+    "identical_results_order_scores_confidence": true,
+    "real_frida_extra_confidence": "weak",
+    "model_warmup": true,
+    "startup_included": false,
+    "baseline_search_miss_ms": [
+      1917.039417000069,
+      945.7314169999336,
+      1107.7014179999196
+    ],
+    "pipeline_search_miss_ms": [
+      832.3747090034885,
+      204.92770899727475,
+      253.56374999682885
+    ],
+    "pipeline_cache_hit_ms": [
+      9.605583007214591,
+      6.177500006742775,
+      7.661541996640153
+    ],
+    "comparability": "baseline direct service vs new HTTP pipeline; different runtime load; not an analytics speedup or cold-model benchmark"
+  },
+  "oracle": {
+    "start_utc": "2026-10-01T21:00:00+00:00",
+    "end_utc": "2026-10-02T21:00:00+00:00",
+    "visits": 2,
+    "searches": 2,
+    "funnel_visits": {
+      "visit": 2,
+      "attempt": 1,
+      "display": 1,
+      "profile": 1,
+      "letter_copy": 1
+    },
+    "funnel_attempts": {
+      "visit": 2,
+      "attempt": 2,
+      "display": 2,
+      "profile": 1,
+      "letter_copy": 1
+    },
+    "repeat_attempts": 1,
+    "direct_profiles": 1,
+    "excluded_visits": {
+      "suspected_bot": 1
+    },
+    "replay_lag_max_seconds": 60.0,
+    "clock_anomalies": 10,
+    "observed_sequence_gap_count": 0,
+    "visits_with_sequence_gaps": 0
+  },
+  "restore": {
+    "source_matches": true,
+    "restored": {
+      "migration": "analytics_0003",
+      "searches": 84,
+      "events": 765,
+      "context": 84,
+      "event_context": 765,
+      "search_sha": "f5fea6e958fa3785586b6c651f4d4d1e",
+      "event_sha": "007833227963bca6be72c8f50eb248b8",
+      "context_sha": "17544f3089cfa4af5c781a9ed6559d77",
+      "event_context_sha": "c3e1fb8b600c08a4a961f3fb32d622be"
+    },
+    "dump_sha256": "80b4797aa2457a8a02514b9beffc016be730aa1d582fb684d0c5f24c00d5e5ab"
+  },
+  "mac_copy": {
+    "verified": true,
+    "files": [
+      {
+        "path": "analytics.dump",
+        "bytes": 110252,
+        "sha256": "789e116bb47b1585404409de752784e70b6fb911562515c50c65ef2562e1d7a9"
+      },
+      {
+        "path": "analytics-journal.tar",
+        "bytes": 1126400,
+        "sha256": "b54cfde1d4c0e39175838d40073ad6272cc3d5c19dc2089cfc5d5d684e93edda"
+      },
+      {
+        "path": "access-logs.tar",
+        "bytes": 1046528,
+        "sha256": "fc703d41a778c0fd565d90dac7bd568476cbf10e51b93e0b8fed66457d17765e"
+      }
+    ],
+    "consistency": "DB pg_dump transaction; active logs/journal may advance while streaming. This is an observed copy, not a common cross-file snapshot; rerun after replay for completeness."
+  },
+  "rate_limits": {
+    "analytics_requests": 125,
+    "status_counts": {
+      "200": 120,
+      "429": 5
+    },
+    "search_after_analytics_flood": 200,
+    "page_after_analytics_flood": 200,
+    "limits_unchanged": true
+  },
+  "diagnostic_exit_policy": {
+    "exit_code": 1,
+    "check_ok": false,
+    "check_reasons": [
+      "historical_errors",
+      "incomplete_observations"
+    ],
+    "database_available": true,
+    "migration_current": true,
+    "pending_count": 0,
+    "quarantine_count": 0,
+    "error_count": 2,
+    "incomplete": true
+  },
+  "postgres_initialization": {
+    "verified_at": "2026-10-02T21:14:28.899653+00:00",
+    "postgres_version": "17.11 (Debian 17.11-1.pgdg12+2)",
+    "fresh_sql_initializer_observed": true,
+    "roles_both_minimal": true,
+    "idempotent_passwords_preserved": true,
+    "reader_read_only": true,
+    "restart_roles_preserved": true
+  },
+  "caddy_regression": {
+    "passed": true,
+    "rows": 3,
+    "paths_preserved": true,
+    "query_secrets_excluded": true,
+    "headers_excluded": true
+  },
+  "browser": {
+    "schema_version": 1,
+    "source_head": "65fbb51fa4bc9958622016004fd04adc11a0894d",
+    "live_receiver": true,
+    "scenario_count": 4,
+    "passed": 4,
+    "duration": "47.3s",
+    "log_sha256": "17c66a4838c5c1eba4f31bd38c262eca6a4fd3279b93d1ebc3b95df40425a4b4",
+    "acknowledged_event_count": 47,
+    "observed_visits": 6,
+    "counts": {
+      "visit_started": 6,
+      "search_attempt": 12,
+      "results_shown": 7,
+      "sort_applied": 1,
+      "profile_opened": 1,
+      "work_selected": 1,
+      "work_confirmed": 1,
+      "letter_copy_success": 1,
+      "letter_copy_failed": 1,
+      "profile_direct": 2,
+      "address_copy_success": 1,
+      "address_copy_failed": 1,
+      "filters_applied": 1,
+      "weak_shown": 4,
+      "topic_followed": 2,
+      "search_reformulated": 1,
+      "empty_shown": 1,
+      "search_error": 2,
+      "search_validation_failed": 1
+    },
+    "postgres_confirmed_distinct_events": 47
+  },
+  "browser_ci_regression": {
+    "node_version": "24.21.0",
+    "architecture": "Linux arm64; CI Linux x64",
+    "before_failure_reproduced": true,
+    "observed_unrelated_timer": {
+      "name": "bound _dispatchStorageEvent",
+      "delay_ms": 0
+    },
+    "after_passed": 137,
+    "after_skipped": 1,
+    "unhandled_errors": 0,
+    "guard_checks": "Node-only channel unused; initialization resolves without 80ms advance; abandoned channel closed; no events or fetch over 60s",
+    "test_source_head": "6af8abd3a6a0f068860633027262412e11f6206c",
+    "product_source_head": "65fbb51fa4bc9958622016004fd04adc11a0894d",
+    "private_logs_sha256": {
+      "before": "f65f7f71cc0c8082590b49b163809969dc76da7546255f4bc788677f4b7935aa",
+      "timer-trace": "5fc556a46a98d7472c818a1e74d75af0223896b2d8821a85a74bed8895427ab4",
+      "after": "ae13274d3ef2c57688327d724fe1e01f77a11bc0b9d7c668c28d868731e1c84b"
+    }
+  },
+  "full_browser_suite": {
+    "command": "SFR_WEB_URL=http://localhost:18080 SFR_ANALYTICS_LIVE_RECEIVER=1 SFR_E2E_MIN_TEST_INTERVAL_MS=15000 make web-e2e",
+    "passed": 42,
+    "skipped": 1,
+    "duration": "10.5m",
+    "production_limits_unchanged": true,
+    "models": "synthetic UI responses and real FRIDA scenarios explicitly separate",
+    "log_file": "web-e2e-final-version.log",
+    "log_sha256": "9b538548ee4d76b6d0827ace851f4ffcbae2788be051cfe2c3fae52db3bd9a14",
+    "source_head": "18ad9e87391cc9a3e61fdc18a23e77514086fbef"
+  }
+}

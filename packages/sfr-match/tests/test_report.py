@@ -83,7 +83,9 @@ def test_render_report_lists_variants_best_first() -> None:
     text = render_report([bad, good], QUERIES, JUDGMENTS)
     assert text.index("`e5-base`") < text.index("`minilm`")
     assert "Success@5" in text
-    assert "30" not in text.split("## Сводная таблица")[0].split("Golden set")[0]
+    # Check dataset sizes directly: a generated timestamp may contain minute 30.
+    assert "Корпус: 3 профилей" in text
+    assert "- Golden set: **3** запросов" in text
 
 
 def test_render_report_appends_handwritten_notes() -> None:

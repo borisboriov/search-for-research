@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   EmptyResults,
@@ -13,76 +13,19 @@ import {
 } from "@/components/empty-results";
 import { DEFAULT_FILTERS, FiltersRow, FiltersSheetRow, type FilterState } from "@/components/filters";
 import { QueryBar } from "@/components/query-bar";
-import { validateQuery } from "@/components/search-box";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { SupervisorCardSkeleton, SupervisorResultCard } from "@/components/supervisor-card";
-import type { MatchResponse } from "@/lib/types";
+import { beginSearch, emitEvent, prepareSearch, whenVisible } from "@/lib/analytics";
+import type { EventData } from "@/lib/analytics-contract";
+import { fetchMatch, type State } from "@/lib/match";
 import { counterText, institutionShort } from "@/lib/utils";
 
-type State =
-  | { kind: "loading" }
-  | { kind: "error" }
-  | { kind: "rate_limited" }
-  | { kind: "invalid"; message: string }
-  | { kind: "done"; response: MatchResponse };
-
-/** Предел ожидания /match (P-24): дольше скелетон не крутится — показываем
- * состояние ошибки с кнопкой «Повторить». p50 запроса ≈130 мс, худший
- * замеренный случай — секунды, так что десять секунд отсекают только зависшее
- * соединение, а не медленный ответ. */
-export const MATCH_TIMEOUT_MS = 10_000;
-
-/** `AbortSignal.timeout` нет в Safari < 16.4 и в старых WebView. Вызов стоял
- * внутри общего `try`, поэтому на таких движках `TypeError` ловился тем же
- * `catch` и `/results` **всегда** показывала «Сервис недоступен» с вечной
- * кнопкой «Повторить» (REVIEW_SFR-6 Low). Нет функции — работаем без предела
- * ожидания: это хуже, чем с ним, но несравнимо лучше, чем страница-заглушка. */
-function timeoutSignal(ms: number): AbortSignal | undefined {
-  return typeof AbortSignal.timeout === "function" ? AbortSignal.timeout(ms) : undefined;
-}
-
-export async function fetchMatch(text: string): Promise<State> {
-  // Проверка интерфейса: ручной ?q=ab — подсказка про запрос,
-  // а не поход в API и не ложное «Сервис недоступен» (REVIEW_SFR3 Medium).
-  const invalid = validateQuery(text);
-  if (invalid) return { kind: "invalid", message: invalid };
-  try {
-    const response = await fetch("/api/match", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: text, k: 10 }),
-      signal: timeoutSignal(MATCH_TIMEOUT_MS),
-    });
-    // 429 отдаёт прокси (лимит Caddy), до route handler Next: тело — не JSON,
-    // поэтому статус проверяется до любого .json(). Это не «сервис лёг», а
-    // «слишком часто» — отдельное сообщение (#23).
-    if (response.status === 429) return { kind: "rate_limited" };
-    if (response.status === 422) {
-      const payload: unknown = await response.json().catch(() => null);
-      const detail =
-        payload !== null && typeof payload === "object" && "detail" in payload
-          ? payload.detail
-          : null;
-      return {
-        kind: "invalid",
-        message:
-          typeof detail === "string"
-            ? detail
-            : "Запрос не прошёл проверку — попробуй переформулировать.",
-      };
-    }
-    if (!response.ok) return { kind: "error" };
-    return { kind: "done", response: (await response.json()) as MatchResponse };
-  } catch {
-    return { kind: "error" };
-  }
-}
 
 function ResultsContent() {
   const router = useRouter();
   const params = useSearchParams();
-  const query = params.get("q")?.trim() ?? "";
+  const query = params.get("q") ?? "";
 
   useEffect(() => {
     if (query === "") router.replace("/");
@@ -100,33 +43,60 @@ function ResultsForQuery({ query }: { query: string }) {
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [editingQuery, setEditingQuery] = useState(false);
 
+  const [searchId, setSearchId] = useState<string | undefined>();
+  const trace = useRef<{ visit: string; search: string; request: string } | null>(null);
+  const startedAt = useRef(0);
+  const initial = useRef<Promise<{ state: State; generation: number }> | null>(null);
+  const generation = useRef(0);
+  const displayed = useRef<string | null>(null);
+  const run = useCallback(async (source?: EventData["source"]) => {
+    const currentGeneration = ++generation.current;
+    const nextTrace = await beginSearch(query, source);
+    trace.current = nextTrace;
+    setSearchId(nextTrace.search);
+    startedAt.current = performance.now();
+    return { state: await fetchMatch(query, nextTrace), generation: currentGeneration };
+  }, [query]);
   useEffect(() => {
     let cancelled = false;
-    fetchMatch(query).then((next) => {
-      if (!cancelled) setState(next);
+    initial.current ??= run();
+    initial.current.then(next => { if (!cancelled && next.generation === generation.current) setState(next.state); });
+    return () => { cancelled = true; };
+  }, [run]);
+  useEffect(() => {
+    if (state.kind !== "done" || !trace.current) return;
+    return whenVisible(() => {
+      const context = trace.current!;
+      if (displayed.current === context.search) return;
+      displayed.current = context.search;
+      const data = { confidence: state.response.confidence, elapsed_ms: Math.min(86400000, performance.now() - startedAt.current) };
+      emitEvent(state.response.confidence === "none" ? "empty_shown" : "results_shown", data, context.search, context.request);
+      if (state.response.confidence === "weak") emitEvent("weak_shown", data, context.search, context.request);
     });
-    return () => {
-      cancelled = true;
-    };
-  }, [query]);
-
+  }, [state]);
   const retry = useCallback(() => {
     setState({ kind: "loading" });
-    fetchMatch(query).then(setState);
-  }, [query]);
-
-  const submitQuery = useCallback(
-    (next: string) => {
-      setEditingQuery(false);
-      if (next === query) {
-        setState({ kind: "loading" });
-        fetchMatch(query).then(setState);
-        return;
-      }
-      router.push(`/results?q=${encodeURIComponent(next)}`);
-    },
-    [query, router],
-  );
+    void run("repeat").then(next => { if (next.generation === generation.current) setState(next.state); });
+  }, [run]);
+  useEffect(() => {
+    const repeatTopic = (event: Event) => {
+      if ((event as CustomEvent<{ query: string }>).detail?.query !== query) return;
+      setState({ kind: "loading" });
+      void run().then(next => { if (next.generation === generation.current) setState(next.state); });
+    };
+    window.addEventListener("sfr:repeat-topic", repeatTopic);
+    return () => window.removeEventListener("sfr:repeat-topic", repeatTopic);
+  }, [query, run]);
+  const submitQuery = useCallback((next: string) => {
+    setEditingQuery(false);
+    if (next === query) { retry(); return; }
+    void prepareSearch(next, "reformulated").then(() => router.push(`/results?q=${encodeURIComponent(next)}`));
+  }, [query, router, retry]);
+  const applyFilters = useCallback((next: FilterState) => {
+    if (next.institution !== filters.institution || next.minHIndex !== filters.minHIndex) emitEvent("filters_applied", { filters: { institution: next.institution ? [next.institution] : [], min_h_index: next.minHIndex }, filter_count: Number(Boolean(next.institution)) + Number(next.minHIndex > 0) }, trace.current?.search);
+    if (next.sort !== filters.sort) emitEvent("sort_applied", { sort: next.sort === "h_index" ? "h_index" : "relevance" }, trace.current?.search);
+    setFilters(next);
+  }, [filters]);
 
   const results = useMemo(
     () => (state.kind === "done" ? state.response.results : []),
@@ -197,8 +167,8 @@ function ResultsForQuery({ query }: { query: string }) {
             {state.response.confidence === "weak" && (
               <WeakBanner onEditQuery={() => setEditingQuery(true)} />
             )}
-            <FiltersRow filters={filters} institutions={institutions} onChange={setFilters} />
-            <FiltersSheetRow filters={filters} institutions={institutions} onChange={setFilters} />
+            <FiltersRow filters={filters} institutions={institutions} onChange={applyFilters} />
+            <FiltersSheetRow filters={filters} institutions={institutions} onChange={applyFilters} />
             {/* Счётчик — заголовком, под ним подпись о порядке выдачи (S-09) */}
             <div className="flex flex-col gap-1 pt-1">
               <h2 className="font-display text-[22px] leading-[1.2] font-semibold sm:text-[30px]">
@@ -216,8 +186,8 @@ function ResultsForQuery({ query }: { query: string }) {
             </div>
             {/* Один reveal всего списка (fade + 8px, 200 мс) — других анимаций нет */}
             <div key={state.response.index_version + query} className="animate-reveal flex flex-col gap-4">
-              {visible.map((result) => (
-                <SupervisorResultCard key={result.author_id} result={result} query={query} />
+              {visible.map((result, position) => (
+                <SupervisorResultCard key={result.author_id} result={result} query={query} searchId={searchId} position={position + 1} />
               ))}
               {/* Сам факт «никто не попал» теперь в заголовке — здесь остаётся
                   только действие, чтобы не повторять одну мысль дважды. */}

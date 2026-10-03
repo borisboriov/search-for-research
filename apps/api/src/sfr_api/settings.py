@@ -97,6 +97,15 @@ class ApiSettings(BaseSettings):
         "http://localhost:5173",
     ]
 
+    # Separate research storage: never points at the catalogue/ETL SQLite DB.
+    analytics_database_url: str = ""
+    analytics_spool_dir: Path = Path("data/analytics/spool")
+    analytics_release: str = "development"
+    analytics_spool_max_bytes: int = 512 * 1024 * 1024
+    analytics_disk_reserve_bytes: int = 64 * 1024 * 1024
+    analytics_replay_seconds: float = 5.0
+    analytics_trusted_proxy_cidrs: list[str] = []
+
     warmup: bool = True
 
     def resolved_index_dir(self) -> Path:

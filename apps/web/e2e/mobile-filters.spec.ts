@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const longInstitution = "Московский государственный технический университет имени Н. Э. Баумана";
 

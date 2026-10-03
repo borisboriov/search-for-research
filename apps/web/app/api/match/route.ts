@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { proxyHeaders, readBody } from "@/lib/proxy";
 import { apiUrl } from "@/lib/api";
 
 // Прокси к POST /api/match бэкенда: клиент ходит на свой origin — внутренний
@@ -13,47 +14,32 @@ const MAX_BODY_BYTES = 4096;
 const UPSTREAM_TIMEOUT_MS = 15_000;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // content-length — быстрый отказ; фактическая длина — защита от chunked-тел без заголовка.
-  const declared = Number(request.headers.get("content-length"));
-  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) {
-    return NextResponse.json({ detail: "Слишком большой запрос." }, { status: 413 });
-  }
   let body: unknown;
-  try {
-    const raw = await request.text();
-    if (raw.length > MAX_BODY_BYTES) {
-      return NextResponse.json({ detail: "Слишком большой запрос." }, { status: 413 });
-    }
-    body = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ detail: "Ожидается JSON-тело запроса." }, { status: 422 });
-  }
+  try { body = await readBody(request, MAX_BODY_BYTES); }
+  catch (error) { return NextResponse.json({ detail: "Ожидается JSON-тело запроса." }, { status: error instanceof RangeError ? 413 : 422 }); }
+  const headers = proxyHeaders(request);
+  const responseHeaders = { "X-Request-ID": headers.get("X-Request-ID")! };
   try {
     const upstream = await fetch(`${apiUrl()}/api/match`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // IP клиента для логов /match (хешируется на стороне API, не хранится
-        // открытым): за прокси Next сам его не подставляет.
-        "X-Forwarded-For": request.headers.get("x-forwarded-for") ?? "",
-      },
+      headers,
       body: JSON.stringify(body),
       cache: "no-store",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
     const payload = await upstream.json();
     // Статус и detail бэкенда (включая 422 с человеческим текстом) — как есть.
-    return NextResponse.json(payload, { status: upstream.status });
+    return NextResponse.json(payload, { status: upstream.status, headers: responseHeaders });
   } catch (error) {
     if (error instanceof DOMException && error.name === "TimeoutError") {
       return NextResponse.json(
         { detail: "Сервис подбора не ответил вовремя. Попробуй ещё раз." },
-        { status: 504 },
+        { status: 504, headers: responseHeaders },
       );
     }
     return NextResponse.json(
       { detail: "Сервис подбора сейчас недоступен." },
-      { status: 502 },
+      { status: 502, headers: responseHeaders },
     );
   }
 }

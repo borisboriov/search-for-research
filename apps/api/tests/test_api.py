@@ -169,7 +169,8 @@ def test_match_writes_a_json_log_line(
     assert isinstance(record["top1_score"], float)
     assert record["model"] == "ai-forever/FRIDA"
     assert record["index_version"].startswith("frida_clean")
-    assert record["ip_hash"] and "203.0.113.7" not in caplog.text
+    assert record["ip_hash"] == "" and "203.0.113.7" not in caplog.text
+    # Untrusted forwarded headers cannot become an asserted client identity.
 
 
 def test_threshold_comes_from_settings() -> None:

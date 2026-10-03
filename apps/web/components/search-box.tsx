@@ -1,5 +1,6 @@
 "use client";
 
+import { emitEvent, prepareSearch } from "@/lib/analytics";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -58,14 +59,17 @@ export function SearchBox({
     event.preventDefault();
     const message = validateQuery(value);
     if (message) {
+      const searchId = crypto.randomUUID();
+      emitEvent("search_attempt", { source: "submitted" }, searchId);
+      emitEvent("search_validation_failed", { error: "validation", query_length: Math.min(length, 100000) }, searchId);
       setError(message);
       return;
     }
-    const query = value.trim();
+    const query = value;
     if (onSubmitQuery) {
       onSubmitQuery(query);
     } else {
-      router.push(`/results?q=${encodeURIComponent(query)}`);
+      void prepareSearch(query).then(() => router.push(`/results?q=${encodeURIComponent(query)}`));
     }
   }
 

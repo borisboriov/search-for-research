@@ -8,14 +8,17 @@ FROM node:24-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY tooling/fast-glob-patterns ./tooling/fast-glob-patterns
 RUN npm ci
 
 COPY . .
 
 ARG NEXT_PUBLIC_SITE_URL
 ARG NEXT_PUBLIC_CLAIM_EMAIL=""
+ARG NEXT_PUBLIC_SFR_RELEASE="unknown"
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     NEXT_PUBLIC_CLAIM_EMAIL=$NEXT_PUBLIC_CLAIM_EMAIL \
+    NEXT_PUBLIC_SFR_RELEASE=$NEXT_PUBLIC_SFR_RELEASE \
     NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

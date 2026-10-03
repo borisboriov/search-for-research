@@ -12,7 +12,8 @@ ENV UV_TORCH_BACKEND=cpu \
     UV_LINK_MODE=copy \
     UV_PYTHON_DOWNLOADS=never \
     PYTHONUNBUFFERED=1 \
-    HF_HOME=/models
+    HF_HOME=/models \
+    TZ=UTC
 
 # Версии apt не пинуем: Debian вымывает старые версии из репозитория, и пин
 # ломает сборку через месяц. Воспроизводимость даёт тег базового образа,
@@ -44,14 +45,15 @@ RUN mkdir -p packages/sfr-core/src/sfr_core packages/sfr-etl/src/sfr_etl \
 
 COPY packages/ packages/
 COPY apps/api/ apps/api/
+COPY scripts/analytics*.py /app/scripts/
 RUN uv sync --frozen --package sfr-api --no-dev
 
 # Не root: компрометация API не должна давать root в контейнере (REVIEW_SFR3
 # Medium). /models принадлежит app, чтобы named-том для HF-кэша (первый старт
 # скачивает веса) остался записываемым; индекс и cards монтируются read-only.
 RUN useradd --system --create-home --uid 10001 app \
-    && mkdir -p /models \
-    && chown -R app:app /models
+    && mkdir -p /models /analytics \
+    && chown -R app:app /models /analytics
 # Имя вместо uid читается лучше, а сам uid зафиксирован строкой выше.
 # hadolint ignore=DL3066
 USER app

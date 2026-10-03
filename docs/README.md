@@ -79,7 +79,8 @@ docs/
 | `SFR3_REPORT.md` … `SFR6_REPORT.md`, `SFR4b_REPORT.md`, `SFR5b_REPORT.md`, `SFR5c_REPORT.md` | отчёты итераций | пишутся руками, числа — из `metrics/` и прогонов |
 | `BACKLOG_2026-09_REPORT.md` | сессии 27.09: бэклог ревью 12–13.09 и дедупликация-2 (PR #139); чистка eval (#143) | руками |
 | `GH_MIGRATION_REPORT.md` | перенос задач из markdown в GitHub Issues (12.09) | руками |
-| [pilot-ui-validation.md](reports/pilot-ui-validation.md) | UI-пакет #155–161: проверки, снимки, принятые тексты; [проверка top-100 переводов с источниками](reports/pilot-ui-topics-top100.md) | принято Борисом в PR #178; merge и выкладка не выполнены |
+| [pilot-ui-validation.md](reports/pilot-ui-validation.md) | UI-пакет #155–161: проверки, снимки, принятые тексты; [проверка top-100 переводов с источниками](reports/pilot-ui-topics-top100.md) | принято Борисом, влито PR #178 |
+| [poc-analytics.md](reports/poc-analytics.md) | PoC #162–164: PostgreSQL, события, надёжная доставка, операторские отчёты/backup и репетиция | технический результат принят, блокер audit устранён; финальный вердикт в PR #179, без merge и выкладки |
 
 Независимый ревьюер возвращает результат координатору; тот сохраняет итог
 в PR с проверенными base/head и ссылками на оставшиеся находки. Отдельный
@@ -94,6 +95,7 @@ REVIEW-файл по умолчанию не создаётся. Для техи
 
 | Файл | Команда |
 |---|---|
+| `poc_analytics_rehearsal.json` | `scripts/collect_analytics_proofs.py --source data/analytics-rehearsal --out docs/metrics/poc_analytics_rehearsal.json` — безопасные агрегаты из локальной репетиции |
 | `sfr2_resources.json` | `make bench` (`scripts/bench_api.py`) |
 | `sfr4_bench.json`, `sfr4_bench_prod.json` | `scripts/bench_sfr4.py` (локально / против боевого адреса) |
 | `sfr5_metrics.json` | `scripts/analyze_sfr5.py` на путях SFR-5 (блок SFR-5 в Makefile заморожен) |

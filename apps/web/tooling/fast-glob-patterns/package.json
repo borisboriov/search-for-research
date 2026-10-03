@@ -1,0 +1,12 @@
+{
+  "name": "@sfr/fast-glob-patterns",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bounded pattern adapter for the three APIs used by Next ESLint fast-glob",
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "brace-expansion": "5.0.12",
+    "picomatch": "2.3.2"
+  }
+}
