@@ -1,0 +1,427 @@
+{
+  "notes": "Candidate availability, not relevance recall; unjudged dense top50 cannot be treated as irrelevant. Hybrid first stage is union of dense50 and positive BM25 top50.",
+  "per_query": [
+    {
+      "query_id": "q01",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5036617497",
+        "A5039264696",
+        "A5064352919"
+      ]
+    },
+    {
+      "query_id": "q02",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5101027372",
+        "A5083659213"
+      ]
+    },
+    {
+      "query_id": "q03",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5084963768",
+        "A5085280845"
+      ]
+    },
+    {
+      "query_id": "q04",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5104780466",
+        "A5103632800",
+        "A5005308072"
+      ]
+    },
+    {
+      "query_id": "q05",
+      "shared_top5": 4,
+      "hybrid_top5_outside_dense50": [
+        "A5108348083"
+      ]
+    },
+    {
+      "query_id": "q06",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5104780466",
+        "A5103632800"
+      ]
+    },
+    {
+      "query_id": "q07",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5083659213",
+        "A5112612755"
+      ]
+    },
+    {
+      "query_id": "q08",
+      "shared_top5": 0,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q09",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q10",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q11",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5085280845",
+        "A5101027372"
+      ]
+    },
+    {
+      "query_id": "q12",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5046535045",
+        "A5104780466"
+      ]
+    },
+    {
+      "query_id": "q13",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5107119062",
+        "A5015774250",
+        "A5001854808"
+      ]
+    },
+    {
+      "query_id": "q14",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5046916766",
+        "A5050891811"
+      ]
+    },
+    {
+      "query_id": "q15",
+      "shared_top5": 4,
+      "hybrid_top5_outside_dense50": [
+        "A5018195435"
+      ]
+    },
+    {
+      "query_id": "q16",
+      "shared_top5": 4,
+      "hybrid_top5_outside_dense50": [
+        "A5101027372"
+      ]
+    },
+    {
+      "query_id": "q17",
+      "shared_top5": 5,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q18",
+      "shared_top5": 4,
+      "hybrid_top5_outside_dense50": [
+        "A5110352183"
+      ]
+    },
+    {
+      "query_id": "q19",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5004900508",
+        "A5082971305"
+      ]
+    },
+    {
+      "query_id": "q20",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5103632800",
+        "A5005308072"
+      ]
+    },
+    {
+      "query_id": "q21",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5055913543",
+        "A5021576493"
+      ]
+    },
+    {
+      "query_id": "q22",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5085280845",
+        "A5075053358"
+      ]
+    },
+    {
+      "query_id": "q23",
+      "shared_top5": 4,
+      "hybrid_top5_outside_dense50": [
+        "A5069056074"
+      ]
+    },
+    {
+      "query_id": "q24",
+      "shared_top5": 5,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q25",
+      "shared_top5": 5,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q26",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5040907228",
+        "A5058508902"
+      ]
+    },
+    {
+      "query_id": "q27",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5058508902"
+      ]
+    },
+    {
+      "query_id": "q28",
+      "shared_top5": 5,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "q29",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5048180486",
+        "A5050531087"
+      ]
+    },
+    {
+      "query_id": "q30",
+      "shared_top5": 5,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "o01",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5085789732",
+        "A5088917432"
+      ]
+    },
+    {
+      "query_id": "o02",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5074849296",
+        "A5084963768"
+      ]
+    },
+    {
+      "query_id": "o04",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5101027372",
+        "A5083659213"
+      ]
+    },
+    {
+      "query_id": "o06",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5074418663",
+        "A5069796226",
+        "A5046626438"
+      ]
+    },
+    {
+      "query_id": "o09",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5085789732",
+        "A5061176607",
+        "A5074418663"
+      ]
+    },
+    {
+      "query_id": "o10",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5074418663",
+        "A5069796226"
+      ]
+    },
+    {
+      "query_id": "o11",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5074418663",
+        "A5069796226"
+      ]
+    },
+    {
+      "query_id": "o14",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5084049631",
+        "A5066224017",
+        "A5061176607"
+      ]
+    },
+    {
+      "query_id": "o16",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5074418663",
+        "A5103026574"
+      ]
+    },
+    {
+      "query_id": "o17",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5066224017",
+        "A5064352919"
+      ]
+    },
+    {
+      "query_id": "o19",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5074418663",
+        "A5069796226"
+      ]
+    },
+    {
+      "query_id": "o20",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5084049631",
+        "A5061176607",
+        "A5074418663"
+      ]
+    },
+    {
+      "query_id": "o21",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5064352919",
+        "A5061176607"
+      ]
+    },
+    {
+      "query_id": "o22",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5069796226",
+        "A5085789732"
+      ]
+    },
+    {
+      "query_id": "o26",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5018195435"
+      ]
+    },
+    {
+      "query_id": "o32",
+      "shared_top5": 5,
+      "hybrid_top5_outside_dense50": []
+    },
+    {
+      "query_id": "o34",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5107119062",
+        "A5101027372",
+        "A5009244552"
+      ]
+    },
+    {
+      "query_id": "e01",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5015378704",
+        "A5038745336",
+        "A5000471980"
+      ]
+    },
+    {
+      "query_id": "p01",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5001854808",
+        "A5060038643"
+      ]
+    },
+    {
+      "query_id": "p02",
+      "shared_top5": 4,
+      "hybrid_top5_outside_dense50": [
+        "A5030742419"
+      ]
+    },
+    {
+      "query_id": "p03",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5083659213",
+        "A5040907228",
+        "A5018595712"
+      ]
+    },
+    {
+      "query_id": "p04",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5083617485",
+        "A5108293733"
+      ]
+    },
+    {
+      "query_id": "p05",
+      "shared_top5": 2,
+      "hybrid_top5_outside_dense50": [
+        "A5108293733",
+        "A5085280845",
+        "A5001854808"
+      ]
+    },
+    {
+      "query_id": "p06",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5018595712"
+      ]
+    },
+    {
+      "query_id": "p08",
+      "shared_top5": 3,
+      "hybrid_top5_outside_dense50": [
+        "A5075701093",
+        "A5025157418"
+      ]
+    }
+  ],
+  "hybrid_slots_outside_dense50": 94,
+  "historical_golden_rankings": {
+    "index_version": "frida_clean-9002p-35e591d4",
+    "source_sha256": "c9749becec384b6934133fb1121f94342a830bf6f5a2ba9242c6267773ce7f3e",
+    "queries_compared": 30,
+    "changed_query_ids": []
+  }
+}

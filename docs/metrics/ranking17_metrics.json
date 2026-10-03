@@ -1,0 +1,4093 @@
+{
+  "judgments_sha256": "1b7e394b2c0c81bafa267e156a18d7f62ea19bdb759c369885b58717bd4f9c08",
+  "groups": {
+    "baseline/queries/in-domain": {
+      "n": 24,
+      "errors": 0,
+      "success@1": {
+        "count": 16,
+        "total": 24,
+        "rate": 0.6666666666666666
+      },
+      "success@5": {
+        "count": 21,
+        "total": 24,
+        "rate": 0.875
+      },
+      "success@1_lower": {
+        "count": 15,
+        "total": 24,
+        "rate": 0.625
+      },
+      "success@1_upper": {
+        "count": 16,
+        "total": 24,
+        "rate": 0.6666666666666666
+      },
+      "success@5_lower": {
+        "count": 21,
+        "total": 24,
+        "rate": 0.875
+      },
+      "success@5_upper": {
+        "count": 22,
+        "total": 24,
+        "rate": 0.9166666666666666
+      },
+      "ood_false_accept_count": null
+    },
+    "baseline/historical22/in-domain": {
+      "n": 22,
+      "errors": 0,
+      "success@1": {
+        "count": 16,
+        "total": 22,
+        "rate": 0.7272727272727273
+      },
+      "success@5": {
+        "count": 21,
+        "total": 22,
+        "rate": 0.9545454545454546
+      },
+      "success@1_lower": {
+        "count": 15,
+        "total": 22,
+        "rate": 0.6818181818181818
+      },
+      "success@1_upper": {
+        "count": 16,
+        "total": 22,
+        "rate": 0.7272727272727273
+      },
+      "success@5_lower": {
+        "count": 21,
+        "total": 22,
+        "rate": 0.9545454545454546
+      },
+      "success@5_upper": {
+        "count": 21,
+        "total": 22,
+        "rate": 0.9545454545454546
+      },
+      "ood_false_accept_count": null
+    },
+    "baseline/queries/edge": {
+      "n": 6,
+      "errors": 0,
+      "success@1": {
+        "count": 4,
+        "total": 6,
+        "rate": 0.6666666666666666
+      },
+      "success@5": {
+        "count": 5,
+        "total": 6,
+        "rate": 0.8333333333333334
+      },
+      "success@1_lower": {
+        "count": 4,
+        "total": 6,
+        "rate": 0.6666666666666666
+      },
+      "success@1_upper": {
+        "count": 4,
+        "total": 6,
+        "rate": 0.6666666666666666
+      },
+      "success@5_lower": {
+        "count": 5,
+        "total": 6,
+        "rate": 0.8333333333333334
+      },
+      "success@5_upper": {
+        "count": 5,
+        "total": 6,
+        "rate": 0.8333333333333334
+      },
+      "ood_false_accept_count": null
+    },
+    "baseline/ood_queries/out-of-domain": {
+      "n": 17,
+      "errors": 0,
+      "success@1": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@5": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@1_lower": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@1_upper": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@5_lower": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@5_upper": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "ood_false_accept_count": 1
+    },
+    "baseline/external_queries/out-of-domain": {
+      "n": 1,
+      "errors": 0,
+      "success@1": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@5": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@1_lower": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@1_upper": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@5_lower": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@5_upper": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "ood_false_accept_count": null
+    },
+    "baseline/pilot_queries_ranking17_20261003/edge": {
+      "n": 7,
+      "errors": 0,
+      "success@1": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "success@5": {
+        "count": 3,
+        "total": 7,
+        "rate": 0.42857142857142855
+      },
+      "success@1_lower": {
+        "count": 0,
+        "total": 7,
+        "rate": 0.0
+      },
+      "success@1_upper": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "success@5_lower": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "success@5_upper": {
+        "count": 4,
+        "total": 7,
+        "rate": 0.5714285714285714
+      },
+      "ood_false_accept_count": null
+    },
+    "hybrid/queries/in-domain": {
+      "n": 24,
+      "errors": 0,
+      "success@1": {
+        "count": 14,
+        "total": 24,
+        "rate": 0.5833333333333334
+      },
+      "success@5": {
+        "count": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "success@1_lower": {
+        "count": 14,
+        "total": 24,
+        "rate": 0.5833333333333334
+      },
+      "success@1_upper": {
+        "count": 14,
+        "total": 24,
+        "rate": 0.5833333333333334
+      },
+      "success@5_lower": {
+        "count": 18,
+        "total": 24,
+        "rate": 0.75
+      },
+      "success@5_upper": {
+        "count": 19,
+        "total": 24,
+        "rate": 0.7916666666666666
+      },
+      "ood_false_accept_count": null
+    },
+    "hybrid/historical22/in-domain": {
+      "n": 22,
+      "errors": 0,
+      "success@1": {
+        "count": 14,
+        "total": 22,
+        "rate": 0.6363636363636364
+      },
+      "success@5": {
+        "count": 18,
+        "total": 22,
+        "rate": 0.8181818181818182
+      },
+      "success@1_lower": {
+        "count": 14,
+        "total": 22,
+        "rate": 0.6363636363636364
+      },
+      "success@1_upper": {
+        "count": 14,
+        "total": 22,
+        "rate": 0.6363636363636364
+      },
+      "success@5_lower": {
+        "count": 18,
+        "total": 22,
+        "rate": 0.8181818181818182
+      },
+      "success@5_upper": {
+        "count": 18,
+        "total": 22,
+        "rate": 0.8181818181818182
+      },
+      "ood_false_accept_count": null
+    },
+    "hybrid/queries/edge": {
+      "n": 6,
+      "errors": 0,
+      "success@1": {
+        "count": 2,
+        "total": 6,
+        "rate": 0.3333333333333333
+      },
+      "success@5": {
+        "count": 5,
+        "total": 6,
+        "rate": 0.8333333333333334
+      },
+      "success@1_lower": {
+        "count": 2,
+        "total": 6,
+        "rate": 0.3333333333333333
+      },
+      "success@1_upper": {
+        "count": 2,
+        "total": 6,
+        "rate": 0.3333333333333333
+      },
+      "success@5_lower": {
+        "count": 5,
+        "total": 6,
+        "rate": 0.8333333333333334
+      },
+      "success@5_upper": {
+        "count": 5,
+        "total": 6,
+        "rate": 0.8333333333333334
+      },
+      "ood_false_accept_count": null
+    },
+    "hybrid/ood_queries/out-of-domain": {
+      "n": 17,
+      "errors": 0,
+      "success@1": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@5": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@1_lower": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@1_upper": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@5_lower": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "success@5_upper": {
+        "count": 0,
+        "total": 17,
+        "rate": 0.0
+      },
+      "ood_false_accept_count": null
+    },
+    "hybrid/external_queries/out-of-domain": {
+      "n": 1,
+      "errors": 0,
+      "success@1": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@5": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@1_lower": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@1_upper": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@5_lower": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "success@5_upper": {
+        "count": 0,
+        "total": 1,
+        "rate": 0.0
+      },
+      "ood_false_accept_count": null
+    },
+    "hybrid/pilot_queries_ranking17_20261003/edge": {
+      "n": 7,
+      "errors": 0,
+      "success@1": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "success@5": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "success@1_lower": {
+        "count": 0,
+        "total": 7,
+        "rate": 0.0
+      },
+      "success@1_upper": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "success@5_lower": {
+        "count": 1,
+        "total": 7,
+        "rate": 0.14285714285714285
+      },
+      "success@5_upper": {
+        "count": 2,
+        "total": 7,
+        "rate": 0.2857142857142857
+      },
+      "ood_false_accept_count": null
+    }
+  },
+  "per_query": [
+    {
+      "query_id": "q01",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5012212950",
+        "A5070267730",
+        "A5100352794",
+        "A5029380392",
+        "A5022906506"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        182.94162501115352,
+        211.25704198493622,
+        207.51483397907577
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q02",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5006995291",
+        "A5101471017",
+        "A5002397716",
+        "A5017151529",
+        "A5064801935"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        126.1509160103742,
+        126.92308402620256,
+        116.07108300086111
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q03",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5067830021",
+        "A5100670875",
+        "A5039966405",
+        "A5002724483",
+        "A5114377115"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        136.7605419945903,
+        117.98124999040738,
+        116.1558750027325
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q04",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5041062340",
+        "A5019927506",
+        "A5064599758",
+        "A5026267619",
+        "A5029059211"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        122.5122920004651,
+        114.95987500529736,
+        115.46266698860563
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q05",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5020887835",
+        "A5004945681",
+        "A5029567858",
+        "A5062232142",
+        "A5040349655"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        119.15833401144482,
+        116.33004201576114,
+        117.82549999770708
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q06",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5037879194",
+        "A5108731634",
+        "A5013488476",
+        "A5011303108",
+        "A5110579031"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        119.24958301824518,
+        116.06841598404571,
+        116.49575000046752
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q07",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5112651411",
+        "A5029181198",
+        "A5027535433",
+        "A5107839879",
+        "A5083103730"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        119.65808298555203,
+        115.95487498561852,
+        116.35616698185913
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q08",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5083490320",
+        "A5001784131",
+        "A5000934507",
+        "A5002957144",
+        "A5002542089"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.31312500685453,
+        113.83179100812413,
+        113.9520840079058
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q09",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5111760858",
+        "A5033682739",
+        "A5062570459",
+        "A5048702317",
+        "A5078641429"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        115.54475000593811,
+        113.2396670000162,
+        113.21099998895079
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q10",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5029181198",
+        "A5112651411",
+        "A5027535433",
+        "A5103568609",
+        "A5030454460"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        121.50899998960085,
+        118.18866699468344,
+        117.93516698526219
+      ],
+      "success@1": true,
+      "success@1_lower": false,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q11",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5107965221",
+        "A5086469184",
+        "A5075059819",
+        "A5013081744",
+        "A5051886862"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        116.17762502282858,
+        113.6151249811519,
+        113.85900000459515
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q12",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5102975236",
+        "A5044023963",
+        "A5062482400",
+        "A5044270430",
+        "A5064585831"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        118.94158300128765,
+        116.30037499708124,
+        118.65691700950265
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q13",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5103634262",
+        "A5015131347",
+        "A5053351584",
+        "A5064597433",
+        "A5090699168"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        115.52604200551286,
+        113.74595802044496,
+        114.01087499689311
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q14",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5111692775",
+        "A5017383854",
+        "A5012166541",
+        "A5017633244",
+        "A5103199431"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        119.44174999371171,
+        115.96345799625851,
+        116.0483339917846
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q15",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5071620748",
+        "A5069514467",
+        "A5039966405",
+        "A5032951968",
+        "A5107980327"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        115.14266699668951,
+        110.49375002039596,
+        110.31429198919795
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q16",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5083126736",
+        "A5101578748",
+        "A5034121563",
+        "A5061589446",
+        "A5091785597"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        115.81795898382552,
+        111.9159999943804,
+        112.50908297370188
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q17",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5107886204",
+        "A5059653984",
+        "A5000525652",
+        "A5104387273",
+        "A5107025957"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        117.99870899994858,
+        114.10037497989833,
+        114.9322499986738
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q18",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5020446476",
+        "A5014414850",
+        "A5002925638",
+        "A5028599598",
+        "A5026920104"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        115.22304100799374,
+        112.57162498077378,
+        115.20170798758045
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q19",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5107892335",
+        "A5063523050",
+        "A5055391580",
+        "A5015779508",
+        "A5110984172"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        114.25758301629685,
+        111.83383301249705,
+        113.14204201335087
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q20",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5084788036",
+        "A5105710473",
+        "A5021543319",
+        "A5003003630",
+        "A5083296409"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        116.38479100656696,
+        114.31070798425935,
+        114.92799999541603
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q21",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5055391580",
+        "A5078249510",
+        "A5020775138",
+        "A5086295663",
+        "A5050234205"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        117.03754198970273,
+        114.4702919991687,
+        115.23883399786428
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q22",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5044023963",
+        "A5014855755",
+        "A5102975236",
+        "A5064199838",
+        "A5020280635"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        117.20462501398288,
+        113.88108399114572,
+        114.71724999137223
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q23",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5095070139",
+        "A5065309599",
+        "A5020945978",
+        "A5033682739",
+        "A5025096043"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        112.05662501743063,
+        110.21270899800584,
+        111.00820801220834
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q24",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5056413709",
+        "A5062232142",
+        "A5072673405",
+        "A5002397716",
+        "A5110627797"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        110.27924998779781,
+        109.63745799381286,
+        110.01124998438172
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q25",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5015225689",
+        "A5069750047",
+        "A5011816761",
+        "A5031290021",
+        "A5036186489"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        118.57387502095662,
+        115.21974997594953,
+        116.40508301206864
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q26",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5031476631",
+        "A5089107166",
+        "A5041310299",
+        "A5074067238",
+        "A5086530184"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        114.057041995693,
+        112.09249999956228,
+        112.58124999585561
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q27",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5024623698",
+        "A5013206562",
+        "A5103610055",
+        "A5017432552",
+        "A5021338684"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        115.94079199130647,
+        112.9217499983497,
+        113.92000000341795
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q28",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5021089109",
+        "A5037747723",
+        "A5033826700",
+        "A5005068608",
+        "A5015793075"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        114.21291701844893,
+        111.90216700197197,
+        112.60520899668336
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q29",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5006576648",
+        "A5042200208",
+        "A5101595440",
+        "A5033640300",
+        "A5080064513"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        114.93666699971072,
+        113.2349580002483,
+        113.84066700702533
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q30",
+      "variant": "baseline",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5006757486",
+        "A5011298864",
+        "A5020072191",
+        "A5110589505",
+        "A5030795507"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        114.40395799581893,
+        111.7620829900261,
+        116.1960830213502
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o01",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5062669526",
+        "A5049088047",
+        "A5035870505",
+        "A5041998777",
+        "A5038954688"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.9179169810377,
+        113.81983300088905,
+        114.39804200199433
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o02",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5031540083",
+        "A5064591149",
+        "A5076636344",
+        "A5038820911",
+        "A5022475274"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        117.18383402330801,
+        114.13970799185336,
+        121.33941700449213
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o04",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5044048940",
+        "A5109976652",
+        "A5026114580",
+        "A5089542227",
+        "A5006719828"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        139.9445840215776,
+        113.11370800831355,
+        116.14250001730397
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o06",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5067555633",
+        "A5084477576",
+        "A5088142555",
+        "A5035817629",
+        "A5052718389"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        117.0821659907233,
+        114.54158299602568,
+        114.82587500358932
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o09",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5051886862",
+        "A5038745336",
+        "A5082971305",
+        "A5109604006",
+        "A5063689348"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        115.8255000191275,
+        113.23249997803941,
+        113.94595800084062
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o10",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5001141420",
+        "A5055864496",
+        "A5080273182",
+        "A5005272119",
+        "A5053853450"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        114.82187500223517,
+        113.41154098045081,
+        114.04275000677444
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o11",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5073390851",
+        "A5076688937",
+        "A5001668182",
+        "A5009162526",
+        "A5045471903"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        115.00558399711736,
+        112.51174999051727,
+        112.8889590036124
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o14",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5100915570",
+        "A5101513847",
+        "A5101661567",
+        "A5002982407",
+        "A5031168495"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        117.6902080187574,
+        121.73025001538917,
+        115.45070802094415
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o16",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5031540083",
+        "A5072213423",
+        "A5068531732",
+        "A5084429956",
+        "A5079502359"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.08258300111629,
+        119.31924999225885,
+        114.87541699898429
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o17",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5086834150",
+        "A5087309603",
+        "A5080231517",
+        "A5101455131",
+        "A5049289895"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.0131249926053,
+        113.75191601109691,
+        113.79074997967109
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o19",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5057992942",
+        "A5101464120",
+        "A5042798620",
+        "A5010528189",
+        "A5056320794"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        114.40024999319576,
+        112.26500000339001,
+        112.56737500661984
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o20",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5048541307",
+        "A5021586593",
+        "A5085595555",
+        "A5017675946",
+        "A5062267829"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.9662089960184,
+        114.92137500317767,
+        114.77804201422259
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o21",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5038082886",
+        "A5032060795",
+        "A5037716535",
+        "A5059383399",
+        "A5081209814"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        113.90033399220556,
+        112.36570798791945,
+        112.8095839812886
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o22",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5062241019",
+        "A5068917270",
+        "A5023309318",
+        "A5066992080",
+        "A5019150260"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        117.51312500564381,
+        115.99362498964183,
+        116.57204100629315
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o26",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5003372247",
+        "A5051032100",
+        "A5032635474",
+        "A5039187758",
+        "A5077404236"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        114.89745802828111,
+        113.67250001057982,
+        112.45716697885655
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o32",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5065992885",
+        "A5078746031",
+        "A5066309906",
+        "A5056696904",
+        "A5103010056"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        119.40279201371595,
+        113.25779199250974,
+        113.57354201027192
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": false
+    },
+    {
+      "query_id": "o34",
+      "variant": "baseline",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5084028528",
+        "A5045425365",
+        "A5023641844",
+        "A5054579045",
+        "A5080460923"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        115.65829199389555,
+        113.41004198766313,
+        113.25366701930761
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": true
+    },
+    {
+      "query_id": "e01",
+      "variant": "baseline",
+      "group": "external_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5111604731",
+        "A5067118675",
+        "A5075521585",
+        "A5071907096",
+        "A5057838397"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        113.92066700500436,
+        111.61545899813063,
+        112.27737498120405
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p01",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5080806360",
+        "A5063535629",
+        "A5048095728",
+        "A5025655729",
+        "A5034417609"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.85379201662727,
+        112.0591249782592,
+        112.21849999856204
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p02",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5041798337",
+        "A5043351441",
+        "A5091041160",
+        "A5023480266",
+        "A5048013094"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        116.44649997469969,
+        113.63512498792261,
+        113.67854100535624
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p03",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5065100573",
+        "A5104087496",
+        "A5066992080",
+        "A5032845915",
+        "A5073742922"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        116.6959999827668,
+        113.81420798716135,
+        113.55358400032856
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p04",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5076595923",
+        "A5064199838",
+        "A5052145490",
+        "A5012212950",
+        "A5072426823"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        117.810499999905,
+        114.4237500266172,
+        115.47737498767674
+      ],
+      "success@1": true,
+      "success@1_lower": false,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": false,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p05",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5047434065",
+        "A5101822993",
+        "A5035493078",
+        "A5034801095",
+        "A5110786342"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        114.48154199752025,
+        111.74158402718604,
+        112.39349999232218
+      ],
+      "success@1": true,
+      "success@1_lower": false,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p06",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5042332724",
+        "A5003407394",
+        "A5039328509",
+        "A5068338189",
+        "A5007206724"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        158.2517079950776,
+        154.33349998784252,
+        159.0843329904601
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p08",
+      "variant": "baseline",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5035120872",
+        "A5059392581",
+        "A5053091194",
+        "A5030123607",
+        "A5026185902"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        115.72491598781198,
+        122.25154100451618,
+        115.61579199042171
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q01",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5070267730",
+        "A5012212950",
+        "A5036617497",
+        "A5039264696",
+        "A5064352919"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        219.9664160143584,
+        235.54954200517386,
+        225.00345899607055
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q02",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5006995291",
+        "A5101027372",
+        "A5083659213",
+        "A5101471017",
+        "A5002397716"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        125.4854169965256,
+        126.93495900020935,
+        126.91262501175515
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q03",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5067830021",
+        "A5084963768",
+        "A5085280845",
+        "A5100670875",
+        "A5039966405"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        126.70608301414177,
+        127.21083397627808,
+        132.2890000010375
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q04",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5041062340",
+        "A5104780466",
+        "A5019927506",
+        "A5103632800",
+        "A5005308072"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        128.57370800338686,
+        129.7850419941824,
+        129.0910000097938
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q05",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5020887835",
+        "A5108348083",
+        "A5004945681",
+        "A5029567858",
+        "A5062232142"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        127.68995799706317,
+        137.92966600158252,
+        135.9674589766655
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q06",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5037879194",
+        "A5104780466",
+        "A5103632800",
+        "A5108731634",
+        "A5013488476"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        128.89054202241823,
+        136.4600000088103,
+        132.37379101337865
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q07",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5083659213",
+        "A5112651411",
+        "A5029181198",
+        "A5112612755",
+        "A5027535433"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        129.2455419898033,
+        129.94933300069533,
+        131.10295898513868
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q08",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5025813785",
+        "A5101711419",
+        "A5018973674",
+        "A5134081240",
+        "A5077963262"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        128.92524999915622,
+        127.51070800004527,
+        127.09070899290964
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q09",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5062570459",
+        "A5111760858",
+        "A5048702317",
+        "A5009128535",
+        "A5013444010"
+      ],
+      "grade2_count": 5,
+      "latency_ms": [
+        123.47737498930655,
+        121.66070801322348,
+        123.50195800536312
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q10",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5030454460",
+        "A5112651411",
+        "A5108094322",
+        "A5018958751",
+        "A5029181198"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        133.9238339860458,
+        132.5224999745842,
+        134.30141701246612
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q11",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5085280845",
+        "A5107965221",
+        "A5086469184",
+        "A5101027372",
+        "A5075059819"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        125.1950419973582,
+        123.3874160097912,
+        124.06487498083152
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q12",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5046535045",
+        "A5102975236",
+        "A5044023963",
+        "A5104780466",
+        "A5062482400"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        127.8396249981597,
+        126.90170900896192,
+        131.20704199536704
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q13",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5103634262",
+        "A5107119062",
+        "A5015131347",
+        "A5015774250",
+        "A5001854808"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        121.90579200978391,
+        122.43833398679271,
+        126.4563329750672
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q14",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5046916766",
+        "A5111692775",
+        "A5017383854",
+        "A5050891811",
+        "A5012166541"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        128.43554097344168,
+        128.28279097448103,
+        129.23166700056754
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q15",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5018195435",
+        "A5071620748",
+        "A5069514467",
+        "A5039966405",
+        "A5032951968"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        114.68354202224873,
+        115.44087500078604,
+        116.86529198777862
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q16",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5083126736",
+        "A5101027372",
+        "A5101578748",
+        "A5034121563",
+        "A5061589446"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        115.99404198932461,
+        116.99220800073817,
+        117.21125000622123
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q17",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5107886204",
+        "A5059653984",
+        "A5000525652",
+        "A5104387273",
+        "A5107025957"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        123.22487498749979,
+        122.16104101389647,
+        122.7904999977909
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q18",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5020446476",
+        "A5110352183",
+        "A5014414850",
+        "A5002925638",
+        "A5028599598"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        125.01695798709989,
+        117.81658299150877,
+        118.62962500890717
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q19",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5004900508",
+        "A5107892335",
+        "A5063523050",
+        "A5082971305",
+        "A5055391580"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        129.90641698706895,
+        120.86466600885615,
+        120.9984169981908
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q20",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5084788036",
+        "A5103632800",
+        "A5005308072",
+        "A5105710473",
+        "A5021543319"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        126.2064170150552,
+        125.14991700300016,
+        125.75466700945981
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q21",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5055391580",
+        "A5055913543",
+        "A5021576493",
+        "A5078249510",
+        "A5020775138"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        124.15808302466758,
+        123.89654200524092,
+        124.1613750171382
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q22",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5084904622",
+        "A5044023963",
+        "A5085280845",
+        "A5014855755",
+        "A5075053358"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        127.37016699975356,
+        126.7634590039961,
+        126.47245801053941
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q23",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5069056074",
+        "A5095070139",
+        "A5065309599",
+        "A5020945978",
+        "A5033682739"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        114.3218329816591,
+        114.74625000846572,
+        114.9024170008488
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q24",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5056413709",
+        "A5062232142",
+        "A5072673405",
+        "A5002397716",
+        "A5110627797"
+      ],
+      "grade2_count": 4,
+      "latency_ms": [
+        111.92483297782019,
+        111.89600001671351,
+        113.08604199439287
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q25",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5015225689",
+        "A5069750047",
+        "A5011816761",
+        "A5031290021",
+        "A5036186489"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        123.7279579800088,
+        123.62020800355822,
+        124.43412499851547
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q26",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5031476631",
+        "A5040907228",
+        "A5058508902",
+        "A5089107166",
+        "A5041310299"
+      ],
+      "grade2_count": 3,
+      "latency_ms": [
+        117.8468749858439,
+        117.43287500576116,
+        118.27991702011786
+      ],
+      "success@1": true,
+      "success@1_lower": true,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q27",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5103610055",
+        "A5087548663",
+        "A5024623698",
+        "A5058508902",
+        "A5013206562"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        122.98933300189674,
+        123.14004098880105,
+        125.28220799867995
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q28",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5021089109",
+        "A5037747723",
+        "A5033826700",
+        "A5005068608",
+        "A5015793075"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        119.74500000360422,
+        119.7691669804044,
+        121.00600000121631
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q29",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5008190685",
+        "A5006576648",
+        "A5048180486",
+        "A5042200208",
+        "A5050531087"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        122.85579199669883,
+        123.17170901224017,
+        123.60008401446976
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "q30",
+      "variant": "hybrid",
+      "group": "queries",
+      "expect": "in-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5006757486",
+        "A5011298864",
+        "A5020072191",
+        "A5110589505",
+        "A5030795507"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        119.5329999900423,
+        120.10587498662062,
+        121.50208299863152
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o01",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5062669526",
+        "A5085789732",
+        "A5049088047",
+        "A5088917432",
+        "A5035870505"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        126.04600001941435,
+        126.33870900026523,
+        126.22791598550975
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o02",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5031540083",
+        "A5074849296",
+        "A5064591149",
+        "A5084963768",
+        "A5076636344"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        126.14129099529237,
+        125.46837501577102,
+        130.38629200309515
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o04",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5006243183",
+        "A5044048940",
+        "A5101027372",
+        "A5083659213",
+        "A5109976652"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        123.69058301555924,
+        125.11241700849496,
+        126.31283298833296
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o06",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5067555633",
+        "A5074418663",
+        "A5069796226",
+        "A5084477576",
+        "A5046626438"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        123.44337499234825,
+        123.64704100764357,
+        124.38054199446924
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o09",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5051886862",
+        "A5085789732",
+        "A5038745336",
+        "A5061176607",
+        "A5074418663"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        123.86562500614673,
+        123.87770798522979,
+        124.40666698967107
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o10",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5103632800",
+        "A5001141420",
+        "A5074418663",
+        "A5055864496",
+        "A5069796226"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        125.42875000508502,
+        124.837583018234,
+        125.24274998577312
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o11",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5073390851",
+        "A5074418663",
+        "A5069796226",
+        "A5076688937",
+        "A5001668182"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        123.43383298139088,
+        122.2205420199316,
+        123.02804097998887
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o14",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5084049631",
+        "A5100915570",
+        "A5066224017",
+        "A5101513847",
+        "A5061176607"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        128.987333009718,
+        127.96029099263251,
+        127.59308301610872
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o16",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5031540083",
+        "A5074418663",
+        "A5072213423",
+        "A5103026574",
+        "A5068531732"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        122.84416699549183,
+        124.54733302001841,
+        126.21395799214952
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o17",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5066224017",
+        "A5086834150",
+        "A5064352919",
+        "A5087309603",
+        "A5080231517"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        124.24870798713528,
+        125.50929200369865,
+        130.7678750017658
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o19",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5057992942",
+        "A5074418663",
+        "A5069796226",
+        "A5101464120",
+        "A5042798620"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        120.9235829883255,
+        121.2489579920657,
+        121.44366701249965
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o20",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5048541307",
+        "A5084049631",
+        "A5021586593",
+        "A5061176607",
+        "A5074418663"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        124.48987501556985,
+        123.89954199898057,
+        124.60524999187328
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o21",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5038082886",
+        "A5064352919",
+        "A5032060795",
+        "A5061176607",
+        "A5037716535"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        121.25349999405444,
+        121.32312500034459,
+        125.33804099075496
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o22",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5062241019",
+        "A5069796226",
+        "A5068917270",
+        "A5085789732",
+        "A5023309318"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        131.39308299287222,
+        129.7861670027487,
+        133.67966702207923
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o26",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5111252869",
+        "A5110241632",
+        "A5003372247",
+        "A5018195435",
+        "A5051032100"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        120.99229198065586,
+        123.19966597715393,
+        123.50704200798646
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o32",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5065992885",
+        "A5078746031",
+        "A5066309906",
+        "A5056696904",
+        "A5103010056"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        120.7252080203034,
+        121.20949997915886,
+        132.37666699569672
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "o34",
+      "variant": "hybrid",
+      "group": "ood_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5084028528",
+        "A5107119062",
+        "A5045425365",
+        "A5101027372",
+        "A5009244552"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        121.83729198295623,
+        122.9382089804858,
+        132.1849999949336
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "e01",
+      "variant": "hybrid",
+      "group": "external_queries",
+      "expect": "out-of-domain",
+      "error": null,
+      "ranked_ids": [
+        "A5015378704",
+        "A5111604731",
+        "A5038745336",
+        "A5067118675",
+        "A5000471980"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        119.40633298945613,
+        119.39404101576656,
+        119.84683299669996
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p01",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5001854808",
+        "A5080806360",
+        "A5060038643",
+        "A5063535629",
+        "A5048095728"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        119.34587502037175,
+        120.35429102252237,
+        121.96937500266358
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p02",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5030742419",
+        "A5041798337",
+        "A5043351441",
+        "A5091041160",
+        "A5023480266"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        118.97170901647769,
+        120.0428330048453,
+        121.3952919933945
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p03",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5065100573",
+        "A5083659213",
+        "A5040907228",
+        "A5104087496",
+        "A5018595712"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        126.52374999015592,
+        127.4262499937322,
+        130.23391598835588
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p04",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5076595923",
+        "A5083617485",
+        "A5064199838",
+        "A5108293733",
+        "A5052145490"
+      ],
+      "grade2_count": 1,
+      "latency_ms": [
+        129.1052910091821,
+        130.091375001939,
+        130.3648329921998
+      ],
+      "success@1": true,
+      "success@1_lower": false,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": false,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p05",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5047434065",
+        "A5108293733",
+        "A5085280845",
+        "A5101822993",
+        "A5001854808"
+      ],
+      "grade2_count": 2,
+      "latency_ms": [
+        119.07587500172667,
+        119.50274999253452,
+        122.24387499736622
+      ],
+      "success@1": true,
+      "success@1_lower": false,
+      "success@1_upper": true,
+      "success@5": true,
+      "success@5_lower": true,
+      "success@5_upper": true,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p06",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5108293733",
+        "A5042332724",
+        "A5003407394",
+        "A5018595712",
+        "A5039328509"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        178.6138750030659,
+        180.1036670221947,
+        183.56591599876992
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    },
+    {
+      "query_id": "p08",
+      "variant": "hybrid",
+      "group": "pilot_queries_ranking17_20261003",
+      "expect": "edge",
+      "error": null,
+      "ranked_ids": [
+        "A5035120872",
+        "A5075701093",
+        "A5025157418",
+        "A5059392581",
+        "A5053091194"
+      ],
+      "grade2_count": 0,
+      "latency_ms": [
+        122.40575000760145,
+        123.43124998733401,
+        125.36508397897705
+      ],
+      "success@1": false,
+      "success@1_lower": false,
+      "success@1_upper": false,
+      "success@5": false,
+      "success@5_lower": false,
+      "success@5_upper": false,
+      "ood_false_accept": null
+    }
+  ],
+  "query_changes": [
+    {
+      "query_id": "q01",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q02",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q03",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q04",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q05",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q06",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q07",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q08",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q09",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q10",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q11",
+      "success@1_delta": 0,
+      "success@5_delta": -1
+    },
+    {
+      "query_id": "q12",
+      "success@1_delta": 0,
+      "success@5_delta": -1
+    },
+    {
+      "query_id": "q13",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q14",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q15",
+      "success@1_delta": -1,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q16",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q17",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q18",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q19",
+      "success@1_delta": 0,
+      "success@5_delta": -1
+    },
+    {
+      "query_id": "q20",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q21",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q22",
+      "success@1_delta": -1,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q23",
+      "success@1_delta": -1,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q24",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q25",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q26",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q27",
+      "success@1_delta": -1,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q28",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q29",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "q30",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o01",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o02",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o04",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o06",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o09",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o10",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o11",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o14",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o16",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o17",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o19",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o20",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o21",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o22",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o26",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o32",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "o34",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "e01",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "p01",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "p02",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "p03",
+      "success@1_delta": 0,
+      "success@5_delta": -1
+    },
+    {
+      "query_id": "p04",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "p05",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "p06",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    },
+    {
+      "query_id": "p08",
+      "success@1_delta": 0,
+      "success@5_delta": 0
+    }
+  ],
+  "latencies": {
+    "baseline": {
+      "aggregate": {
+        "median": 114.92137500317767,
+        "p95": 126.92308402620256,
+        "max": 211.25704198493622
+      },
+      "repeats": [
+        {
+          "median": 116.38479100656696,
+          "p95": 139.9445840215776,
+          "max": 182.94162501115352
+        },
+        {
+          "median": 113.75191601109691,
+          "p95": 126.92308402620256,
+          "max": 211.25704198493622
+        },
+        {
+          "median": 114.39804200199433,
+          "p95": 121.33941700449213,
+          "max": 207.51483397907577
+        }
+      ]
+    },
+    "hybrid": {
+      "aggregate": {
+        "median": 124.38054199446924,
+        "p95": 135.9674589766655,
+        "max": 235.54954200517386
+      },
+      "repeats": [
+        {
+          "median": 123.86562500614673,
+          "p95": 133.9238339860458,
+          "max": 219.9664160143584
+        },
+        {
+          "median": 123.64704100764357,
+          "p95": 137.92966600158252,
+          "max": 235.54954200517386
+        },
+        {
+          "median": 125.33804099075496,
+          "p95": 135.9674589766655,
+          "max": 225.00345899607055
+        }
+      ]
+    }
+  },
+  "recommendation": {
+    "checks": {
+      "zero_errors": true,
+      "no_success_losses": false,
+      "golden_or_pilot_gain": false,
+      "no_added_ood_grade2": true,
+      "latency_limit": true,
+      "memory_limit": true
+    },
+    "losses": [
+      {
+        "query_id": "q11",
+        "metric": "success@5"
+      },
+      {
+        "query_id": "q12",
+        "metric": "success@5"
+      },
+      {
+        "query_id": "q15",
+        "metric": "success@1"
+      },
+      {
+        "query_id": "q19",
+        "metric": "success@5"
+      },
+      {
+        "query_id": "q22",
+        "metric": "success@1"
+      },
+      {
+        "query_id": "q23",
+        "metric": "success@1"
+      },
+      {
+        "query_id": "q27",
+        "metric": "success@1"
+      },
+      {
+        "query_id": "p03",
+        "metric": "success@5"
+      }
+    ],
+    "gains": [],
+    "ood_added_queries": [],
+    "disputed_gain": false,
+    "decision": "keep_current",
+    "scope": "These queries and local CPU only; no independent holdout or VPS claim."
+  },
+  "resources": [
+    {
+      "variant": "baseline",
+      "build_seconds": 0.13680866701179184,
+      "warmup_seconds": 8.604219708999153,
+      "peak_rss_bytes": 3389046784
+    },
+    {
+      "variant": "baseline",
+      "build_seconds": 0.13725945900660008,
+      "warmup_seconds": 2.7804479170008563,
+      "peak_rss_bytes": 3516219392
+    },
+    {
+      "variant": "baseline",
+      "build_seconds": 0.1389705409819726,
+      "warmup_seconds": 3.2008663339947816,
+      "peak_rss_bytes": 3385589760
+    },
+    {
+      "variant": "hybrid",
+      "build_seconds": 0.7950520419981331,
+      "warmup_seconds": 3.768618709000293,
+      "peak_rss_bytes": 3629891584
+    },
+    {
+      "variant": "hybrid",
+      "build_seconds": 0.7919663750217296,
+      "warmup_seconds": 3.3174731670005713,
+      "peak_rss_bytes": 3606216704
+    },
+    {
+      "variant": "hybrid",
+      "build_seconds": 0.8917287079966627,
+      "warmup_seconds": 3.721444041992072,
+      "peak_rss_bytes": 3628777472
+    }
+  ],
+  "disputed": [
+    {
+      "query_id": "o09",
+      "author_id": "A5082971305",
+      "profile_fp": "c05e70eb66fdce46",
+      "profile_hash": "c05e70eb66fdce465a27a775c376ef041bbf4dc2512f8b55259bc3b36cc5c8d0",
+      "grade": 1,
+      "rationale": "Сожительство и межпоколенческие переходы близки семейной части запроса.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 0,
+      "uncertainty": "Демографические процессы семьи могут быть слишком далеки от свадебных конфликтов."
+    },
+    {
+      "query_id": "o32",
+      "author_id": "A5066309906",
+      "profile_fp": "ea5fcc63acff9df0",
+      "profile_hash": "ea5fcc63acff9df0e521100833bb677396cd5050a888a411a8e576e1f0cfb5c6",
+      "grade": 1,
+      "rationale": "Исследуются стили и палимпсесты наскального искусства, другой период и регион.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 0,
+      "uncertainty": "Археология наскального искусства может быть далека от ренессансной иконографии."
+    },
+    {
+      "query_id": "o34",
+      "author_id": "A5045425365",
+      "profile_fp": "963c3bb3fd6170fd",
+      "profile_hash": "963c3bb3fd6170fde8e650137e9370d2972bba41f61dad579fdce23e8897eaa9",
+      "grade": 0,
+      "rationale": "Кураторство биеннале современного искусства, кинонарратив не исследуется.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Культурный анализ визуального искусства может дать смежную наводку."
+    },
+    {
+      "query_id": "p01",
+      "author_id": "A5034417609",
+      "profile_fp": "35cf409e417ca334",
+      "profile_hash": "35cf409e417ca3344660e29d7bc76dd0acb468129ae14c4ebe86060a779e638c",
+      "grade": 1,
+      "rationale": "SLAM для автономных роботов смежен ИИ, проектного управления нет.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 0,
+      "uncertainty": "В названиях нет обучения или помощников; представлены сравнения алгоритмов локализации."
+    },
+    {
+      "query_id": "p02",
+      "author_id": "A5048013094",
+      "profile_fp": "69a00ba94e220af2",
+      "profile_hash": "69a00ba94e220af20dd8158104102734b5b218ee87bf2ee481a5e788b0b98802",
+      "grade": 1,
+      "rationale": "Оценка зрительного дискомфорта при проектировании VR/MR покрывает эргономическую часть.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 2,
+      "uncertainty": "Визуальную эргономику VR можно считать близким видом проектирования и аудита интерфейсов."
+    },
+    {
+      "query_id": "p04",
+      "author_id": "A5076595923",
+      "profile_fp": "1fbea82723b08da0",
+      "profile_hash": "1fbea82723b08da0410e67876a9e4e4631c52c9d04298aa888a8ea8a804c83df",
+      "grade": 2,
+      "rationale": "Профилирование удовлетворённости клиентов и модели спроса с машинным обучением.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Прямых работ о персонализированных рекомендациях нет, но клиентская аналитика очень близка."
+    },
+    {
+      "query_id": "p05",
+      "author_id": "A5047434065",
+      "profile_fp": "8384734fc3f25daa",
+      "profile_hash": "8384734fc3f25daa5cc2a1ab2b6e12a15baae4b9d7690f127a7fe6b0c2c8a671",
+      "grade": 2,
+      "rationale": "Работы о LLM, интеллектуальном капитале, зарплатах и эффективности команд.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Темы представлены раздельно; применения ИИ непосредственно к HR не показаны."
+    },
+    {
+      "query_id": "p06",
+      "author_id": "A5018595712",
+      "profile_fp": "f20d2796b7105f32",
+      "profile_hash": "f20d2796b7105f32d4e79f7b98f4b575fcc14c3cfbf5932bacbddcfae670e04b",
+      "grade": 1,
+      "rationale": "Экономика транспорта представлена; цифровой сервис и распознавание не исследуются.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 0,
+      "uncertainty": "Исследуются городская структура и занятость, связь с логистическим сервисом косвенная."
+    },
+    {
+      "query_id": "q02",
+      "author_id": "A5017151529",
+      "profile_fp": "f7ea4ba7123abec2",
+      "profile_hash": "f7ea4ba7123abec28be83992f10ec3184a4df3ce1da9a8bb768d15087a32024b",
+      "grade": 2,
+      "rationale": "Исследуется ИИ для диагностики по КТ и разметка медицинских изображений.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Нейросетевые архитектуры явно не названы, основная работа представлена обзором ИИ."
+    },
+    {
+      "query_id": "q03",
+      "author_id": "A5100670875",
+      "profile_fp": "ddc86695f864918f",
+      "profile_hash": "ddc86695f864918fa13f2629bfdea3dd29fe0389c7dd3dc6aec392e185d72361",
+      "grade": 1,
+      "rationale": "Коллайдерная теория CalcHEP; экспериментальная работа представлена многотемным CMS.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 2,
+      "uncertainty": "Запрос широкий, поэтому участие в CMS может покрывать желаемые коллайдерные эксперименты."
+    },
+    {
+      "query_id": "q03",
+      "author_id": "A5114377115",
+      "profile_fp": "ac4d1de4276736fe",
+      "profile_hash": "ac4d1de4276736fe5008aaff2b7a2ec1f52797acceae0f1efb37d35e8f32083d",
+      "grade": 1,
+      "rationale": "Экспериментальные результаты ATLAS многотемны; отдельная работа посвящена расчёту фонов.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 2,
+      "uncertainty": "Широкий запрос на участие в коллайдерных экспериментах допускает более полное совпадение."
+    },
+    {
+      "query_id": "q07",
+      "author_id": "A5029181198",
+      "profile_fp": "5129f125c062d8c4",
+      "profile_hash": "5129f125c062d8c42f37df2fa602e8961ad2e921be84992f504bc27c51218b22",
+      "grade": 2,
+      "rationale": "Машинное проектирование радиационных приборов и глубокое обнаружение аномалий.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Проектирование приборов показано явно, применение глубоких моделей к данным детекторов косвенное."
+    },
+    {
+      "query_id": "q09",
+      "author_id": "A5033682739",
+      "profile_fp": "6f5584f4b318aebd",
+      "profile_hash": "6f5584f4b318aebd35f047cdb407cab79919d499a07d6a0be9e37f3b943eb978",
+      "grade": 1,
+      "rationale": "Теория квантовых операций в сверхпроводящих схемах; экспериментальное железо не показано.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 2,
+      "uncertainty": "Физически конкретные схемы реализации алгоритмов можно считать аппаратной частью запроса."
+    },
+    {
+      "query_id": "q10",
+      "author_id": "A5029181198",
+      "profile_fp": "5129f125c062d8c4",
+      "profile_hash": "5129f125c062d8c42f37df2fa602e8961ad2e921be84992f504bc27c51218b22",
+      "grade": 2,
+      "rationale": "Машинное проектирование физических приборов и модели обнаружения аномалий.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Обработка больших экспериментальных наборов явно не показана в фрагментах."
+    },
+    {
+      "query_id": "q13",
+      "author_id": "A5015131347",
+      "profile_fp": "edb633bed66c73b8",
+      "profile_hash": "edb633bed66c73b8ab7fd1b1b0fec16758d39f3eb71548ad3dd32598a30282bb",
+      "grade": 2,
+      "rationale": "Определение сложных кристаллических структур минералов дифракционными методами.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "В явном виде названа электронная дифракция, рентгеновский метод не уточнён."
+    },
+    {
+      "query_id": "q13",
+      "author_id": "A5090699168",
+      "profile_fp": "33149c5bf454c519",
+      "profile_hash": "33149c5bf454c5196f57ae861c7a4b282902d5c33ddd00e39bef3384617c1927",
+      "grade": 2,
+      "rationale": "Кристаллические структуры минералов и межмолекулярные взаимодействия в комплексах.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Метод рентгеновского определения структур не назван явно в доступных фрагментах."
+    },
+    {
+      "query_id": "q18",
+      "author_id": "A5028599598",
+      "profile_fp": "56a921382603028f",
+      "profile_hash": "56a921382603028f6dada528d71914d54dab420f2f2879461a68e7d2c3d6c99c",
+      "grade": 2,
+      "rationale": "Тонкие магнитные плёнки и магнитoимпедансные плёночные сенсоры.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Спинтроника явно не названа; сенсоры могут относиться только к магнитоэлектронике."
+    },
+    {
+      "query_id": "q19",
+      "author_id": "A5110984172",
+      "profile_fp": "74138937322dbe1f",
+      "profile_hash": "74138937322dbe1f852944f3c6c63a62ca50ec04f2f68ff9f916e5bc52368413",
+      "grade": 2,
+      "rationale": "Расчёт ядерных сечений и спектров отдачи для электроники космических аппаратов.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Вычислительная физика есть, конкретное программирование и программные инструменты не названы."
+    },
+    {
+      "query_id": "q20",
+      "author_id": "A5103632800",
+      "profile_fp": "731e97d8d7a16f73",
+      "profile_hash": "731e97d8d7a16f73e8b3657cb43176f71ee73a089168175d6b9e07479d9adf51",
+      "grade": 0,
+      "rationale": "Математическая теория случайных матриц, физические модели мира не представлены.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Случайные матрицы служат аппаратом теоретической физики, но применение здесь не показано."
+    },
+    {
+      "query_id": "q24",
+      "author_id": "A5002397716",
+      "profile_fp": "271dda0e37e656cd",
+      "profile_hash": "271dda0e37e656cd8b3e22a7cce64d29a00de1d8efd913e8718433cd1b46e7da",
+      "grade": 1,
+      "rationale": "Машинное обучение и обработка изображений представлены; нейросетевые методы не уточнены.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 2,
+      "uncertainty": "Работы по современной обработке изображений могут непосредственно включать нейросети, фрагменты неполны."
+    },
+    {
+      "query_id": "q27",
+      "author_id": "A5103610055",
+      "profile_fp": "2e7ea4ae031cf724",
+      "profile_hash": "2e7ea4ae031cf724ce00f4395910d4ecee110ade4cdc9714ea0930a56827d4ff",
+      "grade": 1,
+      "rationale": "Российские государственные реформы исследуются, но только современный период.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 0,
+      "uncertainty": "Современная политология может быть слишком далека от истории реформ Александра II."
+    },
+    {
+      "query_id": "q28",
+      "author_id": "A5021089109",
+      "profile_fp": "1f679d1bb68864c0",
+      "profile_hash": "1f679d1bb68864c0bc1fb4caad4549e32421a2544ce0738c16afa81f845a7d7f",
+      "grade": 0,
+      "rationale": "Конституционализм и публичное право, гражданские договоры не исследуются.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 1,
+      "uncertainty": "Правовая теория может быть смежной наводкой, но совпадает лишь широкая юриспруденция."
+    },
+    {
+      "query_id": "q29",
+      "author_id": "A5042200208",
+      "profile_fp": "40e65aafd7d145a1",
+      "profile_hash": "40e65aafd7d145a1349af843d08a7a8d27978714208c0ba0092f0c1f612a0de7",
+      "grade": 1,
+      "rationale": "Биотехнология хлебопекарных дрожжей смежна, технология выпечки непосредственно не показана.",
+      "iteration": "ranking17-20261003",
+      "judge": "gpt-6-astra/max (sfr-judge)",
+      "alternate_grade": 2,
+      "uncertainty": "Исследование генов хлебопекарных дрожжей может прямо покрывать научную часть хлебопечения."
+    }
+  ],
+  "notes": [
+    "Errors remain in denominators, with success false.",
+    "OOD confidence uses baseline cosine only; hybrid uncalibrated."
+  ]
+}

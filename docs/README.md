@@ -88,6 +88,7 @@ docs/
 | [pilot-ui-validation.md](reports/pilot-ui-validation.md) | UI-пакет #155–161: проверки, снимки, принятые тексты; [проверка top-100 переводов с источниками](reports/pilot-ui-topics-top100.md) | принято Борисом, влито PR #178 |
 | [poc-analytics.md](reports/poc-analytics.md) | PoC #162–164: PostgreSQL, события, надёжная доставка, операторские отчёты/backup и репетиция | репетиция и доказательства; актуальный статус — [бриф](product/brief.md), ревью и приёмка — [PR #179](https://github.com/borisboriov/search-for-research/pull/179) |
 | [ui-analytics-deploy-20261003.md](reports/ui-analytics-deploy-20261003.md) | Выкладка принятого UI и PostgreSQL: текущий сервер, сохранность, smoke, ресурсы, restore и внешние копии | эксплуатационные доказательства; приёмка — PR #183 |
+| [ranking17_20261003.md](reports/ranking17_20261003.md) | Ограниченный эксперимент FRIDA против фиксированного гибрида с BM25; текущий поиск сохраняется | измерения и свежая слепая оценка Astra/max; продуктовая приёмка — [PR #185](https://github.com/borisboriov/search-for-research/pull/185), merge впереди |
 
 Независимый ревьюер возвращает результат координатору; тот сохраняет итог
 в PR с проверенными base/head и ссылками на оставшиеся находки. Отдельный
