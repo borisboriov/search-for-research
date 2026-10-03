@@ -15,6 +15,20 @@ PostgreSQL, устойчивую запись полных поисковых з
 решений. Финальные ревью/CI и вердикт с base/head фиксируются в PR после
 проверок продуктовых правок; merge и выкладка требуют отдельных решений.
 
+**Блокер итоговой передачи, 03.10.** На продуктовом коммите `149c7a0`
+checks/web успешны, но [свежий security CI](https://github.com/borisboriov/search-for-research/actions/runs/37100774857/job/111139709248)
+обнаружил High [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+в `braces@3.0.3`: eslint-config-next → @next/eslint-plugin-next → fast-glob →
+micromatch → braces. На 03.10 GitHub Advisory не указывает исправленной версии;
+npm registry подтверждает latest braces 3.0.3, micromatch 4.0.8 и
+@next/eslint-plugin-next 16.3.8. Это инструменты разработки;
+`npm audit --omit=dev --json` отдельно показал ноль runtime-уязвимостей,
+но не заменяет обязательный полный аудит. Предложенный npm откат
+eslint-config-next до 14.2.35 не применялся. Зависимости и правила аудита
+не изменялись; исключения не добавлялись. Исправление цепочки и успешный
+актуальный audit обязательны до готовности к merge. Ниже результаты
+проверок технической сессии относятся к её версиям, а не отменяют этот блокер.
+
 ## Архитектура и хранение
 
 Путь запроса: браузер → Caddy → Next route handler → внутренний FastAPI.
