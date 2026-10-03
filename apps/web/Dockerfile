@@ -8,6 +8,7 @@ FROM node:24-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY tooling/fast-glob-patterns ./tooling/fast-glob-patterns
 RUN npm ci
 
 COPY . .
