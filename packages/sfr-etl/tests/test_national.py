@@ -43,7 +43,7 @@ def budget(remaining: float = 1) -> httpx.Response:
             "api_key": "SECRET",
             "rate_limit": {
                 "daily_remaining_usd": remaining,
-                "endpoint_costs_usd": {"list": 0.0001},
+                "endpoint_costs_usd": {"list": 0.0001, "singleton": 0},
                 "resets_at": "2026-10-08T00:00:00Z",
             },
         },
@@ -284,4 +284,48 @@ def test_cli_constructor_error_does_not_show_credentials(tmp_path: Path, monkeyp
     assert "RuntimeError" in result.output
     assert "SECRET" not in result.output
     assert "Traceback" not in result.output
+    r.close()
+
+
+def test_affiliated_org_redirects_failures_and_cache(tmp_path: Path) -> None:
+    calls = []
+
+    def handler(request):
+        calls.append(request.url.path)
+        if request.url.path == "/rate-limit":
+            return budget(0)  # Singleton is free even after list quota exhaustion.
+        if request.url.path == "/institutions/I1":
+            return httpx.Response(
+                301, headers={"Location": "https://api.openalex.org/institutions/I2"}
+            )
+        if request.url.path == "/institutions/I2":
+            return httpx.Response(
+                200, json={"id": "https://openalex.org/I2", "country_code": "RU", "extra": 1}
+            )
+        return httpx.Response(404)
+
+    r = make(tmp_path, handler)
+    env = {"kind": "authors", "cursor": "*", "fetched_at": "now", "body": page([author(1)], None)}
+    atomic_json(r.cache_path("authors", "*"), env)
+    r.consume("authors", "*", env)
+    r.resolve_affiliated_institutions()
+    saved = json.loads((tmp_path / "affiliated_institutions/I1.json").read_text())
+    assert [item["status"] for item in saved["chain"]] == [301, 200]
+    assert saved["chain"][-1]["body"]["extra"] == 1
+    before = len(calls)
+    r.resolve_affiliated_institutions()
+    assert len(calls) == before
+    with r.db:
+        value = author(2)
+        value["last_known_institutions"][0]["id"] = "https://openalex.org/I3"
+        r.db.execute(
+            "INSERT INTO records VALUES ('authors',?,?,0)", (value["id"], json.dumps(value))
+        )
+    r.resolve_affiliated_institutions()
+    assert (
+        json.loads((tmp_path / "affiliated_institutions/I3.json").read_text())["chain"][-1][
+            "status"
+        ]
+        == 404
+    )
     r.close()

@@ -11,6 +11,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 
@@ -117,10 +118,13 @@ class NationalRegistry:
         if shutil.disk_usage(self.root).free < self.min_free_bytes:
             raise OSError("Disk reserve reached; progress preserved")
 
-    def request(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
+    def request(
+        self, endpoint: str, params: dict[str, Any], *, details: bool = False
+    ) -> dict[str, Any]:
         for attempt in range(5):
             if endpoint != "/rate-limit":
-                self.budget()  # Every attempt, including retries with an ambiguous outcome.
+                category = "singleton" if endpoint.count("/") > 1 else "list"
+                self.budget(category=category)  # Guard every attempt, including retries.
             self.disk_check()
             self.limiter.acquire()
             with self.db:
@@ -150,7 +154,7 @@ class NationalRegistry:
             if response.status_code == 429:
                 if endpoint == "/rate-limit":
                     raise WaitingQuota("Budget endpoint unavailable (429); collection disabled")
-                self.budget()  # Quota exhaustion stops; transient rate limiting may back off.
+                self.budget(category=category)
                 if attempt == 4:
                     raise RuntimeError("OpenAlex rate-limit retries exhausted; resume cursor")
                 try:
@@ -166,6 +170,18 @@ class NationalRegistry:
                     delay = float(2**attempt)
                 time.sleep(min(60, max(0, delay)))
                 continue
+            if details and response.status_code in {301, 302, 307, 308}:
+                target = urlsplit(
+                    urljoin(
+                        self.settings.openalex_base_url + endpoint,
+                        response.headers.get("Location", ""),
+                    )
+                )
+                if target.netloc != urlsplit(self.settings.openalex_base_url).netloc:
+                    raise ValueError("External institution redirect refused")
+                return {"status": response.status_code, "redirect_path": target.path}
+            if details and response.status_code in {404, 410}:
+                return {"status": response.status_code}
             if response.status_code != 200:
                 raise RuntimeError(f"OpenAlex HTTP {response.status_code}; progress preserved")
             body: dict[str, Any] = response.json()
@@ -176,10 +192,10 @@ class NationalRegistry:
                         self.db.execute(
                             "UPDATE requests SET cost_usd=? WHERE id=?", (str(observed_cost), row)
                         )
-            return body
+            return {"status": 200, "body": body} if details else body
         raise RuntimeError("OpenAlex retries exhausted")
 
-    def budget(self) -> dict[str, Any]:
+    def budget(self, *, category: str = "list") -> dict[str, Any]:
         body = self.request("/rate-limit", {})
         quota = body.get("rate_limit", {})
         # Persist only known accounting fields, never identity/key fields.
@@ -204,10 +220,10 @@ class NationalRegistry:
             )
         try:
             remaining = Decimal(str(quota["daily_remaining_usd"]))
-            cost = Decimal(str(quota["endpoint_costs_usd"]["list"]))
+            cost = Decimal(str(quota["endpoint_costs_usd"][category]))
         except (KeyError, TypeError):
             raise RuntimeError("Unknown free budget schema; collection disabled") from None
-        if cost <= 0 or remaining < cost:
+        if cost < 0 or (category == "list" and cost == 0) or remaining < cost:
             raise WaitingQuota("Free daily budget insufficient; see budget.resets_at")
         return safe
 
@@ -343,6 +359,40 @@ class NationalRegistry:
             }
         return result
 
+    def resolve_affiliated_institutions(self) -> None:
+        """Preserve full responses/redirect evidence for RU affiliation IDs outside RU list."""
+        query = """
+            SELECT a.id FROM (
+                SELECT DISTINCT json_extract(j.value,'$.id') AS id
+                FROM records r, json_each(r.raw,'$.last_known_institutions') j
+                WHERE r.kind='authors' AND lower(json_extract(j.value,'$.country_code'))='ru'
+            ) a LEFT JOIN records i ON i.kind='institutions' AND i.id=a.id
+            WHERE i.id IS NULL
+        """
+        directory = self.root / "affiliated_institutions"
+        directory.mkdir(exist_ok=True)
+        for (identifier,) in self.db.execute(query).fetchall():
+            if not identifier.startswith("https://openalex.org/I"):
+                raise ValueError("Invalid affiliated institution ID")
+            path = directory / (identifier.rsplit("/", 1)[-1] + ".json")
+            if path.exists():
+                continue
+            endpoint = "/institutions/" + identifier.rsplit("/", 1)[-1]
+            chain = []
+            visited = set()
+            for _ in range(10):
+                if endpoint in visited or not endpoint.startswith("/institutions/"):
+                    raise ValueError("Invalid institution redirect chain")
+                visited.add(endpoint)
+                response = self.request(endpoint, {}, details=True)
+                chain.append({"endpoint": endpoint, "at": now(), **response})
+                if "redirect_path" not in response:
+                    break
+                endpoint = response["redirect_path"]
+            else:
+                raise ValueError("Institution redirect chain too long")
+            atomic_json(path, {"requested_id": identifier, "chain": chain})
+
     @classmethod
     def inspect(cls, root: Path) -> dict[str, Any]:
         """Verify a consistent read-only SQLite snapshot, including during collection."""
@@ -357,6 +407,21 @@ class NationalRegistry:
 
     def snapshot(self, status: str, *, persist: bool = True) -> dict[str, Any]:
         report = self.verify()
+        supplemental = []
+        for path in sorted((self.root / "affiliated_institutions").glob("*.json")):
+            item = json.loads(path.read_text())
+            if item["requested_id"].rsplit("/", 1)[-1] != path.stem:
+                raise ValueError("Supplement cache identity mismatch")
+            final = item["chain"][-1]
+            supplemental.append(
+                {
+                    "requested_id": item["requested_id"],
+                    "status": final["status"],
+                    "final_id": final.get("body", {}).get("id"),
+                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                }
+            )
+        report["supplemental_institutions"] = supplemental
         report.update(
             {
                 "status": status,
@@ -433,8 +498,15 @@ class NationalRegistry:
                         ),
                         flush=True,
                     )
+                if kind == "institutions":
+                    self.resolve_affiliated_institutions()
+            self.resolve_affiliated_institutions()
             return self.snapshot("complete")
         except WaitingQuota:
+            try:
+                self.resolve_affiliated_institutions()  # Singleton cost may be zero.
+            except WaitingQuota:
+                print(json.dumps({"status": "supplemental_waiting_quota"}), flush=True)
             return self.snapshot("waiting_quota")
         except KeyboardInterrupt:
             return self.snapshot("interrupted")
