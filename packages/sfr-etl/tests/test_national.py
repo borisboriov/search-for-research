@@ -135,7 +135,7 @@ def test_failed_page_does_not_advance_and_429_not_retried(tmp_path: Path) -> Non
 
     r = make(tmp_path, handler)
     assert r.run()["status"] == "waiting_quota"
-    assert calls == ["/rate-limit", "/authors"]
+    assert calls == ["/rate-limit", "/institutions"]
     assert r.verify()["authors"]["pages"] == 0
     r.close()
 
@@ -167,3 +167,60 @@ def test_disk_lock_and_settings_guard(tmp_path: Path) -> None:
     changed.supervisor_min_works += 1
     with pytest.raises(ValueError, match="configuration"):
         NationalRegistry(tmp_path, changed)
+
+
+def test_backoff_transport_and_server_failures(tmp_path: Path, monkeypatch) -> None:
+    sleeps = []
+    monkeypatch.setattr("sfr_etl.national.time.sleep", lambda delay: sleeps.append(delay))
+    attempts = 0
+
+    def handler(request):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise httpx.ReadError("SECRET must never escape")
+        if attempts == 2:
+            return httpx.Response(503, headers={"Retry-After": "3"})
+        return httpx.Response(200, json=page([], None))
+
+    r = make(tmp_path, handler)
+    r.limiter = type("NoWait", (), {"acquire": lambda self: None})()
+    assert r.request("/authors", {})["results"] == []
+    assert sleeps == [1, 3]
+    assert r.db.execute("SELECT COUNT(*) FROM requests").fetchone()[0] == 3
+    assert r.db.execute("SELECT COUNT(*) FROM requests WHERE status IS NULL").fetchone()[0] == 1
+    r.close()
+
+
+def test_schema_and_invalid_records_never_advance(tmp_path: Path) -> None:
+    r = make(tmp_path, lambda _: httpx.Response(200, json={"rate_limit": {}}))
+    with pytest.raises(RuntimeError, match="budget schema"):
+        r.run()
+    assert r.verify()["authors"]["pages"] == 0
+    bad = author(2)
+    bad["last_known_institutions"] = [{"country_code": None}]
+    env = {
+        "kind": "authors",
+        "cursor": "*",
+        "fetched_at": "now",
+        "body": page([author(1), bad], None),
+    }
+    atomic_json(r.cache_path("authors", "*"), env)
+    with pytest.raises(ValueError, match="outside"):
+        r.consume("authors", "*", env)
+    assert r.db.execute("SELECT COUNT(*) FROM records").fetchone()[0] == 0
+    r.close()
+
+
+def test_readonly_inspection_during_run_and_registry_tamper(tmp_path: Path) -> None:
+    r = make(tmp_path, lambda _: budget())
+    env = {"kind": "authors", "cursor": "*", "fetched_at": "now", "body": page([author(1)], None)}
+    atomic_json(r.cache_path("authors", "*"), env)
+    r.consume("authors", "*", env)
+    assert NationalRegistry.inspect(tmp_path)["authors"]["unique"] == 1
+    assert not (tmp_path / "status.json").exists()
+    with r.db:
+        r.db.execute("DELETE FROM records")
+    with pytest.raises(ValueError, match="Registered IDs"):
+        NationalRegistry.inspect(tmp_path)
+    r.close()

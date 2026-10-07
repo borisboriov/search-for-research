@@ -593,10 +593,13 @@ def national_registry(
     status_only: Annotated[bool, typer.Option(help="Verify local data without network")] = False,
 ) -> None:
     """Collect all RU-affiliated authors and Russian institutions; resume saved cursor."""
+    if status_only:
+        typer.echo(json.dumps(NationalRegistry.inspect(out), ensure_ascii=False, indent=2))
+        return
     settings = Settings(_env_file=env_file)  # type: ignore[call-arg]
     registry = NationalRegistry(out, settings)
     try:
-        result = registry.snapshot("verified_local") if status_only else registry.run()
+        result = registry.run()
         typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
     except Exception as exc:
         # Transport/status errors may carry credentials: print only their class.

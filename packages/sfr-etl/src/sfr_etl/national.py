@@ -18,7 +18,7 @@ from sfr_core.settings import Settings
 from sfr_etl.catalog import passes_heuristic
 from sfr_etl.client import RateLimiter
 
-FILTERS = {"authors": "last_known_institutions.country_code:ru", "institutions": "country_code:ru"}
+FILTERS = {"institutions": "country_code:ru", "authors": "last_known_institutions.country_code:ru"}
 
 
 def now() -> str:
@@ -69,6 +69,7 @@ class NationalRegistry:
         self.http = http or httpx.Client(timeout=60)
         self.limiter = RateLimiter(min(10, max(0.1, settings.openalex_max_rps)))
         self.db = sqlite3.connect(root / "registry.sqlite3")
+        self.db.execute("PRAGMA journal_mode=WAL")
         self.db.execute("PRAGMA synchronous=FULL")
         self.db.executescript("""
             CREATE TABLE IF NOT EXISTS state(kind TEXT PRIMARY KEY, cursor TEXT, done INTEGER);
@@ -90,6 +91,8 @@ class NationalRegistry:
             "recent_years": settings.supervisor_recent_years,
         }
         previous = self.db.execute("SELECT value FROM metadata WHERE key='config'").fetchone()
+        if previous:
+            config["year"] = json.loads(previous[0])["year"]
         if previous and json.loads(previous[0]) != config:
             self.close()
             raise ValueError("Registry configuration changed; use its original settings/year")
@@ -155,6 +158,13 @@ class NationalRegistry:
             if response.status_code != 200:
                 raise RuntimeError(f"OpenAlex HTTP {response.status_code}; progress preserved")
             body: dict[str, Any] = response.json()
+            if endpoint != "/rate-limit":
+                observed_cost = body.get("meta", {}).get("cost_usd")
+                if observed_cost is not None:
+                    with self.db:
+                        self.db.execute(
+                            "UPDATE requests SET cost_usd=? WHERE id=?", (str(observed_cost), row)
+                        )
             return body
         raise RuntimeError("OpenAlex retries exhausted")
 
@@ -260,6 +270,8 @@ class NationalRegistry:
             cursor: str | None = "*"
             visited: set[str] = set()
             total = 0
+            ids: set[str] = set()
+            page_cost = Decimal(0)
             while cursor is not None:
                 row = self.db.execute(
                     "SELECT next_cursor,sha256,records FROM pages WHERE kind=? AND cursor=?",
@@ -273,6 +285,17 @@ class NationalRegistry:
                 raw = self.cache_path(kind, cursor).read_bytes()
                 if hashlib.sha256(raw).hexdigest() != row[1]:
                     raise ValueError("Saved page checksum mismatch")
+                envelope = json.loads(raw)
+                body = envelope["body"]
+                if (
+                    envelope["kind"] != kind
+                    or envelope["cursor"] != cursor
+                    or body["meta"]["next_cursor"] != row[0]
+                    or len(body["results"]) != row[2]
+                ):
+                    raise ValueError("Saved page disagrees with manifest")
+                ids.update(record["id"] for record in body["results"])
+                page_cost += Decimal(str(body["meta"].get("cost_usd", 0)))
                 total += row[2]
                 cursor = row[0]
             state = self.db.execute(
@@ -288,6 +311,12 @@ class NationalRegistry:
             unique = self.db.execute(
                 "SELECT COUNT(*) FROM records WHERE kind=?", (kind,)
             ).fetchone()[0]
+            registered_ids = {
+                value
+                for (value,) in self.db.execute("SELECT id FROM records WHERE kind=?", (kind,))
+            }
+            if ids != registered_ids:
+                raise ValueError("Registered IDs disagree with saved pages")
             counts = self.db.execute(
                 "SELECT MIN(api_count),MAX(api_count) FROM pages WHERE kind=?", (kind,)
             ).fetchone()
@@ -297,12 +326,25 @@ class NationalRegistry:
                 "rows": total,
                 "unique": unique,
                 "duplicates": total - unique,
+                "saved_pages_cost_usd": str(page_cost),
                 "api_count_min": counts[0],
                 "api_count_max": counts[1],
             }
         return result
 
-    def snapshot(self, status: str) -> dict[str, Any]:
+    @classmethod
+    def inspect(cls, root: Path) -> dict[str, Any]:
+        """Verify a consistent read-only SQLite snapshot, including during collection."""
+        instance = cls.__new__(cls)
+        instance.root = root
+        instance.db = sqlite3.connect(f"file:{root / 'registry.sqlite3'}?mode=ro", uri=True)
+        try:
+            instance.db.execute("BEGIN")
+            return instance.snapshot("verified_local", persist=False)
+        finally:
+            instance.db.close()
+
+    def snapshot(self, status: str, *, persist: bool = True) -> dict[str, Any]:
         report = self.verify()
         report.update(
             {
@@ -316,6 +358,18 @@ class NationalRegistry:
                 "requests_by_endpoint": dict(
                     self.db.execute("SELECT endpoint,COUNT(*) FROM requests GROUP BY endpoint")
                 ),
+                "known_list_cost_usd": str(
+                    sum(
+                        (
+                            Decimal(v)
+                            for (v,) in self.db.execute(
+                                "SELECT cost_usd FROM requests WHERE endpoint != '/rate-limit' "
+                                "AND cost_usd IS NOT NULL"
+                            )
+                        ),
+                        Decimal(0),
+                    )
+                ),
                 "unknown_outcomes": self.db.execute(
                     "SELECT COUNT(*) FROM requests WHERE status IS NULL"
                 ).fetchone()[0],
@@ -326,7 +380,8 @@ class NationalRegistry:
                 },
             }
         )
-        atomic_json(self.root / "status.json", report)
+        if persist:
+            atomic_json(self.root / "status.json", report)
         return report
 
     def run(self) -> dict[str, Any]:
@@ -371,3 +426,5 @@ class NationalRegistry:
             return self.snapshot("complete")
         except WaitingQuota:
             return self.snapshot("waiting_quota")
+        except KeyboardInterrupt:
+            return self.snapshot("interrupted")
