@@ -270,3 +270,18 @@ def test_transient_429_backs_off_with_free_budget(tmp_path: Path, monkeypatch) -
     assert r.request("/authors", {})["results"] == []
     assert delays == [4]
     r.close()
+
+
+def test_cli_constructor_error_does_not_show_credentials(tmp_path: Path, monkeypatch) -> None:
+    from typer.testing import CliRunner
+
+    from sfr_etl.cli import app
+
+    r = make(tmp_path, lambda _: budget())
+    monkeypatch.setattr("sfr_etl.cli.Settings", lambda **kwargs: settings())
+    result = CliRunner().invoke(app, ["etl", "national", "--out", str(tmp_path)])
+    assert result.exit_code == 1
+    assert "RuntimeError" in result.output
+    assert "SECRET" not in result.output
+    assert "Traceback" not in result.output
+    r.close()

@@ -593,18 +593,23 @@ def national_registry(
     status_only: Annotated[bool, typer.Option(help="Verify local data without network")] = False,
 ) -> None:
     """Collect all RU-affiliated authors and Russian institutions; resume saved cursor."""
-    if status_only:
-        typer.echo(json.dumps(NationalRegistry.inspect(out), ensure_ascii=False, indent=2))
-        return
-    settings = Settings(_env_file=env_file)  # type: ignore[call-arg]
-    registry = NationalRegistry(out, settings)
+    registry: NationalRegistry | None = None
     try:
-        result = registry.run()
-        typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        if status_only:
+            typer.echo(json.dumps(NationalRegistry.inspect(out), ensure_ascii=False, indent=2))
+            return
+        settings = Settings(_env_file=env_file)  # type: ignore[call-arg]
+        registry = NationalRegistry(out, settings)
+        typer.echo(json.dumps(registry.run(), ensure_ascii=False, indent=2))
     except Exception as exc:
-        # Transport/status errors may carry credentials: print only their class.
-        registry.snapshot("stopped_error")
+        # Constructor, JSON and transport exceptions must never print settings/URLs.
+        if registry is not None:
+            try:
+                registry.snapshot("stopped_error")
+            except Exception as snapshot_error:
+                typer.echo(f"Status unavailable: {type(snapshot_error).__name__}", err=True)
         typer.echo(f"Collection stopped: {type(exc).__name__}; saved cursor preserved", err=True)
         raise typer.Exit(1) from None
     finally:
-        registry.close()
+        if registry is not None:
+            registry.close()
