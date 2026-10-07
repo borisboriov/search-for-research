@@ -130,12 +130,12 @@ def test_failed_page_does_not_advance_and_429_not_retried(tmp_path: Path) -> Non
     def handler(request):
         calls.append(request.url.path)
         if request.url.path == "/rate-limit":
-            return budget()
+            return budget(1 if len(calls) == 1 else 0)
         return httpx.Response(429)
 
     r = make(tmp_path, handler)
     assert r.run()["status"] == "waiting_quota"
-    assert calls == ["/rate-limit", "/institutions"]
+    assert calls == ["/rate-limit", "/institutions", "/rate-limit"]
     assert r.verify()["authors"]["pages"] == 0
     r.close()
 
@@ -176,6 +176,8 @@ def test_backoff_transport_and_server_failures(tmp_path: Path, monkeypatch) -> N
 
     def handler(request):
         nonlocal attempts
+        if request.url.path == "/rate-limit":
+            return budget()
         attempts += 1
         if attempts == 1:
             raise httpx.ReadError("SECRET must never escape")
@@ -187,7 +189,9 @@ def test_backoff_transport_and_server_failures(tmp_path: Path, monkeypatch) -> N
     r.limiter = type("NoWait", (), {"acquire": lambda self: None})()
     assert r.request("/authors", {})["results"] == []
     assert sleeps == [1, 3]
-    assert r.db.execute("SELECT COUNT(*) FROM requests").fetchone()[0] == 3
+    assert (
+        r.db.execute("SELECT COUNT(*) FROM requests WHERE endpoint='/authors'").fetchone()[0] == 3
+    )
     assert r.db.execute("SELECT COUNT(*) FROM requests WHERE status IS NULL").fetchone()[0] == 1
     r.close()
 
@@ -223,4 +227,46 @@ def test_readonly_inspection_during_run_and_registry_tamper(tmp_path: Path) -> N
         r.db.execute("DELETE FROM records")
     with pytest.raises(ValueError, match="Registered IDs"):
         NationalRegistry.inspect(tmp_path)
+    r.close()
+
+
+def test_retry_rechecks_free_budget_after_ambiguous_spend(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("sfr_etl.national.time.sleep", lambda _: None)
+    probes = 0
+    data_calls = 0
+
+    def handler(request):
+        nonlocal probes, data_calls
+        if request.url.path == "/rate-limit":
+            probes += 1
+            return budget(0.0001 if probes == 1 else 0)
+        data_calls += 1
+        raise httpx.ReadError("Response lost after server charged last free credit")
+
+    r = make(tmp_path, handler)
+    assert r.run()["status"] == "waiting_quota"
+    assert probes == 2
+    assert data_calls == 1  # No retry into prepaid after exhausting free credit.
+    assert r.verify()["institutions"]["pages"] == 0
+    r.close()
+
+
+def test_transient_429_backs_off_with_free_budget(tmp_path: Path, monkeypatch) -> None:
+    delays = []
+    monkeypatch.setattr("sfr_etl.national.time.sleep", lambda d: delays.append(d))
+    calls = 0
+
+    def handler(request):
+        nonlocal calls
+        if request.url.path == "/rate-limit":
+            return budget()
+        calls += 1
+        if calls == 1:
+            return httpx.Response(429, headers={"Retry-After": "4"})
+        return httpx.Response(200, json=page([], None))
+
+    r = make(tmp_path, handler)
+    r.limiter = type("NoWait", (), {"acquire": lambda self: None})()
+    assert r.request("/authors", {})["results"] == []
+    assert delays == [4]
     r.close()

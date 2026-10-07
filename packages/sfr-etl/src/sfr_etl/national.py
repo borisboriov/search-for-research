@@ -119,6 +119,8 @@ class NationalRegistry:
 
     def request(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
         for attempt in range(5):
+            if endpoint != "/rate-limit":
+                self.budget()  # Every attempt, including retries with an ambiguous outcome.
             self.disk_check()
             self.limiter.acquire()
             with self.db:
@@ -146,8 +148,17 @@ class NationalRegistry:
                     (response.status_code, cost, row),
                 )
             if response.status_code == 429:
-                # Distinguish quota at the next invocation; never retry into prepaid funds.
-                raise WaitingQuota("OpenAlex 429; resume after budget/rate-limit check")
+                if endpoint == "/rate-limit":
+                    raise WaitingQuota("Budget endpoint unavailable (429); collection disabled")
+                self.budget()  # Quota exhaustion stops; transient rate limiting may back off.
+                if attempt == 4:
+                    raise RuntimeError("OpenAlex rate-limit retries exhausted; resume cursor")
+                try:
+                    delay = float(response.headers.get("Retry-After", 2**attempt))
+                except ValueError:
+                    delay = float(2**attempt)
+                time.sleep(min(60, max(0, delay)))
+                continue
             if response.status_code in {500, 502, 503, 504} and attempt < 4:
                 try:
                     delay = float(response.headers.get("Retry-After", 2**attempt))
@@ -399,7 +410,6 @@ class NationalRegistry:
                     if cache.exists():
                         envelope = json.loads(cache.read_text())
                     else:
-                        self.budget()  # Free-budget check before every uncached list request.
                         page = self.request(
                             f"/{kind}", {"filter": FILTERS[kind], "per_page": 100, "cursor": cursor}
                         )
