@@ -1,0 +1,156 @@
+{
+  "sample": 100,
+  "pilot": 10,
+  "evaluation": 90,
+  "orcid_profiles_recorded": 10,
+  "orcid_statuses": {
+    "found": 10
+  },
+  "candidate_email_profiles": 4,
+  "identity_verified_profiles": 0,
+  "human_verified_profiles": 0,
+  "field_statuses": {
+    "personal_contact": {
+      "not_checked": 100
+    },
+    "coordinator_contact": {
+      "not_checked": 100
+    },
+    "supervision_history": {
+      "not_checked": 100
+    },
+    "published_recruitment": {
+      "not_checked": 100
+    },
+    "direct_willingness": {
+      "not_checked": 100
+    },
+    "topic": {
+      "not_checked": 100
+    },
+    "supervisor_role": {
+      "not_checked": 100
+    },
+    "student_level": {
+      "not_checked": 100
+    },
+    "student_year": {
+      "not_checked": 100
+    },
+    "required_skills": {
+      "not_checked": 100
+    },
+    "external_students": {
+      "not_checked": 100
+    },
+    "thesis_possible": {
+      "not_checked": 100
+    },
+    "city": {
+      "not_checked": 100
+    },
+    "work_format": {
+      "not_checked": 100
+    },
+    "workload": {
+      "not_checked": 100
+    },
+    "payment": {
+      "not_checked": 100
+    },
+    "deadline": {
+      "not_checked": 100
+    },
+    "response_method": {
+      "not_checked": 100
+    }
+  },
+  "network_requests": 21,
+  "denominator_note": "ORCID record found does not mean identity/contact verified",
+  "phase": "pilot_preparation_not_completed_experiment",
+  "method": "enrichment100-v1-pilot",
+  "index_version": "frida_clean-9002p-35e591d4",
+  "sample_sha256": "4a6f6ce2706b43e46282b12d3b61e0a81ac1f9563c56d754df1a69a4fc32e7ab",
+  "index_hashes": {
+    "docs.json": "bc82f4db69428f3b6f113ac2f23e84e9de4a2f477d55cd77cbe230694db167c8",
+    "meta.json": "da833a078d4e50059c0530fb75cfc3736f1a68793048784dc5eb55d8aebec16e",
+    "index.faiss": "527a925a3320ea7021876337fed7f892746549c32bc38c7c5330d43eebd873eb",
+    "vectors.npy": "79b57888d45845c02ab1790d835ab2c0083cd6238c57de8fc1aa891e181531e0"
+  },
+  "live_health_rechecked": false,
+  "selection_unique_ids": 100,
+  "suspect_merge_profiles": 3,
+  "historical_transport_failures": 10,
+  "runs": [
+    {
+      "cohort": "pilot",
+      "seconds": 9.114,
+      "requests_total": 10,
+      "stopped": false,
+      "paid_api_cost": 0,
+      "external_llm_calls": 0
+    },
+    {
+      "cohort": "pilot",
+      "seconds": 16.014,
+      "requests_total": 21,
+      "stopped": false,
+      "paid_api_cost": 0,
+      "external_llm_calls": 0
+    }
+  ],
+  "identity_error_rate": null,
+  "recruitment_error_rate": null,
+  "human_review_minutes": null,
+  "agent_manual_review_minutes": null,
+  "criteria_agreed_by_human": false,
+  "profiles_with_shared_work_titles": 7,
+  "page_comparison": {
+    "mode": "same cached HTML, extraction only",
+    "crawl4ai_version": "0.9.4",
+    "llm_calls": 0,
+    "pages": [
+      {
+        "page": "0",
+        "html_sha256": "ed0b4f575a14fe4bdf1fa9e8433e84f0449f1542e90a44f26ff117d8e6803e95",
+        "baseline_seconds": 0.002736,
+        "crawl4ai_seconds": 0.005397,
+        "baseline_chars": 16726,
+        "crawl4ai_chars": 19515,
+        "baseline_links": 27,
+        "baseline_links_in_markdown": 24,
+        "html_table_count": 0,
+        "table_semantics_reviewed": false,
+        "year_tokens": 37,
+        "year_tokens_preserved": 37,
+        "attachment_links": 0,
+        "attachments_in_markdown": 0,
+        "attachment_contents_tested": false,
+        "text_completeness_reviewed": false,
+        "manual_correction_minutes": null,
+        "live_browser_loading_tested": false
+      },
+      {
+        "page": "1",
+        "html_sha256": "3e084119fffe4ec7c244e6ba7886ffec77dc93adb4dbf1bcd7b9f558bf3f1af0",
+        "baseline_seconds": 0.006059,
+        "crawl4ai_seconds": 0.00862,
+        "baseline_chars": 6503,
+        "crawl4ai_chars": 8326,
+        "baseline_links": 9,
+        "baseline_links_in_markdown": 8,
+        "html_table_count": 0,
+        "table_semantics_reviewed": false,
+        "year_tokens": 2,
+        "year_tokens_preserved": 2,
+        "attachment_links": 0,
+        "attachments_in_markdown": 0,
+        "attachment_contents_tested": false,
+        "text_completeness_reviewed": false,
+        "manual_correction_minutes": null,
+        "live_browser_loading_tested": false
+      }
+    ],
+    "note": "Counts and lengths are diagnostics, not measured extraction accuracy"
+  }
+}
