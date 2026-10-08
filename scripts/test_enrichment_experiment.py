@@ -177,6 +177,35 @@ class EnrichmentTests(unittest.TestCase):
             factory.return_value.__enter__.return_value.get.assert_not_called()
             self.assertEqual(len(list((root / "requests").glob("*.json"))), before)
 
+    def test_interruption_after_raw_recovers_without_network_or_overwrite(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            rules = self.setup_root(root)
+            raw_hashes = {}
+            for i in range(10):
+                path = root / "raw" / f"0000-0000-0000-{i:04d}.json"
+                write_new(
+                    path,
+                    {
+                        "person": {
+                            "emails": {
+                                "email": [{"email": "public@example.org", "visibility": "public"}]
+                            }
+                        }
+                    },
+                )
+                raw_hashes[path] = sha(path)
+            with (
+                patch("enrichment_experiment.httpx.Client") as factory,
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                run_orcid(root, "pilot", "research@example.org", rules)
+            factory.return_value.__enter__.return_value.get.assert_not_called()
+            self.assertEqual(len(latest_results(root)), 10)
+            self.assertTrue(all(row["recovered_from_raw"] for row in latest_results(root).values()))
+            self.assertTrue(all(sha(path) == digest for path, digest in raw_hashes.items()))
+            self.assertEqual(len(list((root / "cache").glob("*.json"))), 10)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,8 +7,10 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import sqlite3
+import tempfile
 import time
 from collections import Counter
 from datetime import UTC, datetime
@@ -69,10 +71,22 @@ def read(path: Path) -> Any:
 def write_new(path: Path, value: Any) -> None:
     """Не перезаписывать снимки и результаты, даже при повторном запуске."""
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    with path.open("x", encoding="utf-8") as stream:
-        json.dump(value, stream, ensure_ascii=False, indent=2)
-        stream.write("\n")
-    path.chmod(0o600)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent, prefix=".enrichment-write-", delete=False
+        ) as stream:
+            temporary = Path(stream.name)
+            json.dump(value, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        # Атомарно публикует завершённый файл, FileExistsError сохраняет старый.
+        # replace/rename могли бы перезаписать уже сохранённое доказательство.
+        os.link(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def private_root(path: Path) -> Path:
@@ -330,9 +344,25 @@ def run_orcid(
             }
             if oid and not stopped:
                 cache_path = root / "cache" / f"{oid}.json"
+                raw_path = root / "raw" / f"{oid}.json"
                 if cache_path.exists():
                     cached = read(cache_path)
                     result.update(cached)
+                elif raw_path.exists():
+                    # Авария могла произойти после исходника, до derived-cache/result.
+                    # Сохранённый ответ — достаточный кэш; не повторять GET/запись raw.
+                    recovered = {
+                        "source": f"{ORCID_API}/{oid}/record",
+                        "http_status": 200,
+                        "orcid_status": "found",
+                        "checked_at": datetime.fromtimestamp(
+                            raw_path.stat().st_mtime, UTC
+                        ).isoformat(),
+                        "candidates": public_candidates(read(raw_path)),
+                        "recovered_from_raw": True,
+                    }
+                    write_new(cache_path, recovered)
+                    result.update(recovered)
                 else:
                     url = f"{ORCID_API}/{oid}/record"
                     for retry in range(3):
@@ -375,7 +405,7 @@ def run_orcid(
                             except (ValueError, AttributeError, TypeError):
                                 result.update(orcid_status="inaccessible", error="invalid_response")
                                 break
-                            write_new(root / "raw" / f"{oid}.json", record)
+                            write_new(raw_path, record)
                             result.update(orcid_status="found", candidates=candidates)
                         else:
                             result["orcid_status"] = (
