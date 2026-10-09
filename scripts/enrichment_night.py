@@ -3,6 +3,7 @@
 import argparse
 import html
 import json
+import multiprocessing
 import os
 import queue
 import sqlite3
@@ -10,6 +11,7 @@ import subprocess
 import threading
 import time
 from datetime import UTC, datetime
+from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -530,6 +532,63 @@ def remaining(batch: Batch, aid: str) -> dict[str, int]:
     }
 
 
+class HostPolicyError(RuntimeError):
+    """Host policy не закончилась в общем прерываемом бюджете."""
+
+
+def _policy_worker(
+    connection: Connection, root: Path, batch_root: Path, aid: str, url: str
+) -> None:
+    try:
+        policy(root, Batch(batch_root), aid, url)
+        connection.send(("ok", ""))
+    except ValueError as exc:
+        connection.send(("denied", str(exc)[:400]))
+    except Exception as exc:
+        connection.send(("failed", type(exc).__name__ + ": " + str(exc)[:400]))
+    finally:
+        connection.close()
+
+
+def policy_until(root: Path, batch: Batch, aid: str, url: str, deadline: float) -> None:
+    """DNS, body и crawl-delay ограничены общим monotonic deadline, не chunk timeout."""
+    if time.monotonic() >= deadline:
+        raise HostPolicyError("Host policy deadline до DNS/robots")
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    process = context.Process(
+        target=_policy_worker, args=(sender, root, batch.root, aid, url), daemon=True
+    )
+    try:
+        process.start()
+        sender.close()
+        if not receiver.poll(max(0.0, deadline - time.monotonic())):
+            raise HostPolicyError("Host policy deadline: DNS/robots/body/crawl-delay прерваны")
+        try:
+            status, reason = receiver.recv()
+        except EOFError as exc:
+            raise HostPolicyError("Host policy worker завершился без результата") from exc
+        if time.monotonic() >= deadline:
+            raise HostPolicyError("Host policy результат после общего deadline")
+        if status == "denied":
+            raise ValueError(reason)
+        if status != "ok":
+            raise HostPolicyError(reason)
+    finally:
+        if process.pid is not None:
+            if process.is_alive():
+                process.terminate()
+            process.join(timeout=0.25)
+            if process.is_alive():
+                process.kill()
+                process.join(timeout=0.25)
+            if process.is_alive():
+                raise HostPolicyError("Host policy worker не остановился после kill")
+            process.close()
+        receiver.close()
+        sender.close()
+
+
 def permission(
     root: Path,
     batch: Batch,
@@ -555,7 +614,12 @@ def permission(
             kind, target = "page", args["url"]
             if urlparse(target).path == "/robots.txt":
                 raise ValueError("Host-only robots; model read forbidden")
-            policy(root, batch, aid, target)
+            deadline = min(
+                time.monotonic() + 25,
+                started + 360,
+                time.monotonic() + HARD_STOP.timestamp() - time.time() - 5,
+            )
+            policy_until(root, batch, aid, target, deadline)
         else:
             raise ValueError("Unapproved source tool")
         operation = reserve(root, batch, aid, kind, target)
@@ -715,16 +779,25 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
     messages: list[dict[str, Any]] = []
     partial_usage: dict[str, int] = {}
     done = False
+    host_error: str | None = None
     seen: set[str] = set()
 
-    def consume_host() -> None:
+    def consume_host(*, accept_reservations: bool = True) -> None:
         nonlocal done
         for row in host_events(directory / "pi", seen):
             kind = row["type"]
             if kind == "reserve":
                 if row.get("probe"):
                     raise ValueError("Probe запрещён в содержательном job")
-                response = permission(root, batch, aid, row, started, pending)
+                if accept_reservations:
+                    response = permission(root, batch, aid, row, started, pending)
+                else:
+                    response = {
+                        "id": row["id"],
+                        "allowed": False,
+                        "reason": "Collector stopped: новая host policy запрещена",
+                        "budget": remaining(batch, aid),
+                    }
                 immutable(directory / "pi" / f"{row['id']}.permission.json", encoded(response))
             elif kind == "mcp_result":
                 finish_source(root, batch, aid, directory, row, pending)
@@ -771,7 +844,11 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
         threading.Thread(target=pump, daemon=True).start()
         try:
             while time.monotonic() - started < 595 and datetime.now(UTC) < HARD_STOP:
-                consume_host()
+                try:
+                    consume_host()
+                except HostPolicyError as exc:
+                    host_error = str(exc)
+                    break
                 try:
                     line = lines.get(timeout=0.25)
                 except queue.Empty:
@@ -809,7 +886,9 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
                 except subprocess.TimeoutExpired:
                     process.kill()
             code = process.wait()
-            consume_host()
+            consume_host(accept_reservations=False)
+    if host_error is not None:
+        done = False
     elapsed = time.monotonic() - started
     immutable(
         directory / "finished.json",
@@ -820,6 +899,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
                 "done": done,
                 "exit_code": code,
                 "pending_operations": [row[0] for row in pending.values()],
+                "host_policy_error": host_error,
             }
         ),
     )
@@ -838,6 +918,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
         "token_usage": usage,
         "cost_usd": None,
         "wall_elapsed_seconds": elapsed,
+        "host_policy_error": host_error,
         "completed_messages": len(messages),
         "model_requests": len(list((directory / "pi").glob("*-model-request-config.json"))),
         "usage_complete": done and code == 0 and not pending and not access_stopped(root),

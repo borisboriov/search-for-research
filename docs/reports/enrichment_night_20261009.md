@@ -1,213 +1,250 @@
-# Ночной ограниченный конвейер, 09–10.10.2026
+# Ограниченный конвейер и экономия GPT, ночь 09–10.10.2026
 
-Работа в PR [#194](https://github.com/borisboriov/search-for-research/pull/194),
-issue #193. [Поручение и жёсткий дедлайн](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6086727260).
-Исходная передача: чистый `a4c7d93545f2abaa311df6fe39c8689e60d1346a`,
-worktree `/private/tmp/sfr-enrichment100-20261008`, ветка `codex/enrichment100-20261008`.
-Основной разработчик requested Sol6.1/high; backend собственной сессии не раскрыт.
-Нельзя менять корневой checkout, production, продуктовые документы и паспорт.
+PR [#194](https://github.com/borisboriov/search-for-research/pull/194), issue #193.
+[Поручение Бориса](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6086727260).
+Переданная ветка `codex/enrichment100-20261008`, исходный чистый head
+`a4c7d93545f2abaa311df6fe39c8689e60d1346a`.
 
-## Этап 1: штатный CLI и ограничение сборщика
+Завершены 12/12 основных профилей. Конвейер сохраняет публичные
+источники, дословные доказательства, независимый Sol/high и читаемые карточки.
+Результат технического эксперимента остаётся в ветке; продуктовой приёмки,
+merge и выкладки нет. Human_reviewed=0 на всех стадиях.
 
-Первый метод [bounded-v1](../experiments/enrichment_cli_bounded_v1.md),
-исправленный [bounded-v2](../experiments/enrichment_cli_bounded_v2.md).
-Старые SDK-runner и stopped roots сохраняются. Новое исполнение запускает штатный
-`pi --mode json`, без собственного `ModelRuntime`/`streamSimple`/model API вызова.
-Session-local расширение использует документированный MCP extension factory
-для сериализации/сохранения источников, а native Pi выполняет модель и авторизацию.
-Новые физические source calls разрешает обычный host, с точным остатком
-4 поисков/8 ресурсов включая robots; источники прекращаются перед шестым
-model request/после360с/исчерпании ресурсов, весь job600с, concurrency1.
-Потоковые снимки на каждый token-delta не создаются: конечные сообщения,
-необходимые события, raw MCP и промежуточные числовые usage учитываются раздельно.
-Отказ/таймаут даёт сохранённый partial/unknown и блокирует зависимые задания,
-не выдаётся за нормальное завершение модели.
+Числа ниже автоматически сформированы из сохранённых receipts/results в
+[числовом артефакте](enrichment_night_20261009.metrics.json); SHA исходных
+измерений включены в него. Деньги, фактический backend и неизвестные значения
+не подставлены из конфигурации или API-прайсов.
 
-Pi может проглотить ошибку extension handler. Поэтому sticky блокировка
-проверяется также перед физическим fetch: ошибка сохранения/контракта/очереди
-не разрешает следующий вызов. Некорректные цитаты сохраняются в rejection;
-только дословные фрагменты реально прочитанных страниц идут в независимый Sol/high.
-Человеческая проверка0. Структурная пригодность и агентская оценка не эталон фактов.
+## Метод и сохранность
 
-Реальный CLI preflight без inference выполнен в
-`/private/tmp/sfr-night-cli-probe-20261009/cli-preflight`:
-effective `zai/glm-5.3-flash/high`, ровно два active source tools,
-automatic/provider retries0, warming/compaction off, model requests0.
-Это проверка конфигурации/доставки расширения, не успешный сбор профиля.
-Свежие ID фиксируются отдельным manifest перед первым содержательным запросом;
-исключаются все прежние выбранные ID, включая неуспешные и не запущенные.
+Сборщик использует документированный native Pi CLI, `zai/glm-5.3-flash/high`,
+session-local MCP extension и host budget: 4 search, 8 resources **включая
+host-only robots**, максимум 6 model requests, concurrency1, 600с на job.
+V4 прекращает источники перед пятым запросом/через360с/при исчерпании бюджета;
+последнее user сообщение требует законченный JSON. Retry0, compaction/warming off.
+См. [bounded-v4](../experiments/enrichment_cli_bounded_v4.md).
 
-## Подписки и условия
+Sol6.1/high выполняется штатным Codex CLI в отдельном пустом workspace без
+tools/MCP/browser. Запрошенные model/effort фиксируются; actual backend/model
+metadata и число физических provider requests native Codex не раскрыты/null.
+Receipt, raw, events и prompt сверяются по SHA; схема проверяется до нормализации
+служебного provenance. Цитаты связываются с буквальными reader фрагментами.
+Групповой набор не переносится на человека, email не считается готовностью.
+Content date и checked_at разделены; отсутствие сведений остаётся unknown.
+Обязательные домашние сообщения native Codex — ограничение клиента; домашние
+файлы намеренно не включались в задания, профильные материалы не сокращались.
 
-На старте официальный Codex tool показал used58%, remaining42% недельного
-account-wide окна; дельта отдельной сессии не установлена. Reset-credit не используется.
-Официальная GLM quota page в доступном in-app browser требует входа: фактическая
-квота/тариф/списание неизвестны, login и покупки не выполнялись.
+Fixed sample закреплена до calls: 12 вузов, прежние выбранные ID исключены,
+включая неуспешные/не запущенные. Первые три результата восстановлены/переиспользованы
+из предыдущего раунда, остальные девять выполнены v4. Это смешанный ряд v2/v4,
+а не двенадцать независимых прогонов одной версии.
 
-На09.10 [официальная страница Pi](https://docs.z.ai/devpack/tool/pi) описывает
-штатный клиент, а [overview](https://docs.z.ai/devpack/overview) включает
-research/office и автоматизацию через поддерживаемые инструменты.
-[Условия подписки, §4](https://docs.z.ai/legal-agreement/subscription-terms)
-ограничивают SDK/general-purpose API и предоставление модельных возможностей
-третьим лицам. Поэтому старый embedded runner не запускается. Малый личный
-прогон через CLI не доказывает допустимость массового продуктового использования;
-до масштаба это отдельное неизвестное, без попыток обхода и обращения в поддержку.
+Сохранены все неуспехи: v1 первый collector потерял IPC stdout (39,996с,
+1 request, known3440tokens, no sources); второй collector v2 был штатным,
+но host dictionary checker упал до Sol; v3 восстановил его raw офлайн без
+третьего GLM. На четвёртом профиле первый collector завершил6requests
+обещанием JSON без JSON (180,603с,52670tokens); v4 выполнил только вторую
+исправленную попытку. Подробности: [v2](../experiments/enrichment_cli_bounded_v2.md),
+[recovery](../experiments/enrichment_cli_recovery_v1.md). Автоматических повторов нет.
+Пустые v3 и первый compact root остановлены до inference, сохранены со STOP.
 
-Документарные GLM лимиты/кредитная формула из overview не являются реальным
-платежом или измеренной квотой аккаунта. $100–200/месяц относится к GPT/Codex
-подписке, плюс GLM; API-стоимость не подставляется вместо этих расходов.
+Заключительная SHA/size/file-list сверка **True**:
+9 roots,
+124,917 файлов,
+добавлений/удалений/изменений0. Старые метрики/разметка/STOP/raw не переписаны.
+Ранний checkpoint03 ошибочно предполагал native requests=1/job;
+он сохранён как история, текущий агрегат использует null.
 
-## Проверки и текущие ограничения
+## Покрытие двенадцати профилей
 
-Подготовительные `make lint/typecheck/test` прошли:186 unittest и388 pytest,
-8 skipped/5 deselected, coverage94,06%. Профильные фикстуры —6 Python/3 Node,
-общие транспортные Node17 также проходят. Реальный CLI preflight прошёл без
-model request. `docs-check` с действующим `SFR_INDEX_META` прошёл. Strict audit выполнен:
-FAIL deps-node/fs-trivy (HIGH sharp/source-map-js), известный #189.
-Независимое ревью первого нового head `4c6516fd` — fail, три находки
-(IPC stdout, quota stop, общий deadline). Исправления v2 проверяются отдельно.
-CI нового head и readonly handoff — обязательные этапы; прежний #189
-не исправляется этой работой и критерии не ослабляются.
+| Вуз / OpenAlex ID | Кандидаты | Положительное покрытие исходных полей, атомы | Поля | Identity / current affiliation / activity |
+|---|---:|---:|---|---|
+| Иннополис / A5079662185 | 7 | 0 | unknown | supported / insufficient / supported |
+| ВШЭ / A5047730452 | 4 | 1 | topic | supported / supported / supported |
+| МАИ / A5041484793 | 0 | 0 | unknown | insufficient / insufficient / insufficient |
+| МГТУ / A5068285041 | 0 | 0 | unknown | insufficient / insufficient / insufficient |
+| МГУ / A5061174451 | 7 | 4 | personal_contact, supervision_history, supervisor_role | supported / supported / supported |
+| МФТИ / A5040643973 | 2 | 1 | topic | supported / insufficient / insufficient |
+| МИСиС / A5039855737 | 0 | 0 | unknown | insufficient / insufficient / insufficient |
+| МИФИ / A5053581596 | 0 | 0 | unknown | insufficient / insufficient / insufficient |
+| НГУ / A5026442137 | 5 | 2 | personal_contact | supported / supported / supported |
+| СПбГУ / A5039216145 | 0 | 0 | unknown | insufficient / insufficient / insufficient |
+| ИТМО / A5011844904 | 0 | 0 | unknown | insufficient / insufficient / insufficient |
+| УрФУ / A5008895365 | 2 | 1 | topic | supported / supported / insufficient |
 
-Первый v1 collector для A5079662185 занял39,996с:3440 total tokens
-(2547 input,189 output,704 cached input;132 reasoning входят в output),
-1 model request,0 source calls. Native CLI перехватил stdout extension в stderr:
-разрешение host не доставилось. Done=false, partial/unknown; Sol не запущен.
-Неизменный root `/Users/boris/Experiments/search-for-research/enrichment-night-cli-v1-20261009`
-и его STOP сохраняются.
+Итого кандидатных атомов 27,
+дословных цитат 30,
+отклонённых кандидатов 39,
+положительное исходное покрытие 9.
+Профессиональные контакты/история руководства найдены у
+2 профилей.
+Подтверждённого published_recruitment/direct_willingness/coordinator_contact нет.
+У 6 профилей нет пригодных атомов.
+Дополнительные/исторические поддержанные факты перечислены отдельно в JSON
+и карточках; они не увеличивают исходное покрытие18полей.
+Существующие темы/публикации взяты из каталога, не собирались заново.
+Идентификационная оценка Sol не является измеренной человеческой точностью;
+для этих12 нельзя заявлять долю ложной идентификации/набора по независимому эталону.
 
-Исправленный v2 использует атомарные durable host-event файлы и учитывает
-429 внутри MCP HTTP200 до следующего модельного запроса и до зависимых/новых jobs.
-Probe+verifier ограничены единым абсолютным дедлайном с запасом5с.
-Реальный CLI preflight в `/private/tmp/sfr-night-cli-ipc-probe-v2-20261009`
-прошёл reserve→permission→result→done с локальным transport fixture:
-model requests0, физических source calls0, ipc_roundtrip=true.
-Это проверка IPC, не сбор данных. V2 закрепляет те же ID/вузы v1 с provenance
-повтора, максимум второй collector attempt первого профиля.
+Локальные карточки:
+`/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/cards-final-12.html`.
+Открытие в native Codex file panel queued для скрытого технического чата.
+HTML/экранирование/ссылки проверены статически; визуальная браузерная проверка
+не выполнена из-за ограничения file URL, обхода не было.
 
-Содержательных collector/verifier/judge jobs нового этапа пока1/0/0;
-карточек/экономии/точности/масштабируемости не заявляем. После04:30 новые
-профили и партии запрещены, до04:50 сохраняются результаты и условия продолжения,
-в05:00 работа прекращается независимо от готовности. Следующий запуск требует
-нового поручения Бориса после ночной остановки. #193/#47/#103 открыты.
-Предложений правок паспорта нет; результат не принят продуктовым потоком.
+## Сравнение GPT
 
-## Завершённый v2 collector и восстановление v3
+[Пререгистрация](../experiments/enrichment_gpt_compact_v1.md): три старых сложных
+входа, шесть новых Sol/high jobs, одна и та же полная source JSON и все identity
+anchors/цитаты. Baseline — полная инструкция со schema в prompt+output-schema;
+compact — [краткая инструкция](../experiments/enrichment_verifier_compact_v1.md)
+и schema только в output-schema. Два слепых Astra/xhigh judges, случайные A/B,
+без названия варианта, model/usage/provenance; packet/mapping/seals связаны с raw.
+Порог input≥15%, input+output≥10%, correct atoms/axes не ниже baseline,
+нет новых/усиленных конкретных high/critical. Время/кэш зависят от порядка,
+это не причинная оценка ускорения и не универсальная оценка экономии.
 
-Второй collector attempt A5079662185 завершился штатно: done=true,exit0,pending=[];
-233,257с,5model requests,2search+2hostrobots+3reader. Raw Pi receipt:
-30761 uncached input,9216cached read,11885output (включая8958reasoning),
-totalTokens51862. Pi input исключает cached read; cached+input+output дают total,
-reasoning отдельно не прибавляется. Это не денежная стоимость/квота.
+| Вариант, 3 jobs | Input | Output | Cached input | Reasoning в output | Input+output | Сумма секунд |
+|---|---:|---:|---:|---:|---:|---:|
+| baseline | 50 053 | 8 446 | 0 | 3 168 | 58 499 | 204.10 |
+| compact | 45 181 | 7 101 | 8 320 | 2 213 | 52 282 | 166.73 |
 
-Postflight host упал KeyError:properties: checker рассчитан на фиксированные
-объекты и не поддерживал evidence_pool.additionalProperties. Native verifier
-не запускался. V2root/STOP сохраняются. [V3 recovery](../experiments/enrichment_cli_recovery_v1.md)
-исправляет проверку dictionary по схеме и копирует исходные данные в новыйroot:
-третий collector job не нужен и запрещён. Модельная инструкция остаётсяv2;
-новый method/code hash фиксируется отдельно.
+Снижение input: 9.7%; input+output: 10.6%. Допуск свежего контроля: **False**.
 
-Офлайн probe `/private/tmp/sfr-night-recovery-probe-v3-20261009` восстановил
-последний assistant, проверил идентификаторы/schema/дословность и Batch.submit:
-7атомов,9literal evidence,3rejections. Raw stdout SHA до/после копии одинаков:
-`bfc84658789ec033f21ca474145b03e0fe925b5fb2b77f72323b04dd746e36f6`.
-Дополнительных inference/source calls0. Это пригодность сохранённого входа,
-не независимая фактологическая оценка: первая Sol проверка ещё нужна.
+| Вариант | Correct atoms | Correct axes | High/critical |
+|---|---:|---:|---:|
+| baseline | 10 | 8 | 2 |
+| compact | 6 | 8 | 0 |
 
-Предзапусковое независимое ревью dbde249ee7585020e1ff5bdae509db4f6a832d85
-закрыло прежние3 находки, pass/blocking0; относится к исправлениямv2,
-не к итоговой приёмке. Strict audit v2 повторён, FAIL#189; остальные этапыPASS.
-SHA-индекс7 прежних roots до исправленного запуска сохранён в v2/prior-roots-before.json;
-после всей работы требуется заключительная сверка.
+Новые/усиленные high/critical: `[]`. Это агентская слепая проверка, не human ground truth.
 
-Проверки исправленного postflight: make lint/typecheck/test PASS,190unittest,
-388pytest,coverage94,06%; Node21 и docs-check actualmeta PASS.
-Дополнительный тест сохраняет прежний строгий запрет лишних полей; dictionary
-разрешён только явным typed additionalProperties, его вложенные поля обязательны.
+| Вариант | Оценка | Severity | Тип ошибки | Количество |
+|---|---|---|---|---:|
+| baseline | atom_evaluations | high | identity | 2 |
+| baseline | atom_evaluations | high | object_relation | 2 |
+| baseline | profile_evaluations | medium | text | 1 |
+| compact | atom_evaluations | medium | object_relation | 6 |
+| compact | profile_evaluations | medium | text | 1 |
 
-## Первый полный профиль
+Одна оценка может иметь несколько типов ошибки, строки не суммируются в число неверных атомов. Конкретные оценки без source/contact текста сохранены в JSON. Полная инструкция тоже не даёт эталона и требует отдельной фактологической приёмки.
 
-Рабочий root: `/Users/boris/Experiments/search-for-research/enrichment-night-cli-v3-fixed-20261009`,
-manifestSHA `d25523d776b6d667aee04c0c3c771710421422e72972cc736150320606f9ec09`.
-Независимый recovery-review head ebf64b482cf4d2f4ad2d7d6f0edeadebac5f69e9:
-pass/blocking0; доказана пригодность сохранённого входа, не качество фактов.
-Первый independent Sol/high завершён:106,419с,17872input,3770output
-(включая1280reasoning),cached0,tool/source calls0. Общий token total21642.
+Свежий контроль не запускался: условие допуска сравнительного этапа не выполнено.
+Метод дополнительного этапа: [fresh compact control](../experiments/enrichment_fresh_compact_control_v1.md).
 
-Sol:identity supported,activity supported,current_affiliation insufficient.
-7атомов,1полностью поддержанный дополнительный факт (nationality);
-положительное покрытие18 исходных полей0. Контакты/история из отдельного PDF
-не получили достаточной связи с личностью; сложные смешанные атомы отклонены;
-текущий набор не установлен. Завершение конвейера не доказывает качество
-обогащения, а unknown не считается отказом человека. Ещё2 профиля идут
-последовательно; переход к12 зависит от пригодности этих результатов.
+## Физическая работа и расходы
 
-Квота перед следующей партией:Codex used61%/remaining39% accountwide.
-GLM фактическая квота/деньги/дельта unknown, reset-credit не используется.
+Общий учёт включает неуспехи и дедуплицирует копии одного receipt/agent_id;
+started без receipt учитывается как partial. Reasoning входит в output,
+cached input — часть input. Pi cached read прибавляется к uncached input
+один раз; native Codex input уже включает cache. Ниже full total unknown
+при неполном usage, известный subtotal сохранён отдельно.
 
-Метод будущего сравнения [compact-v1](../experiments/enrichment_gpt_compact_v1.md)
-фиксируется до его model calls:3 использованных сложных saved inputs,
-полный baseline vs краткий [verifier](../experiments/enrichment_verifier_compact_v1.md),
-источники побайтно одинаковы,2blind Astra/xhigh judges; пороги15%input/10%total,
-нет новых high/critical и нет снижения correct. Сравнение только после12
-пригодных pipeline results. Сейчас сравнительных jobs0, экономия не заявляется.
-Отдельный renderer карточек использует сохранённые оценки, цитаты и даты;
-поддержанные дополнительные/исторические факты не смешиваются с положительным
-покрытием исходных полей; темы берутся из каталога.
+| Стадия | CLI jobs | Сумма секунд | Полный input+output | Known subtotal | Физические model requests |
+|---|---:|---:|---:|---:|---:|
+| collector | 14 | 3022.57 | unknown | 631 936 | 69 |
+| comparison_verifier | 6 | 370.82 | 110 781 | 110 781 | unknown |
+| judge | 2 | 260.87 | 51 286 | 51 286 | unknown |
+| native_verifier | 12 | 622.24 | 224 456 | 224 456 | unknown |
 
-## Остановка четвёртого профиля и ограниченный v4
+Физические source operations за всю ночь (включая неуспехи):
+search 41,
+reader 33,
+host robots 30.
+Budgets без receipt: 0.
 
-После трёх completed четвёртый collector A5068285041 завершил шесть физических
-model requests ответом «составляю итоговый JSON» без объекта JSON.
-180,603 с, input29997 + cacheRead15360 + output7313 = total52670;
-reasoning6688 входит в output. Done=true/exit0 не считаются завершением задания:
-completion-status=invalid_model_output, dependent Sol и остальные профили остановлены.
-Root v3-fixed и STOP сохраняются.
+Работа основного разработчика и независимого ревьюера отдельно, cumulative
+numeric token_count на указанный cutoff; повторные snapshots не суммируются.
+Большая часть input — cached, время включает ожидания/перекрывающиеся jobs и
+не является чистым временем разработки. Последующие публикации/финальное ревью
+после cutoff не входят; raw журналы/домашние сообщения не экспортировались.
 
-V4 закрывает источники перед пятым запросом и передаёт последним user сообщением
-требование полного JSON без вступления или обещания. Предел шесть запросов,
-600 с и бюджеты4/8 сохраняются. Новый отдельный root переиспользует первые
-три результата без новых calls; только четвёртый допускает вторую исправленную
-попытку. Перед расширением v4 нужны три completed на профилях4–6.
+| Актор | Cutoff UTC | Input | Cached input | Output | Reasoning в output | Интервал секунд |
+|---|---|---:|---:|---:|---:|---:|
+| independent_code_review | 2026-10-09T20:25:50.983Z | 15 001 937 | 14 268 544 | 68 729 | 26 609 | 6884.75 |
+| technical_session_orchestration | 2026-10-09T20:33:14.888Z | 35 358 874 | 34 515 968 | 247 182 | 115 363 | 8297.93 |
 
-Ревью 8b8bde8 выявило один Medium блокер сравнительного runner: производная
-validated.json не была связана с первичным raw. До любых сравнительных calls
-добавлены сравнение raw→result (у verifier только нормализация provenance),
-сверка receipt/events/prompt и seal/содержимое packet→unblinding→проверенные ответы.
-Пять offline тестов подтверждают отказ при подмене verdict/grade/receipt/mapping.
-Первый compact root имел0 сравнительных calls; он остановлен, нужен новый freeze.
+Официальные account-wide quota snapshots находятся в JSON. На старте
+Codex used58%/remaining42%; дельта этой сессии не отделена от других чатов.
+При remaining≤15% новые GPT jobs запрещены, reset-credit/покупки не использовались.
+GLM actual tier/quota/debit/payment unknown: официальная quota page требовала login.
+API-цены не используются для пересчёта подписки. Цель $100–200/месяц на
+GPT/Codex плюс GLM пока не подтверждена измеренным платежом/лимитом.
 
-Ревью7797a2c подтвердило закрытие прежнего Medium и отсутствие открытых
-блокеров в самостоятельном v4 scope, включая873 прежних файлов без изменений.
-Оно выявило новый Medium в compact response: strict schema проверялась после
-служебного provenance. Порядок исправлен; положительный тест использует полную
-verify schema и semantic-v3 и подтверждает успешное чтение корректного raw.
-Сравнительные calls по-прежнему0 до исправленного подтверждения.
+## Условные сценарии 60 дней
 
-Числовой runner `scripts/enrichment_night_metrics.py` читает receipts/results,
-сверяет native raw/events/prompt, дедуплицирует physical agent_id и проверяет
-одинаковость copied receipts. Cached input/reasoning — подмножества, не
-дополнительные токены; failed collector attempts считаются физической работой.
-Условные сценарии17/167 профилей в день не доказывают выполнимость: human time,
-реальная квота/платёж и разрешение массового продукта неизвестны.
-Они отдельно исключают разработку/review/ошибки/очереди. Текущий каталог9002
-не покрывает10000 различных людей. Documentary GLM credits не фактический
-subscription debit и не сумма денег. Human_reviewed0.
+Линейная экстраполяция только 12 completed profiles
+с mixed-method baseline verifier; исключает ошибки, разработку, ревью,
+очереди и человеческую работу. Если свежий compact control выполнен, его
+отдельный denominator2 приведён в JSON, с основным рядом не смешан.
 
-Ревью566d20e закрыло compact schema/provenance и не нашло новых блокеров
-самостоятельного comparative runner. Новый Medium/Low относится к измерениям:
-started без receipt пропускался; native request count подставлялся как1.
-Исправлено: started attempts с partial/unknown и known sub-total, полные суммы
-null при неполном учёте. Число native provider requests неизвестно/null, CLI jobs
-считаются отдельно. Client turn.completed usage при отсутствующем receipt
-сохраняется как известный subtotal, не как доказанный полный job outcome.
-Checkpoint03 — прежний проверенный снимок3completed с предположением requests3,
-не текущий итог; его не перезаписываем.
+| Цель | Профилей/день | Последовательные model часы/день | GPT tokens/день | Документарные GLM credits/день |
+|---|---:|---:|---:|---:|
+| 1000 | 17 | 1.35 | 317 979 | 237.31–359.02 |
+| 10000 | 167 | 13.24 | 3 123 679 | 2331.24–3526.88 |
 
-Следующий условный этап реализован отдельно: `enrichment_night_control.py`,
-[одноответный контроль](../experiments/enrichment_fresh_compact_control_v1.md).
-До eligible сравнения root/выборка/calls этого этапа не создаются.
-Только2 новых ID после исключения всех прежних sample, тот же bounded-v4
-collector, выбранный компактныйSol и1 дополнительный одноответныйAstra.
-Native raw/receipt/wrapper сверяются, B не выдумывается. Метрики перечисляют
-comparison_verifier и judge отдельными стадиями, включая partial/unknown.
+Это нагрузка при линейном сценарии, не обещание пропускной способности.
+Human hours, реальная quota capacity, subscription money и commercial scale
+permission неизвестны. Каталог содержит9002людей, поэтому10000различных
+профилей не покрывает даже исходная база. Ограниченное покрытие контактов
+и отсутствие доказанного набора дополнительно ограничивают продуктовую ценность.
+
+[Официальный Pi](https://docs.z.ai/devpack/tool/pi) поддерживает штатный клиент.
+[Overview](https://docs.z.ai/devpack/overview) описывает research/office и
+автоматизацию в поддерживаемых инструментах, квоты Lite/Pro/Max
+2000/12000/28000 за5ч и10000/60000/140000 за неделю. Документарная формула
+Flash credits: `(uncached_input×2.3+cached_input×0.56+output×8)/10000`;
+model off-peak0.5x, search/reader1.2credit; host robots не MCP credit.
+Это не проверенный tier/debit аккаунта. [Subscription terms §4](https://docs.z.ai/legal-agreement/subscription-terms)
+ограничивает SDK/general-purpose API и предоставление модели третьим лицам.
+Личный native CLI pilot не доказывает допустимость массового продукта;
+условия масштабирования остаются отдельным блокером без обхода.
+
+## Проверки, ревью и передача
+
+`make lint/typecheck/test` PASS:206unittest,388pytest,8skipped/5deselected,
+coverage94,06%; Node21 и docs-check с действующим index meta PASS.
+Реальный native CLI preflight —0 inference, local IPC fixture прошёл.
+Offline integrity/schema/mapping/partial-accounting/control/host deadline tests входят в206.
+CI измеренной версии `a59169ea45b42d11daeebcedad9170d242ba1582`:
+[checks и web PASS](https://github.com/borisboriov/search-for-research/actions/runs/37982634995),
+[audit FAIL](https://github.com/borisboriov/search-for-research/actions/runs/37982635088).
+
+Strict audit `--no-images --strict` FAIL deps-node/fs-trivy: HIGH sharp0.35.4
+(GHSA-wq5f-xc86-pv6w) и source-map-js1.2.1 (CVE-2026-93749), известный#189.
+Зависимости/критерии не менялись. Stock Docker history scanner в linked worktree
+проверил0commits из-за внешнего commonGit; это ограничение явно сохранено.
+Дополнительная проверка с двумя read-only mount реальных путей проверила
+456commits/10.84MB, no leaks. Остальные code/Python/container audit stages PASS.
+
+Независимый sfr-reviewer закрыл находки IPC/quota/deadline, dictionary/schema,
+raw integrity/provenance order, partial jobs/provider request accounting.
+[Предзапусковой pass на a59169e](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6088210012)
+относится к коду, не к последующим outcomes. [Полный проход21файла на a59169e](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6088682667)
+отменил его: один Medium блокер синхронного host policy, который мог нарушить
+600с/HARD_STOP при медленном DNS/robots/body/crawl-delay.
+
+После завершения всех измерений исправлен [host deadline](../experiments/enrichment_cli_host_deadline_v1.md):
+policy изолирована в child process, parent ждёт до min25с/source360с/HARD_STOP−5с,
+terminate/kill имеют bounded joins. Timeout останавливает CLI, сохраняет
+partial/unknown и блокирует dependent Sol; поздние reserve не запускают policy.
+Реальные hung-worker/ignored-SIGTERM/local-CLI фикстуры проходят.
+**Новых collector/verifier/judge jobs этого исправленного кода нет**: результаты12 и
+сравнение относятся к прежним frozen core hashes, копии21исходника на a591
+сохранены в private validation/source-at-a591/source-index.json. Старый root
+не возобновляется после изменения core; будущий запуск требует нового freeze.
+
+Итоговый exact-head review и
+CI/handoff публикуются в PR после коммита этого отчёта; старый legacy диапазон
+PR до a4c7d93 не выдаётся за полностью прочитанный в ночном scope.
+
+DoD:12completed/card export, immutable receipts/failed rounds,
+matched comparison и проверка условия свежего контроля, числовой учёт/сценарии,
+independent review выполняются в пределах этой ночи. Фактический исход
+условного контроля указан выше, отрицательный допуск не разрешает его запуск.
+Audit/green handoff не
+выполнен из-за#189; human quality/payment/scale terms не установлены.
+#193/#47/#103 остаются открыты. Нет merge/deploy/main push, product docs,
+паспорт/CustDev не менялись; предложений ячеек паспорта нет.
+Работа останавливается по завершении раньше05:00МСК, новые inference партии
+после04:30 запрещены. Неуспехи не повторяются автоматически; дальнейшая
+работа после ночной остановки требует нового поручения Бориса.

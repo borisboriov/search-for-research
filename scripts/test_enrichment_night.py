@@ -1,23 +1,34 @@
 """Регрессии ограниченного CLI-пути без источников и model inference."""
 
+import json
+import os
+import signal
+import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from collections.abc import Iterator
 from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta
+from multiprocessing.connection import Connection
 from pathlib import Path
 from typing import Any, cast
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from enrichment_batch import Batch, encoded, immutable
 from enrichment_experiment import FIELDS, sha
 from enrichment_native import deadline_timeout
 from enrichment_night import (
     METHOD,
+    HostPolicyError,
     bind,
+    collect,
     completion_status,
     host_events,
     locked,
     permission,
+    policy_until,
     remaining,
     require_access,
     run,
@@ -29,10 +40,19 @@ from enrichment_verifier_benchmark import check_schema
 class FakeBatch:
     def __init__(self, rows: list[dict[str, Any]] | None = None) -> None:
         self.rows = rows or []
+        self.root = Path("/unused")
 
     @contextmanager
     def locked(self) -> Iterator[list[dict[str, Any]]]:
         yield self.rows
+
+
+def hanging_policy_fixture(
+    connection: Connection, root: Path, batch_root: Path, aid: str, url: str
+) -> None:
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    (root / "worker-pid").write_text(str(os.getpid()))
+    time.sleep(30)
 
 
 class BoundedTests(unittest.TestCase):
@@ -178,6 +198,89 @@ class BoundedTests(unittest.TestCase):
 
 
 class SafetyRegressionTests(unittest.TestCase):
+    def test_policy_deadline_kills_real_hung_worker_including_ignored_terminate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            started = time.monotonic()
+            with (
+                patch("enrichment_night._policy_worker", hanging_policy_fixture),
+                self.assertRaisesRegex(HostPolicyError, "deadline"),
+            ):
+                policy_until(
+                    root, cast(Batch, FakeBatch()), "a", "https://example.com", started + 2
+                )
+            self.assertLess(time.monotonic() - started, 4)
+            pid = int((root / "worker-pid").read_text())
+            with self.assertRaises(ProcessLookupError):
+                os.kill(pid, 0)
+
+    def test_expired_policy_deadline_does_not_launch_dns_or_child(self) -> None:
+        with (
+            patch("enrichment_night.time.monotonic", return_value=10),
+            patch("enrichment_night.multiprocessing.get_context") as context,
+            self.assertRaisesRegex(HostPolicyError, "deadline"),
+        ):
+            policy_until(Path("/unused"), cast(Batch, FakeBatch()), "a", "https://example.com", 9)
+        context.assert_not_called()
+
+    def test_policy_timeout_preserves_partial_and_stops_real_cli_without_late_reservation(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            task = root / "task.json"
+            task.write_text("{}")
+            batch = Mock(spec=Batch)
+            batch.ticket.return_value = task
+            original_popen = subprocess.Popen
+            children: list[subprocess.Popen[bytes]] = []
+
+            def local_cli(*args: Any, **kwargs: Any) -> subprocess.Popen[bytes]:
+                child = original_popen(
+                    [sys.executable, "-c", "import time; time.sleep(30)"], **kwargs
+                )
+                children.append(child)
+                return child
+
+            reservation = {"type": "reserve", "id": "r1"}
+            late_reservation = {"type": "reserve", "id": "r2"}
+            budget = {
+                "search_remaining": 4,
+                "resources_remaining_including_robots": 8,
+                "host_robots": 0,
+                "source_reads": 0,
+            }
+            started = time.monotonic()
+            with (
+                patch("enrichment_night.HARD_STOP", datetime.now(UTC) + timedelta(minutes=5)),
+                patch("enrichment_night.access_stopped", return_value=False),
+                patch("enrichment_night.event"),
+                patch("enrichment_night.subprocess.Popen", side_effect=local_cli),
+                patch(
+                    "enrichment_night.host_events", side_effect=[[reservation], [late_reservation]]
+                ),
+                patch(
+                    "enrichment_night.permission", side_effect=HostPolicyError("fixture deadline")
+                ) as grant,
+                patch("enrichment_night.remaining", return_value=budget),
+            ):
+                result, receipt = collect(
+                    root, {"id": "a", "name": "Fixture", "institution": "Test"}, batch
+                )
+            grant.assert_called_once()
+            self.assertLess(time.monotonic() - started, 4)
+            self.assertIsNotNone(children[0].poll())
+            run_dir = result.parent
+            self.assertFalse(receipt["usage_complete"])
+            self.assertEqual(receipt["host_policy_error"], "fixture deadline")
+            self.assertEqual(
+                json.loads((run_dir / "completion-status.json").read_text())["status"],
+                "host_partial_unknown",
+            )
+            self.assertFalse(json.loads((run_dir / "finished.json").read_text())["done"])
+            self.assertFalse(json.loads((run_dir / "pi/r2.permission.json").read_text())["allowed"])
+            self.assertEqual(json.loads(result.read_text())["items"], [])
+
     def test_real_collector_dictionary_schema_checks_every_evidence_row(self) -> None:
         raw: dict[str, Any] = {
             "author_id": "a",

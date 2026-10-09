@@ -1,0 +1,1390 @@
+{
+  "method": "night-public-numeric-v1",
+  "pipeline": {
+    "pipeline_manifest_sha256": "9b4cd17ab527a3b39fa5d816129a72c58488f942242cb9c8f0fa0387f86dee84",
+    "profiles_selected": 12,
+    "profiles_completed": 12,
+    "profiles": [
+      {
+        "author_id": "A5079662185",
+        "axes": {
+          "activity": "supported",
+          "current_affiliation": "insufficient",
+          "identity": "supported"
+        },
+        "candidate_atoms": 7,
+        "collector_budget": {
+          "host_robots": 2,
+          "resources_remaining_including_robots": 3,
+          "search_remaining": 2,
+          "source_reads": 3
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 233.25749104097486,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 9216,
+          "input_plus_output": 51862,
+          "input_tokens": 39977,
+          "output_tokens": 11885,
+          "reasoning_output_tokens": 8958,
+          "uncached_input_tokens": 30761,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 9,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 339.6760989911854,
+        "rejected_candidates": 3,
+        "result_sha256": "c3e7b99fd6d6df18c7cc92b37d7ec1fac361c3ec9e53408d2ceb0b4e8201a220",
+        "supported_facts_by_field_including_additional_historical": {
+          "nationality": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 106.41860795021057,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 21642,
+          "input_tokens": 17872,
+          "output_tokens": 3770,
+          "reasoning_output_tokens": 1280,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5047730452",
+        "axes": {
+          "activity": "supported",
+          "current_affiliation": "supported",
+          "identity": "supported"
+        },
+        "candidate_atoms": 4,
+        "collector_budget": {
+          "host_robots": 3,
+          "resources_remaining_including_robots": 2,
+          "search_remaining": 0,
+          "source_reads": 3
+        },
+        "collector_model_requests": 6,
+        "collector_seconds": 216.58523991599213,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8960,
+          "input_plus_output": 65456,
+          "input_tokens": 54979,
+          "output_tokens": 10477,
+          "reasoning_output_tokens": 7485,
+          "uncached_input_tokens": 46019,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 4,
+        "original_coverage_atoms": 1,
+        "original_coverage_fields": {
+          "topic": 1
+        },
+        "pipeline_seconds": 281.52675869956147,
+        "rejected_candidates": 6,
+        "result_sha256": "65c0416e8ec17769f2bf73568b3ebe85553f7a68976df685ea6c9f4bea3e92d5",
+        "supported_facts_by_field_including_additional_historical": {
+          "person_status": 1,
+          "topic": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 64.94151878356934,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 19731,
+          "input_tokens": 17431,
+          "output_tokens": 2300,
+          "reasoning_output_tokens": 662,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5041484793",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 3,
+          "resources_remaining_including_robots": 3,
+          "search_remaining": 1,
+          "source_reads": 2
+        },
+        "collector_model_requests": 6,
+        "collector_seconds": 229.0532545419992,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 11136,
+          "input_plus_output": 52389,
+          "input_tokens": 44061,
+          "output_tokens": 8328,
+          "reasoning_output_tokens": 7119,
+          "uncached_input_tokens": 32925,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 254.00447147811064,
+        "rejected_candidates": 2,
+        "result_sha256": "b327427b2f1e5e077552e5f43cf956affa6bb1c8975b4d3db7acaa98e38ca4be",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 24.95121693611145,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 17011,
+          "input_tokens": 16462,
+          "output_tokens": 549,
+          "reasoning_output_tokens": 49,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5068285041",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 3,
+          "resources_remaining_including_robots": 2,
+          "search_remaining": 1,
+          "source_reads": 3
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 136.4207158330246,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8064,
+          "input_plus_output": 34143,
+          "input_tokens": 30687,
+          "output_tokens": 3456,
+          "reasoning_output_tokens": 2819,
+          "uncached_input_tokens": 22623,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 159.90771558316192,
+        "rejected_candidates": 0,
+        "result_sha256": "c910ca84115645f4ba4a734b5697d1f614f607e2e3d4798d9bbf1e0f353d702e",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 23.48699975013733,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 16962,
+          "input_tokens": 16377,
+          "output_tokens": 585,
+          "reasoning_output_tokens": 71,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5061174451",
+        "axes": {
+          "activity": "supported",
+          "current_affiliation": "supported",
+          "identity": "supported"
+        },
+        "candidate_atoms": 7,
+        "collector_budget": {
+          "host_robots": 4,
+          "resources_remaining_including_robots": 0,
+          "search_remaining": 2,
+          "source_reads": 4
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 179.81737929099472,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8256,
+          "input_plus_output": 51063,
+          "input_tokens": 43367,
+          "output_tokens": 7696,
+          "reasoning_output_tokens": 5921,
+          "uncached_input_tokens": 35111,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [
+          "personal_contact",
+          "supervision_history"
+        ],
+        "literal_evidence": 3,
+        "original_coverage_atoms": 4,
+        "original_coverage_fields": {
+          "personal_contact": 2,
+          "supervision_history": 1,
+          "supervisor_role": 1
+        },
+        "pipeline_seconds": 292.03208142035874,
+        "rejected_candidates": 3,
+        "result_sha256": "5713e1f0ae9870a26826318434eb443e1d7268e82fb1fe8c8233d05ac6e8c20c",
+        "supported_facts_by_field_including_additional_historical": {
+          "personal_contact": 2,
+          "supervision_history": 2,
+          "supervisor_role": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "coordinator_contact",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 112.21470212936401,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 21303,
+          "input_tokens": 17009,
+          "output_tokens": 4294,
+          "reasoning_output_tokens": 2070,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5040643973",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "supported"
+        },
+        "candidate_atoms": 2,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 5,
+          "search_remaining": 1,
+          "source_reads": 2
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 200.37993191700662,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 7872,
+          "input_plus_output": 41093,
+          "input_tokens": 33375,
+          "output_tokens": 7718,
+          "reasoning_output_tokens": 6161,
+          "uncached_input_tokens": 25503,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 5,
+        "original_coverage_atoms": 1,
+        "original_coverage_fields": {
+          "topic": 1
+        },
+        "pipeline_seconds": 269.50389789562905,
+        "rejected_candidates": 0,
+        "result_sha256": "4b873aed154dfa64637cacbcbed952731fa1c7b78558a3665dc0d786894d1bdf",
+        "supported_facts_by_field_including_additional_historical": {
+          "published_recruitment": 1,
+          "topic": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 69.12396597862244,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 19520,
+          "input_tokens": 17265,
+          "output_tokens": 2255,
+          "reasoning_output_tokens": 940,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5039855737",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 3,
+          "resources_remaining_including_robots": 2,
+          "search_remaining": 0,
+          "source_reads": 3
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 240.38359891698929,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8896,
+          "input_plus_output": 55158,
+          "input_tokens": 46295,
+          "output_tokens": 8863,
+          "reasoning_output_tokens": 7321,
+          "uncached_input_tokens": 37399,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 1,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 263.5181747608003,
+        "rejected_candidates": 5,
+        "result_sha256": "a33f7ab1fdcc6017d1a5b21e2ac6b7efb51b07e25605fcd2a2e17b521e6a3194",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 23.134575843811035,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 17326,
+          "input_tokens": 16632,
+          "output_tokens": 694,
+          "reasoning_output_tokens": 111,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5053581596",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 0,
+          "resources_remaining_including_robots": 8,
+          "search_remaining": 0,
+          "source_reads": 0
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 115.13951133401133,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8256,
+          "input_plus_output": 36529,
+          "input_tokens": 32435,
+          "output_tokens": 4094,
+          "reasoning_output_tokens": 3597,
+          "uncached_input_tokens": 24179,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 133.40688656480052,
+        "rejected_candidates": 0,
+        "result_sha256": "f0a181c6c16cd8b1aa8316e56461c63f61860242e5fc3805493a7af924bcb193",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 18.267375230789185,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 16969,
+          "input_tokens": 16382,
+          "output_tokens": 587,
+          "reasoning_output_tokens": 84,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5026442137",
+        "axes": {
+          "activity": "supported",
+          "current_affiliation": "supported",
+          "identity": "supported"
+        },
+        "candidate_atoms": 5,
+        "collector_budget": {
+          "host_robots": 4,
+          "resources_remaining_including_robots": 0,
+          "search_remaining": 2,
+          "source_reads": 4
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 534.1265530000092,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 3584,
+          "input_plus_output": 60878,
+          "input_tokens": 43442,
+          "output_tokens": 17436,
+          "reasoning_output_tokens": 14986,
+          "uncached_input_tokens": 39858,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [
+          "personal_contact"
+        ],
+        "literal_evidence": 5,
+        "original_coverage_atoms": 2,
+        "original_coverage_fields": {
+          "personal_contact": 2
+        },
+        "pipeline_seconds": 620.5933009992004,
+        "rejected_candidates": 6,
+        "result_sha256": "6bec2a4dba2d568d5f6ad8dbd207aa249a88126d609f7d7427c126e4ae49bfee",
+        "supported_facts_by_field_including_additional_historical": {
+          "person_status": 1,
+          "personal_contact": 2
+        },
+        "unknown_or_unchecked_fields": [
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 86.46674799919128,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 20478,
+          "input_tokens": 17420,
+          "output_tokens": 3058,
+          "reasoning_output_tokens": 1195,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5039216145",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 2,
+          "resources_remaining_including_robots": 4,
+          "search_remaining": 0,
+          "source_reads": 2
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 190.07878041703952,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 7872,
+          "input_plus_output": 38652,
+          "input_tokens": 33004,
+          "output_tokens": 5648,
+          "reasoning_output_tokens": 4404,
+          "uncached_input_tokens": 25132,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 209.96472049196018,
+        "rejected_candidates": 5,
+        "result_sha256": "8ffeb64977a52f625ef33114760ce6a4417074680da59560f5d1e68b7dfa1abe",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 19.885940074920654,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 17201,
+          "input_tokens": 16605,
+          "output_tokens": 596,
+          "reasoning_output_tokens": 86,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5011844904",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 2,
+          "resources_remaining_including_robots": 3,
+          "search_remaining": 1,
+          "source_reads": 3
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 316.6426934999763,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8448,
+          "input_plus_output": 48470,
+          "input_tokens": 39907,
+          "output_tokens": 8563,
+          "reasoning_output_tokens": 6840,
+          "uncached_input_tokens": 31459,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 339.4726025862037,
+        "rejected_candidates": 9,
+        "result_sha256": "0c8bc0643e557b355941bc6f83916e877634aa6d9922e7611f2893c2a269057a",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 22.829909086227417,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 16998,
+          "input_tokens": 16391,
+          "output_tokens": 607,
+          "reasoning_output_tokens": 104,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5008895365",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "supported",
+          "identity": "supported"
+        },
+        "candidate_atoms": 2,
+        "collector_budget": {
+          "host_robots": 2,
+          "resources_remaining_including_robots": 4,
+          "search_remaining": 1,
+          "source_reads": 2
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 210.0823149170028,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8192,
+          "input_plus_output": 40133,
+          "input_tokens": 35049,
+          "output_tokens": 5084,
+          "reasoning_output_tokens": 3644,
+          "uncached_input_tokens": 26857,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 3,
+        "original_coverage_atoms": 1,
+        "original_coverage_fields": {
+          "topic": 1
+        },
+        "pipeline_seconds": 260.6054937328445,
+        "rejected_candidates": 0,
+        "result_sha256": "4fc6c4c980ee8a48a77b3ba23f88af64d7603c1ed8cabaaee973b6b40f8d8e72",
+        "supported_facts_by_field_including_additional_historical": {
+          "topic": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 50.523178815841675,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 19315,
+          "input_tokens": 17544,
+          "output_tokens": 1771,
+          "reasoning_output_tokens": 516,
+          "usage_complete": true
+        }
+      }
+    ],
+    "conditional_scale_scenarios": [
+      {
+        "catalogue_unique_profiles": 9002,
+        "commercial_scale_permission": "unverified",
+        "days": 60,
+        "failed_attempts_development_review_and_queue_time_excluded": true,
+        "glm_credit_formula_is_not_actual_quota_or_payment": true,
+        "glm_documentary_credits_per_day_range": [
+          237.31184849999997,
+          359.0236969999999
+        ],
+        "gpt_input_plus_output_per_day_if_linear": 317979.3333333334,
+        "human_hours_per_day": null,
+        "model_pipeline_hours_per_day_if_linear": 1.3474909132977984,
+        "observed_completed_denominator": 12,
+        "observed_seconds_per_completed_range": [
+          133.40688656480052,
+          620.5933009992004
+        ],
+        "profiles_per_day_ceiling": 17,
+        "real_quota_capacity": null,
+        "subscription_cost_usd": null,
+        "target": 1000,
+        "target_exceeds_current_catalogue": false
+      },
+      {
+        "catalogue_unique_profiles": 9002,
+        "commercial_scale_permission": "unverified",
+        "days": 60,
+        "failed_attempts_development_review_and_queue_time_excluded": true,
+        "glm_credit_formula_is_not_actual_quota_or_payment": true,
+        "glm_documentary_credits_per_day_range": [
+          2331.2399235,
+          3526.8798469999992
+        ],
+        "gpt_input_plus_output_per_day_if_linear": 3123679.3333333335,
+        "human_hours_per_day": null,
+        "model_pipeline_hours_per_day_if_linear": 13.237116618866606,
+        "observed_completed_denominator": 12,
+        "observed_seconds_per_completed_range": [
+          133.40688656480052,
+          620.5933009992004
+        ],
+        "profiles_per_day_ceiling": 167,
+        "real_quota_capacity": null,
+        "subscription_cost_usd": null,
+        "target": 10000,
+        "target_exceeds_current_catalogue": true
+      }
+    ],
+    "human_reviewed": 0
+  },
+  "physical_totals_all_night_stages": {
+    "collector": {
+      "jobs": 14,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 114816,
+        "input_plus_output": 631936,
+        "input_tokens": 525186,
+        "output_tokens": 106750,
+        "reasoning_output_tokens": 86075
+      },
+      "known_wall_seconds_subtotal": 3022.5673066250165,
+      "model_requests": 69,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": null,
+        "cached_input_tokens": null,
+        "input_plus_output": null,
+        "input_tokens": null,
+        "output_tokens": null,
+        "reasoning_output_tokens": null
+      },
+      "usage_complete": false,
+      "wall_seconds": 3022.5673066250165
+    },
+    "comparison_verifier": {
+      "jobs": 6,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 8320,
+        "input_plus_output": 110781,
+        "input_tokens": 95234,
+        "output_tokens": 15547,
+        "reasoning_output_tokens": 5381
+      },
+      "known_wall_seconds_subtotal": 370.8232364654541,
+      "model_requests": null,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 8320,
+        "input_plus_output": 110781,
+        "input_tokens": 95234,
+        "output_tokens": 15547,
+        "reasoning_output_tokens": 5381
+      },
+      "usage_complete": true,
+      "wall_seconds": 370.8232364654541
+    },
+    "judge": {
+      "jobs": 2,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 51286,
+        "input_tokens": 39803,
+        "output_tokens": 11483,
+        "reasoning_output_tokens": 5374
+      },
+      "known_wall_seconds_subtotal": 260.866747379303,
+      "model_requests": null,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 51286,
+        "input_tokens": 39803,
+        "output_tokens": 11483,
+        "reasoning_output_tokens": 5374
+      },
+      "usage_complete": true,
+      "wall_seconds": 260.866747379303
+    },
+    "native_verifier": {
+      "jobs": 12,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 224456,
+        "input_tokens": 203390,
+        "output_tokens": 21066,
+        "reasoning_output_tokens": 7168
+      },
+      "known_wall_seconds_subtotal": 622.2447385787964,
+      "model_requests": null,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 224456,
+        "input_tokens": 203390,
+        "output_tokens": 21066,
+        "reasoning_output_tokens": 7168
+      },
+      "usage_complete": true,
+      "wall_seconds": 622.2447385787964
+    }
+  },
+  "collector_source_operations": {
+    "search": 41,
+    "reader": 33,
+    "host_robots": 30,
+    "receipt_missing_jobs": 0
+  },
+  "comparison": {
+    "cost_usd": null,
+    "eligible_for_fresh_control": false,
+    "human_reviewed": 0,
+    "method": "gpt-compact-v1",
+    "new_high_critical_errors": [],
+    "quality": {
+      "baseline": {
+        "atom_evaluations:correct": 10,
+        "atom_evaluations:incorrect": 2,
+        "high_critical": 2,
+        "profile_evaluations:correct": 8,
+        "profile_evaluations:incorrect": 1
+      },
+      "compact": {
+        "atom_evaluations:correct": 6,
+        "atom_evaluations:incorrect": 6,
+        "profile_evaluations:correct": 8,
+        "profile_evaluations:incorrect": 1
+      }
+    },
+    "reductions": {
+      "input_plus_output": 0.10627532094565717,
+      "input_tokens": 0.09733682296765434
+    },
+    "subscription_delta": null,
+    "totals": {
+      "baseline": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 58499,
+        "input_tokens": 50053,
+        "jobs": 3,
+        "output_tokens": 8446,
+        "reasoning_output_tokens": 3168,
+        "wall_seconds": 204.09690928459167
+      },
+      "compact": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 8320,
+        "input_plus_output": 52282,
+        "input_tokens": 45181,
+        "jobs": 3,
+        "output_tokens": 7101,
+        "reasoning_output_tokens": 2213,
+        "wall_seconds": 166.72632718086243
+      }
+    }
+  },
+  "comparison_flagged_errors": [
+    {
+      "variant": "compact",
+      "kind": "atom_evaluations",
+      "author_id": "A5015573260",
+      "item_or_axis": "A5015573260_c3",
+      "error_types": [
+        "object_relation"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "compact",
+      "kind": "atom_evaluations",
+      "author_id": "A5015573260",
+      "item_or_axis": "A5015573260_c5",
+      "error_types": [
+        "object_relation"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "compact",
+      "kind": "atom_evaluations",
+      "author_id": "A5015573260",
+      "item_or_axis": "A5015573260_c7",
+      "error_types": [
+        "object_relation"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "compact",
+      "kind": "atom_evaluations",
+      "author_id": "A5015573260",
+      "item_or_axis": "A5015573260_c8",
+      "error_types": [
+        "object_relation"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "compact",
+      "kind": "atom_evaluations",
+      "author_id": "A5027597767",
+      "item_or_axis": "A5027597767_c6",
+      "error_types": [
+        "object_relation"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "compact",
+      "kind": "atom_evaluations",
+      "author_id": "A5027597767",
+      "item_or_axis": "A5027597767_c7",
+      "error_types": [
+        "object_relation"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "baseline",
+      "kind": "atom_evaluations",
+      "author_id": "A5100670875",
+      "item_or_axis": "A5100670875_c5",
+      "error_types": [
+        "identity",
+        "object_relation"
+      ],
+      "severity": "high"
+    },
+    {
+      "variant": "baseline",
+      "kind": "atom_evaluations",
+      "author_id": "A5100670875",
+      "item_or_axis": "A5100670875_c6",
+      "error_types": [
+        "identity",
+        "object_relation"
+      ],
+      "severity": "high"
+    },
+    {
+      "variant": "compact",
+      "kind": "profile_evaluations",
+      "author_id": "A5100670875",
+      "item_or_axis": "current_affiliation",
+      "error_types": [
+        "text"
+      ],
+      "severity": "medium"
+    },
+    {
+      "variant": "baseline",
+      "kind": "profile_evaluations",
+      "author_id": "A5100670875",
+      "item_or_axis": "current_affiliation",
+      "error_types": [
+        "text"
+      ],
+      "severity": "medium"
+    }
+  ],
+  "fresh_control": null,
+  "orchestration_and_code_review": {
+    "actors": {
+      "independent_code_review": {
+        "actual_backend": null,
+        "cost_usd": null,
+        "elapsed_wall_interval_seconds_including_waits_and_overlapping_jobs": 6884.752,
+        "latest_cumulative_snapshot": {
+          "at": "2026-10-09T20:25:50.983Z",
+          "tokens": {
+            "cache_write_input_tokens": 0,
+            "cached_input_tokens": 14268544,
+            "input_tokens": 15001937,
+            "output_tokens": 68729,
+            "reasoning_output_tokens": 26609,
+            "total_tokens": 15070666
+          }
+        },
+        "requested_configs": [
+          {
+            "effort": "high",
+            "model": "gpt-6.1-sol"
+          }
+        ],
+        "scope": "Only this actor token_count; native collector/verifier/judge usages excluded; cached/reasoning already subsets.",
+        "source_prefix_bytes": 10107194,
+        "source_prefix_sha256": "7a2661bfafecb913e15f06621f6c74c31c5bdba6d1cf4f4cbcf4e1186ebbc823",
+        "source_raw_exported": false,
+        "start_at": "2026-10-09T18:31:06.231Z",
+        "subscription_delta": null,
+        "token_count_events": 121
+      },
+      "technical_session_orchestration": {
+        "actual_backend": null,
+        "cost_usd": null,
+        "elapsed_wall_interval_seconds_including_waits_and_overlapping_jobs": 8297.929,
+        "latest_cumulative_snapshot": {
+          "at": "2026-10-09T20:33:14.888Z",
+          "tokens": {
+            "cache_write_input_tokens": 0,
+            "cached_input_tokens": 34515968,
+            "input_tokens": 35358874,
+            "output_tokens": 247182,
+            "reasoning_output_tokens": 115363,
+            "total_tokens": 35606056
+          }
+        },
+        "requested_configs": [
+          {
+            "effort": "high",
+            "model": "gpt-6.1-sol"
+          }
+        ],
+        "scope": "Only this actor token_count; native collector/verifier/judge usages excluded; cached/reasoning already subsets.",
+        "source_prefix_bytes": 10849109,
+        "source_prefix_sha256": "93a1a855229c9f693fc48780fc51d8e78c8731e87d71e1e079f40b578d5d16e6",
+        "source_raw_exported": false,
+        "start_at": "2026-10-09T18:14:56.959Z",
+        "subscription_delta": null,
+        "token_count_events": 302
+      }
+    },
+    "billing_not_exposed": true,
+    "human_reviewed": 0,
+    "method": "numeric-actor-usage-v1",
+    "not_final_usage": "Snapshot excludes subsequent sampling/review/final messages; not a pure development-time measure."
+  },
+  "prior_results_preservation": {
+    "checked_at": "2026-10-09T20:13:00.750701+00:00",
+    "checks": [
+      {
+        "root": "enrichment-night-cli-v1-20261009",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 102,
+        "bytes": 231601,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-pi12-20261009",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 57084,
+        "bytes": 546558254,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-pi12-high-20261009",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 21459,
+        "bytes": 494853912,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-verifier-benchmark-20261009",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 51,
+        "bytes": 10726950,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-verifier-pair-20261009",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 15151,
+        "bytes": 1031448293,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-verifier-three-20261009",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 27553,
+        "bytes": 1815390088,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment100-20261008",
+        "baseline_index_sha256": "639bfd6ba5b97603edcb84e1e7ca9e0bf13017e2dbc58ee96872cd4c41e24132",
+        "files": 2401,
+        "bytes": 581991400,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-night-cli-v2-20261009",
+        "baseline_index_sha256": "9fd1b4232094c9844c51b12f8afa4665b8f74c1468d3052b4a116dbcfb7ff3ff",
+        "files": 243,
+        "bytes": 23483409,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      },
+      {
+        "root": "enrichment-night-cli-v3-fixed-20261009",
+        "baseline_index_sha256": "24b861b78056b64d55169506febf8d9dfe524a082f9364522ee2a3458fcf215b",
+        "files": 873,
+        "bytes": 2298842,
+        "missing": [],
+        "added": [],
+        "changed": [],
+        "pass": true
+      }
+    ],
+    "pass": true
+  },
+  "quota_snapshots": [
+    {
+      "account_wide": true,
+      "checked_at": "2026-10-09T19:27:58.763Z",
+      "codex": {
+        "remaining_percent": 38,
+        "resets_at": 1791959338,
+        "used_percent": 62,
+        "window_minutes": 10080
+      },
+      "glm": null,
+      "money": null,
+      "reset_credit_used": false,
+      "session_delta": null
+    },
+    {
+      "account_wide": true,
+      "checked_at": "2026-10-09T19:44:55.955Z",
+      "codex": {
+        "remaining_percent": 38,
+        "resets_at": 1791959338,
+        "used_percent": 62,
+        "window_minutes": 10080
+      },
+      "glm": null,
+      "money": null,
+      "reset_credit_used": false,
+      "session_delta": null
+    },
+    {
+      "checked_at": "2026-10-09T20:33:35.095Z",
+      "codex": {
+        "used_percent": 65,
+        "remaining_percent": 35,
+        "window_minutes": 10080,
+        "resets_at": 1791959338
+      },
+      "glm": null,
+      "account_wide": true,
+      "session_delta": null,
+      "money": null,
+      "reset_credit_used": false
+    },
+    {
+      "checked_at": "2026-10-09T20:12:08.029Z",
+      "codex": {
+        "used_percent": 63,
+        "remaining_percent": 37,
+        "window_minutes": 10080,
+        "resets_at": 1791959338
+      },
+      "glm": null,
+      "account_wide": true,
+      "session_delta": null,
+      "money": null,
+      "reset_credit_used": false
+    },
+    {
+      "checked_at": "2026-10-09T20:22:28.473Z",
+      "codex": {
+        "used_percent": 64,
+        "remaining_percent": 36,
+        "window_minutes": 10080,
+        "resets_at": 1791959338
+      },
+      "glm": null,
+      "account_wide": true,
+      "session_delta": null,
+      "money": null,
+      "reset_credit_used": false
+    }
+  ],
+  "source_artifact_sha256": {
+    "enrichment-night-cli-v4-20261009/metrics-final-01.json": "71ffa9f2d9ae0bddd9b2d74e701efe8b85c03091533a8224b636c159e400832d",
+    "enrichment-night-cli-v4-20261009/orchestration-usage-final-01.json": "31a0f193775425b8048142da42b746f953bcf3526e1eb2fe1e4722181d4cd2b5",
+    "enrichment-night-cli-v4-20261009/preservation-final-01.json": "22428d3ffcef8ac2c012df81bf3ccbd4df31a1574282991a8478b7b9db46f834",
+    "enrichment-gpt-compact-v1-fixed-20261009/metrics.json": "2c159140202daeffb1759cf8f70dd35d8a6a09ab36c829b17f8b38b4b882e95c",
+    "enrichment-gpt-compact-v1-fixed-20261009/judges/packet-01/validated.json": "6c661d6a96463863c693f72032deb013ccd9d78a7e8a3f830cf8ae72801d5a2f",
+    "enrichment-gpt-compact-v1-fixed-20261009/unblinding/packet-01.json": "fdb7166ed5d5abd5ada325dc355e6052b380711afde7a77b53a2c3dfae4f443c",
+    "enrichment-gpt-compact-v1-fixed-20261009/judges/packet-02/validated.json": "3fddac002a9e1cadf4a996856545cf7947a74d058d2c1964692bc9a2a77827df",
+    "enrichment-gpt-compact-v1-fixed-20261009/unblinding/packet-02.json": "fe09d4fdef278d553667635d9bdf47f096718e1a6599682a14f2ead6b45e80ba",
+    "enrichment-night-cli-v4-20261009/quota-before-four.json": "4a0fb0966a754a8d04645271c7b3dce26cfcc247a5f02b9e011c80a5693cc247",
+    "enrichment-night-cli-v4-20261009/quota-before-twelve.json": "a0be96ecfe8f5b2c040a96fef56ebd4834df97387c13c1ee265044eb34346e7c",
+    "enrichment-night-cli-v4-20261009/quota-z-after-model-jobs-20261009.json": "0188a8fe16468dab952ad800223a0b72049341f98228883c48b72e008874d269",
+    "enrichment-gpt-compact-v1-fixed-20261009/quota-before-six-20261009T201208.json": "a78d790191f68d9ea661a3dd2909026ea252ef9ffb298e4ab8dcbc3bc1d15717",
+    "enrichment-gpt-compact-v1-fixed-20261009/quota-judges-20261009T2025.json": "6f1735378c83192253b919f673d72fc0f7116b20324bda3c0a9c68c9e54ff1a3",
+    "enrichment-night-cli-v4-20261009/validation/source-at-a591/source-index.json": "e34801471c341619e119a57b3c4bb30ea90477fa348f4c329acbfeb20404c540"
+  },
+  "actual_subscription_payment_usd": null,
+  "commercial_scale_permission": "unverified"
+}
