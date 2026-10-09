@@ -443,3 +443,137 @@ Private roots: `/Users/boris/Experiments/search-for-research/` плюс
 #193/#47/#103 не закрываются. Нет merge/main push/deploy/production/product docs/
 паспорта. Раннее завершение этой сессии не отменяет разрешённую Борисом ночь до
 05:00МСК; дальнейший scope в её пределах определяет продуктовый координатор.
+
+
+## Последний этап 10.10: early-read-v6, парные последние попытки
+
+[Постановка до calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6090040750),
+[передача продуктового потока](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6089940389).
+Измеренный head `4de4a8f1ddf895a861fd956d01f86c460cf6b7ce` после b06;
+[правила](../experiments/enrichment_cli_early_read_v6.md),
+[новый числовой артефакт](enrichment_night_early_read_v6_20261010.metrics.json).
+Это **парное сравнение маршрутов тех же3**, вторая и последняя collector попытка
+каждого ID. Новый контроль не запускался. Итоги v5/compact/старого судьи неизменны.
+
+### Что зафиксировано до измерения
+
+Изменён существующий collector/CLI extension: первый exact basic query — имя
+и ORCID либо индексированная публикация. URLs прежних поисков передаются как
+discovered, без статуса evidence; прежние неудачные URLs не повторяются. Reader
+допускает только exact найденный link. При request≥3 без тела и с доступным URL
+новый поиск отклоняется; request4 оставлен для альтернативного чтения после
+отказа/оболочки. Каталог не подтверждает нынешний вуз. Вымышленная кафедра/URL
+не допускается. Все4search/8resources includingrobots/6requests/600s/concurrency1,
+source cutoff before5, retries0, full Sol/high, literal binder и empty gate сохранены.
+
+Заранее выбран технический минимум тела:200UTF16 code units (native JS string
+length) и30Unicode letter/number words в decoded reader content. Snippet/metadata
+не входят. **Это прокси непустого текста, не полезная страница о человеке и не
+подтверждение личности.** Цель первого содержательного целевого чтения — не позже
+request3. Отдельно измеряются profile evidence/identity и допустимые факты.
+Порог условного нового профиля:≥2/3с телом по замороженному минимуму и≥1с supported
+identity либо supported фактом по полной проверке. Порог не менялся после исходов.
+Measurement-plan и код анализа с SHA сохранены доcalls; source snapshot11 файлов
+из manifest соответствует4de4a8f. Offline fixture foundURL→earlyread и
+refusal/shell→другая найденная ссылка прошёл; третий collector запрещён при freeze
+и перед запуском. Предварительный независимый reviewer:pass для кода до inference.
+
+### Результат: больше чтений, полезное покрытие не улучшилось
+
+| Парный ID | Физические search / reader / host robots | Model requests | Секунды | Тела по техническому минимуму | Atoms / evidence / supported identity |
+|---|---:|---:|---:|---:|---:|
+| A5080057408 | 1 / 0 / 1 | 5 | 63.27 | 0 | 0 / 0 / 0 |
+| A5101711419 | 2 / 2 / 2 | 5 | 288.01 | 0 | 0 / 0 / 0 |
+| A5111695924 | 2 / 1 / 1 | 4 | 237.78 | 1 | 0 / 0 / 0 |
+
+Все3 завершились штатно, partial/timeouts0. Полная pipeline-пустота доказана
+для каждого raw/normalized пакета:0atoms,0pool,0profile refs, rejections0.
+Три host gate дают insufficient/unknown по всем осям. Sol не вызван3 раза,
+расход0; avoided tokensunknown. Это отсутствие доказательств в ограниченном
+маршруте, не отрицание фактов/набора у людей.
+
+Иннополис: первая строка модели сократила ORCID URL из frozen basic query до ID
+и была отклонена exact first-query guard. Реальный поиск произошёл наrequest2;
+следующий поиск наrequest3 отклонил route guard. Единственное reader намерение
+наrequest4 выбрало другую языковую ссылку Scholar, host robots запретил доступ.
+Физического reader0, цель раннего полезного чтения не достигнута. Обхода robots
+не было; повторной попытки этого ID не будет.
+
+ВШЭ: reader наrequest3 и альтернативный наrequest4 вернули212UTF16/26words и
+193UTF16/39words. Оба ниже заранее установленного совместного минимума;
+не добавлены допустимые anchors/факты. После ORCID модель вновь использовала
+неподтверждённый вуз в поиске. Запросы/цитаты не исправлялись после получения.
+
+МАИ: наrequest3 прочитано2050UTF16/214words общей страницы федеральной программы
+`fcpir.fcntp.ru`. Текст проходит длиновой минимум, но в нём нет Nenarokomov/
+Ненарокомов или выбранного названия публикации. Это **1техническое тело**, а не
+полезная страница исследователя. Предметная идентичность/факты0. Вымышленный
+`101.mai.ru` не повторялся, источник текущей кафедры не додумывался.
+
+По тем же3 v5→v6: реальные reader1→3, тела по минимуму0→1, полезные факты/
+supported identity0→0. Целевое полезное чтение доrequest3 не подтверждено ни у
+одного. Инструкции/guard улучшили число чтений, но не обеспечили выбор предметных
+страниц в малом бюджете. **Полезность метода не подтверждена**; успешные fixture
+и completed не выданы за улучшение доказанного покрытия.
+
+### Условные вызовы и расходы
+
+Контрольный A5014957454/МГТУ заранее заморожен отдельно из другого вуза, отсутствует
+в139 исключённых ID. Порог не выполнен (1/3технических тел,0полезных результатов):
+его collector/verifier не запускались. Last Astra также не запускался — полезного
+нового результата нет; резерв1сохранён. Новый single-response export/selection
+план сохранён, но фактического нового packet/prompt/audit нет. Прежний
+partly_unblinded v5 остаётся ограниченным; full blind acceptance не заявляется.
+Human_reviewed0; контакты не равны готовности, история не равна нынешнему набору.
+
+Новых содержательных jobs3/10: только GLM collector; модельных retries0.
+Глобальный итог ночи43/100jobs,15/30новых людей,3/4Astra. Один выбранный условный
+ID не выдаётся за реально проверенного свежего человека.14client model requests
+подтверждены14HTTP200 chat/completions записями; фактический backend не раскрыт.
+Source calls по successful reservations:search10→5,reader1→3,hostrobots2→4;
+MCP protocol discovery/202/405 не считаются содержательными запросами источников.
+
+| Парная стадия GLM, отдельно3+3 jobs | Input+output | Сумма секунд |
+|---|---:|---:|
+| v5 | 88 307 | 277.46 |
+| v6 | 113 156 | 589.06 |
+
+Итого v6:input88 886 (cached25 536 уже внутри input),output24 270 (reasoning22 084
+уже внутри output),total113 156. Токены выросли на28.14%,
+collector time на112.31% при нулевом приросте полезного покрытия.
+Денежный debit/GLM quota unknown; API-прайс не подставлялся вместо подписки.
+Официальные snapshots доcalls/следующей партии/после:Codexremaining30%,account-wide;
+до разработки31%. GPT stop≤15% не достигнут, reset/purchase/APIоплаты нет.
+
+Разработка/ревью отдельно — cumulative snapshots собственных акторов на cutoff,
+включая прежнюю работу этого чата. Их не суммировать с таблицей v5 или content jobs.
+Cached/reasoning — части input/output; raw logs не экспортированы, actual backend
+unknown. Последующее финальное review/публикация после этих cutoff исключены.
+
+| Актор | Cutoff UTC | Input | Cached input | Output | Reasoning в output |
+|---|---|---:|---:|---:|---:|
+| independent_code_review | 2026-10-09T22:09:36.893Z | 6 052 464 | 5 727 616 | 28 803 | 7 491 |
+| technical_session_orchestration | 2026-10-09T22:28:32.772Z | 20 343 067 | 19 946 496 | 144 810 | 69 664 |
+
+### Проверки и сохранность
+
+Lint/typecheck/test PASS217unittest/388pytest,coverage94,06%; Node22/docs-check
+actual index meta PASS. Strict audit FAIL только прежние deps-node/fs-trivy HIGH
+sharp/source-map-js #189; зависимости/критерии не менялись. CI4de:
+[checks/web SUCCESS](https://github.com/borisboriov/search-for-research/actions/runs/37997447269),
+[audit FAIL #189](https://github.com/borisboriov/search-for-research/actions/runs/37997447291).
+Актуальное финальное review/CI/readonlyhandoff публикуется в PR после коммита
+раздела. Зелёная готовность или продуктовая приёмка не заявляется.
+
+Private roots в `/Users/boris/Experiments/search-for-research/`:
+`enrichment-night-early-read-v6-paired-20261010` (manifest/source snapshots,
+measurement-plan/version,3raw/receipts/gates/results,cards.html,metrics-final,
+conditional-decisions,quota/actor cutoff и validation),
+`enrichment-night-early-read-v6-control-20261010` (один sample/manifest,не запускался).
+Числовой public JSON совпадает с private metrics-final byte-for-byte; полные
+source bodies не вgit. Исходник анализа с исходным SHA доступен в private
+validation/sfr-v6-measure.py, временный creation path вmeasurement-plan — provenance.
+Все25 ссылок на старые парные данные совпали; старые9roots/124917файлов целиком
+не перечитывались и не записывались. Собственные content processes закончены,
+оба новых roots STOP. Ветка/worktree сохраняются; после окончательной передачи
+запись исполнителя прекращается, дальнейший этап определяет продуктовый поток.
