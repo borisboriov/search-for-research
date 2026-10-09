@@ -135,6 +135,7 @@ def prepare_control(
     sample_sha256: str,
     *,
     namespace: str | None = None,
+    source_kind: str = "control_cache_only_collection",
 ) -> Path:
     """Вход независимого проверяющего после реального нового cache-only сборщика.
 
@@ -168,7 +169,7 @@ def prepare_control(
         )
     _require(len({row["item_id"] for row in items}) == len(items), "Повторный атом")
     value = {
-        "source_kind": "control_cache_only_collection",
+        "source_kind": source_kind,
         "author_id": author_id,
         "profile": profile,
         "rules_version": RULES_VERSION,
@@ -398,7 +399,8 @@ def import_result(root: Path, input_path: Path, result_path: Path, run_id: str) 
         digest = source[name]
         if digest is None and name == "old_output_sha256":
             _require(
-                source.get("source_kind") == "control_cache_only_collection",
+                source.get("source_kind")
+                in ("control_cache_only_collection", "fresh_pi_collection"),
                 "Нет старого источника повторной оценки",
             )
             continue

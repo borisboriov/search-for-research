@@ -8,8 +8,10 @@
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import time
+import tomllib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
@@ -122,7 +124,17 @@ def schema(stage: str) -> dict[str, Any]:
 
 
 def execute(
-    directory: Path, prompt: str, output_schema: dict[str, Any], cwd: Path
+    directory: Path,
+    prompt: str,
+    output_schema: dict[str, Any],
+    cwd: Path,
+    *,
+    model: str | None = None,
+    effort: str | None = None,
+    timeout_seconds: int = 1200,
+    skip_git_repo_check: bool = False,
+    disable_mcp: bool = False,
+    no_retries: bool = False,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -167,6 +179,24 @@ def execute(
             str(cwd),
             "-",
         ]
+        if model:
+            command[2:2] = ["-m", model]
+        if effort:
+            command[2:2] = ["-c", f'model_reasoning_effort="{effort}"']
+        if skip_git_repo_check:
+            command.insert(2, "--skip-git-repo-check")
+        if disable_mcp or no_retries:
+            config_path = (
+                Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "config.toml"
+            )
+            config = tomllib.loads(config_path.read_text()) if config_path.exists() else {}
+            if disable_mcp:
+                for name in config.get("mcp_servers", {}):
+                    command[2:2] = ["-c", f"mcp_servers.{json.dumps(name)}.enabled=false"]
+            if no_retries:
+                provider = json.dumps(config.get("model_provider", "openai"))
+                for setting in ("request_max_retries", "stream_max_retries"):
+                    command[2:2] = ["-c", f"model_providers.{provider}.{setting}=0"]
         with (
             (directory / "events.jsonl").open("xb") as event_stream,
             (directory / "stderr.log").open("xb") as errors,
@@ -176,7 +206,7 @@ def execute(
                 input=prompt_bytes,
                 stdout=event_stream,
                 stderr=errors,
-                timeout=1200,
+                timeout=timeout_seconds,
                 check=False,
             )
         immutable(
@@ -217,6 +247,8 @@ def execute(
         "events_sha256": sha(directory / "events.jsonl"),
         "prompt_sha256": sha(directory / "prompt.txt"),
         "tool_calls": 0,
+        "requested_model": model,
+        "requested_effort": effort,
     }
     immutable(receipt, encoded(value))
     return directory / "raw-result.json", value
