@@ -639,7 +639,7 @@ def run_pi(
                 "at": now(),
                 "epoch": time.time(),
                 "task_sha256": sha(directory / "request.json"),
-                "method": pilot_method(root),
+                "method": method_override or pilot_method(root),
             }
         ),
     )

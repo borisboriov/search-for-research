@@ -311,7 +311,9 @@ class NativeIsolationTests(unittest.TestCase):
                             "usage": {"input_tokens": 1, "output_tokens": 1},
                         },
                     ]
-                    kwargs["stdout"].write(b"".join(encoded(row) for row in events))
+                    kwargs["stdout"].write(
+                        b"".join((json.dumps(row) + "\n").encode() for row in events)
+                    )
                     return subprocess.CompletedProcess(command, 0)
 
                 with (
