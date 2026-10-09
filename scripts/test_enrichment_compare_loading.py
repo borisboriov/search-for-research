@@ -1,8 +1,15 @@
 """Бюджет, fail-closed правила источников и пределы диагностики загрузки."""
 
+import asyncio
+import importlib
+import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
+from unittest.mock import AsyncMock, patch
 
-from enrichment_compare_loading import Budget, extract, policy
+from enrichment_compare_loading import Budget, DomainStops, extract, policy, run
 
 
 class LoadingTests(unittest.TestCase):
@@ -17,6 +24,73 @@ class LoadingTests(unittest.TestCase):
             budget.reserve("robots", "https://example.org/robots.txt")
         with self.assertRaises(ValueError):
             budget.reserve("browser", "https://example.org/a")
+
+    def test_domain_stop_survives_restart_and_blocks_other_paths(self) -> None:
+        for status in (403, 429):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                stops = DomainStops(root)
+                stops.observe("https://example.org/a", status)
+                self.assertTrue(stops.blocked("https://example.org/b"))
+                self.assertFalse(stops.blocked("https://other.org/a"))
+                restarted = DomainStops(root)
+                self.assertTrue(restarted.blocked("https://example.org/robots.txt"))
+                restarted.observe("https://example.org/b", status)
+                self.assertEqual(len(list(root.glob("domain-stop-*.json"))), 1)
+
+    def test_live_loop_stops_second_method_and_same_domain_url(self) -> None:
+        calls = []
+
+        class Client:
+            async def __aenter__(self) -> Any:
+                return self
+
+            async def __aexit__(self, *args: Any) -> None:
+                return None
+
+            async def get(self, url: str) -> SimpleNamespace:
+                calls.append(url)
+                if url.endswith("robots.txt"):
+                    return SimpleNamespace(status_code=200, text="User-agent: *\nAllow: /")
+                return SimpleNamespace(status_code=403, text="Forbidden")
+
+        class Strategy(Client):
+            async def crawl(self, *args: Any, **kwargs: Any) -> None:
+                raise AssertionError("Crawl4AI must not request a stopped domain")
+
+        real_import = importlib.import_module
+
+        def module(name: str) -> Any:
+            if name == "sfr_core.settings":
+                return SimpleNamespace(
+                    Settings=lambda **kw: SimpleNamespace(openalex_mailto="test@example.org")
+                )
+            if name == "crawl4ai.async_crawler_strategy":
+                return SimpleNamespace(AsyncHTTPCrawlerStrategy=lambda **kw: Strategy())
+            if name == "crawl4ai.async_configs":
+                return SimpleNamespace(
+                    HTTPCrawlerConfig=lambda **kw: None, CrawlerRunConfig=lambda **kw: None
+                )
+            if name == "crawl4ai.markdown_generation_strategy":
+                return SimpleNamespace(DefaultMarkdownGenerator=lambda: None)
+            return real_import(name)
+
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch("enrichment_compare_loading.importlib.import_module", side_effect=module),
+            patch("enrichment_compare_loading.httpx.AsyncClient", return_value=Client()),
+            patch("enrichment_compare_loading.Budget.wait", new=AsyncMock()),
+            patch(
+                "enrichment_compare_loading.URLS",
+                ("https://example.org/a", "https://example.org/b"),
+            ),
+        ):
+            summary = asyncio.run(run(Path(temporary), Path("unused")))
+        self.assertEqual(calls, ["https://example.org/robots.txt", "https://example.org/a"])
+        self.assertEqual(
+            [row["status"] for row in summary["rows"]],
+            ["http_failure", "domain_stopped", "domain_stopped", "domain_stopped"],
+        )
 
     def test_policy_unknown_is_not_permission(self) -> None:
         self.assertEqual(policy("", "https://example.org/a", 503), (False, 1))

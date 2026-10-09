@@ -1,0 +1,6025 @@
+{
+  "version": "v2_complete_r2",
+  "run_id": "native-v2-complete",
+  "denominators": {
+    "sample": 100,
+    "inputs": 100,
+    "outputs": 100
+  },
+  "sources": [
+    {
+      "source_id": "S00001",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "work_format": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 2
+      }
+    },
+    {
+      "source_id": "S00002",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00003",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00004",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00005",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "city": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 6
+      }
+    },
+    {
+      "source_id": "S00006",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "external_students": 2,
+        "required_skills": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 6
+      }
+    },
+    {
+      "source_id": "S00007",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00008",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00009",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00010",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00011",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "thesis_possible": 2,
+        "published_recruitment": 2,
+        "direct_willingness": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 9,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00012",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 1
+      }
+    },
+    {
+      "source_id": "S00013",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "city": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00014",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 2
+      }
+    },
+    {
+      "source_id": "S00015",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00016",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "thesis_possible": 1,
+        "external_students": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00017",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00018",
+      "family": "offer_or_program_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 17
+      },
+      "profiles": 3,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 17
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "published_recruitment": 5,
+        "student_level": 4,
+        "student_year": 4,
+        "required_skills": 3
+      },
+      "dated_evidence": 5,
+      "unknown_date_evidence": 13,
+      "information_year_counts": {
+        "2022": 5
+      }
+    },
+    {
+      "source_id": "S00019",
+      "family": "offer_or_program_page",
+      "evidence_counts": {
+        "collector_evidence": 5,
+        "verifier_confirmed_original_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 11
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "coordinator_contact": 2,
+        "required_skills": 3,
+        "workload": 2,
+        "response_method": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 11,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00020",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2,
+        "supervisor_role": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 4
+      }
+    },
+    {
+      "source_id": "S00021",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00022",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00023",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "supervisor_role": 1,
+        "student_level": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 3
+      }
+    },
+    {
+      "source_id": "S00024",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00025",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "collector_evidence": 5,
+        "verifier_confirmed_original_evidence": 5
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 10
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2,
+        "thesis_possible": 2
+      },
+      "dated_evidence": 10,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 10
+      }
+    },
+    {
+      "source_id": "S00026",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "topic": 2,
+        "city": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 4
+      }
+    },
+    {
+      "source_id": "S00027",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2022": 1
+      }
+    },
+    {
+      "source_id": "S00028",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 8
+      }
+    },
+    {
+      "source_id": "S00029",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00030",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 4
+      }
+    },
+    {
+      "source_id": "S00031",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 1
+      }
+    },
+    {
+      "source_id": "S00032",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "student_level": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2022": 4
+      }
+    },
+    {
+      "source_id": "S00033",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "city": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 2
+      }
+    },
+    {
+      "source_id": "S00034",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "topic": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2007": 6
+      }
+    },
+    {
+      "source_id": "S00035",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2019": 8
+      }
+    },
+    {
+      "source_id": "S00036",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6,
+        "new_finding": 4
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "student_level": 2,
+        "deadline": 2,
+        "required_skills": 1,
+        "response_method": 1,
+        "payment": 1,
+        "workload": 1
+      },
+      "dated_evidence": 10,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 10
+      }
+    },
+    {
+      "source_id": "S00037",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "city": 2,
+        "student_level": 1
+      },
+      "dated_evidence": 7,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 7
+      }
+    },
+    {
+      "source_id": "S00038",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2016": 1
+      }
+    },
+    {
+      "source_id": "S00039",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 2
+      }
+    },
+    {
+      "source_id": "S00040",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "student_year": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 2
+      }
+    },
+    {
+      "source_id": "S00041",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00042",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 6
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "published_recruitment": 1,
+        "student_level": 2,
+        "coordinator_contact": 2,
+        "work_format": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 8,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00043",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 4
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "supervisor_role": 1,
+        "student_level": 1
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00044",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 7
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "supervisor_role": 1,
+        "supervision_history": 2,
+        "topic": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00045",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00046",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 3
+      }
+    },
+    {
+      "source_id": "S00047",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00048",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "supervision_history": 3,
+        "student_level": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {
+        "2025": 3
+      }
+    },
+    {
+      "source_id": "S00049",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00050",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "topic": 1,
+        "personal_contact": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00051",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00052",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 2
+      }
+    },
+    {
+      "source_id": "S00053",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00054",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00055",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 4,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00056",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00057",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "student_level": 2,
+        "thesis_possible": 2,
+        "payment": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 7,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00058",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00059",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00060",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "student_year": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 8,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00061",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "topic": 2,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00062",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00063",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00064",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "topic": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2020": 2
+      }
+    },
+    {
+      "source_id": "S00065",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00066",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00067",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1,
+        "personal_contact": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 2
+      }
+    },
+    {
+      "source_id": "S00068",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2014": 1
+      }
+    },
+    {
+      "source_id": "S00069",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00070",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00071",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2022": 1
+      }
+    },
+    {
+      "source_id": "S00072",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00073",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00074",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00075",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00076",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00077",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2010": 2
+      }
+    },
+    {
+      "source_id": "S00078",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2009": 2
+      }
+    },
+    {
+      "source_id": "S00079",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2013": 1
+      }
+    },
+    {
+      "source_id": "S00080",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2012": 3
+      }
+    },
+    {
+      "source_id": "S00081",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00082",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00083",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00084",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 2,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 5,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00085",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "student_level": 2,
+        "deadline": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00086",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "payment": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00087",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00088",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 8,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00089",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "topic": 2,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00090",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00091",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 2
+      }
+    },
+    {
+      "source_id": "S00092",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 7,
+        "verifier_confirmed_original_evidence": 7,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 14,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "required_skills": 2,
+        "workload": 2,
+        "deadline": 2,
+        "response_method": 2,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 15,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 15
+      }
+    },
+    {
+      "source_id": "S00093",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 1
+      }
+    },
+    {
+      "source_id": "S00094",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1,
+        "supervision_history": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2015": 2
+      }
+    },
+    {
+      "source_id": "S00095",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 3
+      }
+    },
+    {
+      "source_id": "S00096",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00097",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "city": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00098",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00099",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00100",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00101",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2026": 2
+      }
+    },
+    {
+      "source_id": "S00102",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00103",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 2,
+      "field_status_evidence_counts": {
+        "new_finding": 1,
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "topic": 2
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2006": 3
+      }
+    },
+    {
+      "source_id": "S00104",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00105",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00106",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "student_level": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 4
+      }
+    },
+    {
+      "source_id": "S00107",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00108",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00109",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "payment": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00110",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00111",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2012": 1
+      }
+    },
+    {
+      "source_id": "S00112",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 8
+      }
+    },
+    {
+      "source_id": "S00113",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00114",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "personal_contact": 4,
+        "city": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00115",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2007": 4
+      }
+    },
+    {
+      "source_id": "S00116",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "workload": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00117",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 2,
+        "student_level": 2,
+        "thesis_possible": 2,
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 7,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00118",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00119",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 1
+      }
+    },
+    {
+      "source_id": "S00120",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00121",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00122",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00123",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00124",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00125",
+      "family": "offer_or_program_page",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 6,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 9,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 3,
+        "student_level": 2,
+        "response_method": 4,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 10,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00126",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 8
+      }
+    },
+    {
+      "source_id": "S00127",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00128",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "student_level": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 2
+      }
+    },
+    {
+      "source_id": "S00129",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00130",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 2,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2025": 2
+      }
+    },
+    {
+      "source_id": "S00131",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00132",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00133",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 2,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00134",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2019": 1
+      }
+    },
+    {
+      "source_id": "S00135",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00136",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00137",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00138",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 1
+      }
+    },
+    {
+      "source_id": "S00139",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00140",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00141",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "required_skills": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00142",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00143",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00144",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "personal_contact": 2,
+        "published_recruitment": 2,
+        "student_level": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00145",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00146",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "topic": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 3
+      }
+    },
+    {
+      "source_id": "S00147",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "supervisor_role": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 4,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00148",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2018": 1
+      }
+    },
+    {
+      "source_id": "S00149",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "city": 2,
+        "topic": 2
+      },
+      "dated_evidence": 5,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 5
+      }
+    },
+    {
+      "source_id": "S00150",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "topic": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 3
+      }
+    },
+    {
+      "source_id": "S00151",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2020": 2
+      }
+    },
+    {
+      "source_id": "S00152",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2016": 2,
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00153",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00154",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2019": 2
+      }
+    },
+    {
+      "source_id": "S00155",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "topic": 2,
+        "supervisor_role": 2,
+        "city": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2019": 6
+      }
+    },
+    {
+      "source_id": "S00156",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00157",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2018": 2
+      }
+    },
+    {
+      "source_id": "S00158",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 1
+      }
+    },
+    {
+      "source_id": "S00159",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00160",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 3,
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00161",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 2
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2015": 4
+      }
+    },
+    {
+      "source_id": "S00162",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2020": 1
+      }
+    },
+    {
+      "source_id": "S00163",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 1
+      }
+    },
+    {
+      "source_id": "S00164",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2017": 1
+      }
+    },
+    {
+      "source_id": "S00165",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00166",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 2
+      }
+    },
+    {
+      "source_id": "S00167",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "city": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2016": 2,
+        "2017": 4
+      }
+    },
+    {
+      "source_id": "S00168",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "topic": 2,
+        "city": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 6
+      }
+    },
+    {
+      "source_id": "S00169",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 1
+      }
+    },
+    {
+      "source_id": "S00170",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00171",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "city": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2019": 2
+      }
+    },
+    {
+      "source_id": "S00172",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00173",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00174",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "city": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 8
+      }
+    },
+    {
+      "source_id": "S00175",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00176",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2017": 2
+      }
+    },
+    {
+      "source_id": "S00177",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00178",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 6
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "coordinator_contact": 1,
+        "payment": 1,
+        "thesis_possible": 1,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00179",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00180",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00181",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2017": 1
+      }
+    },
+    {
+      "source_id": "S00182",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 7
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 7
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "published_recruitment": 1,
+        "student_year": 1,
+        "student_level": 1,
+        "response_method": 1,
+        "supervisor_role": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 7,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00183",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00184",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 6,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "direct_willingness": 2,
+        "published_recruitment": 2,
+        "student_level": 1,
+        "supervisor_role": 1,
+        "supervision_history": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 8,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00185",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "supervisor_role": 1,
+        "topic": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 3
+      }
+    },
+    {
+      "source_id": "S00186",
+      "family": "structured_orcid",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2,
+        "2026": 1
+      }
+    },
+    {
+      "source_id": "S00187",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2018": 2
+      }
+    },
+    {
+      "source_id": "S00188",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00189",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 8
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "direct_willingness": 1,
+        "student_level": 2,
+        "required_skills": 1,
+        "topic": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 8,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00190",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5
+      },
+      "field_evidence_counts": {
+        "thesis_possible": 2,
+        "work_format": 3
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00191",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "direct_willingness": 1,
+        "student_level": 1,
+        "required_skills": 1,
+        "topic": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00192",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2002": 1
+      }
+    },
+    {
+      "source_id": "S00193",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00194",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 3
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00195",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00196",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 5
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1,
+        "payment": 1,
+        "work_format": 1,
+        "external_students": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00197",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "supervisor_role": 1,
+        "required_skills": 1,
+        "city": 1
+      },
+      "dated_evidence": 4,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 4
+      }
+    },
+    {
+      "source_id": "S00198",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00199",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00200",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00201",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00202",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00203",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 2,
+        "topic": 1
+      },
+      "dated_evidence": 5,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 5
+      }
+    },
+    {
+      "source_id": "S00204",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00205",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 1
+      }
+    },
+    {
+      "source_id": "S00206",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00207",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 9,
+        "verifier_confirmed_original_evidence": 10,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 19,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "published_recruitment": 2,
+        "topic": 2,
+        "student_level": 2,
+        "external_students": 2,
+        "payment": 3,
+        "deadline": 2,
+        "city": 2,
+        "response_method": 2,
+        "workload": 1
+      },
+      "dated_evidence": 20,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 20
+      }
+    },
+    {
+      "source_id": "S00208",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 7
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 7
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "required_skills": 1,
+        "student_level": 1,
+        "work_format": 1,
+        "payment": 1,
+        "deadline": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 7,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 7
+      }
+    },
+    {
+      "source_id": "S00209",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "city": 2,
+        "supervisor_role": 1,
+        "student_level": 1
+      },
+      "dated_evidence": 7,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00210",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00211",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 8,
+        "verifier_confirmed_original_evidence": 7,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 15,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 4,
+        "direct_willingness": 2,
+        "student_level": 2,
+        "thesis_possible": 2,
+        "external_students": 2,
+        "response_method": 2,
+        "required_skills": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 16,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00212",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 3,
+        "student_level": 2,
+        "topic": 1
+      },
+      "dated_evidence": 5,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2014": 2,
+        "2010": 2,
+        "2013": 1
+      }
+    },
+    {
+      "source_id": "S00213",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00214",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 8,
+        "verifier_confirmed_original_evidence": 8,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 16,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 2,
+        "student_level": 2,
+        "external_students": 2,
+        "required_skills": 2,
+        "payment": 2,
+        "deadline": 2,
+        "response_method": 2,
+        "topic": 2,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 17,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 17
+      }
+    },
+    {
+      "source_id": "S00215",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 8,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00216",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00217",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00218",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 1
+      }
+    },
+    {
+      "source_id": "S00219",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00220",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "topic": 2,
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00221",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00222",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00223",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "city": 2,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00224",
+      "family": "public_channel",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "student_level": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00225",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00226",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00227",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00228",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2010": 1
+      }
+    },
+    {
+      "source_id": "S00229",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00230",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00231",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00232",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00233",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 4,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00234",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 2,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00235",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2009": 1
+      }
+    },
+    {
+      "source_id": "S00236",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2006": 1
+      }
+    },
+    {
+      "source_id": "S00237",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "city": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 3
+      }
+    },
+    {
+      "source_id": "S00238",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00239",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00240",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 6
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1,
+        "published_recruitment": 1,
+        "required_skills": 1,
+        "work_format": 1,
+        "deadline": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 6
+      }
+    },
+    {
+      "source_id": "S00241",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00242",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "collector_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "student_level": 1,
+        "topic": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 3
+      }
+    },
+    {
+      "source_id": "S00243",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2026": 2
+      }
+    },
+    {
+      "source_id": "S00244",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00245",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "collector_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00246",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 2
+      }
+    },
+    {
+      "source_id": "S00247",
+      "family": "thesis_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 1
+      }
+    },
+    {
+      "source_id": "S00248",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00249",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00250",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00251",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "published_recruitment": 1,
+        "coordinator_contact": 1,
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00252",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 5,
+        "verifier_confirmed_original_evidence": 5
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 10
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "student_year": 2,
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 10,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00253",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00254",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 2,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00255",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 5
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 5
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1,
+        "published_recruitment": 1,
+        "external_students": 1,
+        "student_level": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 5,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2016": 5
+      }
+    },
+    {
+      "source_id": "S00256",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "city": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2022": 8
+      }
+    },
+    {
+      "source_id": "S00257",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00258",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "topic": 2,
+        "city": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 7,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00259",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "student_level": 2,
+        "topic": 2,
+        "supervisor_role": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2019": 8
+      }
+    },
+    {
+      "source_id": "S00260",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "city": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00261",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 4,
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00262",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00263",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00264",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 6,
+        "verifier_confirmed_original_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 12
+      },
+      "field_evidence_counts": {
+        "supervision_history": 4,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "student_year": 2,
+        "topic": 2
+      },
+      "dated_evidence": 12,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2018": 12
+      }
+    },
+    {
+      "source_id": "S00265",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2022": 1
+      }
+    },
+    {
+      "source_id": "S00266",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00267",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3,
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 6
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "topic": 2
+      },
+      "dated_evidence": 6,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2020": 6
+      }
+    },
+    {
+      "source_id": "S00268",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "student_year": 1
+      },
+      "dated_evidence": 3,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2023": 3
+      }
+    },
+    {
+      "source_id": "S00269",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2012": 1
+      }
+    },
+    {
+      "source_id": "S00270",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00271",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00272",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2025": 1
+      }
+    },
+    {
+      "source_id": "S00273",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 2,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "city": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 5,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00274",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00275",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00276",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00277",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 1
+      }
+    },
+    {
+      "source_id": "S00278",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1,
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00279",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "topic": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00280",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 2,
+        "verifier_confirmed_original_evidence": 3,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 5,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 2,
+        "student_level": 2,
+        "personal_contact": 1,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 6,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00281",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00282",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 3
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "topic": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {
+        "2017": 2
+      }
+    },
+    {
+      "source_id": "S00283",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 1
+      }
+    },
+    {
+      "source_id": "S00284",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00285",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 4
+      },
+      "field_evidence_counts": {
+        "coordinator_contact": 1,
+        "published_recruitment": 1,
+        "student_level": 1,
+        "response_method": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 4,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00286",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1,
+        "topic": 1,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00287",
+      "family": "person_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 3
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 3
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1,
+        "topic": 1,
+        "city": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 3,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00288",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "topic": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2009": 1
+      }
+    },
+    {
+      "source_id": "S00289",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 1,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2001": 1
+      }
+    },
+    {
+      "source_id": "S00290",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8
+      },
+      "field_evidence_counts": {
+        "supervision_history": 2,
+        "supervisor_role": 2,
+        "student_level": 2,
+        "topic": 2
+      },
+      "dated_evidence": 8,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2024": 8
+      }
+    },
+    {
+      "source_id": "S00291",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00292",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 5,
+        "verifier_confirmed_original_evidence": 5,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 10,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "city": 2,
+        "coordinator_contact": 2,
+        "thesis_possible": 2,
+        "work_format": 2,
+        "published_recruitment": 3,
+        "payment": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 12,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00293",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "student_level": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 2,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00294",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 4,
+        "verifier_confirmed_original_evidence": 4,
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 8,
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "direct_willingness": 2,
+        "student_level": 2,
+        "topic": 2,
+        "published_recruitment": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 9,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00295",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 1
+      },
+      "field_evidence_counts": {
+        "supervisor_role": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00296",
+      "family": "other_source",
+      "evidence_counts": {
+        "collector_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00297",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1
+      },
+      "field_evidence_counts": {
+        "personal_contact": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 1,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00298",
+      "family": "person_page",
+      "evidence_counts": {
+        "collector_evidence": 1,
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 2,
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "personal_contact": 3,
+        "topic": 1
+      },
+      "dated_evidence": 0,
+      "unknown_date_evidence": 4,
+      "information_year_counts": {}
+    },
+    {
+      "source_id": "S00299",
+      "family": "other_source",
+      "evidence_counts": {
+        "verifier_new_finding_evidence": 2
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "new_finding": 2
+      },
+      "field_evidence_counts": {
+        "supervision_history": 1,
+        "topic": 1
+      },
+      "dated_evidence": 2,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2011": 2
+      }
+    },
+    {
+      "source_id": "S00300",
+      "family": "offer_or_program_page",
+      "evidence_counts": {
+        "verifier_confirmed_original_evidence": 1,
+        "verifier_new_finding_evidence": 6
+      },
+      "profiles": 1,
+      "field_status_evidence_counts": {
+        "found": 1,
+        "new_finding": 6
+      },
+      "field_evidence_counts": {
+        "personal_contact": 2,
+        "published_recruitment": 1,
+        "payment": 1,
+        "workload": 1,
+        "deadline": 1,
+        "required_skills": 1
+      },
+      "dated_evidence": 7,
+      "unknown_date_evidence": 0,
+      "information_year_counts": {
+        "2021": 7
+      }
+    }
+  ],
+  "analysis_version": "source_diagnostics_v1",
+  "identity_linked_confirmed_original_profiles_by_field": {
+    "city": 29,
+    "coordinator_contact": 3,
+    "deadline": 4,
+    "direct_willingness": 3,
+    "external_students": 4,
+    "payment": 2,
+    "personal_contact": 65,
+    "published_recruitment": 14,
+    "required_skills": 5,
+    "response_method": 6,
+    "student_level": 29,
+    "student_year": 3,
+    "supervision_history": 26,
+    "supervisor_role": 31,
+    "thesis_possible": 6,
+    "topic": 63,
+    "work_format": 1,
+    "workload": 2
+  },
+  "confirmed_original_claims_with_unresolved_identity_by_field": {
+    "city": 2,
+    "direct_willingness": 1,
+    "personal_contact": 3,
+    "published_recruitment": 1,
+    "required_skills": 1,
+    "response_method": 1,
+    "student_level": 1,
+    "supervision_history": 1,
+    "thesis_possible": 1,
+    "topic": 6,
+    "work_format": 1
+  },
+  "identity_linked_new_finding_profiles_by_field": {
+    "city": 12,
+    "coordinator_contact": 15,
+    "deadline": 4,
+    "direct_willingness": 1,
+    "external_students": 2,
+    "payment": 8,
+    "personal_contact": 36,
+    "published_recruitment": 13,
+    "required_skills": 7,
+    "response_method": 5,
+    "student_level": 16,
+    "student_year": 5,
+    "supervision_history": 33,
+    "supervisor_role": 25,
+    "thesis_possible": 2,
+    "topic": 23,
+    "work_format": 4,
+    "workload": 4
+  },
+  "confirmed_original_claims_using_additional_source_by_field": {
+    "city": 4,
+    "coordinator_contact": 1,
+    "direct_willingness": 1,
+    "personal_contact": 22,
+    "published_recruitment": 4,
+    "required_skills": 1,
+    "response_method": 1,
+    "student_level": 1,
+    "supervision_history": 3,
+    "supervisor_role": 4,
+    "topic": 16
+  },
+  "note": "Evidence references, not accuracy. New findings are separate; no human gold standard. Year counts use literal ISO-like information dates; checking today does not refresh an old offer. Identity-linked counts do not establish current availability. An additional source does not imply a false claim.",
+  "private_evidence_map": "source_id -> URL and per-profile uses in private source map"
+}

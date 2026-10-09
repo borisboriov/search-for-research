@@ -50,6 +50,28 @@ class Budget:
         self.last[domain] = time.monotonic()
 
 
+class DomainStops:
+    """Сохраняемая остановка домена после 403/429, включая возобновление."""
+
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.domains = {read(p)["domain"] for p in root.glob("domain-stop-*.json")}
+
+    def blocked(self, url: str) -> bool:
+        return urlparse(url).netloc in self.domains
+
+    def observe(self, url: str, status_code: int | None) -> None:
+        if status_code not in (403, 429) or self.blocked(url):
+            return
+        domain = urlparse(url).netloc
+        name = hashlib.sha256(domain.encode()).hexdigest()
+        write_new(
+            self.root / f"domain-stop-{name}.json",
+            {"domain": domain, "url": url, "status_code": status_code, "checked_at": now()},
+        )
+        self.domains.add(domain)
+
+
 def policy(robots: str, url: str, status_code: int) -> tuple[bool, float]:
     if status_code != 200:
         return False, 1
@@ -144,6 +166,7 @@ async def run(out: Path, settings_file: Path) -> dict[str, Any]:
     )
     setup_seconds = time.monotonic() - started
     budget = Budget()
+    stops = DomainStops(out)
     results = []
     async with (
         httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=False) as client,
@@ -154,6 +177,8 @@ async def run(out: Path, settings_file: Path) -> dict[str, Any]:
             robots_path = out / f"robots-{index}.json"
             if robots_path.exists():
                 saved = read(robots_path)
+            elif stops.blocked(url):
+                saved = {"text": "", "status_code": None}
             else:
                 budget.reserve("robots", robots_url)
                 write_new(
@@ -181,11 +206,14 @@ async def run(out: Path, settings_file: Path) -> dict[str, Any]:
                         "error": type(exc).__name__,
                     }
                 write_new(robots_path, saved)
+            stops.observe(robots_url, saved["status_code"])
             allowed, delay = policy(saved["text"], url, saved["status_code"])
             for method in ("httpx", "crawl4ai_http"):
                 result_path = out / f"page-{index}-{method}.json"
                 if result_path.exists():
-                    results.append(read(result_path))
+                    cached = read(result_path)
+                    stops.observe(url, cached.get("status_code"))
+                    results.append(cached)
                     continue
                 item: dict[str, Any] = {
                     "page": index,
@@ -203,7 +231,9 @@ async def run(out: Path, settings_file: Path) -> dict[str, Any]:
                         "pilot_no_explicit_terms_located_current_terms_not_reverified"
                     ),
                 }
-                if not allowed:
+                if stops.blocked(url):
+                    item.update(status="domain_stopped", elapsed_seconds=None)
+                elif not allowed:
                     item.update(status="policy_unavailable_or_disallowed", elapsed_seconds=None)
                 else:
                     budget.reserve(method, url)
@@ -237,6 +267,7 @@ async def run(out: Path, settings_file: Path) -> dict[str, Any]:
                             )
                             raw, code = response.html, response.status_code
                             markdown = generator.generate_markdown(raw, base_url=url).raw_markdown
+                        stops.observe(url, code)
                         item.update(
                             status="ok" if code == 200 else "http_failure",
                             status_code=code,
