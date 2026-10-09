@@ -1,0 +1,41 @@
+{
+  "method": "semantic-v3",
+  "profiles": 5,
+  "native_collector_runs": 5,
+  "native_independent_verifier_runs": 5,
+  "distinct_native_contexts": 10,
+  "peak_concurrent_runs": 2,
+  "full_batch_wall_seconds": 622.7400000095367,
+  "sum_native_wall_seconds": 550.2511005401611,
+  "union_native_wall_seconds": 321.69680666923523,
+  "usage": {
+    "cache_write_input_tokens": 0,
+    "cached_input_tokens": 0,
+    "input_tokens": 272536,
+    "output_tokens": 16912,
+    "reasoning_output_tokens": 1695
+  },
+  "native_cost_usd": null,
+  "actual_model": null,
+  "actual_effort": null,
+  "metadata_status": "runtime_not_exposed",
+  "new_source_searches": 0,
+  "new_source_pages": 0,
+  "tool_calls": 0,
+  "integration_failures": 2,
+  "automatic_agent_retries": 0,
+  "unplanned_coordinator_interventions": 1,
+  "human_reviewed": 0,
+  "human_minutes": null,
+  "historical_cache_only": true,
+  "scale_hypothesis": {
+    "profiles": 8902,
+    "authorization": false,
+    "full_wall_hours_if_identical_cached_batches": 307.97952667138316,
+    "native_union_hours_if_identical_cached_batches": 159.09694294275178,
+    "input_tokens_if_same_profile_mean": 485223094.4,
+    "output_tokens_if_same_profile_mean": 30110124.8,
+    "cost_usd": null,
+    "scope": "Hypothesis for identical cache-only workloads, excludes fresh search, access policy checks, rate limits, quality and human review. No catalog run."
+  }
+}
