@@ -453,8 +453,8 @@ def execute(
             and "item" in event
             and event["item"].get("type") not in ("agent_message", "reasoning")
         )
-        for event in events
-        if event not in client_diagnostics
+        for index, event in enumerate(events)
+        if index >= turn_start or event not in client_diagnostics
     ):
         raise ValueError(
             "Cache-only запуск использовал инструмент: нужна отдельная "

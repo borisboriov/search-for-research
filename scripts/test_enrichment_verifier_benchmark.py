@@ -467,7 +467,7 @@ class NativeIsolationTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            rendered = [
+            rendered: list[dict[str, Any]] = [
                 {
                     "type": "message",
                     "role": role,
@@ -488,7 +488,7 @@ class NativeIsolationTests(unittest.TestCase):
             self.assertEqual(proof["additional_client_messages"], 2)
             self.assertTrue(proof["rendered_messages"][-1]["is_exact_user_prompt"])
             self.assertIsNone(proof["available_tool_inventory"])
-            # Extra client messages must not hide a changed final task or an assistant history.
+            # Extra client messages must not hide a changed final task.
             for changed in ("other task", "rules"):
                 rendered[-1]["content"][0]["text"] = changed
                 with (
@@ -595,7 +595,12 @@ class NativeIsolationTests(unittest.TestCase):
             "Code mode will fail closed; enable `features.code_mode_host` "
             "and install `codex-code-mode-host`."
         )
-        for pre_turn, message in ((True, warning), (False, warning), (True, "other error")):
+        for pre_turn, message, repeat in (
+            (True, warning, False),
+            (False, warning, False),
+            (True, "other error", False),
+            (True, warning, True),
+        ):
             with (
                 self.subTest(pre_turn=pre_turn, message=message),
                 tempfile.TemporaryDirectory() as temporary,
@@ -612,6 +617,7 @@ class NativeIsolationTests(unittest.TestCase):
                 events = [
                     {"type": "thread.started", "thread_id": "test"},
                     *([diagnostic, turn] if pre_turn else [turn, diagnostic]),
+                    *([diagnostic] if repeat else []),
                     {
                         "type": "turn.completed",
                         "usage": {"input_tokens": 1, "output_tokens": 1},
@@ -623,7 +629,7 @@ class NativeIsolationTests(unittest.TestCase):
                 )
                 before = sha(root / "events.jsonl"), sha(root / "raw-result.json")
                 with patch("enrichment_native.subprocess.run") as launch:
-                    if pre_turn and message == warning:
+                    if pre_turn and message == warning and not repeat:
                         _, receipt = execute(root, "task", {}, root, system_prompt="rules")
                         self.assertEqual(receipt["tool_calls"], 0)
                         self.assertEqual(receipt["client_diagnostics"], [diagnostic])
