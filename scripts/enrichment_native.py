@@ -137,8 +137,6 @@ def isolation_options(directory: Path) -> list[str]:
         "include_environment_context=false",
         'web_search="disabled"',
         'sandbox_mode="read-only"',
-        "model_providers.openai.request_max_retries=0",
-        "model_providers.openai.stream_max_retries=0",
         "features.unbounded_connection_retries=false",
     ]
     options += [
@@ -180,40 +178,53 @@ def isolation_probe(
 ) -> dict[str, Any]:
     """Render only; never launch a turn or accept extra model-visible context."""
 
-    probe = subprocess.run(
-        [
-            "codex",
-            "debug",
-            "prompt-input",
-            *[a for c in isolation_config for a in ("-c", c)],
-            "-c",
-            f"model={json.dumps(model)}",
-            prompt,
-        ],
-        cwd=cwd,
-        capture_output=True,
-        timeout=30,
-        check=False,
-    )
+    command = [
+        "codex",
+        "debug",
+        "prompt-input",
+        *[a for c in isolation_config for a in ("-c", c)],
+        "-c",
+        f"model={json.dumps(model)}",
+        prompt,
+    ]
+    started_at = time.time()
+    timed_out = False
+    try:
+        probe = subprocess.run(command, cwd=cwd, capture_output=True, timeout=30, check=False)
+        stdout, stderr, exit_code = probe.stdout, probe.stderr, probe.returncode
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        stdout, stderr, exit_code = exc.stdout or b"", exc.stderr or b"", -9
+    if isinstance(stdout, str):
+        stdout = stdout.encode()
+    if isinstance(stderr, str):
+        stderr = stderr.encode()
     proof: dict[str, Any] = {
-        "exit_code": probe.returncode,
-        "stdout_sha256": hashlib.sha256(probe.stdout).hexdigest(),
-        "stderr_sha256": hashlib.sha256(probe.stderr).hexdigest(),
+        "exit_code": exit_code,
+        "timed_out": timed_out,
+        "started_at_epoch": started_at,
+        "wall_elapsed_seconds": time.time() - started_at,
+        "stdout_sha256": hashlib.sha256(stdout).hexdigest(),
+        "stderr_sha256": hashlib.sha256(stderr).hexdigest(),
         "instruction_sha256": hashlib.sha256(system_prompt.encode()).hexdigest(),
+        "requested_instruction_file": str(directory / "instructions.txt"),
+        "instruction_delivery": "unverified",
         "user_prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
         "available_tool_inventory": None,
         "tool_inventory_contract": "prompt-input renders messages, not separate API tools",
     }
+    for stream, data in (("stdout", stdout), ("stderr", stderr)):
+        name = "isolation-" + stream + "-" + proof[stream + "_sha256"] + ".bin"
+        immutable(directory / name, data)
+        (directory / name).chmod(0o600)
+        proof[stream + "_path"] = str(directory / name)
     immutable(
-        directory / ("isolation-render-" + proof["stdout_sha256"][:16] + ".json"), encoded(proof)
+        directory / ("isolation-render-" + hashlib.sha256(encoded(proof)).hexdigest() + ".json"),
+        encoded(proof),
     )
-    if probe.returncode:
-        immutable(
-            directory / ("isolation-probe-failed-" + proof["stderr_sha256"][:16] + ".json"),
-            encoded(proof),
-        )
+    if exit_code:
         raise ValueError("Не доказана изоляция native prompt: offline render отказал")
-    rendered = json.loads(probe.stdout)
+    rendered = json.loads(stdout)
     if not isinstance(rendered, list):
         raise ValueError("Неизвестный контракт offline native prompt")
     texts = []
@@ -231,8 +242,12 @@ def isolation_probe(
             raise ValueError("Постороннее содержимое native prompt")
         texts.append("".join(c["text"] for c in content))
     texts = [text for text in texts if text]
-    if texts not in ([prompt], [system_prompt, prompt]):
-        raise ValueError("Native prompt содержит домашние/посторонние инструкции")
+    if texts != [system_prompt, prompt]:
+        raise ValueError(
+            "Не доказана доставка общей native инструкции: требуется точный render "
+            "[instruction, prompt], без домашних/посторонних сообщений"
+        )
+    proof["instruction_delivery"] = "rendered_instruction_and_user"
     immutable(directory / "isolation-probe.json", encoded(proof))
     return proof
 

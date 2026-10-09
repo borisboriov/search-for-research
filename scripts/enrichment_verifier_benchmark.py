@@ -109,7 +109,7 @@ def judge_schema() -> dict[str, Any]:
     )
 
 
-def freeze(root: Path, source_root: Path) -> None:
+def freeze(root: Path, source_root: Path, allow_existing_preparation: bool = False) -> None:
     instruction = (
         "Ты независимый проверяющий фиксированных сохранённых атомов. Никаких "
         "команд, инструментов или веба. Не создавай новые находки. Оцени каждый "
@@ -123,8 +123,6 @@ def freeze(root: Path, source_root: Path) -> None:
         "judge-instruction.txt": (JUDGE_RULES + RUBRIC.read_text()).encode(),
         "judge-schema.json": encoded(judge_schema()),
     }
-    for name, payload in artifacts.items():
-        immutable(root / name, payload)
     files = [
         REPO / "scripts" / name
         for name in (
@@ -145,11 +143,15 @@ def freeze(root: Path, source_root: Path) -> None:
         RUBRIC,
         files,
         {
-            "artifact_hashes": {name: sha(root / name) for name in artifacts},
+            "artifact_hashes": {
+                name: hashlib.sha256(data).hexdigest() for name, data in artifacts.items()
+            },
             "pi": HIGH_CONFIGS["pi_verifier"],
             "native": HIGH_CONFIGS["native_verifier"],
             "judge": JUDGE_CONFIG,
         },
+        artifacts=artifacts,
+        allow_existing_preparation=allow_existing_preparation,
     )
 
 
@@ -524,6 +526,88 @@ def judge(root: Path) -> None:
             raise
 
 
+def stage_usage(runs: list[Path], *, pi: bool = False) -> dict[str, Any]:
+    """Completed receipts and unfinished observed segments stay separate."""
+    completed: Counter[str] = Counter()
+    partial: Counter[str] = Counter()
+    receipts = partial_segments = incomplete_events = 0
+    walls: list[float] = []
+    unknown_wall = 0
+    attempts = sum((p / "started.json").exists() for p in runs)
+
+    def add(counter: Counter[str], usage: Any) -> None:
+        if isinstance(usage, dict):
+            counter.update({k: v for k, v in usage.items() if type(v) is int and v >= 0})
+
+    for directory in runs:
+        receipt = read(directory / "receipt.json") if (directory / "receipt.json").exists() else {}
+        if receipt:
+            receipts += 1
+            add(completed, receipt.get("token_usage", receipt.get("tokens")))
+        elif pi and (directory / "stdout.jsonl").exists():
+            for line in (directory / "stdout.jsonl").read_text().splitlines():
+                try:
+                    control = json.loads(line)
+                except json.JSONDecodeError:
+                    incomplete_events += 1
+                    continue
+                if control.get("event_type") == "message_end":
+                    message = read(directory / "pi" / control["file"]).get("message", {})
+                    if message.get("role") == "assistant" and isinstance(
+                        message.get("usage"), dict
+                    ):
+                        add(partial, message["usage"])
+                        partial_segments += 1
+        elif (directory / "events.jsonl").exists():
+            for line in (directory / "events.jsonl").read_text().splitlines():
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    incomplete_events += 1
+                    continue
+                if event.get("type") == "turn.completed" and isinstance(event.get("usage"), dict):
+                    add(partial, event["usage"])
+                    partial_segments += 1
+        wall = receipt.get("wall_elapsed_seconds")
+        if wall is None and (directory / "started.json").exists():
+            started = read(directory / "started.json")
+            finished = (
+                read(directory / "finished.json") if (directory / "finished.json").exists() else {}
+            )
+            start = started.get("epoch", started.get("started_at_epoch"))
+            end = finished.get("epoch", finished.get("finished_at_epoch"))
+            wall = end - start if start is not None and end is not None else None
+            unknown_wall += wall is None
+        if isinstance(wall, int | float):
+            walls.append(wall)
+    return {
+        "attempts": attempts,
+        "completed_receipts": receipts,
+        "completed_usage": dict(completed) if completed else None,
+        "unfinished_observed_segments": partial_segments,
+        "incomplete_event_records": incomplete_events,
+        "unfinished_observed_usage": dict(partial) if partial_segments else None,
+        "unfinished_full_usage": None,
+        "wall_elapsed_seconds": None if unknown_wall else sum(walls),
+        "known_wall_elapsed_seconds": sum(walls),
+        "unknown_wall_jobs": unknown_wall,
+        "cost_usd": None,
+        "subscription_quota_delta": None,
+        "automatic_cli_retries": 0,
+        "transport_retries": None,
+        "requested_sdk_retries": 0 if pi else None,
+        "token_contract": (
+            "Pi input/output/cacheRead/cacheWrite disjoint; totalTokens authoritative; "
+            "reasoning subset output"
+        )
+        if pi
+        else (
+            "native cached_input_tokens subset input_tokens; reasoning unknown; "
+            "raw CLI fields retained"
+        ),
+    }
+
+
 def aggregate(root: Path) -> dict[str, Any]:
     manifest = locked(root)
     pairs = [read(p) for p in (root / "paired").glob("*.json")]
@@ -531,8 +615,12 @@ def aggregate(root: Path) -> dict[str, Any]:
     grades: dict[str, dict[str, Counter[str]]] = {
         name: {axis: Counter() for axis in ("atoms", "profile_axes")} for name in ("pi", "native")
     }
-    errors: dict[str, Counter[str]] = {axis: Counter() for axis in ("atoms", "profile_axes")}
-    severities: dict[str, Counter[str]] = {axis: Counter() for axis in ("atoms", "profile_axes")}
+    errors: dict[str, dict[str, Counter[str]]] = {
+        name: {axis: Counter() for axis in ("atoms", "profile_axes")} for name in grades
+    }
+    severities: dict[str, dict[str, Counter[str]]] = {
+        name: {axis: Counter() for axis in ("atoms", "profile_axes")} for name in grades
+    }
     judges = list((root / "judges").glob("*/validated.json"))
     for path in judges:
         packet_id = path.parent.name
@@ -553,36 +641,27 @@ def aggregate(root: Path) -> dict[str, Any]:
         }
         for axis, key in (("atoms", "atom_evaluations"), ("profile_axes", "profile_evaluations")):
             for row in value[key]:
-                grades[mapping[row["author_id"], row["response"]]][axis][row["grade"]] += 1
-                errors[axis].update(row["error_types"])
-                severities[axis][row["severity"]] += 1
-    usage = {}
-    for name, stage in (("pi", "pi_verifier"), ("native", "native_verifier")):
-        runs = list((root / "runs").glob("*/" + stage))
-        receipts = [read(p / "receipt.json") for p in runs if (p / "receipt.json").exists()]
-        counts: Counter[str] = Counter()
-        for receipt in receipts:
-            observed = receipt.get("token_usage", receipt.get("tokens"))
-            if isinstance(observed, dict):
-                counts.update(
-                    {
-                        k: v
-                        for k, v in observed.items()
-                        if isinstance(v, int) and not isinstance(v, bool)
-                    }
-                )
-        usage[name] = {
-            "attempts": sum((p / "started.json").exists() for p in runs),
-            "completed_receipts": len(receipts),
-            "completed_usage": dict(counts) if receipts else None,
-            "unfinished_full_usage": None,
-            "cost_usd": None,
-            "subscription_quota_delta": None,
-            "token_contract": "Pi cache disjoint; reasoning subset output"
-            if name == "pi"
-            else "native cached_input_tokens subset input_tokens; reasoning unknown; "
-            "raw CLI fields retained",
-        }
+                name = mapping[row["author_id"], row["response"]]
+                grades[name][axis][row["grade"]] += 1
+                errors[name][axis].update(row["error_types"])
+                severities[name][axis][row["severity"]] += 1
+    usage = {
+        name: stage_usage(list((root / "runs").glob("*/" + stage)), pi=name == "pi")
+        for name, stage in (("pi", "pi_verifier"), ("native", "native_verifier"))
+    }
+    usage["judge"] = stage_usage(list((root / "judges").glob("*")))
+    probes = [read(p) for p in root.rglob("isolation-render-*.json")]
+    prep_walls = [p["wall_elapsed_seconds"] for p in probes if "wall_elapsed_seconds" in p]
+    usage["preparation"] = {
+        "offline_render_attempts": len(probes),
+        "offline_render_failures": sum(p["exit_code"] != 0 for p in probes),
+        "wall_elapsed_seconds": sum(prep_walls) if len(prep_walls) == len(probes) else None,
+        "known_wall_elapsed_seconds": sum(prep_walls),
+        "other_preparation_wall_elapsed_seconds": None,
+        "model_invocations": 0,
+        "token_usage": None,
+        "cost_usd": None,
+    }
     controls = [read(p) for p in (root / "pilot-events").glob("*.json")]
     human_records = [read(p) for p in (root / "paired-human/records").glob("*.json")]
     human_profiles = {a for record in human_records for a in record["fully_reviewed_profiles"]}
@@ -600,8 +679,16 @@ def aggregate(root: Path) -> dict[str, Any]:
         else None,
         "judge_atom_evaluations": sum(sum(v["atoms"].values()) for v in grades.values()),
         "judge_profile_evaluations": sum(sum(v["profile_axes"].values()) for v in grades.values()),
-        "error_types": {a: dict(v) for a, v in errors.items()} if judges else None,
-        "severities": {a: dict(v) for a, v in severities.items()} if judges else None,
+        "judge_evaluated_per_model": {
+            n: {a: sum(v.values()) for a, v in axes.items()} for n, axes in grades.items()
+        },
+        "error_types": {n: {a: dict(v) for a, v in axes.items()} for n, axes in errors.items()}
+        if judges
+        else None,
+        "severities": {n: {a: dict(v) for a, v in axes.items()} for n, axes in severities.items()}
+        if judges
+        else None,
+        "judge_result_paths": [str(p.parent / "raw-result.json") for p in judges],
         "usage": usage,
         "human_reviewed": len(human_profiles),
         "human_minutes": sum(r["answers"]["minutes"] for r in human_records)
@@ -622,11 +709,12 @@ def main() -> None:
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--source-root", type=Path)
     parser.add_argument("--limit", type=int, default=3)
+    parser.add_argument("--allow-existing-preparation", action="store_true")
     args = parser.parse_args()
     if args.action == "freeze":
         if args.source_root is None:
             parser.error("freeze требует --source-root")
-        freeze(args.root, args.source_root)
+        freeze(args.root, args.source_root, args.allow_existing_preparation)
     elif args.action == "run":
         run(args.root, args.limit)
     else:

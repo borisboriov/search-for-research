@@ -10,6 +10,12 @@ from enrichment_experiment import private_root, read, sha
 METHOD = "cache-verifier-v1"
 SELECTION_SEED = 19319420261011
 BLIND_SEED = "19319420261012"
+OLD_NAMES = (
+    "enrichment100-20261008",
+    "enrichment-pi12-20261009",
+    "enrichment-pi12-high-20261009",
+)
+OLD_PARENT = Path("/Users/boris/Experiments/search-for-research")
 # Отбор по содержанию исходных материалов, без чтения старых вердиктов.
 CASES = (
     ("A5015573260", ("c3", "c5", "c7", "c8"), "postdoc; дата; длительность"),
@@ -84,16 +90,43 @@ def common_input(source: dict[str, Any], ids: list[str], rubric_sha: str) -> dic
     }
 
 
+def destination(root: Path, source_root: Path, allow_existing_preparation: bool = False) -> Path:
+    """Read-only guard before mkdir/chmod/publication, including resolved aliases."""
+    resolved, source = root.resolve(), source_root.resolve()
+    protected = {source, *(OLD_PARENT / name for name in OLD_NAMES)}
+    protected.update(source.parent / name for name in OLD_NAMES)
+    for old in protected:
+        old = old.resolve()
+        if resolved == old or resolved.is_relative_to(old) or old.is_relative_to(resolved):
+            raise ValueError("Root пересекается с защищёнными прежними данными")
+    if root.is_symlink() or (resolved / "manifest.json").exists():
+        raise ValueError("Root является ссылкой либо уже заморожен")
+    if resolved.exists():
+        if not resolved.is_dir():
+            raise ValueError("Root не является каталогом")
+        entries = list(resolved.iterdir())
+        if entries and (
+            not allow_existing_preparation
+            or any(p.name not in {"preflight", "diagnosis"} or not p.is_dir() for p in entries)
+            or any(p.is_symlink() for p in resolved.rglob("*"))
+        ):
+            raise ValueError("Непустой чужой root; разрешены явно только preflight/diagnosis")
+    return resolved
+
+
 def build(
     root: Path,
     source_root: Path,
     rubric: Path,
     code_paths: list[Path],
     contracts: dict[str, Any] | None = None,
+    *,
+    artifacts: dict[str, bytes] | None = None,
+    allow_existing_preparation: bool = False,
 ) -> dict[str, Any]:
-    root = private_root(root)
-    if root == source_root or (root / "manifest.json").exists():
-        raise ValueError("Root уже заморожен либо совпадает с прежними данными")
+    root = private_root(destination(root, source_root, allow_existing_preparation))
+    for name, payload in (artifacts or {}).items():
+        immutable(root / name, payload)
     rest = list(CASES[3:])
     random.Random(SELECTION_SEED).shuffle(rest)
     ordered = [*CASES[:3], *rest]
