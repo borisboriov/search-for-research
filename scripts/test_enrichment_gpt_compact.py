@@ -4,11 +4,15 @@ import tempfile
 import unittest
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 from enrichment_batch import encoded, immutable
 from enrichment_experiment import now, read, sha
 from enrichment_gpt_compact import CASES, allow_new, judge_response, packets, response, task_for
+from enrichment_native import normalized_provenance, schema
+from enrichment_semantics import validate
+from test_enrichment_semantics import fixture
 
 
 class CompactTests(unittest.TestCase):
@@ -72,6 +76,60 @@ class CompactTests(unittest.TestCase):
                     )
                 self.assertTrue((root / "unblinding" / path.name).exists())
 
+    def test_original_schema_valid_raw_can_be_read_after_provenance_normalization(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source, raw = fixture()
+            aid = source["author_id"]
+            immutable(root / "inputs" / f"{aid}.json", encoded(source))
+            task = task_for(root, aid)
+            raw.pop("provenance")
+            raw.update(
+                {
+                    key: task[key]
+                    for key in (
+                        "author_id",
+                        "batch_ticket_id",
+                        "batch_input_sha256",
+                        "input_sha256",
+                    )
+                }
+            )
+            run = root / "runs" / aid / "baseline"
+            for name, data in (
+                ("raw-result.json", encoded(raw)),
+                ("events.jsonl", b"events"),
+                ("prompt.txt", b"prompt"),
+            ):
+                immutable(run / name, data)
+            receipt: dict[str, Any] = {
+                key: sha(run / name)
+                for name, key in (
+                    ("raw-result.json", "raw_result_sha256"),
+                    ("events.jsonl", "events_sha256"),
+                    ("prompt.txt", "prompt_sha256"),
+                )
+            }
+            receipt.update(
+                agent_id="new",
+                runtime_status="runtime_not_exposed",
+                model=None,
+                effort=None,
+                tokens=None,
+                cost_usd=None,
+            )
+            immutable(run / "receipt.json", encoded(receipt))
+            immutable(root / "schema.json", encoded(schema("verify", strict_levels=True)))
+            result = raw | {"provenance": normalized_provenance(receipt, "verify")}
+            saved = {
+                "result": result,
+                "receipt": receipt,
+                "classifications": validate(source, result, task["input_sha256"]),
+                "human_reviewed": 0,
+            }
+            immutable(run / "validated.json", encoded(saved))
+            self.assertEqual(response(root, aid, "baseline"), saved)
+
     def test_modified_validated_verdict_and_receipt_are_rejected_without_raw_change(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -83,7 +141,7 @@ class CompactTests(unittest.TestCase):
                 ("prompt.txt", b"prompt"),
             ):
                 immutable(run / name, data)
-            receipt = {
+            receipt: dict[str, Any] = {
                 key: sha(run / name)
                 for name, key in (
                     ("raw-result.json", "raw_result_sha256"),
@@ -92,6 +150,9 @@ class CompactTests(unittest.TestCase):
                 )
             }
             immutable(run / "receipt.json", encoded(receipt))
+            immutable(
+                root / "schema.json", encoded({"type": "object", "additionalProperties": True})
+            )
             altered = {"items": [{"verdict": "supported"}], "provenance": {}}
             immutable(
                 run / "validated.json",
@@ -120,7 +181,7 @@ class CompactTests(unittest.TestCase):
                 ("prompt.txt", b"prompt"),
             ):
                 immutable(run / name, data)
-            receipt = {
+            receipt: dict[str, Any] = {
                 key: sha(run / name)
                 for name, key in (
                     ("raw-result.json", "raw_result_sha256"),

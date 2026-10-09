@@ -176,3 +176,20 @@ validated.json не была связана с первичным raw. До лю
 сверка receipt/events/prompt и seal/содержимое packet→unblinding→проверенные ответы.
 Пять offline тестов подтверждают отказ при подмене verdict/grade/receipt/mapping.
 Первый compact root имел0 сравнительных calls; он остановлен, нужен новый freeze.
+
+Ревью7797a2c подтвердило закрытие прежнего Medium и отсутствие открытых
+блокеров в самостоятельном v4 scope, включая873 прежних файлов без изменений.
+Оно выявило новый Medium в compact response: strict schema проверялась после
+служебного provenance. Порядок исправлен; положительный тест использует полную
+verify schema и semantic-v3 и подтверждает успешное чтение корректного raw.
+Сравнительные calls по-прежнему0 до исправленного подтверждения.
+
+Числовой runner `scripts/enrichment_night_metrics.py` читает receipts/results,
+сверяет native raw/events/prompt, дедуплицирует physical agent_id и проверяет
+одинаковость copied receipts. Cached input/reasoning — подмножества, не
+дополнительные токены; failed collector attempts считаются физической работой.
+Условные сценарии17/167 профилей в день не доказывают выполнимость: human time,
+реальная квота/платёж и разрешение массового продукта неизвестны.
+Они отдельно исключают разработку/review/ошибки/очереди. Текущий каталог9002
+не покрывает10000 различных людей. Documentary GLM credits не фактический
+subscription debit и не сумма денег. Human_reviewed0.

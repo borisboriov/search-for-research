@@ -169,11 +169,11 @@ def response(root: Path, aid: str, variant: str) -> dict[str, Any]:
     directory = root / "runs" / aid / variant
     saved, receipt = saved_raw(directory)
     expected = read(directory / "raw-result.json")
+    check_schema(expected, read(root / "schema.json"))
     expected["provenance"] = normalized_provenance(receipt, "verify")
     if saved["result"] != expected:
         raise ValueError("Verifier result отличается от raw")
     task = task_for(root, aid)
-    check_schema(expected, read(root / "schema.json"))
     if any(
         expected[key] != task[key]
         for key in ("author_id", "batch_ticket_id", "batch_input_sha256", "input_sha256")
