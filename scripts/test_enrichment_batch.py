@@ -162,6 +162,66 @@ class BatchTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             restored.submit("A0-collect", path, provenance)
 
+    def test_stop_survives_interrupt_before_optional_domain_index(self) -> None:
+        for outcome in ("403", "429"):
+            with self.subTest(outcome=outcome):
+                batch = Batch.create(
+                    self.base / f"stop-{outcome}", self.frozen, ["A0", "A1"], self.rules
+                )
+                batch.ticket("A0", "collect")
+                operation = batch.reserve("A0-collect", "page", "https://example.org/blocked")
+                original = batch.append
+
+                def interrupt(
+                    events: list[dict[str, Any]],
+                    action: str,
+                    *,
+                    _append: Any = original,
+                    **data: Any,
+                ) -> None:
+                    if action == "domain_stop":
+                        raise OSError("interrupt after durable HTTP outcome")
+                    _append(events, action, **data)
+
+                with (
+                    patch.object(batch, "append", side_effect=interrupt),
+                    self.assertRaisesRegex(OSError, "interrupt"),
+                ):
+                    batch.finish_operation(operation, outcome)
+                resumed = Batch(batch.root)
+                self.assertEqual(resumed.status()["stopped_domains"], ["example.org"])
+                before = resumed.status()["event_count"]
+                with self.assertRaisesRegex(ValueError, "закрытая"):
+                    resumed.finish_operation(operation, outcome)
+                self.assertEqual(resumed.status()["event_count"], before)
+                resumed.ticket("A1", "collect")
+                with self.assertRaisesRegex(ValueError, "остановлен"):
+                    resumed.reserve("A1-collect", "page", "https://example.org/another")
+                ticket = resumed.ticket("A0", "collect")
+                result = self.base / f"closed-{outcome}.json"
+                result.write_bytes(
+                    encoded(
+                        {
+                            "author_id": "A0",
+                            "batch_ticket_id": "A0-collect",
+                            "batch_input_sha256": ticket.name,
+                            "network_operations": [operation],
+                        }
+                    )
+                )
+                resumed.submit(
+                    "A0-collect",
+                    result,
+                    {"agent_id": "collector", "stage": "collect", "model": None, "effort": None},
+                )
+                resumed.ticket("A0", "verify")
+                before = resumed.status()["event_count"]
+                with self.assertRaisesRegex(ValueError, "остановлен"):
+                    resumed.reserve("A0-verify", "page", "https://sub.example.org/verification")
+                self.assertEqual(resumed.status()["event_count"], before)
+                self.assertEqual(resumed.status()["network_reservations"], 1)
+                self.assertEqual(resumed.status()["unknown_inflight"], [])
+
     def test_crash_unknown_inflight_and_limits_and_stops(self) -> None:
         path, provenance = self.result("A0", "collect")
         operation = self.batch.reserve("A0-collect", "page", "https://example.org/x")

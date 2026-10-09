@@ -287,6 +287,18 @@ class Batch:
             )
             return self.root / "blobs" / sha
 
+    def stopped_domains(self, events: list[dict[str, Any]]) -> list[str]:
+        """403/429 durable outcome — источник истины; domain_stop только индекс."""
+        stopped = set(self.config["initial_stopped_domains"])
+        stopped.update(e["domain"] for e in events if e["action"] == "domain_stop")
+        reservations = {e["operation_id"]: e for e in events if e["action"] == "reserved"}
+        for event in events:
+            if event["action"] == "operation_finished" and event["outcome"] in ("403", "429"):
+                reservation = reservations.get(event["operation_id"])
+                if reservation and reservation.get("domain"):
+                    stopped.add(reservation["domain"])
+        return sorted(stopped)
+
     def reserve(self, ticket_id: str, kind: str, url_or_query: str, cached: bool = False) -> str:
         if kind not in ("search", "page") or not url_or_query.strip():
             raise ValueError("Неверное обращение")
@@ -295,9 +307,7 @@ class Batch:
             if self.completed(events, ticket["author_id"], ticket["stage"]):
                 raise ValueError("Стадия уже завершена")
             domain = urlparse(url_or_query).hostname
-            stopped = self.config["initial_stopped_domains"] + [
-                e["domain"] for e in events if e["action"] == "domain_stop"
-            ]
+            stopped = self.stopped_domains(events)
             if (
                 not cached
                 and domain
@@ -367,6 +377,7 @@ class Batch:
                 for e in events
             ):
                 raise ValueError("Неизвестная или уже закрытая резервация")
+            stopped_before = self.stopped_domains(events)
             self.append(
                 events,
                 "operation_finished",
@@ -374,7 +385,11 @@ class Batch:
                 outcome=outcome,
                 elapsed_seconds=elapsed_seconds,
             )
-            if outcome in ("403", "429") and reservation["domain"]:
+            if (
+                reservation["domain"]
+                and reservation["domain"] not in stopped_before
+                and reservation["domain"] in self.stopped_domains(events)
+            ):
                 self.append(events, "domain_stop", domain=reservation["domain"], outcome=outcome)
 
     @staticmethod
@@ -579,6 +594,7 @@ class Batch:
                 "reported_agent_wall_seconds_unknown_count": len(wall) - len(known_wall),
                 "network_reservations": sum(not e["cached"] for e in reservations),
                 "cached_operations": sum(e["cached"] for e in reservations),
+                "stopped_domains": self.stopped_domains(events),
                 "unknown_inflight": sorted(
                     e["operation_id"] for e in reservations if e["operation_id"] not in finished
                 ),
