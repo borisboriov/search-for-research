@@ -141,6 +141,80 @@ class NativeTests(unittest.TestCase):
             for path, original in preserved:
                 self.assertEqual(path.read_bytes(), original)
 
+    def test_resume_after_verify_submission_before_wrapper_has_no_agent_call(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            batch = self.make_batch(root, "batch", ["A1"])
+            ticket = batch.ticket("A1", "collect")
+            collector = root / "collector.json"
+            collector.write_bytes(
+                encoded(
+                    {
+                        "author_id": "A1",
+                        "batch_ticket_id": "A1-collect",
+                        "batch_input_sha256": ticket.name,
+                        "items": [],
+                        "provenance": {"agent_id": "collector"},
+                    }
+                )
+            )
+            batch.submit(
+                "A1-collect",
+                collector,
+                {"agent_id": "collector", "stage": "collect", "model": None, "effort": None},
+            )
+            evidence_root = root / "frozen"
+            source = prepare_control(
+                evidence_root,
+                {"id": "A1"},
+                collector,
+                {},
+                root / "rules.md",
+                sha(evidence_root / "sample.json"),
+                namespace=control_namespace(batch, evidence_root, "A1"),
+            )
+            ticket = batch.ticket("A1", "verify")
+            _, result = fixture()
+            result.update(
+                input_sha256=sha(source),
+                items=[],
+                batch_ticket_id="A1-verify",
+                batch_input_sha256=ticket.name,
+            )
+            result["provenance"]["stage"] = "verify"
+            result_path = root / "verified.json"
+            result_path.write_bytes(encoded(result))
+            # Точная прежняя граница прерывания: submitted durable, import ещё нет.
+            submitted_sha = batch.submit("A1-verify", result_path, result["provenance"])
+            _, wrapper = control_paths(batch, evidence_root, "A1")
+            self.assertFalse(wrapper.exists())
+            with patch("enrichment_native.execute") as agent:
+                status = run(
+                    Batch(batch.root),
+                    evidence_root,
+                    root / "missing-cache",
+                    root / "rules.md",
+                    root,
+                )
+                agent.assert_not_called()
+            self.assertTrue(wrapper.exists())
+            self.assertTrue(all(status["stages"]["A1"].values()))
+            self.assertEqual(status["network_reservations"], 0)
+            self.assertEqual(sha(batch.root / "blobs" / submitted_sha), submitted_sha)
+            old_wrapper = wrapper.read_bytes()
+            old_events = status["event_count"]
+            with patch("enrichment_native.execute") as agent:
+                resumed = run(
+                    Batch(batch.root),
+                    evidence_root,
+                    root / "missing-cache",
+                    root / "rules.md",
+                    root,
+                )
+                agent.assert_not_called()
+            self.assertEqual(resumed["event_count"], old_events)
+            self.assertEqual(wrapper.read_bytes(), old_wrapper)
+
     def test_actual_execution_receipt_resume_and_tamper(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

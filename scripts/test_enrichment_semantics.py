@@ -134,6 +134,25 @@ class SemanticsTest(unittest.TestCase):
         )
         self.assertTrue(validate(source, result, "digest")["c1"]["usable_coverage"])
 
+    def test_blank_date_cannot_establish_current_recruitment_or_profile_date(self) -> None:
+        source, result = fixture("published_recruitment")
+        row = result["items"][0]
+        row.update(fact_kind="intake", current_applicability="current", date_basis="content")
+        for value in ("", "  ", "\t\n"):
+            with self.subTest(value=value):
+                row["information_date"] = value
+                self.assertFalse(classification(source["items"][0], row)["usable_coverage"])
+                with self.assertRaises(ValueError):
+                    validate(source, result, "digest")
+                row["information_date"] = "2024–2026"
+                result["profile_assessments"]["activity"].update(
+                    date_basis="content", information_date=value
+                )
+                with self.assertRaises(ValueError):
+                    validate(source, result, "digest")
+        result["profile_assessments"]["activity"]["information_date"] = None
+        self.assertTrue(validate(source, result, "digest")["c1"]["usable_coverage"])
+
     def test_unknown_identity_candidate_and_conflicting_death_date_are_not_truth(self) -> None:
         source, result = fixture()
         result["items"][0]["identity_verdict"] = "insufficient"

@@ -230,7 +230,10 @@ def classification(item: dict[str, Any], assessment: dict[str, Any]) -> dict[str
     if field in ("published_recruitment", "direct_willingness"):
         if assessment["current_applicability"] != "current":
             reasons.append("opportunity_not_current")
-        if assessment["information_date"] is None or assessment["date_basis"] in (
+        if not (
+            isinstance(assessment["information_date"], str)
+            and assessment["information_date"].strip()
+        ) or assessment["date_basis"] in (
             "url_only",
             "conflicting",
             "unknown",
@@ -320,7 +323,13 @@ def validate(source: dict[str, Any], result: dict[str, Any], input_sha: str) -> 
         )
         _require(
             "information_date" in row
-            and (row["information_date"] is None or isinstance(row["information_date"], str)),
+            and (
+                row["information_date"] is None
+                or (
+                    isinstance(row["information_date"], str)
+                    and bool(row["information_date"].strip())
+                )
+            ),
             "Нужна дата или null",
         )
         _require(row.get("date_basis") in DATE_BASES, "Неизвестное основание даты")
@@ -355,7 +364,15 @@ def validate(source: dict[str, Any], result: dict[str, Any], input_sha: str) -> 
         if row["verdict"] == "supported":
             _require(bool(row["evidence_refs"]), "Профиль подтверждён без источника")
         _require(
-            row.get("date_basis") in DATE_BASES and "information_date" in row,
+            row.get("date_basis") in DATE_BASES
+            and "information_date" in row
+            and (
+                row["information_date"] is None
+                or (
+                    isinstance(row["information_date"], str)
+                    and bool(row["information_date"].strip())
+                )
+            ),
             "Нужна дата профильного факта",
         )
         if row["date_basis"] in ("url_only", "conflicting", "unknown"):

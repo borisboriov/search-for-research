@@ -9,6 +9,7 @@ import fcntl
 import hashlib
 import json
 import os
+import tempfile
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -30,16 +31,52 @@ def encoded(value: Any) -> bytes:
 
 
 def immutable(path: Path, data: bytes) -> None:
+    """Атомарная публикация полностью записанного файла без перезаписи."""
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=".sfr-immutable-", suffix=".tmp", dir=path.parent
+    )
+    temporary = Path(temporary_name)
     try:
-        with path.open("xb") as stream:
+        with os.fdopen(descriptor, "wb") as stream:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        path.chmod(0o600)
-    except FileExistsError:
-        if path.read_bytes() != data:
-            raise ValueError("Попытка перезаписи доказательства") from None
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            if path.read_bytes() != data:
+                raise ValueError("Попытка перезаписи доказательства") from None
+        directory_descriptor = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_descriptor)
+        finally:
+            os.close(directory_descriptor)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def checksummed(value: dict[str, Any]) -> dict[str, Any]:
+    payload = {key: item for key, item in value.items() if key != "payload_sha256"}
+    return payload | {"payload_sha256": digest(encoded(payload))}
+
+
+def checked_json(path: Path, sidecar: Path, message: str) -> dict[str, Any]:
+    """Новый JSON самодостаточен; старому обязательно прежнее SHA-доказательство."""
+    data = path.read_bytes()
+    value = json.loads(data)
+    if not isinstance(value, dict):
+        raise ValueError(message)
+    internal = value.get("payload_sha256")
+    if internal is not None and internal != checksummed(value)["payload_sha256"]:
+        raise ValueError(message)
+    if sidecar.exists():
+        if digest(data) != sidecar.read_text():
+            raise ValueError(message)
+    elif internal is None:
+        # Не восстанавливаем недостающий SHA старого файла из самого файла.
+        raise ValueError(message)
+    return value
 
 
 class Batch:
@@ -84,16 +121,15 @@ class Batch:
                 "global_limits": {"search": 20, "page": 40},
                 "profile_limits": {"search": 4, "page": 8},
             }
+            config = checksummed(config)
             immutable(root / "batch.json", encoded(config))
             immutable(root / "batch.sha256", digest(encoded(config)).encode())
         return cls(root)
 
     def _check_inputs(self) -> None:
-        if (
-            digest((self.root / "batch.json").read_bytes())
-            != (self.root / "batch.sha256").read_text()
-        ):
-            raise ValueError("Конфигурация партии изменена")
+        checked_json(
+            self.root / "batch.json", self.root / "batch.sha256", "Конфигурация партии изменена"
+        )
         if self.config["global_limits"] != {"search": 20, "page": 40}:
             raise ValueError("Общие лимиты нельзя ослаблять")
         if self.config["profile_limits"] != {"search": 4, "page": 8}:
@@ -113,10 +149,7 @@ class Batch:
             events: list[dict[str, Any]] = []
             previous = None
             for index, path in enumerate(sorted((self.root / "events").glob("*.json"))):
-                event_bytes = path.read_bytes()
-                if digest(event_bytes) != path.with_suffix(".sha256").read_text():
-                    raise ValueError("Событие повреждено")
-                row = json.loads(event_bytes)
+                row = checked_json(path, path.with_suffix(".sha256"), "Событие повреждено")
                 if row["sequence"] != index or row["previous_sha256"] != previous:
                     raise ValueError("Цепочка событий повреждена")
                 previous = digest(path.read_bytes())
@@ -149,6 +182,7 @@ class Batch:
             "action": action,
             **data,
         }
+        row = checksummed(row)
         event_path = self.root / "events" / f"{index:06d}.json"
         immutable(event_path, encoded(row))
         immutable(event_path.with_suffix(".sha256"), digest(encoded(row)).encode())

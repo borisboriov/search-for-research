@@ -346,14 +346,28 @@ def run_stage(
         validate(read(source_path), value, sha(source_path))
     result_path = batch.root / "native" / ticket["ticket_id"] / "captured-result.json"
     immutable(result_path, encoded(value))
-    batch.submit(ticket["ticket_id"], result_path, provenance)
     if stage == "verify":
         assert source_path is not None
+        # Публикуем проверенный wrapper до completed: прерывание не оставит
+        # завершённую verify без входа следующих стадий. Импорт идемпотентен.
         import_result(root, source_path, result_path, "native-control-v3")
+    batch.submit(ticket["ticket_id"], result_path, provenance)
 
 
 def advance(batch: Batch, root: Path, aid: str) -> None:
     source, wrapper_path = control_paths(batch, root, aid)
+    verified = completed(batch, aid, "verify")
+    if verified is None:
+        raise ValueError("Сначала выполните независимую проверку")
+    # Восстановление прежнего окна submit→import без нового агента/сети.
+    # Неизменяемый submitted blob снова проходит полную смысловую валидацию;
+    # существующий wrapper импортируется идемпотентно, иной не перезаписывается.
+    import_result(
+        root,
+        source,
+        batch.root / "blobs" / verified["result_sha256"],
+        "native-control-v3",
+    )
     wrapper = read(wrapper_path)
     for stage in ("validate", "humanpacket", "metrics"):
         if completed(batch, aid, stage):

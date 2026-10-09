@@ -6,8 +6,9 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
-from enrichment_batch import Batch, digest, encoded
+from enrichment_batch import Batch, digest, encoded, immutable
 
 
 class BatchTests(unittest.TestCase):
@@ -40,6 +41,86 @@ class BatchTests(unittest.TestCase):
             )
         )
         return path, {"agent_id": agent, "model": None, "effort": None, "stage": stage}
+
+    def test_atomic_publication_never_exposes_partial_final_file(self) -> None:
+        final = self.base / "atomic" / "proof.json"
+        with (
+            patch(
+                "enrichment_batch.os.link", side_effect=OSError("controlled publication failure")
+            ),
+            self.assertRaisesRegex(OSError, "publication failure"),
+        ):
+            immutable(final, b"complete proof")
+        self.assertFalse(final.exists())
+        self.assertEqual(list(final.parent.iterdir()), [])
+        immutable(final, b"complete proof")
+        immutable(final, b"complete proof")
+        with self.assertRaisesRegex(ValueError, "перезаписи"):
+            immutable(final, b"changed")
+        self.assertEqual(final.read_bytes(), b"complete proof")
+        self.assertEqual(final.stat().st_mode & 0o777, 0o600)
+
+    def test_create_and_event_resume_after_json_before_sidecar(self) -> None:
+        original = immutable
+
+        def stop_before_sidecar(path: Path, data: bytes) -> None:
+            if path.name == "batch.sha256" or path.suffix == ".sha256":
+                raise OSError("controlled interruption before sidecar")
+            original(path, data)
+
+        party = self.base / "interrupted"
+        with (
+            patch("enrichment_batch.immutable", side_effect=stop_before_sidecar),
+            self.assertRaisesRegex(OSError, "interruption"),
+        ):
+            Batch.create(party, self.frozen, ["A0"], self.rules)
+        self.assertTrue((party / "batch.json").exists())
+        self.assertFalse((party / "batch.sha256").exists())
+        resumed = Batch(party)
+        self.assertEqual(resumed.status()["event_count"], 0)
+        with (
+            patch("enrichment_batch.immutable", side_effect=stop_before_sidecar),
+            self.assertRaisesRegex(OSError, "interruption"),
+        ):
+            resumed.ticket("A0", "collect")
+        event = party / "events" / "000000.json"
+        event_bytes = event.read_bytes()
+        self.assertFalse(event.with_suffix(".sha256").exists())
+        resumed = Batch(party)
+        ticket = resumed.ticket("A0", "collect")
+        self.assertTrue(ticket.exists())
+        self.assertEqual(resumed.status()["event_count"], 1)
+        self.assertEqual(event.read_bytes(), event_bytes)
+        altered = json.loads(event_bytes)
+        altered["author_id"] = "A1"
+        event.write_bytes(encoded(altered))
+        with self.assertRaisesRegex(ValueError, "повреждено"):
+            resumed.status()
+
+    def test_old_format_needs_existing_sidecar_and_is_not_rehashed(self) -> None:
+        config_path = self.batch.root / "batch.json"
+        config = json.loads(config_path.read_bytes())
+        config.pop("payload_sha256")
+        config_path.write_bytes(encoded(config))
+        sidecar = self.batch.root / "batch.sha256"
+        sidecar.write_text(digest(config_path.read_bytes()))
+        self.assertEqual(Batch(self.batch.root).status()["event_count"], 0)
+        sidecar.unlink()
+        with self.assertRaisesRegex(ValueError, "Конфигурация"):
+            Batch(self.batch.root)
+
+    def test_old_event_sidecar_stays_required(self) -> None:
+        self.batch.ticket("A0", "collect")
+        event_path = self.batch.root / "events" / "000000.json"
+        event = json.loads(event_path.read_bytes())
+        event.pop("payload_sha256")
+        event_path.write_bytes(encoded(event))
+        sidecar = event_path.with_suffix(".sha256")
+        sidecar.write_text(digest(event_path.read_bytes()))
+        self.assertEqual(Batch(self.batch.root).status()["event_count"], 1)
+        sidecar.unlink()
+        with self.assertRaisesRegex(ValueError, "повреждено"):
+            self.batch.status()
 
     def test_late_failure_record_does_not_extend_completed_time(self) -> None:
         with self.batch.locked() as events:
