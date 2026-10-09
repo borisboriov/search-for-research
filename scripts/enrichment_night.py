@@ -1,11 +1,13 @@
 """Ограниченный личный эксперимент через штатный Pi CLI и независимый Codex."""
 
 import argparse
+import hashlib
 import html
 import json
 import multiprocessing
 import os
 import queue
+import re
 import sqlite3
 import subprocess
 import threading
@@ -28,16 +30,16 @@ from enrichment_pi_pilot import (
     events,
     final_json,
     policy,
-    reader_body,
     reserve,
     select_profiles,
     source_text,
+    unwrap,
 )
 from enrichment_semantics import prepare_control, validate
 from enrichment_verifier_benchmark import check_schema
 
 REPO = Path(__file__).resolve().parent.parent
-METHOD = "enrichment-cli-bounded-v4"
+METHOD = "enrichment-cli-literal-format-v5"
 RULES = REPO / "docs/experiments/enrichment_cli_bounded_v4.md"
 EXTENSION = REPO / "scripts/enrichment_pi_cli_extension.mjs"
 PARENT = Path("/Users/boris/Experiments/search-for-research")
@@ -57,22 +59,23 @@ SETTINGS = {
 }
 
 
-def freeze(root: Path, from_root: Path | None = None) -> None:
+def freeze(
+    root: Path, from_root: Path | None = None, *, profiles: int = 3, recover_saved: bool = False
+) -> None:
     root = private_root(root)
     if (root / "manifest.json").exists():
         raise ValueError("Уже заморожено")
-    if (
-        from_root is not None
-        and read(from_root / "manifest.json")["method"] == "enrichment-cli-bounded-v3"
-    ):
-        freeze_continuation(root, from_root)
+    if recover_saved:
+        if from_root is None:
+            raise ValueError("Нужен исходный root для восстановления")
+        freeze_saved(root, from_root)
         return
-    if (
-        from_root is not None
-        and read(from_root / "manifest.json")["method"] == "enrichment-cli-bounded-v2"
-    ):
-        freeze_recovery(root, from_root)
-        return
+    if not 1 <= profiles <= 3:
+        raise ValueError("Новый контроль ограничен тремя профилями")
+    if from_root is not None:
+        raise ValueError(
+            "V5 не возобновляет старые STOP: нужен --recover-saved либо свежий контроль"
+        )
     old = read(PARENT / "enrichment100-20261008/manifest.json")
     hashes = {name: sha(INDEX / name) for name in old["index_hashes"]}
     docs = read(INDEX / "docs.json")
@@ -88,34 +91,7 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
         exclusion_hashes[str(sample)] = sha(sample)
     if len(excluded) < 124:
         raise ValueError("Неполные исключения прежних профилей")
-    retry = None
-    if from_root is None:
-        selected = select_profiles(docs, excluded, 19319420261014)
-    else:
-        previous = read(from_root / "manifest.json")
-        if (
-            previous["method"] != "enrichment-cli-bounded-v1"
-            or not (from_root / "stopped.json").exists()
-        ):
-            raise ValueError("Повтор разрешён только после остановленного v1")
-        selected = verified_sample(from_root)
-        if len(selected) != 12 or len({row["institution"] for row in selected}) != 12:
-            raise ValueError("Не та первоначальная выборка")
-        previous_runs = list((from_root / "runs").glob("*/collector/started.json"))
-        if len(previous_runs) != 1 or previous_runs[0].parent.parent.name != selected[0]["id"]:
-            raise ValueError("Повтор допустим только для единственной первой попытки v1")
-        if list((from_root / "runs").glob("*/native_verifier/started.json")):
-            raise ValueError("Нельзя незаметно повторить verifier")
-        retry = {
-            "root": str(from_root),
-            "manifest_sha256": sha(from_root / "manifest.json"),
-            "sample_sha256": sha(from_root / "sample.json"),
-            "stop_sha256": sha(from_root / "stopped.json"),
-            "reason": (
-                "Исправлены IPC stdout, quota stop и общий deadline; "
-                "максимум второй collector attempt"
-            ),
-        }
+    selected = select_profiles(docs, excluded, 19319420261016)[:profiles]
     db_sha = sha(DB)
     with sqlite3.connect(DB.resolve().as_uri() + "?mode=ro", uri=True) as conn:
         rows = conn.execute(
@@ -160,9 +136,9 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
             {
                 "method": METHOD,
                 "created_at": now(),
-                "seed": 19319420261014,
+                "seed": 19319420261016,
                 "selection": "one/group; sorted institution and ID; Random.choice; no replacement",
-                "retry_of": retry,
+                "retry_of": None,
                 "sample_sha256": sha(root / "sample.json"),
                 "excluded_count": len(excluded),
                 "exclusions": exclusion_hashes,
@@ -171,7 +147,7 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
                 "index_version": old["index_version"],
                 "rules_hashes": {str(path.relative_to(REPO)): sha(path) for path in files},
                 "limits": {
-                    "profiles": 12,
+                    "profiles": len(selected),
                     "search": 4,
                     "resources_including_robots": 8,
                     "timeout_seconds": 600,
@@ -189,6 +165,55 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
     )
     for index, profile in enumerate(selected, 1):
         Batch.create(root / "batches" / f"{index:02d}", root, [profile["id"]], RULES, concurrency=1)
+
+
+def freeze_saved(root: Path, previous: Path) -> None:
+    """Два разрешённых вторых verifier; старые reader/raw не копируются и не меняются."""
+    if read(previous / "manifest.json")["method"] != "enrichment-cli-bounded-v4":
+        raise ValueError("Нужны исходные bounded-v4 материалы")
+    selected = [
+        row for row in verified_sample(previous) if row["id"] in ("A5011844904", "A5061174451")
+    ]
+    if len(selected) != 2:
+        raise ValueError("Нет двух разрешённых сохранённых профилей")
+    immutable(root / "sample.json", encoded(selected))
+    inputs = {}
+    for index, profile in enumerate(selected, 1):
+        aid = profile["id"]
+        old = checked_result(previous, aid)
+        directory = previous / "runs" / aid / "collector"
+        if not read(directory / "completion-status.json")["model_completed"]:
+            raise ValueError("Незавершённый старый collector")
+        # The source event log and each used reader response are sealed as references.
+        paths = [directory / "result.json", directory / "receipt.json"]
+        paths += [previous / "rejections" / f"{aid}.json"]
+        paths += sorted((previous / "pilot-events").glob("*.json"))
+        paths += [Path(old["input_path"]), previous / "results" / f"{aid}.json"]
+        paths += [
+            previous / row["raw_file"]
+            for row in events(previous)
+            if row.get("author_id") == aid and row.get("action") == "source_finished"
+        ]
+        inputs[aid] = {str(path): sha(path) for path in paths}
+        Batch.create(root / "batches" / f"{index:02d}", root, [aid], RULES, concurrency=1)
+    source_manifest = read(previous / "manifest.json")
+    immutable(
+        root / "manifest.json",
+        encoded(
+            source_manifest
+            | {
+                "method": METHOD,
+                "created_at": now(),
+                "sample_sha256": sha(root / "sample.json"),
+                "saved_recovery": {"root": str(previous), "inputs": inputs},
+                "continuation": {},
+                "rules_hashes": {
+                    name: sha(REPO / name) for name in source_manifest["rules_hashes"]
+                },
+                "limits": source_manifest["limits"] | {"profiles": 2, "collector_jobs": 0},
+            }
+        ),
+    )
 
 
 def freeze_continuation(root: Path, previous: Path) -> None:
@@ -360,6 +385,9 @@ def locked(root: Path) -> dict[str, Any]:
             raise ValueError("Переиспользованный результат изменён")
     if any(sha(REPO / name) != value for name, value in manifest["rules_hashes"].items()):
         raise ValueError("Код/правила изменены: нужен новый раунд")
+    for files in manifest.get("saved_recovery", {}).get("inputs", {}).values():
+        if any(sha(Path(path)) != digest for path, digest in files.items()):
+            raise ValueError("Исходные материалы восстановления изменены")
     return dict(manifest)
 
 
@@ -971,10 +999,43 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
     return directory / "result.json", receipt
 
 
+def formatting_text(text: str) -> tuple[str, list[int]]:
+    """Только NBSP, апострофы ‘/’ и bullet/ATX prefixes; сохраняет offset каждого символа."""
+    output, offsets = [], []
+    cursor = 0
+    for line in text.splitlines(keepends=True):
+        prefix = re.match(r"^[ \t]*(?:(?:[-+*]|#{1,6})[ \t]+)+", line)
+        start = prefix.end() if prefix else 0
+        for index, char in enumerate(line[start:], start):
+            output.append({"\u00a0": " ", "\u2018": "'", "\u2019": "'"}.get(char, char))
+            offsets.append(cursor + index)
+        cursor += len(line)
+    return "".join(output), offsets
+
+
+def recover_quote(bodies: list[str], quote: str) -> dict[str, Any] | None:
+    """Один полный непрерывный фрагмент одного тела; ни glue, ни fuzzy поиска."""
+    needle, _ = formatting_text(quote)
+    if not needle.strip():
+        return None
+    matches = []
+    for block, body in enumerate(bodies):
+        normalized, offsets = formatting_text(body)
+        position = normalized.find(needle)
+        while position >= 0:
+            start, end = offsets[position], offsets[position + len(needle) - 1] + 1
+            # Round-trip prevents a partial-prefix match crossing a removed structure.
+            exact = body[start:end]
+            if formatting_text(exact)[0] == needle:
+                matches.append({"block": block, "start": start, "end": end, "excerpt": exact})
+            position = normalized.find(needle, position + 1)
+    return matches[0] if len(matches) == 1 else None
+
+
 def bind(
     root: Path, aid: str, raw: dict[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
-    """Только дословные прочитанные цитаты; отклонённые кандидаты не исчезают."""
+    """Дословные цитаты либо уникальное восстановление оформления того же reader body."""
     source_rows = [
         row
         for row in events(root)
@@ -987,23 +1048,53 @@ def bind(
     rejected = []
     for ref, evidence in raw["evidence_pool"].items():
         matches = [row for row in source_rows if row["arguments"]["url"] == evidence["url"]]
-        body = (
-            reader_body(read(root / matches[0]["raw_file"])["message"].get("result", {}))
-            if len(matches) == 1
-            else ""
-        )
-        if not evidence["excerpt"].strip() or evidence["excerpt"] not in body:
-            rejected.append(
-                {
-                    "evidence_ref": ref,
-                    "reason": "quote_not_literal_or_unread",
-                    "candidate": evidence,
-                }
-            )
-        else:
+        bodies = []
+        if len(matches) == 1:
+            response = read(root / matches[0]["raw_file"])["message"].get("result", {})
+            for block in response.get("content", []):
+                decoded = unwrap(block.get("text"))
+                if (
+                    isinstance(decoded, dict)
+                    and decoded.get("url") == evidence["url"]
+                    and isinstance(decoded.get("content"), str)
+                ):
+                    bodies.append(decoded["content"])
+        excerpt = evidence["excerpt"]
+        literal = bool(excerpt.strip()) and any(excerpt in body for body in bodies)
+        recovery = None if literal else recover_quote(bodies, excerpt)
+        if not literal:
+            refusal = {
+                "evidence_ref": ref,
+                "reason": "quote_not_literal_or_unread",
+                "candidate": evidence,
+                "disposition": "rejected",
+            }
+            if recovery is not None:
+                body = bodies[recovery["block"]]
+                raw_path = root / matches[0]["raw_file"]
+                refusal.update(
+                    disposition="recovered_formatting",
+                    recovery=recovery
+                    | {
+                        "method": METHOD,
+                        "normalizations": [
+                            "NBSP/space",
+                            "apostrophe ‘/’/'",
+                            "Markdown bullet/ATX prefix",
+                        ],
+                        "reader_raw_path": str(raw_path),
+                        "reader_raw_sha256": sha(raw_path),
+                        "body_sha256": hashlib.sha256(body.encode()).hexdigest(),
+                        "offset_unit": "Unicode code points; zero based; end exclusive",
+                    },
+                )
+                excerpt = recovery["excerpt"]
+            rejected.append(refusal)
+        if literal or recovery is not None:
             pool[ref] = {
                 key: evidence[key] for key in ("url", "excerpt", "information_date", "object_type")
             }
+            pool[ref]["excerpt"] = excerpt
             pool[ref]["checked_at"] = matches[0]["checked_at"]
     value = json.loads(json.dumps(raw))
     value["items"] = []
@@ -1038,12 +1129,21 @@ def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
     require_access(root)
     aid = profile["id"]
     batch = Batch(root / "batches" / f"{index:02d}")
-    raw_path, receipt = collect(root, profile, batch)
+    previous = locked(root).get("saved_recovery", {}).get("root")
+    source_root = Path(previous) if previous else root
+    if previous:
+        directory = source_root / "runs" / aid / "collector"
+        raw_path, receipt = directory / "result.json", read(directory / "receipt.json")
+    else:
+        raw_path, receipt = collect(root, profile, batch)
     if not read(raw_path.parent / "completion-status.json")["model_completed"]:
         raise ValueError("Сборщик не завершён: partial сохранён, зависимые jobs остановлены")
-    value, pool, rejected = bind(root, aid, read(raw_path))
+    value, pool, rejected = bind(source_root, aid, read(raw_path))
     immutable(root / "rejections" / f"{aid}.json", encoded(rejected))
     value["provenance"] = receipt | {"stage": "collect"}
+    if previous:
+        # Rebind only the batch envelope; facts and source rows remain untouched.
+        value["batch_input_sha256"] = sha(batch.ticket(aid, "collect"))
     value["network_operations"] = []
     with batch.locked() as log:
         value["network_operations"] = [
@@ -1062,8 +1162,68 @@ def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
         RUBRIC,
         sha(root / "sample.json"),
         namespace=METHOD,
-        source_kind="fresh_pi_cli_collection",
+        source_kind="saved_formatting_recovery" if previous else "fresh_pi_cli_collection",
     )
+    verify_profile(root, profile, batch, source_path, receipt, rejected)
+
+
+def empty_packet(source: dict[str, Any]) -> bool:
+    return (
+        not source["items"]
+        and not source["evidence_pool"]
+        and not any(source.get("profile_evidence", {}).values())
+    )
+
+
+def empty_result(task: dict[str, Any]) -> dict[str, Any]:
+    """Детерминированное unknown; явно не модельное заключение."""
+    if not empty_packet(task["semantic_input"]):
+        raise ValueError("Непустой пакет требует Sol")
+    assessment: dict[str, Any] = {
+        "verdict": "insufficient",
+        "evidence_refs": [],
+        "information_date": None,
+        "date_basis": "unknown",
+        "explanation": "Допустимых сохранённых доказательств нет; модель не вызывалась.",
+    }
+    return {
+        key: task[key]
+        for key in ("author_id", "batch_ticket_id", "batch_input_sha256", "input_sha256")
+    } | {
+        "rules_version": "semantic-v3",
+        "items": [],
+        "profile_assessments": {
+            "identity": assessment.copy(),
+            "current_affiliation": assessment.copy(),
+            "activity": assessment | {"status": "unknown"},
+        },
+        "summary": {
+            key: "Не установлено: допустимый пакет пуст, Sol не вызывался."
+            for key in ("known", "unknown", "identity", "current_opportunity")
+        },
+        "provenance": {
+            "agent_id": "host-empty-gate:" + task["input_sha256"],
+            "runtime_status": "runtime_not_exposed",
+            "model": None,
+            "effort": None,
+            "tokens": 0,
+            "cost_usd": None,
+            "stage": "verify",
+            "model_not_called": True,
+        },
+        "network_operations": [],
+    }
+
+
+def verify_profile(
+    root: Path,
+    profile: dict[str, Any],
+    batch: Batch,
+    source_path: Path,
+    receipt: dict[str, Any],
+    rejected: list[dict[str, Any]],
+) -> None:
+    aid = profile["id"]
     source = read(source_path)
     ticket = batch.ticket(aid, "verify")
     task = {
@@ -1091,28 +1251,38 @@ def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
     require_access(root)
     if datetime.now(UTC) >= HARD_STOP:
         raise ValueError("Дедлайн процесса: native job не запущен")
-    result_path, native_receipt = execute(
-        root / "runs" / aid / "native_verifier",
-        prompt,
-        output_schema,
-        workspace,
-        model="gpt-6.1-sol",
-        effort="high",
-        timeout_seconds=600,
-        deadline_epoch=HARD_STOP.timestamp() - 5,
-        skip_git_repo_check=True,
-        disable_mcp=True,
-        required_config=HIGH_CONFIGS["native_verifier"],
-        system_prompt=instruction,
-    )
-    result = read(result_path)
-    check_schema(result, output_schema)
+    native_receipt = None
+    if empty_packet(source):
+        result = empty_result(task)
+        immutable(
+            root / "gates" / f"{aid}.json",
+            encoded(
+                {"input_sha256": sha(source_path), "model_not_called": True, "actual_tokens": 0}
+            ),
+        )
+    else:
+        result_path, native_receipt = execute(
+            root / "runs" / aid / "native_verifier",
+            prompt,
+            output_schema,
+            workspace,
+            model="gpt-6.1-sol",
+            effort="high",
+            timeout_seconds=600,
+            deadline_epoch=HARD_STOP.timestamp() - 5,
+            skip_git_repo_check=True,
+            disable_mcp=True,
+            required_config=HIGH_CONFIGS["native_verifier"],
+            system_prompt=instruction,
+        )
+        result = read(result_path)
+        check_schema(result, output_schema)
+        result["provenance"] = normalized_provenance(native_receipt, "verify")
     if any(
         result[key] != task[key]
         for key in ("author_id", "batch_ticket_id", "batch_input_sha256", "input_sha256")
     ):
         raise ValueError("Ответ проверяющего другого задания")
-    result["provenance"] = normalized_provenance(native_receipt, "verify")
     derived = validate(source, result, task["input_sha256"])
     result["network_operations"] = []
     normalized = root / "normalized" / aid / "verifier.json"
@@ -1130,7 +1300,13 @@ def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
                 "input_sha256": task["input_sha256"],
                 "collector_receipt": receipt,
                 "verifier_receipt": native_receipt,
-                "rejected_candidates": len(rejected),
+                "rejected_candidates": sum(
+                    row.get("disposition") != "recovered_formatting" for row in rejected
+                ),
+                "recovered_quotes": sum(
+                    row.get("disposition") == "recovered_formatting" for row in rejected
+                ),
+                "model_not_called": native_receipt is None,
                 "human_reviewed": 0,
             }
         ),
@@ -1153,7 +1329,7 @@ def checked_result(root: Path, aid: str) -> dict[str, Any]:
 def run(root: Path, limit: int) -> None:
     locked(root)
     require_access(root)
-    if (root / "stopped.json").exists() or not 1 <= limit <= 12:
+    if (root / "stopped.json").exists() or not 1 <= limit <= locked(root)["limits"]["profiles"]:
         raise ValueError("STOP либо неправильный лимит")
     preflight_proof = read(root / "preflight.json")
     if (
@@ -1247,9 +1423,11 @@ def main() -> None:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--limit", type=int, default=1)
     parser.add_argument("--from-root", type=Path)
+    parser.add_argument("--profiles", type=int, default=3)
+    parser.add_argument("--recover-saved", action="store_true")
     args = parser.parse_args()
     if args.command == "freeze":
-        freeze(args.root, args.from_root)
+        freeze(args.root, args.from_root, profiles=args.profiles, recover_saved=args.recover_saved)
     elif args.command == "preflight":
         preflight(args.root)
     elif args.command == "run":
