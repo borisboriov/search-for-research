@@ -1,6 +1,7 @@
 """Числовой итог ночи из сохранённых receipts; без контактов и новых calls."""
 
 import argparse
+import json
 from collections import Counter
 from pathlib import Path
 from statistics import mean
@@ -46,6 +47,57 @@ def tokens(receipt: dict[str, Any], stage: str) -> dict[str, Any]:
     }
 
 
+def partial_job(directory: Path, stage: str, root_name: str) -> dict[str, Any]:
+    started = read(directory / "started.json")
+    finished = read(directory / "finished.json") if (directory / "finished.json").exists() else {}
+    begin = started.get("started_at_epoch", started.get("epoch"))
+    end = finished.get("finished_at_epoch")
+    wall = finished.get(
+        "elapsed_seconds", end - begin if end is not None and begin is not None else None
+    )
+    usage: dict[str, Any] = {"usage_complete": False}
+    events_path = directory / "events.jsonl"
+    if stage == "native_verifier" and events_path.exists():
+        for line in events_path.read_text().splitlines():
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if event.get("type") == "turn.completed" and isinstance(event.get("usage"), dict):
+                reported = event["usage"]
+                usage = {**reported, "usage_complete": False}
+                if all(type(reported.get(key)) is int for key in ("input_tokens", "output_tokens")):
+                    usage["input_plus_output"] = (
+                        reported["input_tokens"] + reported["output_tokens"]
+                    )
+    return {
+        "agent_id": "started:"
+        + stage
+        + ":"
+        + directory.parent.name
+        + ":"
+        + sha(directory / "started.json"),
+        "author_id": directory.parent.name,
+        "stage": stage,
+        "root": root_name,
+        "started_sha256": sha(directory / "started.json"),
+        "receipt_sha256": None,
+        "receipt_copies": [],
+        "attempt_copies": [str(directory)],
+        "wall_seconds": wall,
+        "tokens": usage,
+        "partial_events_sha256": sha(events_path) if events_path.exists() else None,
+        "reported_usage_source": "last_turn_completed_client_event" if len(usage) > 1 else None,
+        "model_requests": None,
+        "budget": None,
+        "requested_config": started.get("requested_config"),
+        "actual_backend": None,
+        "completion": "receipt_missing_partial_or_failed",
+        "exit_code": finished.get("exit_code"),
+        "timed_out": finished.get("timed_out"),
+    }
+
+
 def physical_jobs(parent: Path) -> list[dict[str, Any]]:
     jobs: dict[str, dict[str, Any]] = {}
     fingerprints: dict[str, str] = {}
@@ -53,9 +105,23 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
         root = parent / name
         if not root.exists():
             continue
-        for path in sorted((root / "runs").glob("*/*/receipt.json")):
-            stage = path.parent.name
+        directories = {
+            path.parent
+            for file in ("started.json", "receipt.json")
+            for path in (root / "runs").glob(f"*/*/{file}")
+        }
+        for directory in sorted(directories):
+            stage = directory.name
             if stage not in ("collector", "native_verifier"):
+                continue
+            path = directory / "receipt.json"
+            if not path.exists():
+                job = partial_job(directory, stage, name)
+                agent = job["agent_id"]
+                if agent in jobs:
+                    jobs[agent]["attempt_copies"].append(str(directory))
+                else:
+                    jobs[agent] = job
                 continue
             receipt = read(path)
             agent = receipt["agent_id"]
@@ -64,6 +130,7 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
                 if fingerprints[agent] != digest:
                     raise ValueError("Один physical agent_id с разными receipts")
                 jobs[agent]["receipt_copies"].append(str(path))
+                jobs[agent]["attempt_copies"].append(str(directory))
                 continue
             if stage == "native_verifier":
                 for file, key in (
@@ -71,19 +138,20 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
                     ("events.jsonl", "events_sha256"),
                     ("prompt.txt", "prompt_sha256"),
                 ):
-                    if sha(path.parent / file) != receipt[key]:
+                    if sha(directory / file) != receipt[key]:
                         raise ValueError("Native первичный артефакт изменён")
             fingerprints[agent] = digest
             jobs[agent] = {
                 "agent_id": agent,
-                "author_id": path.parent.parent.name,
+                "author_id": directory.parent.name,
                 "stage": stage,
                 "root": name,
                 "receipt_sha256": digest,
                 "receipt_copies": [str(path)],
+                "attempt_copies": [str(directory)],
                 "wall_seconds": receipt["wall_elapsed_seconds"],
                 "tokens": tokens(receipt, stage),
-                "model_requests": receipt.get("model_requests", 1),
+                "model_requests": receipt.get("model_requests") if stage == "collector" else None,
                 "budget": receipt.get("budget"),
                 "requested_config": receipt.get(
                     "requested_config",
@@ -93,6 +161,7 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
                     },
                 ),
                 "actual_backend": None,
+                "completion": "receipt_available",
             }
     return list(jobs.values())
 
@@ -164,15 +233,28 @@ def total(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "reasoning_output_tokens",
         "input_plus_output",
     )
+    complete = all(row["tokens"]["usage_complete"] for row in rows)
     return {
         "jobs": len(rows),
-        "wall_seconds": sum(row["wall_seconds"] for row in rows),
-        "model_requests": sum(row["model_requests"] for row in rows),
-        "usage_complete": all(row["tokens"]["usage_complete"] for row in rows),
+        "receipt_missing_jobs": sum(row["receipt_sha256"] is None for row in rows),
+        "wall_seconds": sum(row["wall_seconds"] for row in rows)
+        if all(row["wall_seconds"] is not None for row in rows)
+        else None,
+        "known_wall_seconds_subtotal": sum(
+            row["wall_seconds"] for row in rows if row["wall_seconds"] is not None
+        ),
+        "model_requests": sum(row["model_requests"] for row in rows)
+        if all(type(row["model_requests"]) is int for row in rows)
+        else None,
+        "usage_complete": complete,
         "tokens": {
             key: sum(row["tokens"][key] for row in rows)
-            if all(type(row["tokens"].get(key)) is int for row in rows)
+            if complete and all(type(row["tokens"].get(key)) is int for row in rows)
             else None
+            for key in keys
+        },
+        "known_token_subtotals": {
+            key: sum(row["tokens"][key] for row in rows if type(row["tokens"].get(key)) is int)
             for key in keys
         },
     }
@@ -235,7 +317,7 @@ def measured(root: Path) -> dict[str, Any]:
         "profiles_selected": len(profiles),
         "profiles_completed": len(completed),
         "profiles": profiles,
-        "unique_physical_jobs": jobs,
+        "physical_job_attempts": jobs,
         "physical_totals": {
             stage: total([row for row in jobs if row["stage"] == stage])
             for stage in ("collector", "native_verifier")

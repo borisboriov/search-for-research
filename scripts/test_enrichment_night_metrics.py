@@ -46,6 +46,62 @@ class NightMetricsTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "разными receipts"):
                     physical_jobs(parent)
 
+    def test_native_timeout_without_receipt_is_counted_with_unknown_usage(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            run = parent / "one" / "runs" / "a" / "native_verifier"
+            immutable(
+                run / "started.json",
+                encoded(
+                    {
+                        "started_at_epoch": 100,
+                        "requested_config": {"model": "gpt-6.1-sol", "effort": "high"},
+                    }
+                ),
+            )
+            immutable(
+                run / "finished.json",
+                encoded(
+                    {
+                        "finished_at_epoch": 700,
+                        "timed_out": True,
+                        "exit_code": -9,
+                        "full_job_usage": None,
+                    }
+                ),
+            )
+            with patch("enrichment_night_metrics.NIGHT_ROOTS", ("one",)):
+                jobs = physical_jobs(parent)
+            summed = total(jobs)
+            self.assertEqual(summed["jobs"], 1)
+            self.assertEqual(summed["receipt_missing_jobs"], 1)
+            self.assertEqual(summed["wall_seconds"], 600)
+            self.assertFalse(summed["usage_complete"])
+            self.assertIsNone(summed["tokens"]["input_plus_output"])
+            self.assertIsNone(summed["model_requests"])
+            self.assertEqual(summed["known_token_subtotals"]["input_plus_output"], 0)
+            immutable(
+                run / "events.jsonl",
+                encoded(
+                    {
+                        "type": "turn.completed",
+                        "usage": {
+                            "input_tokens": 100,
+                            "cached_input_tokens": 20,
+                            "output_tokens": 30,
+                        },
+                    }
+                ),
+            )
+            # JSONL events are one JSON per line, not an indented JSON object.
+            (run / "events.jsonl").write_text(
+                '{"type":"turn.completed","usage":{"input_tokens":100,"cached_input_tokens":20,"output_tokens":30}}\n'
+            )
+            with patch("enrichment_night_metrics.NIGHT_ROOTS", ("one",)):
+                known = total(physical_jobs(parent))
+            self.assertIsNone(known["tokens"]["input_plus_output"])
+            self.assertEqual(known["known_token_subtotals"]["input_plus_output"], 130)
+
     def test_native_cached_and_reasoning_are_subsets(self) -> None:
         result = tokens(
             {

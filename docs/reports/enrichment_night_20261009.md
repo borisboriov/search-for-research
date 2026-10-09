@@ -193,3 +193,13 @@ verify schema и semantic-v3 и подтверждает успешное чте
 Они отдельно исключают разработку/review/ошибки/очереди. Текущий каталог9002
 не покрывает10000 различных людей. Documentary GLM credits не фактический
 subscription debit и не сумма денег. Human_reviewed0.
+
+Ревью566d20e закрыло compact schema/provenance и не нашло новых блокеров
+самостоятельного comparative runner. Новый Medium/Low относится к измерениям:
+started без receipt пропускался; native request count подставлялся как1.
+Исправлено: started attempts с partial/unknown и known sub-total, полные суммы
+null при неполном учёте. Число native provider requests неизвестно/null, CLI jobs
+считаются отдельно. Client turn.completed usage при отсутствующем receipt
+сохраняется как известный subtotal, не как доказанный полный job outcome.
+Checkpoint03 — прежний проверенный снимок3completed с предположением requests3,
+не текущий итог; его не перезаписываем.
