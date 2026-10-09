@@ -126,6 +126,7 @@ def freeze(
         REPO / "scripts/enrichment_pi_runner.mjs",
         REPO / "scripts/enrichment_pi_pilot.py",
         REPO / "scripts/enrichment_native.py",
+        REPO / "scripts/enrichment_night_metrics.py",
         REPO / "scripts/enrichment_batch.py",
         REPO / "scripts/enrichment_semantics.py",
         REPO / "scripts/enrichment_verifier_benchmark.py",
@@ -209,7 +210,11 @@ def freeze_saved(root: Path, previous: Path) -> None:
                 "saved_recovery": {"root": str(previous), "inputs": inputs},
                 "continuation": {},
                 "rules_hashes": {
-                    name: sha(REPO / name) for name in source_manifest["rules_hashes"]
+                    name: sha(REPO / name)
+                    for name in (
+                        *source_manifest["rules_hashes"],
+                        "scripts/enrichment_night_metrics.py",
+                    )
                 },
                 "limits": source_manifest["limits"] | {"profiles": 2, "collector_jobs": 0},
             }

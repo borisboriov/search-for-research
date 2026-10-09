@@ -6,10 +6,50 @@ from pathlib import Path
 from unittest.mock import patch
 
 from enrichment_batch import encoded, immutable
-from enrichment_night_metrics import physical_jobs, tokens, total
+from enrichment_night_metrics import physical_jobs, profile_metrics, tokens, total
 
 
 class NightMetricsTests(unittest.TestCase):
+    def test_proven_empty_gate_has_zero_usage_without_a_fabricated_receipt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "input.json"
+            immutable(source, encoded({"items": [], "evidence_pool": {}, "profile_evidence": {}}))
+            immutable(root / "results/a.json", encoded({}))
+            wrapper = {
+                "input_path": str(source),
+                "classifications": {},
+                "rejected_candidates": 0,
+                "result": {"items": [], "profile_assessments": {}},
+                "verifier_receipt": None,
+                "model_not_called": True,
+                "collector_receipt": {
+                    "wall_elapsed_seconds": 10,
+                    "model_requests": 1,
+                    "budget": {},
+                    "usage_complete": True,
+                    "token_usage": {
+                        "input": 20,
+                        "cacheRead": 0,
+                        "cacheWrite": 0,
+                        "output": 10,
+                        "totalTokens": 30,
+                    },
+                },
+            }
+            with (
+                patch("enrichment_night_metrics.verified_sample", return_value=[{"id": "a"}]),
+                patch("enrichment_night_metrics.checked_result", return_value=wrapper),
+            ):
+                row = profile_metrics(root)[0]
+                self.assertTrue(row["model_not_called"])
+                self.assertEqual(row["verifier_tokens"]["input_plus_output"], 0)
+                self.assertEqual(row["verifier_seconds"], 0)
+                self.assertEqual(row["pipeline_seconds"], 10)
+                wrapper["model_not_called"] = False
+                with self.assertRaisesRegex(ValueError, "доказанного"):
+                    profile_metrics(root)
+
     def test_copied_collector_receipts_are_one_physical_job(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             parent = Path(directory)

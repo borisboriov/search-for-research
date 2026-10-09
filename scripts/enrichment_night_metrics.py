@@ -9,7 +9,7 @@ from typing import Any
 
 from enrichment_batch import encoded, immutable
 from enrichment_experiment import FIELDS, private_root, read, sha, verified_sample
-from enrichment_night import checked_result
+from enrichment_night import checked_result, empty_packet
 
 NIGHT_ROOTS = (
     "enrichment-night-cli-v1-20261009",
@@ -201,6 +201,25 @@ def profile_metrics(root: Path) -> list[dict[str, Any]]:
             ):
                 supported[assessment["corrected_field"] or item["original_field"]] += 1
         collector, verifier = wrapper["collector_receipt"], wrapper["verifier_receipt"]
+        if verifier is None and (not wrapper.get("model_not_called") or not empty_packet(source)):
+            raise ValueError("Отсутствие verifier receipt требует доказанного пустого gate")
+        verifier_seconds = verifier["wall_elapsed_seconds"] if verifier is not None else 0
+        verifier_tokens = (
+            tokens(verifier, "native_verifier")
+            if verifier is not None
+            else {
+                key: 0
+                for key in (
+                    "input_tokens",
+                    "output_tokens",
+                    "cached_input_tokens",
+                    "cache_write_input_tokens",
+                    "reasoning_output_tokens",
+                    "input_plus_output",
+                )
+            }
+            | {"usage_complete": True}
+        )
         profiles.append(
             {
                 "author_id": aid,
@@ -216,11 +235,11 @@ def profile_metrics(root: Path) -> list[dict[str, Any]]:
                 "axes": {key: row["verdict"] for key, row in result["profile_assessments"].items()},
                 "unknown_or_unchecked_fields": [field for field in FIELDS if not coverage[field]],
                 "collector_seconds": collector["wall_elapsed_seconds"],
-                "verifier_seconds": verifier["wall_elapsed_seconds"],
-                "pipeline_seconds": collector["wall_elapsed_seconds"]
-                + verifier["wall_elapsed_seconds"],
+                "model_not_called": verifier is None,
+                "verifier_seconds": verifier_seconds,
+                "pipeline_seconds": collector["wall_elapsed_seconds"] + verifier_seconds,
                 "collector_tokens": tokens(collector, "collector"),
-                "verifier_tokens": tokens(verifier, "native_verifier"),
+                "verifier_tokens": verifier_tokens,
                 "collector_budget": collector["budget"],
                 "collector_model_requests": collector["model_requests"],
             }
