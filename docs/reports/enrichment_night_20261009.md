@@ -664,3 +664,78 @@ private metrics-final. Исходники репозитория, старые r
 не менялись. Для docs-only результата выполняются docs-check и независимая сверка
 доказательств; актуальные CI/review/handoff публикуются в PR. #189 остаётся вне scope;
 готовность к merge и продуктовая приёмка не заявляются.
+
+
+## Direct HTTP 10.10: точный URL отвечает редиректом
+
+Последний малый контроль по [поручению](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6090899434):
+[plan до calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6090952234),
+[безопасное уточнение до calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6090965443).
+Зафиксирован exact `https://www.isir.upmc.fr/personnel/grossard`, anchors
+Charline Grossard/ISIR и буквальный факт «Ingénieure de recherche».
+Прежний MCP500/code1234 сохранён отдельной ссылкой/SHA как исторический исход.
+Наследованные policy/native403/429 и persisted domain STOP для ISIR проверены
+в19 roots; запрета не обнаружено. Старые roots/STOP не менялись.
+
+Первый запуск композиции отклонён automatic approval review **до исполнения**:
+configured mailto передавался бы во внешний User-Agent, разрешение на эту
+метаинформацию не установлено. Исходные script/plan/seal сохранены неизменными,
+физических HTTP calls этого варианта0. Выполнен допущенный безопасный вариант
+того же HTTP пути: `SFRExperiment/2.0` без личного mailto, Settings/.env/auth/cookies.
+Имя robots-агента прежнее; новый script/seal до calls, лимиты не изменены.
+OpenAlex не вызывался. Это изменение отправляемой метаинформации, не обход
+robots/403/429 и не смена сетевого сервиса.
+
+| Операция | Exact URL | Ответ | Результат |
+|---|---|---:|---|
+| robots GET | https://www.isir.upmc.fr/robots.txt | 200, text/plain | 117 байт; путь разрешён, crawl-delay1s |
+| HTML GET | https://www.isir.upmc.fr/personnel/grossard | 301, text/html | Location: https://www.isir.upmc.fr/personnel/grossard/; переход не выполнен |
+
+Фактически2 HTTP requests, **1,216855 секунды**, follow_redirects=False/retries0.
+Каждый запрос ограничен30 секундами total; robots64KiB, HTML2MiB. Статус301
+остановил чтение на заголовках: body capture0bytes, complete=False.
+SHA `e3b0c442…` относится к пустому **захвату**, не к телу целевой страницы.
+Robots body SHA `5a729e512461ba914ae6bf7d2f053a5b64d61a6502c951d711c32d61ea3179e2`.
+Ответ получен23:24:41UTC09.10 (02:24:41МСК10.10); даты HTTP проверок сохранены
+в артефактах, дата информации о человеке не выводится.
+
+Обычный HTTP подтвердил ответ на exact URL и канонический redirect с завершающим
+слешем; **доступность target body не установлена**. Тело/статический текст/новые
+доказанные цитаты/контакт не получены. SimpleHTML/extract не запускались на
+redirect-body. Поэтому explicit conditional model gateFalse: GLM extractor0,
+Sol0, Astra0; semantic packet не создавался и модельного receipt нет.
+Идентичность, текущая аффилиация, дата/набор не оценены. Это диагностический
+положительный случай, не новый профиль/prevalence/mixed12 и не третья попытка
+последних3ID. Статусы фактов человека из этого исхода не выводятся.
+
+Дополнительно проверен код native URL пути, без новых MCP calls:
+`McpServerConnection.callTool` → `McpClient.callTool` → `validateCallToolResult`;
+`McpClient.handleResponse` передаёт message.result; `StreamableHttpTransport.send`
+и `consumeSse` разбирают JSON/SSE. Проверка content не преобразует link. Наш
+`createSerializedTransport` сохраняет raw до readerView. Это кодовое основание
+в пользу серверных значений link, а не локального обрезания URL; байтовый HTTP
+search payload по-прежнему не сохранён. Ничего в parser не исправлялось.
+
+Минимальный следующий шаг по новому поручению — закрепить **наблюдаемый** Location
+`https://www.isir.upmc.fr/personnel/grossard/` и проверить его отдельным допустимым
+ограниченным HTTP контролем. Третий запрос сегодня не сделан. Если body получен,
+связь настоящего directHTTP source с действующей строгой quote-binding/PiCLI/Sol
+цепочкой ещё требует проверки: текущий `enrichment_night.bind` принимает
+успешные zai_reader events/MCP raw; directHTTP не выдаётся за такой receipt.
+Существенной переделки схем/runner в этом контроле нет.
+
+Счёт без новых content jobs:43 профильных+1 сообщённая архитектурная консультация
+=44 зачтённых задания,15 новых людей,Astra4/4. Консультация backend/tokensunknown,
+без выдуманного receipt. Последний известный remaining до этапа27% от координатора,
+официальный usage после26%, account-wide; это не quota одного чата или HTTP debit.
+
+Private immutable root `enrichment-night-direct-http-control-20261010`: original
+и safer plan/seals/scripts, наследованный stop-check, request/response metadata,
+bounded bytes/decoded captures, model gate, native code hashes, metrics-final и
+stopped.json. Public numeric document byte-identical private. Использована лишь
+одноразовая композиция существующих Budget/DomainStops/policy/httpx/extract;
+полный benchmark run, Crawl4AI/браузер/поиск/HAL не запускались. Код репозитория,
+прежние метрики/roots, продуктовые документы/паспорт не менялись. Проверки —
+docs-check и независимая сверка артефактов; актуальные review/CI/handoff в PR.
+#189 остаётся вне scope и препятствует готовности к merge; после передачи запись
+исполнителя прекращается, дополнительных source/model вызовов нет.

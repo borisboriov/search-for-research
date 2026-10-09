@@ -1,0 +1,150 @@
+{
+  "method": "single-direct-http-positive-control-v1",
+  "created_at": "2026-10-09T23:26:33.162590+00:00",
+  "head_before": "1b3db1b99101d1ec1df37b7b5476fe95f05b2f48",
+  "source_kind": "direct_http",
+  "exact_url": "https://www.isir.upmc.fr/personnel/grossard",
+  "robots_url": "https://www.isir.upmc.fr/robots.txt",
+  "robots": {
+    "at": "2026-10-09T23:24:40.442984+00:00",
+    "status_code": 200,
+    "content_type": "text/plain; charset=utf-8",
+    "body_bytes": 117,
+    "body_complete": true,
+    "body_sha256": "5a729e512461ba914ae6bf7d2f053a5b64d61a6502c951d711c32d61ea3179e2"
+  },
+  "robots_allowed": true,
+  "crawl_delay_seconds": 1.0,
+  "html": {
+    "at": "2026-10-09T23:24:41.130748+00:00",
+    "url": "https://www.isir.upmc.fr/personnel/grossard",
+    "status_code": 301,
+    "content_type": "text/html; charset=UTF-8",
+    "location": "https://www.isir.upmc.fr/personnel/grossard/",
+    "body_bytes": 0,
+    "body_complete": false,
+    "body_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "error": "http_status_or_redirect"
+  },
+  "html_body_sha_is_empty_capture_not_target_page": true,
+  "redirect_followed": false,
+  "target_body_received": false,
+  "static_extraction_performed": false,
+  "anchors_or_literal_fact_checked_in_current_body": false,
+  "new_proven_quotes": 0,
+  "new_proven_contacts": 0,
+  "historical_mcp_outcome": {
+    "path": "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/known-direct-reader.json",
+    "sha256": "e65fd86951b04c4a383189c09a2dc9823e6e05be4182890d937b0945b1d1e00f",
+    "robots_status": 200,
+    "reported_mcp_status": "500",
+    "reported_code": "1234",
+    "not_current_http_outcome": true
+  },
+  "counts": {
+    "http_requests": 2,
+    "robots_get": 1,
+    "html_get": 1,
+    "search": 0,
+    "mcp": 0,
+    "browser": 0,
+    "crawl4ai": 0,
+    "retries": 0,
+    "redirects": 0,
+    "model_planning": 0,
+    "glm_jobs": 0,
+    "sol_jobs": 0,
+    "astra_jobs": 0
+  },
+  "elapsed_seconds": 1.2168549580383115,
+  "gate": {
+    "at": "2026-10-09T23:26:33.161282+00:00",
+    "condition": "static HTML contains both anchors and literal fact",
+    "satisfied": false,
+    "reason": "Exact fixedURLreturned301; redirects disabled; targetbody not downloaded. No statement that fact is absent from actual page.",
+    "glm_extractor_called": false,
+    "sol_called": false,
+    "astra_called": false,
+    "semantic_input_prepared": false,
+    "fake_extractor_or_mcp_receipt_created": false,
+    "content_jobs_added": 0
+  },
+  "night_profile_content_jobs": 43,
+  "architecture_consultations": 1,
+  "night_counted_jobs": 44,
+  "night_new_people": 15,
+  "night_astra_used": 4,
+  "architecture_backend_tokens_unknown": true,
+  "architecture_source": "Coordinator message/PR comment6090688893; no independent receipt",
+  "codex_remaining_before_percent": 27,
+  "codex_remaining_after_percent": 26,
+  "quota_account_wide": true,
+  "source_money_or_quota_debit_unknown": true,
+  "initial_auto_review_rejection": {
+    "before_execution": true,
+    "reason": "Configured mailto identity would be transmitted in User-Agent; authorization for metadata not established",
+    "safer_executed_variant": "SFRExperiment/2.0 without configured identity or Settings/env/auth/cookies; same HTTP path/robots/caps",
+    "no_workaround_or_resource_refusal_bypass": true
+  },
+  "native_url_code_inspection": {
+    "at": "2026-10-09T23:26:33.161659+00:00",
+    "read_only_code_inspection": true,
+    "no_live_mcp_requests": true,
+    "raw_http_search_payload_not_saved": true,
+    "inference": "Inspected native code forwards result content and validates structure; no link URL transformation is present on this path. This is code evidence, not byte-level HTTP comparison.",
+    "files": [
+      {
+        "path": "/Users/boris/.pi/agent/install/releases/1.1.0/node_modules/@earendil-works/pi-coding-agent/dist/extensions/mcp/runtime.js",
+        "sha256": "55f0d73d76a80b5343781ea5d99b7ab248e201276c4552dc55cce7bee972852c",
+        "functions": [
+          "McpServerConnection.callTool",
+          "createDefaultTransport"
+        ]
+      },
+      {
+        "path": "/Users/boris/.pi/agent/install/releases/1.1.0/node_modules/@earendil-works/pi-mcp/dist/client.js",
+        "sha256": "e7cea15988abaef5b5a7d0c98bc597f47d4725678716ba04319265ca55a8c6ad",
+        "functions": [
+          "McpClient.callTool",
+          "McpClient.handleResponse",
+          "validateCallToolResult"
+        ]
+      },
+      {
+        "path": "/Users/boris/.pi/agent/install/releases/1.1.0/node_modules/@earendil-works/pi-mcp/dist/transports/streamable-http.js",
+        "sha256": "5473f92bb21142f5a7e9182d76ed2ee83377a6517489c3bf39af6135ec411845",
+        "functions": [
+          "StreamableHttpTransport.send",
+          "StreamableHttpTransport.consumeSse"
+        ]
+      }
+    ]
+  },
+  "diagnosis": "Fixed URL is reachable enough to answer HTTP301 after permitted robots200; target body availability not established. Prior MCP500 and current directHTTP301 are different historical/current transport outcomes. No evidence of missing person facts or extractor defect; no model stages allowed.",
+  "next_step": "New authorization may freeze observed Location URL with trailing slash and repeat bounded directHTTPcontrol under current robots; no thirdHTTPrequest made today. Then legitimate directHTTP source->strictquote binding/PiCLI/Sol path would still need verification; not fabricated as MCP.",
+  "no_prevalence_or_new_profile": true,
+  "references": {
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/policy.json": "ffc944028f3a4c31b99855ca589de67580906aedcd2190d2d001732fa3c516e2",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/fixed-http-public-control.py": "ecd11b490e42121f1066d4be0de5d37a91e872b6dc05ed0a1aadc57b8a281c04",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/safer-before-calls-seal.json": "3ee5c6affe656fe95cf03bd2c3ceae2974cb4a60bfffca9ddfd9305eb5134d89",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/html-request.json": "18c2b5ecc0068c53d31a850ac898122f20cbcb8e53bbfcf4647e1af2b54bf573",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/html-body.bin": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/safer-scope-comment.md": "0431c391742cc8707aba76356510ad413ece31f103e8c06ad36120e548809add",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/robots-request.json": "831e9f17b436299bf349d0e3371e4417220a5248503e6e46d3db47e7ce4e2a3f",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/http-finished.json": "e9200220deef884001855438636718792c94350b65ed537b5a89af52268331c8",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/native-url-path-code-check.json": "2a028185a33b43151b225668f5341b3b75966bfe84595cd62433b655664ff850",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/scope-comment.md": "c93d69b7a829d0ffc75bda45c3132cb48a95e5cc9557536bd34da7d0fb029c60",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/started.json": "ded1695a479acb18f788ab07649119883b2e7eb2e2797b211334920790503f41",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/robots-body.bin": "5a729e512461ba914ae6bf7d2f053a5b64d61a6502c951d711c32d61ea3179e2",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/html-response.json": "98b9d0b501f93c7b8fa2014a9eda4326a41653b2eaecc2583edd6e6279413589",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/before-calls-seal.json": "f65a84f9a4dc7f7be458c75f1d98edec2c76d0af9a605f4589c749644cafaa27",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/html-decoded.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/manifest.json": "9006d8550f6177d41e1a2c831c8458237c44b65c78fba69c092c70b938265ce6",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/robots-decoded.txt": "5a729e512461ba914ae6bf7d2f053a5b64d61a6502c951d711c32d61ea3179e2",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/conditional-model-gate.json": "2cc1e1f3b88b4d0b3b8d2b91685e7d7596bdc5f752caf07ae6b2aa1dd36007bc",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/inherited-domain-check.json": "b6d14b076daddc2b529162281c371fed407fc3dc876c4d9bb02eb806d191697f",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/public-console.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/fixed-http-control.py": "123ecf9aa646e41c1b85862ad3f7552263f02ddb385c1d38924a9c6b6d33e475",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-direct-http-control-20261010/robots-response.json": "f4e2e90778c29853f41a44c6935b014c2f2ffff6b6c3e9a01fdca88d7c1b4314"
+  }
+}
