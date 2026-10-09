@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import readline from 'node:readline';
 import {mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
@@ -212,6 +213,73 @@ test('file sync, immutable link, and directory sync finish before delivery; sync
   } finally {rmSync(dir, {recursive: true});}
 });
 
+test('denial, cache, and reservation fsync failures stop queued second-server calls before reserve or send', async () => {
+  for (const outcome of ['denied', 'cached', 'reservation']) {
+    const dir = mkdtempSync(path.join(tmpdir(), 'sfr-pi-synthetic-durable-'));
+    try {
+      const failedKind = {denied: 'denied-mcp-response', cached: 'cached-mcp-response', reservation: 'reservation'}[outcome];
+      const descriptors = new Map(), reservations = [], deliveries = [], captures = [];
+      const io = {...fs,
+        openSync(file, ...args) {const fd = fs.openSync(file, ...args); descriptors.set(fd, file); return fd;},
+        fsyncSync(fd) {
+          if (descriptors.get(fd) === dir) throw new Error('directory fsync failed');
+          fs.fsyncSync(fd);
+        },
+      };
+      const q = createSourceQueue(), inner = fakeTransport();
+      const reserve = async request => {
+        reservations.push(request.rpc_id);
+        if (request.rpc_id === 1 && outcome === 'denied') return {allowed: false, reason: 'host policy'};
+        if (request.rpc_id === 1 && outcome === 'cached') return {allowed: true, replacement_result: {content: []}};
+        return {allowed: true};
+      };
+      const firstTransport = createSerializedTransport({inner, server: 'zai_search', mode: 'collect', queue: q,
+        reserve, emit: () => {}, persist: (kind, value) => {
+          captures.push(kind);
+          if (kind === failedKind) writeOnce(path.join(dir, `${kind}.json`), value, io);
+          return kind;
+        }});
+      firstTransport.onMessage(message => deliveries.push(message));
+      const second = harness(q, 'zai_reader', reserve);
+      const firstResult = assert.rejects(firstTransport.send(call(1)), /directory fsync failed/);
+      const secondResult = assert.rejects(second.transport.send(call(2, 'webReader')), /queue stopped/);
+      await Promise.all([firstResult, secondResult]);
+      await assert.rejects(second.transport.send(call(3, 'webReader')), /queue stopped/);
+      assert.deepEqual(reservations, [1], outcome);
+      assert.ok(captures.includes(failedKind), outcome);
+      assert.equal(deliveries.length, 0, outcome);
+      assert.equal(inner.sent.length, 0, outcome);
+      assert.equal(second.inner.sent.length, 0, outcome);
+    } finally {rmSync(dir, {recursive: true});}
+  }
+});
+test('protocol capture failure also stops the shared queue and active physical request', async () => {
+  for (const failedKind of ['mcp-request', 'mcp-response']) {
+    const q = createSourceQueue(), inner = fakeTransport(), reservations = [], deliveries = [];
+    let fail = false;
+    const reserve = async request => {reservations.push(request.rpc_id); return {allowed: true};};
+    const firstTransport = createSerializedTransport({inner, server: 'zai_search', mode: 'collect', queue: q,
+      reserve, emit: () => {}, persist: kind => {
+        if (fail && kind === failedKind) throw new Error('protocol capture failed');
+        return kind;
+      }});
+    firstTransport.onMessage(message => deliveries.push(message));
+    const second = harness(q, 'zai_reader', reserve);
+    const firstResult = assert.rejects(firstTransport.send(call(1)), /protocol capture failed/);
+    const secondResult = assert.rejects(second.transport.send(call(2, 'webReader')), /queue stopped/);
+    await tick();
+    fail = true;
+    if (failedKind === 'mcp-request')
+      await assert.rejects(firstTransport.send({jsonrpc: '2.0', id: 10, method: 'initialize'}), /protocol capture failed/);
+    else inner.respond({jsonrpc: '2.0', id: 10, result: {protocolVersion: 'test'}});
+    await Promise.all([firstResult, secondResult]);
+    assert.deepEqual(reservations, [1]);
+    assert.equal(inner.sent.length, 1);
+    assert.equal(second.inner.sent.length, 0);
+    assert.equal(deliveries.length, 0);
+  }
+});
+
 test('closing transport releases active call and rejects its queued calls before new reservations', async () => {
   const reservations = [];
   const a = harness(createSourceQueue(), 'zai_search', async request => {
@@ -234,4 +302,146 @@ test('session-local warming and both retry layers must be off before model runti
   assert.equal(assertSessionSettings(mock()).cache_warming, 'off');
   for (const settings of [mock('streaming'), mock('off', true), mock('off', false, 1), mock('off', false, 0, 1)])
     assert.throws(() => assertSessionSettings(settings), /settings differ/);
+});
+
+test('terminal queue state rejects another physical model request after a swallowed tool error', async () => {
+  const queue = createSourceQueue();
+  let modelCalls = 0;
+  const stream = createGuardedModelStream(() => {modelCalls++;}, approved, () => {}, queue.assertHealthy);
+  const swallowed = await queue.run(() => {
+    const error = new Error('capture fsync failed');
+    queue.stop(error);
+    throw error;
+  }).catch(error => ({isError: true, content: [{type: 'text', text: error.message}]}));
+  assert.equal(swallowed.isError, true);
+  assert.throws(() => stream({provider: 'zai', id: 'glm-5.3-flash'}, {}, {reasoning: 'high'}), /queue stopped/);
+  assert.throws(queue.assertHealthy, /queue stopped/);
+  assert.equal(modelCalls, 0);
+});
+
+test('main rejects swallowed capture failure despite normal empty collector JSON; no runtime/done or downstream jobs', async () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'sfr-pi-terminal-sdk-'));
+  const originalFetch = globalThis.fetch, originalSync = fs.fsyncSync, originalOpen = fs.openSync;
+  const originalWrite = process.stdout.write, originalReadline = readline.createInterface;
+  const emitted = [], descriptors = new Map();
+  let hostLine;
+  globalThis.__sfrTerminalFixture = {failCapture: false, swallowed: false, modelCalls: 0, disposed: false};
+  try {
+    const release = path.join(dir, 'release');
+    const pkg = path.join(release, 'node_modules/@earendil-works/pi-coding-agent');
+    const ai = path.join(release, 'node_modules/@earendil-works/pi-ai');
+    fs.mkdirSync(path.join(pkg, 'dist/extensions/mcp'), {recursive: true});
+    fs.mkdirSync(path.join(ai, 'dist'), {recursive: true});
+    writeFileSync(path.join(pkg, 'package.json'), '{"type":"module"}');
+    writeFileSync(path.join(ai, 'package.json'), '{"type":"module"}');
+    writeFileSync(path.join(ai, 'dist/models.js'), 'export const getSupportedThinkingLevels = () => ["high"];');
+    writeFileSync(path.join(pkg, 'dist/extensions/mcp/config.js'), 'export const loadMcpConfig = () => ({servers: [], errors: []});');
+    writeFileSync(path.join(pkg, 'dist/extensions/mcp/runtime.js'), `
+      export const createDefaultTransport = () => ({
+        onError() {}, onClose() {}, onMessage() {}, start: async () => {}, close: async () => {},
+        send: async () => { throw new Error('Physical request must not be reached after capture failure'); },
+      });
+    `);
+    writeFileSync(path.join(pkg, 'dist/index.js'), `
+      export const VERSION = 'offline-fixture';
+      export const getAgentDir = () => '/unused-no-auth';
+      export const SettingsManager = {inMemory: () => ({
+        getCacheWarmingMode: () => 'off', getRetrySettings: () => ({enabled: false, maxRetries: 0}),
+        getProviderRetrySettings: () => ({maxRetries: 0, timeoutMs: 600000}),
+      })};
+      export const ModelRuntime = {create: async () => ({
+        getModel: () => ({provider: 'zai', id: 'glm-5.3-flash'}),
+        streamSimple: () => {globalThis.__sfrTerminalFixture.modelCalls++; return 'mock';},
+      })};
+      export const SessionManager = {inMemory: () => ({})};
+      export const createMcpExtension = options => options;
+      export class DefaultResourceLoader {
+        constructor(options) {this.options = options;}
+        async reload() {}
+        getAgentsFiles() {return {agentsFiles: []};}
+        getSkills() {return {skills: []};}
+        getPrompts() {return {prompts: []};}
+        getAppendSystemPrompt() {return [];}
+      }
+      export async function createAgentSession({resourceLoader, model, thinkingLevel, modelRuntime}) {
+        const transport = resourceLoader.options.extensionFactories[0].createTransport({name: 'zai_search'});
+        let listener;
+        return {session: {
+          model, thinkingLevel, bindExtensions: async () => {},
+          getAllTools: () => [{name: 'mcp__zai_search__web_search_prime'}, {name: 'mcp__zai_reader__webReader'}],
+          subscribe: callback => {listener = callback;},
+          prompt: async input => {
+            const task = JSON.parse(input);
+            const hooks = globalThis.__sfrTerminalFixture;
+            modelRuntime.streamSimple(model, {}, {reasoning: 'high'});
+            hooks.failCapture = true;
+            try {await transport.send({jsonrpc: '2.0', id: 10, method: 'tools/call', params: {name: 'web_search_prime', arguments: {search_query: 'offline fixture'}}});}
+            catch (error) {hooks.swallowed = {isError: true, content: [{type: 'text', text: error.message}]};}
+            listener({type: 'message_end', message: {role: 'assistant', stopReason: 'stop',
+              content: [{type: 'text', text: JSON.stringify({
+                author_id: task.author_id, batch_ticket_id: task.batch_ticket_id,
+                batch_input_sha256: task.batch_input_sha256, items: [], evidence_pool: {},
+                profile_evidence: {identity: [], current_affiliation: []},
+                field_statuses: Object.fromEntries(['personal_contact', 'coordinator_contact', 'supervision_history',
+                  'published_recruitment', 'direct_willingness', 'topic', 'supervisor_role', 'student_level',
+                  'student_year', 'required_skills', 'external_students', 'thesis_possible', 'city',
+                  'work_format', 'workload', 'payment', 'deadline', 'response_method'].map(field => [field, 'not_checked'])),
+              })}]}});
+          },
+          getSessionStats: () => ({}), abort() {},
+          dispose() {globalThis.__sfrTerminalFixture.disposed = true;},
+        }};
+      }
+    `);
+    fs.openSync = (file, ...args) => {
+      const descriptor = originalOpen(file, ...args);
+      descriptors.set(descriptor, String(file));
+      return descriptor;
+    };
+    fs.fsyncSync = descriptor => {
+      if (globalThis.__sfrTerminalFixture.failCapture && descriptors.get(descriptor)?.includes('denied-mcp-response')) {
+        globalThis.__sfrTerminalFixture.failCapture = false;
+        throw new Error('fixture capture fsync failed');
+      }
+      return originalSync(descriptor);
+    };
+    readline.createInterface = () => ({on(event, handler) {if (event === 'line') hostLine = handler;}, close() {}});
+    process.stdout.write = chunk => {
+      const event = JSON.parse(String(chunk));
+      emitted.push(event);
+      if (event.type === 'reserve') hostLine(JSON.stringify({id: event.id, allowed: false, reason: 'offline host denial'}));
+      return true;
+    };
+    const runDir = path.join(dir, 'run'), request = path.join(dir, 'request.json');
+    writeFileSync(request, JSON.stringify({config: approved, mode: 'collect', system_prompt: 'offline',
+      workspace_dir: dir, run_dir: runDir, pi_release_dir: release, task: {author_id: 'A1', batch_ticket_id: 'A1-collect', batch_input_sha256: 'a'.repeat(64)}}));
+    let downstreamJobs = 0;
+    await assert.rejects((async () => {
+      await main(request);
+      downstreamJobs++; // Native verifier and following profile can only follow successful completion.
+    })(), /queue stopped/);
+    assert.equal(globalThis.__sfrTerminalFixture.swallowed.isError, true);
+    assert.equal(globalThis.__sfrTerminalFixture.modelCalls, 1);
+    assert.equal(globalThis.__sfrTerminalFixture.disposed, true);
+    assert.equal(downstreamJobs, 0);
+    assert.ok(emitted.some(event => event.type === 'failure'));
+    assert.equal(emitted.some(event => event.type === 'done'), false);
+    assert.equal(existsSync(path.join(runDir, 'runner-finished.json')), false);
+    assert.equal(fs.readdirSync(runDir).some(file => file.endsWith('-runtime.json')), false);
+    const saved = fs.readdirSync(runDir).filter(file => file.endsWith('-session-event.json'));
+    assert.equal(saved.length, 1);
+    const empty = JSON.parse(JSON.parse(readFileSync(path.join(runDir, saved[0]), 'utf8')).message.content[0].text);
+    assert.deepEqual(empty.items, []);
+    assert.equal(Object.keys(empty.field_statuses).length, 18);
+    assert.equal(empty.batch_ticket_id, 'A1-collect');
+    assert.deepEqual(empty.profile_evidence, {identity: [], current_affiliation: []});
+  } finally {
+    globalThis.fetch = originalFetch;
+    fs.fsyncSync = originalSync;
+    fs.openSync = originalOpen;
+    readline.createInterface = originalReadline;
+    process.stdout.write = originalWrite;
+    delete globalThis.__sfrTerminalFixture;
+    rmSync(dir, {recursive: true});
+  }
 });

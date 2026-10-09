@@ -77,8 +77,9 @@ export function assertEffectiveConfig(session, requested) {
     throw new Error('Runtime configuration differs from requested configuration');
   return effective;
 }
-export function createGuardedModelStream(stream, requested, record) {
+export function createGuardedModelStream(stream, requested, record, assertHealthy = () => {}) {
   return (model, context, options) => {
+    assertHealthy(); // SDK can swallow tool errors; never allow another physical model request.
     const effective = {provider: model?.provider ?? null, model: model?.id ?? null,
       effort: options?.reasoning ?? null};
     if (Object.keys(requested).some(key => effective[key] !== requested[key]))
@@ -101,11 +102,15 @@ export function assertSessionSettings(settings) {
 export function createSourceQueue() {
   let tail = Promise.resolve();
   let stopped;
+  const assertHealthy = () => {
+    if (stopped) throw new Error('Source queue stopped after terminal transport/capture failure', {cause: stopped});
+  };
   return {
     stop(error) {stopped ??= error;},
+    assertHealthy,
     run(operation) {
       const task = tail.then(() => {
-        if (stopped) throw new Error('Source queue stopped after unknown physical outcome', {cause: stopped});
+        assertHealthy();
         return operation();
       });
       tail = task.catch(() => {});
@@ -123,6 +128,11 @@ export function createSerializedTransport({inner, server, mode, queue, reserve, 
     if (active.size) queue.stop(error);
     for (const pending of active.values()) pending.reject(error);
   };
+  // Every capture is a safety boundary, including protocol, reservations and synthetic replies.
+  const capture = (kind, value) => {
+    try {return persist(kind, value);}
+    catch (error) {queue.stop(error); failActive(error); throw error;}
+  };
   inner.onError(failActive);
   const closePending = () => {closed = true; failActive(new Error('Source transport closed'));};
   inner.onClose(closePending);
@@ -131,7 +141,7 @@ export function createSerializedTransport({inner, server, mode, queue, reserve, 
     const completed = Object.hasOwn(message, 'id') &&
       (Object.hasOwn(message, 'result') || Object.hasOwn(message, 'error'));
     try {
-      const file = persist('mcp-response', {server, message});
+      const file = capture('mcp-response', {server, message});
       emit({type: 'mcp_result', server, rpc_id: message.id ?? null, file});
       // Save durable raw before delivery and before granting the next call.
       if (pending && completed) pending.received = true;
@@ -144,7 +154,7 @@ export function createSerializedTransport({inner, server, mode, queue, reserve, 
   });
   const synthetic = (message, result, kind, extra = {}) => {
     const response = {jsonrpc: '2.0', id: message.id, result};
-    const file = persist(kind, {server, message: response});
+    const file = capture(kind, {server, message: response});
     emit({type: 'mcp_result', server, rpc_id: message.id, file, performed: false, ...extra});
     deliver(response);
   };
@@ -157,7 +167,7 @@ export function createSerializedTransport({inner, server, mode, queue, reserve, 
     send: async message => {
       if (closed) throw new Error('Source transport closed');
       if (message.method !== 'tools/call') {
-        persist('mcp-request', {server, message});
+        capture('mcp-request', {server, message});
         return inner.send(message);
       }
       if (!allowedCall(server, message.params?.name, mode)) throw new Error('Unapproved source tool');
@@ -166,7 +176,7 @@ export function createSerializedTransport({inner, server, mode, queue, reserve, 
         const name = message.params.name;
         const permission = await reserve({server, tool: name,
           arguments: message.params.arguments, rpc_id: message.id});
-        persist('reservation', {server, name, rpc_id: message.id, permission});
+        capture('reservation', {server, name, rpc_id: message.id, permission});
         if (closed) throw new Error('Source transport closed');
         if (!permission.allowed) {
           synthetic(message, {isError: true, content: [{type: 'text',
@@ -190,7 +200,7 @@ export function createSerializedTransport({inner, server, mode, queue, reserve, 
         });
         response.catch(() => {});
         try {
-          persist('mcp-request', {server, message});
+          capture('mcp-request', {server, message});
           await Promise.all([inner.send(message), response]);
         } catch (error) {
           if (!pending.received) queue.stop(error);
@@ -258,9 +268,9 @@ export async function main(requestPath) {
     'node_modules/@earendil-works/pi-ai/dist/models.js')).href);
   if (!getSupportedThinkingLevels(model).includes(requested.effort))
     throw new Error('Required thinking effort unavailable; downgrade forbidden');
-  modelRuntime.streamSimple = createGuardedModelStream(modelRuntime.streamSimple.bind(modelRuntime),
-    requested, data => persist('model-request-config', data));
   const queue = createSourceQueue();
+  modelRuntime.streamSimple = createGuardedModelStream(modelRuntime.streamSimple.bind(modelRuntime),
+    requested, data => persist('model-request-config', data), queue.assertHealthy);
   const mcp = sdk.createMcpExtension({
     logPath: path.join(runDir, 'mcp.log'),
     loadConfig: () => {
@@ -305,7 +315,7 @@ export async function main(requestPath) {
       const file = persist('tool-schemas', tools);
       emit({type: 'schemas', file, names: tools.map(tool => tool.name)});
     }
-    if (request.mode === 'discover') {emit({type: 'done', mode: 'discover'}); return;}
+    if (request.mode === 'discover') {queue.assertHealthy(); emit({type: 'done', mode: 'discover'}); return;}
     session.subscribe(event => {
       if (event.type === 'message_end' && event.message?.role === 'assistant' &&
           ['error', 'aborted'].includes(event.message.stopReason)) assistantFailure = true;
@@ -315,7 +325,10 @@ export async function main(requestPath) {
     timeout = setTimeout(() => {timedOut = true; session.abort();}, 600000);
     const publicInput = request.output_schema ? {task: request.task, output_json_schema: request.output_schema} : request.task;
     assertEffectiveConfig(session, requested);
+    queue.assertHealthy();
     await session.prompt(JSON.stringify(publicInput), {expandPromptTemplates: false});
+    // A normal assistant completion cannot erase a source/capture failure swallowed by Pi SDK.
+    queue.assertHealthy();
     if (timedOut || assistantFailure) throw new Error('Agent did not complete normally');
     const stats = session.getSessionStats();
     const effective = assertEffectiveConfig(session, requested);
