@@ -266,7 +266,12 @@ async def run(out: Path, settings_file: Path) -> dict[str, Any]:
                                 url, config=configs.CrawlerRunConfig(page_timeout=30000)
                             )
                             raw, code = response.html, response.status_code
-                            markdown = generator.generate_markdown(raw, base_url=url).raw_markdown
+                            stops.observe(url, code)
+                            markdown = (
+                                generator.generate_markdown(raw, base_url=url).raw_markdown
+                                if code == 200
+                                else None
+                            )
                         stops.observe(url, code)
                         item.update(
                             status="ok" if code == 200 else "http_failure",

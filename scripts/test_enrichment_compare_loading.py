@@ -92,6 +92,68 @@ class LoadingTests(unittest.TestCase):
             ["http_failure", "domain_stopped", "domain_stopped", "domain_stopped"],
         )
 
+    def test_crawl_stop_precedes_unavailable_markdown(self) -> None:
+        calls = []
+
+        class Client:
+            async def __aenter__(self) -> Any:
+                return self
+
+            async def __aexit__(self, *args: Any) -> None:
+                return None
+
+            async def get(self, url: str) -> SimpleNamespace:
+                calls.append(url)
+                if url.endswith("robots.txt"):
+                    return SimpleNamespace(status_code=200, text="User-agent: *\nAllow: /")
+                return SimpleNamespace(status_code=200, text="<p>ok</p>")
+
+        class Strategy(Client):
+            async def crawl(self, url: str, **kwargs: Any) -> SimpleNamespace:
+                calls.append("crawl:" + url)
+                return SimpleNamespace(status_code=429, html="Forbidden")
+
+        real_import = importlib.import_module
+
+        def module(name: str) -> Any:
+            if name == "sfr_core.settings":
+                return SimpleNamespace(
+                    Settings=lambda **kw: SimpleNamespace(openalex_mailto="test@example.org")
+                )
+            if name == "crawl4ai.async_crawler_strategy":
+                return SimpleNamespace(AsyncHTTPCrawlerStrategy=lambda **kw: Strategy())
+            if name == "crawl4ai.async_configs":
+                return SimpleNamespace(
+                    HTTPCrawlerConfig=lambda **kw: None, CrawlerRunConfig=lambda **kw: None
+                )
+            if name == "crawl4ai.markdown_generation_strategy":
+                return SimpleNamespace(DefaultMarkdownGenerator=lambda: None)
+            return real_import(name)
+
+        with (
+            tempfile.TemporaryDirectory() as temporary,
+            patch("enrichment_compare_loading.importlib.import_module", side_effect=module),
+            patch("enrichment_compare_loading.httpx.AsyncClient", return_value=Client()),
+            patch("enrichment_compare_loading.Budget.wait", new=AsyncMock()),
+            patch(
+                "enrichment_compare_loading.URLS",
+                ("https://example.org/a", "https://example.org/b"),
+            ),
+        ):
+            summary = asyncio.run(run(Path(temporary), Path("unused")))
+        self.assertEqual(
+            calls,
+            [
+                "https://example.org/robots.txt",
+                "https://example.org/a",
+                "crawl:https://example.org/a",
+            ],
+        )
+        self.assertEqual(
+            [row["status"] for row in summary["rows"]],
+            ["ok", "http_failure", "domain_stopped", "domain_stopped"],
+        )
+
     def test_policy_unknown_is_not_permission(self) -> None:
         self.assertEqual(policy("", "https://example.org/a", 503), (False, 1))
         self.assertEqual(
