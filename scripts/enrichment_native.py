@@ -128,13 +128,8 @@ def isolation_options(directory: Path) -> list[str]:
     """Session-only options shared by the offline renderer and isolated inference."""
     options = [
         'model_provider="openai"',
-        'developer_instructions=""',
+        "developer_instructions=" + json.dumps((directory / "instructions.txt").read_text()),
         "project_doc_max_bytes=0",
-        f"model_instructions_file={json.dumps(str(directory / 'instructions.txt'))}",
-        "include_permissions_instructions=false",
-        "include_apps_instructions=false",
-        "include_collaboration_mode_instructions=false",
-        "include_environment_context=false",
         'web_search="disabled"',
         'sandbox_mode="read-only"',
         "features.unbounded_connection_retries=false",
@@ -176,7 +171,11 @@ def isolation_probe(
     model: str,
     isolation_config: list[str],
 ) -> dict[str, Any]:
-    """Render only; never launch a turn or accept extra model-visible context."""
+    """Render task delivery, without treating unrendered API fields as absent.
+
+    Mandatory client messages may coexist with the task. A new ephemeral exec,
+    rather than message-list equality with Pi, supplies the history boundary.
+    """
 
     command = [
         "codex",
@@ -241,13 +240,31 @@ def isolation_probe(
         ):
             raise ValueError("Постороннее содержимое native prompt")
         texts.append("".join(c["text"] for c in content))
-    texts = [text for text in texts if text]
-    if texts != [system_prompt, prompt]:
-        raise ValueError(
-            "Не доказана доставка общей native инструкции: требуется точный render "
-            "[instruction, prompt], без домашних/посторонних сообщений"
-        )
-    proof["instruction_delivery"] = "rendered_instruction_and_user"
+    instruction_messages = [
+        text
+        for message, text in zip(rendered, texts, strict=True)
+        if message["role"] in ("developer", "system") and system_prompt in text
+    ]
+    if (
+        not system_prompt
+        or len(instruction_messages) != 1
+        or texts[-1:] != [prompt]
+        or rendered[-1]["role"] != "user"
+    ):
+        raise ValueError("Не доказана доставка общей native инструкции или точного конечного входа")
+    proof["instruction_delivery"] = "rendered_instruction_and_exact_final_user"
+    proof["rendered_messages"] = [
+        {
+            "role": message["role"],
+            "sha256": hashlib.sha256(text.encode()).hexdigest(),
+            "characters": len(text),
+            "contains_shared_instruction": system_prompt in text,
+            "is_exact_user_prompt": text == prompt,
+        }
+        for message, text in zip(rendered, texts, strict=True)
+    ]
+    proof["additional_client_messages"] = len(rendered) - 2
+    proof["api_system_instructions"] = "not rendered; presence/absence not inferred"
     immutable(directory / "isolation-probe.json", encoded(proof))
     return proof
 
@@ -414,6 +431,21 @@ def execute(
         for line in (directory / "events.jsonl").read_text().splitlines()
         if line.strip()
     ]
+    turn_start = next(
+        (index for index, event in enumerate(events) if event.get("type") == "turn.started"), 0
+    )
+    # The client emits this diagnostic when its command host is intentionally disabled.
+    # It is not model activity. Accept only the known pre-turn warning, retaining its raw event.
+    client_diagnostics = [
+        event
+        for event in events[:turn_start]
+        if event.get("type") == "item.completed"
+        and event.get("item", {}).get("type") == "error"
+        and event["item"].get("message")
+        == "Code Mode is unavailable because code-mode host is disabled. "
+        "Code mode will fail closed; enable `features.code_mode_host` "
+        "and install `codex-code-mode-host`."
+    ]
     if any(
         event.get("item", {}).get("type") in ("web_search", "command_execution", "mcp_tool_call")
         or (
@@ -422,6 +454,7 @@ def execute(
             and event["item"].get("type") not in ("agent_message", "reasoning")
         )
         for event in events
+        if event not in client_diagnostics
     ):
         raise ValueError(
             "Cache-only запуск использовал инструмент: нужна отдельная "
@@ -445,6 +478,7 @@ def execute(
         "events_sha256": sha(directory / "events.jsonl"),
         "prompt_sha256": sha(directory / "prompt.txt"),
         "tool_calls": 0,
+        "client_diagnostics": client_diagnostics,
         "requested_model": model,
         "requested_effort": effort,
         "transport_retries": None,

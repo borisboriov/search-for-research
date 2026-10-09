@@ -404,10 +404,13 @@ class NativeIsolationTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
+            (root / "instructions.txt").write_text("rules")
             options = isolation_options(root)
             self.assertNotIn("model_providers.openai.request_max_retries=0", options)
             self.assertNotIn("model_providers.openai.stream_max_retries=0", options)
             self.assertIn('model_provider="openai"', options)
+            self.assertIn('developer_instructions="rules"', options)
+            self.assertFalse(any(c.startswith("model_instructions_file=") for c in options))
             raw_error = b"reserved built-in provider diagnostic\n"
             with (
                 patch(
@@ -456,6 +459,48 @@ class NativeIsolationTests(unittest.TestCase):
             self.assertTrue(proof["timed_out"])
             self.assertEqual(Path(proof["stdout_path"]).read_bytes(), b"partial")
             self.assertEqual(Path(proof["stderr_path"]).read_bytes(), b"timeout diagnostic")
+
+    def test_client_messages_do_not_block_exact_task_delivery(self) -> None:
+        import subprocess
+
+        from enrichment_native import isolation_probe
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            rendered = [
+                {
+                    "type": "message",
+                    "role": role,
+                    "content": [{"type": "input_text", "text": text}],
+                }
+                for role, text in (
+                    ("developer", "mandatory client instructions"),
+                    ("developer", "rules"),
+                    ("user", "# AGENTS.md instructions: git conventions"),
+                    ("user", "task"),
+                )
+            ]
+            with patch(
+                "enrichment_native.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 0, json.dumps(rendered).encode(), b""),
+            ):
+                proof = isolation_probe(root, "task", "rules", root, "gpt-6.1-sol", [])
+            self.assertEqual(proof["additional_client_messages"], 2)
+            self.assertTrue(proof["rendered_messages"][-1]["is_exact_user_prompt"])
+            self.assertIsNone(proof["available_tool_inventory"])
+            # Extra client messages must not hide a changed final task or an assistant history.
+            for changed in ("other task", "rules"):
+                rendered[-1]["content"][0]["text"] = changed
+                with (
+                    patch(
+                        "enrichment_native.subprocess.run",
+                        return_value=subprocess.CompletedProcess(
+                            [], 0, json.dumps(rendered).encode(), b""
+                        ),
+                    ),
+                    self.assertRaises(ValueError),
+                ):
+                    isolation_probe(root, "task", "rules", root, "gpt-6.1-sol", [])
 
     def test_leaked_render_fails_before_inference(self) -> None:
         import subprocess
@@ -541,6 +586,54 @@ class NativeIsolationTests(unittest.TestCase):
                 self.assertIsNone(read(root / "finished.json")["full_job_usage"])
                 command = read(root / "command.json") if (root / "command.json").exists() else []
                 self.assertNotIn("--dangerously-bypass-hook-trust", command)
+
+    def test_disabled_host_diagnostic_recovery_never_repeats_inference(self) -> None:
+        from enrichment_native import execute
+
+        warning = (
+            "Code Mode is unavailable because code-mode host is disabled. "
+            "Code mode will fail closed; enable `features.code_mode_host` "
+            "and install `codex-code-mode-host`."
+        )
+        for pre_turn, message in ((True, warning), (False, warning), (True, "other error")):
+            with (
+                self.subTest(pre_turn=pre_turn, message=message),
+                tempfile.TemporaryDirectory() as temporary,
+            ):
+                root = Path(temporary)
+                immutable(root / "started.json", encoded({"started_at_epoch": 1}))
+                immutable(root / "finished.json", encoded({"exit_code": 0, "finished_at_epoch": 2}))
+                immutable(root / "raw-result.json", b"{}")
+                diagnostic = {
+                    "type": "item.completed",
+                    "item": {"type": "error", "message": message},
+                }
+                turn = {"type": "turn.started"}
+                events = [
+                    {"type": "thread.started", "thread_id": "test"},
+                    *([diagnostic, turn] if pre_turn else [turn, diagnostic]),
+                    {
+                        "type": "turn.completed",
+                        "usage": {"input_tokens": 1, "output_tokens": 1},
+                    },
+                ]
+                immutable(
+                    root / "events.jsonl",
+                    b"".join((json.dumps(row) + "\n").encode() for row in events),
+                )
+                before = sha(root / "events.jsonl"), sha(root / "raw-result.json")
+                with patch("enrichment_native.subprocess.run") as launch:
+                    if pre_turn and message == warning:
+                        _, receipt = execute(root, "task", {}, root, system_prompt="rules")
+                        self.assertEqual(receipt["tool_calls"], 0)
+                        self.assertEqual(receipt["client_diagnostics"], [diagnostic])
+                    else:
+                        with self.assertRaisesRegex(ValueError, "инструмент"):
+                            execute(root, "task", {}, root, system_prompt="rules")
+                    launch.assert_not_called()
+                self.assertEqual(
+                    before, (sha(root / "events.jsonl"), sha(root / "raw-result.json"))
+                )
 
     def test_any_native_tool_item_is_rejected(self) -> None:
         import subprocess
