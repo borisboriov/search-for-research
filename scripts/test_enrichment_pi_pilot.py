@@ -126,3 +126,32 @@ class PilotTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "не завершён"):
                 import_pi(root, "A1", "collector")
             self.assertFalse((root / "receipt.json").exists())
+
+    def test_http_capture_latches_without_auxiliary_event(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            batch = self.fixture(root)
+            immutable(
+                root / "runs" / "A1" / "collector" / "pi" / "000001-http.json",
+                encoded({"status": 429}),
+            )
+            with patch("enrichment_pi_pilot.subprocess.Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "остановлен"):
+                    run_pi(root, batch, "A2", "collector", {}, "rules", {})
+                launch.assert_not_called()
+
+    def test_mcp_refusal_search_latches_without_http_status(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            batch = self.fixture(root)
+            operation = batch.reserve("A1-collect", "search", "search target has no domain")
+            batch.finish_operation(operation, "429")
+            with patch("enrichment_pi_pilot.subprocess.Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "остановлен"):
+                    run_pi(root, batch, "A2", "collector", {}, "rules", {})
+                launch.assert_not_called()
+
+    def test_prefixed_json_import_without_another_call(self) -> None:
+        self.assertEqual(
+            final_json('Итоговый JSON:\n```json\n{"author_id":"A1"}\n```'), {"author_id": "A1"}
+        )

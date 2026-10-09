@@ -98,6 +98,7 @@ def generate(root: Path, packet_id: str, entries: list[dict[str, Any]], blind_se
                 "input_sha256": digest,
                 "selection_reason": entry["selection_reason"],
                 "field_statuses": source.get("field_statuses", {}),
+                "collector_quoted_fragments": source.get("collector_quoted_fragments", {}),
             }
         )
         mapping.append(
@@ -184,6 +185,13 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
             + proof(list(pool.values()))
             + "</details>"
         )
+        original_quotes = profile.get("collector_quoted_fragments", {})
+        if original_quotes:
+            cards.append(
+                "<details><summary>Исходные цитаты сборщика (могут содержать ошибки)</summary>"
+                + proof([dict(row, checked_at=None) for row in original_quotes.values()])
+                + "</details>"
+            )
         for slot, response in profile["responses"].items():
             cards.append(f"<section><h3>Краткий ответ {slot}</h3>")
             for key, title in {

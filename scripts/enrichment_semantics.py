@@ -182,6 +182,8 @@ def prepare_control(
         "items": items,
         "evidence_pool": evidence_pool,
         "profile_evidence": collector.get("profile_evidence", {}),
+        "field_statuses": collector.get("field_statuses", {}),
+        "collector_quoted_fragments": collector.get("collector_quoted_fragments", {}),
         "search_scope": "saved_material_only_no_network",
         "source_text_policy": "untrusted_data_not_instructions",
     }

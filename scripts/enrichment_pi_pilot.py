@@ -26,7 +26,7 @@ from enrichment_semantics import EXTRA_FIELDS, import_result, prepare_control, v
 SEED = 19319420261009
 NATIVE_MODEL = "gpt-6.1-sol"
 NATIVE_EFFORT = "medium"
-METHOD = "pi12-v1"
+METHOD = "pi12-v1.1"
 REPO = Path(__file__).resolve().parent.parent
 COLLECT_RULES = REPO / "docs/experiments/enrichment_pi12.md"
 RUBRIC = REPO / "docs/experiments/enrichment_verifier_v3.md"
@@ -61,7 +61,25 @@ def final_json(text: str) -> dict[str, Any]:
     text = text.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
-    value = json.loads(text)
+    try:
+        value = json.loads(text)
+    except ValueError:
+        # Повторный импорт тех же байтов, не новый вызов модели.
+        decoder = json.JSONDecoder()
+        candidates = []
+        offset = 0
+        while (start := text.find("{", offset)) >= 0:
+            try:
+                candidate, end = decoder.raw_decode(text[start:])
+            except ValueError:
+                offset = start + 1
+                continue
+            offset = start + end
+            if isinstance(candidate, dict) and "author_id" in candidate:
+                candidates.append(candidate)
+        if len(candidates) != 1:
+            raise ValueError("Не найден единственный ответ JSON") from None
+        value = candidates[0]
     if not isinstance(value, dict):
         raise ValueError("Ответ не JSON объект")
     return value
@@ -215,6 +233,28 @@ def events(root: Path) -> list[dict[str, Any]]:
     return [read(p) for p in sorted((root / "pilot-events").glob("*.json"))]
 
 
+def access_stopped(root: Path) -> bool:
+    """Восстанавливает отказ из первичных записей даже без вспомогательного события."""
+    if any(e.get("action") == "service_stopped" for e in events(root)):
+        return True
+    for path in (root / "runs").glob("*/*/pi/*-http.json"):
+        if read(path).get("status") in (403, 429):
+            return True
+    for path in (root / "batches").glob("*/batch.json"):
+        with Batch(path.parent).locked() as log:
+            reservations = {e["operation_id"]: e for e in log if e["action"] == "reserved"}
+            for row in log:
+                if row["action"] == "operation_finished" and (
+                    row["outcome"] == "429"
+                    or (
+                        row["outcome"] == "403"
+                        and reservations[row["operation_id"]]["kind"] == "search"
+                    )
+                ):
+                    return True
+    return False
+
+
 def reserve(root: Path, batch: Batch, aid: str, kind: str, target: str) -> str:
     previous: list[dict[str, Any]] = []
     for path in sorted((root / "batches").glob("*/batch.json")):
@@ -362,7 +402,7 @@ def run_pi(
         if not (directory / "finished.json").exists():
             raise ValueError("Незавершённая попытка: автоматический повтор запрещён")
         return import_pi(directory, aid, stage)
-    if any(e.get("action") == "service_stopped" for e in events(root)):
+    if access_stopped(root):
         raise ValueError("Z.ai остановлен после отказа доступа/квоты; новый запуск запрещён")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     (directory / "workspace").mkdir(mode=0o700)
@@ -387,7 +427,12 @@ def run_pi(
     immutable(
         directory / "started.json",
         encoded(
-            {"at": now(), "epoch": time.time(), "task_sha256": sha(directory / "request.json")}
+            {
+                "at": now(),
+                "epoch": time.time(),
+                "task_sha256": sha(directory / "request.json"),
+                "method": METHOD,
+            }
         ),
     )
     event(root, {"action": "llm_started", "author_id": aid, "stage": stage})
@@ -488,6 +533,17 @@ def run_pi(
                     elif "403" in text:
                         outcome, stopped = "403", True
                 batch.finish_operation(operation, outcome, time.time() - at)
+                if outcome == "429" or (outcome == "403" and reservation["server"] == "zai_search"):
+                    event(
+                        root,
+                        {
+                            "action": "service_stopped",
+                            "author_id": aid,
+                            "stage": stage,
+                            "status": outcome,
+                            "source": "mcp_result",
+                        },
+                    )
                 event(
                     root,
                     {
@@ -670,6 +726,54 @@ def validate_collection(root: Path, aid: str, raw: dict[str, Any]) -> dict[str, 
     return pool
 
 
+def bind_sources(root: Path, aid: str, original: dict[str, Any]) -> dict[str, Any]:
+    """Не исправляет утверждения: связывает их с первичным текстом, сохраняя дефект цитаты."""
+    value = json.loads(json.dumps(original))
+    resources = [
+        e
+        for e in events(root)
+        if e.get("action") == "source_finished"
+        and e.get("author_id") == aid
+        and e.get("kind") == "zai_reader"
+        and e.get("outcome") == "ok"
+    ]
+    bindings = []
+    for key, evidence in value["evidence_pool"].items():
+        matches = [e for e in resources if e["arguments"]["url"] == evidence["url"]]
+        if len(matches) != 1:
+            raise ValueError("Кандидат без единственного прочитанного источника")
+        body = reader_body(read(root / matches[0]["raw_file"])["message"].get("result", {}))
+        if not body:
+            raise ValueError("Не удалось выделить тело прочитанного источника")
+        literal = bool(evidence["excerpt"].strip()) and evidence["excerpt"] in body
+        bindings.append(
+            {
+                "evidence_id": key,
+                "raw_file": matches[0]["raw_file"],
+                "collector_excerpt": evidence["excerpt"],
+                "literal_quote_valid": literal,
+                "body_sha256": hashlib.sha256(body.encode()).hexdigest(),
+                "body_truncated": not literal and len(body) > 20000,
+            }
+        )
+        evidence["resource_file"] = matches[0]["raw_file"]
+        if not literal:
+            evidence["excerpt"] = body[:20000]
+    immutable(
+        root / "source-bindings" / f"{aid}.json",
+        encoded(
+            {
+                "method": METHOD,
+                "collector_result_sha256": sha(root / "runs" / aid / "collector" / "result.json"),
+                "bindings": bindings,
+                "claims_changed": False,
+                "accepted_automatically": False,
+            }
+        ),
+    )
+    return dict(value)
+
+
 def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
     aid = profile["id"]
     task_path = batch.ticket(aid, "collect")
@@ -692,23 +796,10 @@ def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
     for key in ("author_id", "batch_ticket_id", "batch_input_sha256"):
         if raw.get(key) != task[key]:
             raise ValueError("Ответ сборщика другого задания")
-    # URL is stable model-visible resource handle; local raw names remain host-only.
-    for evidence in raw["evidence_pool"].values():
-        if evidence["resource_file"] == evidence["url"]:
-            matches = [
-                e
-                for e in events(root)
-                if e.get("action") == "source_finished"
-                and e.get("author_id") == aid
-                and e.get("kind") == "zai_reader"
-                and e.get("arguments", {}).get("url") == evidence["url"]
-                and e["outcome"] == "ok"
-            ]
-            if len(matches) != 1:
-                raise ValueError("Нет единственного прочитанного URL")
-            evidence["resource_file"] = matches[0]["raw_file"]
+    raw = bind_sources(root, aid, raw)
     pool = validate_collection(root, aid, raw)
     collected = {k: v for k, v in raw.items() if k != "evidence_pool"}
+    collected["collector_quoted_fragments"] = read(rawpath)["evidence_pool"]
     collected["provenance"] = receipt | {"stage": "collect"}
     with batch.locked() as log:
         collected["network_operations"] = [
@@ -761,7 +852,6 @@ def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
         timeout_seconds=600,
         skip_git_repo_check=True,
         disable_mcp=True,
-        no_retries=True,
     )
     wrappers = {}
     for name, path, provenance in (
@@ -807,6 +897,30 @@ def measurements(root: Path) -> Path:
         )
     }
     compared = 0
+    human_profiles: set[str] = set()
+    human_grades: dict[str, dict[str, int]] = {name: {} for name in ("pi", "native")}
+    human_minutes = 0.0
+    human_records = list((root / "paired-human" / "records").glob("*.json"))
+    for path in human_records:
+        record = read(path)
+        answers = record["answers"]
+        packet = root / "paired-human" / "packets" / answers["packet_id"] / "manifest.json"
+        if (
+            answers.get("actual_human_attestation") is not True
+            or sha(packet) != answers["packet_sha256"]
+        ):
+            raise ValueError("Неподтверждённая запись человеческого просмотра")
+        mapping = read(root / "paired-human" / "unblinding" / (answers["packet_id"] + ".json"))
+        slots = {
+            p["author_id"]: {k: v["executor"] for k, v in p["responses"].items()}
+            for p in mapping["profiles"]
+        }
+        human_profiles.update(record["fully_reviewed_profiles"])
+        human_minutes += answers["minutes"]
+        for row in answers["answers"]:
+            executor = slots[row["author_id"]][row["response"]]
+            grade = row["grade"]
+            human_grades[executor][grade] = human_grades[executor].get(grade, 0) + 1
     for profile in profiles:
         aid = profile["id"]
         stages = {}
@@ -837,7 +951,7 @@ def measurements(root: Path) -> Path:
                 "institution_id": profile["institution_id"],
                 "stages": stages,
                 "paired": pair.exists(),
-                "human_reviewed": False,
+                "human_reviewed": aid in human_profiles,
             }
         )
     data = {
@@ -848,7 +962,7 @@ def measurements(root: Path) -> Path:
             "fixed_profiles": 12,
             "paired_profiles": sum(r["paired"] for r in rows),
             "compared_atoms": compared,
-            "human_reviewed": 0,
+            "human_reviewed": len(human_profiles),
         },
         "disagreements": disagreement,
         "source_reservations": {
@@ -861,10 +975,22 @@ def measurements(root: Path) -> Path:
         "errors": [e for e in events(root) if e.get("action") == "profile_incomplete"],
         "subscription_cost": None,
         "subscription_quota_delta": None,
-        "human_accuracy": None,
+        "human_accuracy": human_grades if human_records else None,
         "human_completeness": None,
-        "human_minutes": None,
+        "human_minutes": human_minutes if human_records else None,
+        "human_records": len(human_records),
+        "human_grade_contract": (
+            "raw counts by executor; partial/repeated reviews not pooled as a precision percentage"
+        ),
         "quota_parallel_account_use_observed": True,
+        "source_quote_errors": sum(
+            not binding["literal_quote_valid"]
+            for path in (root / "source-bindings").glob("*.json")
+            for binding in read(path)["bindings"]
+        ),
+        "source_quote_denominator": sum(
+            len(read(path)["bindings"]) for path in (root / "source-bindings").glob("*.json")
+        ),
     }
     payload = encoded(data)
     path = root / "measurements" / (hashlib.sha256(payload).hexdigest() + ".json")
@@ -876,6 +1002,7 @@ def finish_artifacts(root: Path) -> None:
     from enrichment_pair_human import generate
 
     profiles = read(root / "sample.json")
+    aggregate_path = measurements(root)
     for index in range(4):
         selected = profiles[index * 3 : index * 3 + 3]
         paths = [root / "paired" / f"{r['id']}.json" for r in selected]
@@ -927,18 +1054,43 @@ def finish_artifacts(root: Path) -> None:
                     }
                 ),
             )
-            batch.advance(aid, "humanpacket", artifact)
+            previous_sha = batch.advance(aid, "humanpacket", artifact)
+            artifact = root / "advances" / aid / "metrics.json"
+            if not artifact.exists():
+                immutable(
+                    artifact,
+                    encoded(
+                        {
+                            "author_id": aid,
+                            "stage": "metrics",
+                            "previous_sha256": previous_sha,
+                            "completed": True,
+                            "proof_path": str(aggregate_path),
+                            "proof_sha256": sha(aggregate_path),
+                        }
+                    ),
+                )
+            batch.advance(aid, "metrics", artifact)
     measurements(root)
 
 
-def run(root: Path, limit: int) -> None:
+def run(root: Path, limit: int, method_lock: Path | None = None) -> None:
     root = private_root(root)
     with (root / "pilot.lock").open("a+b") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         manifest = read(root / "manifest.json")
         if sha(root / "sample.json") != manifest["sample_sha256"]:
             raise ValueError("Выборка изменилась")
-        for file, digest in manifest["rules_hashes"].items():
+        current_lock = read(method_lock) if method_lock else manifest
+        if method_lock and (
+            not method_lock.resolve().is_relative_to(root / "method-locks")
+            or sha(method_lock) != method_lock.with_suffix(".sha256").read_text().strip()
+            or current_lock.get("method") != METHOD
+        ):
+            raise ValueError("Повреждён или неверен method-lock")
+        if method_lock and current_lock.get("sample_sha256") != manifest["sample_sha256"]:
+            raise ValueError("Новая версия меняет выборку")
+        for file, digest in current_lock["rules_hashes"].items():
             if sha(REPO / file) != digest:
                 raise ValueError("Метод изменился после заморозки")
         profiles = read(root / "sample.json")
@@ -978,14 +1130,17 @@ def main() -> None:
     parser.add_argument("--db", type=Path)
     parser.add_argument("--old", type=Path)
     parser.add_argument("--limit", type=int, default=3)
+    parser.add_argument("--method-lock", type=Path)
     args = parser.parse_args()
     if args.command == "freeze":
         if not all((args.index, args.db, args.old)):
             parser.error("freeze: --index --db --old")
         freeze(args.root, args.index, args.db, args.old)
     else:
-        run(args.root, args.limit)
-        finish_artifacts(args.root.resolve())
+        run(args.root, args.limit, args.method_lock)
+        with (args.root / "pilot.lock").open("a+b") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            finish_artifacts(args.root.resolve())
 
 
 if __name__ == "__main__":

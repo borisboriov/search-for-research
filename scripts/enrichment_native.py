@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import subprocess
 import time
 import tomllib
@@ -134,7 +135,6 @@ def execute(
     timeout_seconds: int = 1200,
     skip_git_repo_check: bool = False,
     disable_mcp: bool = False,
-    no_retries: bool = False,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -185,18 +185,16 @@ def execute(
             command[2:2] = ["-c", f'model_reasoning_effort="{effort}"']
         if skip_git_repo_check:
             command.insert(2, "--skip-git-repo-check")
-        if disable_mcp or no_retries:
+        if disable_mcp:
+            command[2:2] = ["-c", "features.shell_tool=false", "-c", "features.unified_exec=false"]
             config_path = (
                 Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "config.toml"
             )
             config = tomllib.loads(config_path.read_text()) if config_path.exists() else {}
-            if disable_mcp:
-                for name in config.get("mcp_servers", {}):
-                    command[2:2] = ["-c", f"mcp_servers.{json.dumps(name)}.enabled=false"]
-            if no_retries:
-                provider = json.dumps(config.get("model_provider", "openai"))
-                for setting in ("request_max_retries", "stream_max_retries"):
-                    command[2:2] = ["-c", f"model_providers.{provider}.{setting}=0"]
+            for name in config.get("mcp_servers", {}):
+                if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
+                    raise ValueError("Имя MCP не поддерживает безопасное CLI-переопределение")
+                command[2:2] = ["-c", f"mcp_servers.{name}.enabled=false"]
         with (
             (directory / "events.jsonl").open("xb") as event_stream,
             (directory / "stderr.log").open("xb") as errors,
@@ -249,6 +247,7 @@ def execute(
         "tool_calls": 0,
         "requested_model": model,
         "requested_effort": effort,
+        "transport_retries": None,
     }
     immutable(receipt, encoded(value))
     return directory / "raw-result.json", value
