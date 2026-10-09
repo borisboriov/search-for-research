@@ -91,3 +91,36 @@ model requests0, физических source calls0, ipc_roundtrip=true.
 в05:00 работа прекращается независимо от готовности. Следующий запуск требует
 нового поручения Бориса после ночной остановки. #193/#47/#103 открыты.
 Предложений правок паспорта нет; результат не принят продуктовым потоком.
+
+## Завершённый v2 collector и восстановление v3
+
+Второй collector attempt A5079662185 завершился штатно: done=true,exit0,pending=[];
+233,257с,5model requests,2search+2hostrobots+3reader. Raw Pi receipt:
+30761 uncached input,9216cached read,11885output (включая8958reasoning),
+totalTokens51862. Pi input исключает cached read; cached+input+output дают total,
+reasoning отдельно не прибавляется. Это не денежная стоимость/квота.
+
+Postflight host упал KeyError:properties: checker рассчитан на фиксированные
+объекты и не поддерживал evidence_pool.additionalProperties. Native verifier
+не запускался. V2root/STOP сохраняются. [V3 recovery](../experiments/enrichment_cli_recovery_v1.md)
+исправляет проверку dictionary по схеме и копирует исходные данные в новыйroot:
+третий collector job не нужен и запрещён. Модельная инструкция остаётсяv2;
+новый method/code hash фиксируется отдельно.
+
+Офлайн probe `/private/tmp/sfr-night-recovery-probe-v3-20261009` восстановил
+последний assistant, проверил идентификаторы/schema/дословность и Batch.submit:
+7атомов,9literal evidence,3rejections. Raw stdout SHA до/после копии одинаков:
+`bfc84658789ec033f21ca474145b03e0fe925b5fb2b77f72323b04dd746e36f6`.
+Дополнительных inference/source calls0. Это пригодность сохранённого входа,
+не независимая фактологическая оценка: первая Sol проверка ещё нужна.
+
+Предзапусковое независимое ревью dbde249ee7585020e1ff5bdae509db4f6a832d85
+закрыло прежние3 находки, pass/blocking0; относится к исправлениямv2,
+не к итоговой приёмке. Strict audit v2 повторён, FAIL#189; остальные этапыPASS.
+SHA-индекс7 прежних roots до исправленного запуска сохранён в v2/prior-roots-before.json;
+после всей работы требуется заключительная сверка.
+
+Проверки исправленного postflight: make lint/typecheck/test PASS,190unittest,
+388pytest,coverage94,06%; Node21 и docs-check actualmeta PASS.
+Дополнительный тест сохраняет прежний строгий запрет лишних полей; dictionary
+разрешён только явным typed additionalProperties, его вложенные поля обязательны.

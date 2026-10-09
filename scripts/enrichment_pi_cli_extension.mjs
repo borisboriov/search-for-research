@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {SOURCE_TOOLS, writeOnce, createGuardedFetch, createSourceQueue,
   createSerializedTransport, validateConfig} from './enrichment_pi_runner.mjs';
 
-export const CLI_METHOD = 'enrichment-cli-bounded-v2';
+export const CLI_METHOD = 'enrichment-cli-bounded-v3';
 export function upstreamRefusal(raw) {
   const message = raw.message ?? {}, result = message.result ?? {};
   const text = JSON.stringify(result.isError ? result : message.error ?? {});

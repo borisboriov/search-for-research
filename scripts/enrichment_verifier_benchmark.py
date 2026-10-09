@@ -78,11 +78,20 @@ def check_schema(value: Any, contract: dict[str, Any]) -> None:
     ):
         raise ValueError("Ответ не соответствует JSON schema")
     if kind == "object":
-        properties = contract["properties"]
-        if set(value) != set(properties):
+        properties = contract.get("properties", {})
+        # Preserve the existing strict fixed-object contract. Only explicitly
+        # typed additionalProperties introduces a dictionary of evidence.
+        required = contract.get("required", list(properties))
+        additional = contract.get("additionalProperties", False)
+        if not set(required) <= set(value) or (
+            additional is False and set(value) - set(properties)
+        ):
             raise ValueError("Лишние или отсутствующие поля JSON schema")
         for key, item in value.items():
-            check_schema(item, properties[key])
+            if key in properties:
+                check_schema(item, properties[key])
+            elif isinstance(additional, dict):
+                check_schema(item, additional)
     elif kind == "array":
         if len(value) < contract.get("minItems", 0):
             raise ValueError("Пустой обязательный массив")

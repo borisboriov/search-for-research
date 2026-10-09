@@ -22,6 +22,8 @@ from enrichment_night import (
     require_access,
     run,
 )
+from enrichment_pi_pilot import collector_schema
+from enrichment_verifier_benchmark import check_schema
 
 
 class FakeBatch:
@@ -176,6 +178,37 @@ class BoundedTests(unittest.TestCase):
 
 
 class SafetyRegressionTests(unittest.TestCase):
+    def test_real_collector_dictionary_schema_checks_every_evidence_row(self) -> None:
+        raw: dict[str, Any] = {
+            "author_id": "a",
+            "batch_ticket_id": "a-collect",
+            "batch_input_sha256": "hash",
+            "items": [],
+            "evidence_pool": {
+                "e": {
+                    "url": "https://example.com",
+                    "excerpt": "exact",
+                    "resource_file": "https://example.com",
+                    "information_date": None,
+                    "object_type": "scientist",
+                }
+            },
+            "profile_evidence": {"identity": [], "current_affiliation": []},
+            "field_statuses": {field: "not_checked" for field in FIELDS},
+        }
+        check_schema(raw, collector_schema())
+        raw["evidence_pool"]["e"]["object_type"] = "invented"
+        with self.assertRaises(ValueError):
+            check_schema(raw, collector_schema())
+        raw["evidence_pool"]["e"]["object_type"] = "scientist"
+        del raw["evidence_pool"]["e"]["excerpt"]
+        with self.assertRaises(ValueError):
+            check_schema(raw, collector_schema())
+        raw["evidence_pool"]["e"]["excerpt"] = "exact"
+        raw["evidence_pool"]["e"]["unexpected"] = "extra"
+        with self.assertRaises(ValueError):
+            check_schema(raw, collector_schema())
+
     def test_quota_denies_completed_classification_and_dependent_job(self) -> None:
         self.assertEqual(completion_status(True, 0, {}, True), "access_refused_partial_unknown")
         with (

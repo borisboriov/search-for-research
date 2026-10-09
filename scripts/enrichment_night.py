@@ -35,7 +35,7 @@ from enrichment_semantics import prepare_control, validate
 from enrichment_verifier_benchmark import check_schema
 
 REPO = Path(__file__).resolve().parent.parent
-METHOD = "enrichment-cli-bounded-v2"
+METHOD = "enrichment-cli-bounded-v3"
 RULES = REPO / "docs/experiments/enrichment_cli_bounded_v2.md"
 EXTENSION = REPO / "scripts/enrichment_pi_cli_extension.mjs"
 PARENT = Path("/Users/boris/Experiments/search-for-research")
@@ -59,6 +59,12 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
     root = private_root(root)
     if (root / "manifest.json").exists():
         raise ValueError("Уже заморожено")
+    if (
+        from_root is not None
+        and read(from_root / "manifest.json")["method"] == "enrichment-cli-bounded-v2"
+    ):
+        freeze_recovery(root, from_root)
+        return
     old = read(PARENT / "enrichment100-20261008/manifest.json")
     hashes = {name: sha(INDEX / name) for name in old["index_hashes"]}
     docs = read(INDEX / "docs.json")
@@ -175,6 +181,107 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
     )
     for index, profile in enumerate(selected, 1):
         Batch.create(root / "batches" / f"{index:02d}", root, [profile["id"]], RULES, concurrency=1)
+
+
+def freeze_recovery(root: Path, previous: Path) -> None:
+    """Новый root с точными копиями, восстановление без третьего collector job."""
+    manifest = read(previous / "manifest.json")
+    sample = verified_sample(previous)
+    aid = sample[0]["id"]
+    original = previous / "runs" / aid / "collector"
+    finished = read(original / "finished.json")
+    stop = read(previous / "stopped.json")
+    if (
+        stop["reason"] != "KeyError: 'properties'"
+        or stop["author_id"] != aid
+        or not finished["done"]
+        or finished["exit_code"] != 0
+        or finished["pending_operations"]
+        or not read(original / "receipt.json")["usage_complete"]
+        or access_stopped(previous)
+        or len(list((previous / "runs").glob("*/collector/started.json"))) != 1
+        or list((previous / "runs").glob("*/native_verifier/started.json"))
+    ):
+        raise ValueError("Нужен единственный завершённый v2 collector с ошибкой dictionary schema")
+    if list(root.iterdir()):
+        raise ValueError("Recovery root должен быть пуст")
+    copied = {}
+    for name in ("sample.json", "batches", "runs", "pilot-events", "policies"):
+        source = previous / name
+        if not source.exists():
+            continue
+        paths = sorted(source.rglob("*")) if source.is_dir() else [source]
+        for path in paths:
+            if path.is_symlink():
+                raise ValueError("Symlink в recovery запрещён")
+            if path.is_file():
+                target = root / path.relative_to(previous)
+                immutable(target, path.read_bytes())
+                copied[str(path.relative_to(previous))] = sha(path)
+    immutable(root / "imported/manifest-v2.json", (previous / "manifest.json").read_bytes())
+    immutable(root / "imported/STOP-v2.json", (previous / "stopped.json").read_bytes())
+    manifest["method"] = METHOD
+    manifest["created_at"] = now()
+    manifest["recovery"] = {
+        "source_root": str(previous),
+        "author_id": aid,
+        "source_manifest_sha256": sha(previous / "manifest.json"),
+        "copied_files": copied,
+        "additional_collector_jobs": 0,
+        "reason": "Поддержать schema additionalProperties; raw не меняется",
+    }
+    manifest["rules_hashes"] = {name: sha(REPO / name) for name in manifest["rules_hashes"]}
+    recovery_rules = REPO / "docs/experiments/enrichment_cli_recovery_v1.md"
+    manifest["rules_hashes"][str(recovery_rules.relative_to(REPO))] = sha(recovery_rules)
+    immutable(root / "manifest.json", encoded(manifest))
+
+
+def recovered_collector(
+    root: Path, profile: dict[str, Any], batch: Batch
+) -> tuple[Path, dict[str, Any]]:
+    recovery = locked(root).get("recovery")
+    aid = profile["id"]
+    if not recovery or recovery["author_id"] != aid:
+        raise ValueError("Попытка уже существует: повтор collector запрещён")
+    for name, digest in recovery["copied_files"].items():
+        if sha(root / name) != digest:
+            raise ValueError("Скопированное доказательство изменено")
+    directory = root / "runs" / aid / "collector"
+    request = read(directory / "request.json")
+    task = request["task"]
+    if sha(batch.ticket(aid, "collect")) != task["batch_input_sha256"]:
+        raise ValueError("Recovery должен сохранить первоначальное задание")
+    messages = [
+        json.loads(line)["message"]
+        for line in (directory / "stdout.jsonl").read_text().splitlines()
+        if json.loads(line).get("type") == "message_end"
+        and json.loads(line)["message"].get("role") == "assistant"
+    ]
+    if not messages or messages[-1].get("stopReason") != "stop":
+        raise ValueError("Нет завершённого исходного assistant")
+    raw = final_json(
+        "".join(
+            block.get("text", "") for block in messages[-1]["content"] if block["type"] == "text"
+        )
+    )
+    check_schema(raw, collector_schema())
+    if any(raw[key] != task[key] for key in ("author_id", "batch_ticket_id", "batch_input_sha256")):
+        raise ValueError("Raw другого задания")
+    immutable(directory / "result.json", encoded(raw))
+    immutable(
+        directory / "completion-status.json",
+        encoded(
+            {
+                "status": "model_completed",
+                "model_completed": True,
+                "recovered_without_inference": True,
+                "human_reviewed": 0,
+                "source_root": recovery["source_root"],
+                "pending_operations": [],
+            }
+        ),
+    )
+    return directory / "result.json", read(directory / "receipt.json")
 
 
 def locked(root: Path) -> dict[str, Any]:
@@ -453,7 +560,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
     aid = profile["id"]
     directory = root / "runs" / aid / "collector"
     if directory.exists():
-        raise ValueError("Попытка уже существует: автоматический повтор запрещён")
+        return recovered_collector(root, profile, batch)
     workspace = directory / "workspace"
     workspace.mkdir(parents=True, mode=0o700)
     (workspace / ".pi").mkdir(mode=0o700)
