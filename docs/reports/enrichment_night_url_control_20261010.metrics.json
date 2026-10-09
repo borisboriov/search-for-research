@@ -1,0 +1,180 @@
+{
+  "method": "single-known-positive-url-delivery-control-v1",
+  "created_at": "2026-10-09T23:07:08.988037+00:00",
+  "plan_sha256": "cb3f66c9fcd9727c0133d9ee51274cfcc56091a2312740f4509db2f0dc7c0dba",
+  "head_before": "a1dd6e531e46e9196876e5f2e542d1ff5efdf15e",
+  "known_url": "https://www.isir.upmc.fr/personnel/grossard",
+  "query": "\"Charline Grossard\" \"ISIR\" \"Institut des Systèmes Intelligents et de Robotique\"",
+  "search_result_count": 9,
+  "returned_links": [
+    {
+      "title": "ICT and autism care",
+      "link": "https://hal.sorbonne-universite.fr"
+    },
+    {
+      "title": "Mohamed Chetouani",
+      "link": "https://www.isir.upmc.fr/personnel/chetouani/feed"
+    },
+    {
+      "title": "Mohamed Chetouani",
+      "link": "https://cv.hal.science/mohamed-chetouani"
+    },
+    {
+      "title": "Charline GROSSARD | Speech therapist",
+      "link": "https://www.researchgate.net/profile"
+    },
+    {
+      "title": "Multimodal Personalization of Multi-User Human-Robot",
+      "link": "https://dl.acm.org/doi"
+    },
+    {
+      "title": "Investigating the Feasibility of a Wizard-of-Oz Robotic",
+      "link": "https://nbn-resolving.org"
+    },
+    {
+      "title": "Robotique : quel intérêt dans l'autisme ?",
+      "link": "https://www.larevuedupraticien.fr/pdf"
+    },
+    {
+      "title": "Sofiane Boucenna",
+      "link": "https://loop.frontiersin.org/people/overview"
+    },
+    {
+      "title": "Investigating the Feasibility of a Wizard-of-Oz Robotic",
+      "link": "https://link.springer.com/content/pdf"
+    }
+  ],
+  "selected_link": "https://hal.sorbonne-universite.fr",
+  "selected_title": "ICT and autism care",
+  "broad_name_institute_match": true,
+  "target_professional_page_retrieved": false,
+  "selection_limitation": "Frozen broad name+institute criterion selected a related paper, not the same professional page; no followup query/corrective live read was made. selection.json target_not_retrieved refers only to this broad criterion.",
+  "known_direct": {
+    "url": "https://www.isir.upmc.fr/personnel/grossard",
+    "robots_status": 200,
+    "reader_mcp_error": true,
+    "reported_error_code": "1234",
+    "reported_error_status": "500",
+    "target_body_received": false,
+    "prior_saved_reader_positive": true,
+    "prior_body_reused_as_current_result": false
+  },
+  "selected_reader": {
+    "url": "https://hal.sorbonne-universite.fr",
+    "robots_status": 302,
+    "robots_allowed": false,
+    "physical_reader_called": false,
+    "target_body_received": false
+  },
+  "physical_calls": {
+    "search_rpc": 1,
+    "reader_rpc": 1,
+    "host_robots": 2,
+    "resources_including_robots": 3,
+    "reader_attempts_including_denial": 2,
+    "protocol_discovery_excluded": true
+  },
+  "actual_request_records": [
+    {
+      "file": "000011-mcp-request.json",
+      "server": "zai_search",
+      "arguments": {
+        "search_query": "\"Charline Grossard\" \"ISIR\" \"Institut des Systèmes Intelligents et de Robotique\"",
+        "location": "cn"
+      }
+    },
+    {
+      "file": "000027-mcp-request.json",
+      "server": "zai_reader",
+      "arguments": {
+        "url": "https://www.isir.upmc.fr/personnel/grossard",
+        "retain_images": false
+      }
+    }
+  ],
+  "denied_request_records": [],
+  "robots": [
+    {
+      "url": "https://www.isir.upmc.fr/robots.txt",
+      "status": 200,
+      "allowed_status": true
+    },
+    {
+      "url": "https://hal.sorbonne-universite.fr/robots.txt",
+      "status": 302,
+      "allowed_status": false
+    }
+  ],
+  "seconds": 10.863,
+  "model_planning_requests": 0,
+  "content_jobs_added": 0,
+  "glm_extractor_jobs": 0,
+  "sol_verifier_jobs": 0,
+  "astra_jobs": 0,
+  "conditional_extraction_allowed": false,
+  "conditional_reason": "Search did not return the exact known target page and direct reader did not deliver target body.",
+  "night_profile_content_jobs": 43,
+  "architecture_consultations": 1,
+  "night_counted_jobs": 44,
+  "night_new_people": 15,
+  "night_astra_consumed": 4,
+  "architecture_usage_backend_unknown": true,
+  "architecture_source": "Coordinator delegation and PR comment6090688893; no invented receipt",
+  "codex_remaining_before": 27,
+  "source_money_or_quota_debit_unknown": true,
+  "diagnosis": {
+    "confirmed": "Selected search link was already bare domain in the durable native response, before custom readerView. Its robots302 blocked reading. Known exact URL robots200 permitted reader, which returned MCP error500/code1234.",
+    "not_confirmed": [
+      "Current successful exact-URL target reading",
+      "Missing target body caused only by search URL delivery",
+      "Extraction defect",
+      "Person facts absent",
+      "Exact provider versus native Pi transport layer of shortened search links"
+    ],
+    "next_step": "With new authorization, freeze a same-professional-page title match; obtain one exact target-body control through permitted native reader, without retries today. Inspect raw HTTP search payload versus native message if exact URL is absent, before changing extractor or choosing new transport."
+  },
+  "no_prevalence_or_mixed12": true,
+  "references": {
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/search-client-result.json": "59b792ac342f1968f27f096aa6619b261bbefb0c7464e5417741e90ea4c47cd3",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/search-link-reader.json": "b588886c6e3bf186adc046ae09288277cfafe9454c56a2fd55fbfbb782735b44",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/known-direct-reader.json": "e65fd86951b04c4a383189c09a2dc9823e6e05be4182890d937b0945b1d1e00f",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000001-mcp-request.json": "1b1e9d147bf5d1c3e70d256273746fe37df7cc8dd2a6a81c2f3b980ee57f38cc",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000002-http.json": "faa7bb438e4d3c0a342005dcff6169a6c434cad5f794938a9b37fdb9a96767ec",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000003-mcp-response.json": "e2789bcbf29aecdd64ffb0c36542bdea07f684b4dd4b30c64c302d68e421c111",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000004-mcp-request.json": "2e8c9f57da0a97b64f6217d17d013adfc6f02c3d25baeeb8fe67751efe1e5fcf",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000005-http.json": "53177dd93e9079a478b41fb33207b326513994357dffd71087ff1d810601e7b1",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000006-mcp-request.json": "9062c7975f1f1be6197f966ebdd23ecb86dab7b97ceb26cd7f0a25dee58b004a",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000007-http.json": "7d4a46cf111aad6442a1a0caa60acef34130edea1150fb68fe49ec0b19a539aa",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000008-http.json": "70da66e9aaf62fa6cb364d415d87e41ffd6f2398a60ceab55682d150078f7100",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000009-mcp-response.json": "3da9c75f9fb9651302b6f994b8b6f4e910e1f068680c0925246a0f6b686b5fab",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000010-reservation.json": "27ec992881aef386c5202aef975dbd5fb947df49c4ce906ad44925fef14b3bb0",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000011-mcp-request.json": "7f427e7649b2ea3a75932c5faf394ad712c51ea54247f1d5f54ce5aaacf4a4a2",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000012-http.json": "7215aedae23ff3c2e1e8f63305839e78a6d1589d7d22de9e6ea194e793152f9a",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000013-mcp-response.json": "ec6709e99b228fb4687596ead80faf4d3364ee8d76359ea4bec4c4a85c85148c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000014-mcp-request.json": "66e0ccf71e68f62ef9fcab82c1f5b63df56046d1ca1ff17ba0516e46f3bf37b1",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000015-http.json": "c6b5851e0c6aa6ca0354f764a42ec4f6ce5245d40713a45b2a22d0914604a9d0",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000016-mcp-response.json": "0f0b6e638db26cc08c299a4ceb43dcf8ecddfd275b09aa381692e9d216b58a39",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000017-mcp-request.json": "577b2e1dd79a219fe8414b0108b77e88b8aaa5f46c8f3f2db31b80deb98bec05",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000018-http.json": "c7a7bdea340110047e62b494f65ec7c7e676cb80673bf26c4123583b40202341",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000019-mcp-request.json": "065a523527c937c14af667317b9b60fe890426ba19a22d7738e27928322002d7",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000020-http.json": "e1d4d166d5e42e4a7f15027869ee32ce9d4831be875431a806399285ac784daa",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000021-mcp-response.json": "4f79f93e73244618dd537aa0ddc26dc1f2f97ad495882dfb3f84d4b259366a11",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000022-host-policy-permission.json": "3483baa4b832e1fec94c12732ea648a89bde27c794f6922bf018a982296181f2",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000023-reservation.json": "a394d2fc0a16d3e12150b02b735e85915f2e9ef701d8b6ae9e82268c9441de03",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000024-denied-mcp-response.json": "197a711f53d70b876488e3b64f2491f3fbd2a7a0244af6d09965c1bfdbfbaaf7",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000025-host-policy-permission.json": "46ea734c9c914a58d1b721e2e5fa503d47ca8f68e48dd2f6d74a94afdd8570f6",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000026-reservation.json": "40b61d941e297e24e60dae40255eba8cfc12f9cf33918c208e07af2e24b7667f",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000027-mcp-request.json": "beb67c2556b13c4af8dc9ed442db102b74706be41cda33c93088f829612bb868",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000028-http.json": "464c9f2dc5ab21fdffa1adcbb05b412cb058c7676ce1aba4fa2298ea337114f5",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000029-http.json": "b9c72fbb8c05223c881d3e966e2334caae7991a00ce60d5ed8aa16e31de390b9",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000030-mcp-response.json": "ceb679d151c21cc27841578d158024bf4c0c4f8cb29588e49323bcd0844d9adb",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000031-http.json": "9797e9e1188c7471981c145b9834d66334c16d59906dd0704086a451f23d41d7",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/protocol/000032-http.json": "6169c7bfde8334bc8656b679e398343e49bd8550fe726862a1f5378a7e04f847",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/manifest.json": "cb3f66c9fcd9727c0133d9ee51274cfcc56091a2312740f4509db2f0dc7c0dba",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/before-calls-seal.json": "992ae5dd0c24ad297621a23ec790699ada628da5c9e97ec70a5ae5a6e0c56aae",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/finished.json": "07ec028d6a133cf83f5a5ed68826672bd3bd0d94046ba5f15fe10f7efb71a62a",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/selection.json": "82ca3ffae9420fa7c3acb941dfb2f08635dfcf1949387bbb5e38b67f0de57539",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/url-control.mjs": "47de0c82d57d8a91c59b41a4c1c67bea1a3cf284e4f3d13c5ee9766a893fe6b3",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-url-control-20261010/check-policy.py": "18e76178596eeb460ff5b1c6911e03a0527113f31a6f15efb182b58fbfebc1fe"
+  }
+}

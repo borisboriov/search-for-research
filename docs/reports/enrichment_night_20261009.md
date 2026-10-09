@@ -585,3 +585,82 @@ validation/sfr-v6-measure.py, временный creation path вmeasurement-pla
 не перечитывались и не записывались. Собственные content processes закончены,
 оба новых roots STOP. Ветка/worktree сохраняются; после окончательной передачи
 запись исполнителя прекращается, дальнейший этап определяет продуктовый поток.
+
+
+## URL-контроль 10.10: native MCP, положительная сохранённая страница
+
+По [узкому поручению](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6090688893)
+выполнен один контроль без модельного планирования; [постановка до вызовов](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6090765165).
+Заведомо положительный старый reader — Charline Grossard, ISIR,
+`https://www.isir.upmc.fr/personnel/grossard` (v4/A5011844904/000063).
+До calls закреплены title, anchors Charline Grossard/ISIR и прямой буквальный факт
+«Ingénieure de recherche». Поисковая строка:
+`"Charline Grossard" "ISIR" "Institut des Systèmes Intelligents et de Robotique"`.
+Последние три ID исключены. Это не свежий случай и не добавление к prevalence/mixed12.
+Лимиты: 1 search / 2 reader / 4 resources включая robots / 600 секунд,
+concurrency1, retries0. Условие GLM/Sol: поиск возвращает точный адрес целевой
+страницы, а reader — тело с обоими anchors и буквальным прямым фактом.
+
+Поиск вернул девять результатов. Точные `link` из native raw:
+
+| Заголовок | Возвращённый link |
+|---|---|
+| ICT and autism care | https://hal.sorbonne-universite.fr |
+| Mohamed Chetouani | https://www.isir.upmc.fr/personnel/chetouani/feed |
+| Mohamed Chetouani | https://cv.hal.science/mohamed-chetouani |
+| Charline GROSSARD — Speech therapist | https://www.researchgate.net/profile |
+| Multimodal Personalization of Multi-User Human-Robot | https://dl.acm.org/doi |
+| Investigating the Feasibility of a Wizard-of-Oz Robotic | https://nbn-resolving.org |
+| Robotique : quel intérêt dans l’autisme ? | https://www.larevuedupraticien.fr/pdf |
+| Sofiane Boucenna | https://loop.frontiersin.org/people/overview |
+| Investigating the Feasibility of a Wizard-of-Oz Robotic | https://link.springer.com/content/pdf |
+
+**Целевая профессиональная страница ISIR не получена.** Предварительный широкий
+критерий «первый результат с именем и институтом в title/snippet» выбрал связанную
+статью ICT and autism care, а не ту же профессиональную страницу. Это ограничение
+контроля: `selection.json.target_not_retrieved=false` означает только совпадение
+с широким критерием; не означает получение целевой страницы. Новых запросов или
+исправляющего live-чтения не было. Возвращённый корень HAL передан reader точно:
+robots302 отклонён существующей политикой, физический reader этой ссылки не вызван.
+Нельзя переносить утверждение «все links — корни» на этот контроль: некоторые links
+имеют пути; среди них есть профили другого человека и общие пути без ID документа.
+
+Отдельный прямой контроль передал **известный точный URL** ISIR. Robots200 разрешил
+путь, native reader вернул isError, MCP error500/code1234 Network error. Тело,
+цитаты и прямой факт текущим вызовом не получены; прежний успешный reader сохранён
+раздельно и не выдан за новый результат. Никаких retries/обходов или новых livecalls.
+
+Подтверждённая граница: выбранный search link уже был корнем HAL в durable native
+response до нашего readerView; native raw rows и результат MCP client совпали.
+Offline сверка существующего readerView сохраняет search values; локальный адаптер
+не исправлялся. Использованы штатные Pi1.1.0 McpServerConnection/createDefaultTransport
+и существующий serialized capture wrapper, без нового универсального runner или
+транспорта. Одноразовая оркестрация фиксированного случая сохранена только private.
+Точное различение provider/backend и native Pi parser не сделано: raw HTTP search
+payload не сохранён. **Контроль не подтвердил, что потеря адреса — единственная
+причина отсутствия тела**: прямой exact URL тоже завершился ошибкой чтения.
+Extractor не проверялся, отсутствие фактов у человека не выводится.
+
+Фактически: 1 search RPC, 1 reader RPC, 2 host robots = 3 resources включая robots;
+reader attempts2, из них1 host-denied до физического вызова; 10,863 секунды.
+Protocol discovery не content calls. Model planning/GLM extractor/Sol/Astra0;
+условие извлечения не выполнено. Новых profile content jobs0: прежние43 неизменны;
+с отдельно указанной архитектурной консультацией —44 зачтённых задания,
+15 новых людей, Astra4/4. Консультация requestedAstra/xhigh, backend/token usage
+unknown, источник — сообщение координатора/PR; receipt не выдуман. Codexremaining
+перед контролем27%, account-wide; источник money/quota debit неизвестен.
+
+Минимальный следующий шаг по новому поручению: заморозить совпадение именно
+с заголовком профессиональной страницы; получить допустимый exact-URL target body
+через native reader. Если адрес в поиске отсутствует, сопоставить raw HTTP search
+payload с native message до изменения extractor или выбора другого транспорта.
+Обычных collector-партий и третьих попыток прежних3 сегодня не будет.
+
+Private immutable root: `enrichment-night-url-control-20261010` в прежней папке
+экспериментов: manifest/seal до calls, старый reader отдельно, native raw,
+search-client-result/selection, два reader outcome, robots, metrics-final,
+offline-url-preservation и stopped.json. Public числовой документ byte-identical
+private metrics-final. Исходники репозитория, старые roots/STOP и v6 метрики
+не менялись. Для docs-only результата выполняются docs-check и независимая сверка
+доказательств; актуальные CI/review/handoff публикуются в PR. #189 остаётся вне scope;
+готовность к merge и продуктовая приёмка не заявляются.
