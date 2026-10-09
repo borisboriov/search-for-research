@@ -67,6 +67,39 @@ class PilotTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Бюджет"):
                 reserve(root, batch, "A1", "search", "fifth")
 
+    def test_reader_refusal_survives_missing_ack(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            batch = self.fixture(root)
+            directory = root / "runs" / "A1" / "collector" / "pi"
+            immutable(
+                directory / "000001-mcp-request.json",
+                encoded(
+                    {
+                        "server": "zai_reader",
+                        "message": {
+                            "id": 7,
+                            "method": "tools/call",
+                            "params": {"arguments": {"url": "https://official.test/person"}},
+                        },
+                    }
+                ),
+            )
+            immutable(
+                directory / "000002-mcp-response.json",
+                encoded(
+                    {
+                        "server": "zai_reader",
+                        "message": {
+                            "id": 7,
+                            "result": {"isError": True, "content": [{"text": "403 forbidden"}]},
+                        },
+                    }
+                ),
+            )
+            with self.assertRaisesRegex(ValueError, "остановлен"):
+                reserve(root, batch, "A1", "page", "https://official.test/other")
+
     def test_unknown_attempt_never_relaunches(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -113,8 +146,8 @@ class PilotTests(unittest.TestCase):
             root = Path(temporary)
             self.assertEqual(validate_collection(root, "A1", raw), {})
             raw["field_statuses"]["workload"] = "found"
-            with self.assertRaisesRegex(ValueError, "без атома"):
-                validate_collection(root, "A1", raw)
+            self.assertEqual(validate_collection(root, "A1", raw), {})
+            # Декларация found сама по себе не создаёт атом или покрытие.
 
     def test_failed_pi_import_is_not_success(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -198,7 +231,7 @@ class PilotTests(unittest.TestCase):
 
             def assessment(task: dict[str, Any]) -> dict[str, Any]:
                 source = task["semantic_input"]
-                axis = {
+                axis: dict[str, Any] = {
                     "verdict": "insufficient",
                     "evidence_refs": [],
                     "information_date": None,

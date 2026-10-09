@@ -26,7 +26,7 @@ from enrichment_semantics import EXTRA_FIELDS, import_result, prepare_control, v
 SEED = 19319420261009
 NATIVE_MODEL = "gpt-6.1-sol"
 NATIVE_EFFORT = "medium"
-METHOD = "pi12-v1.2"
+METHOD = "pi12-v1.3"
 NAMESPACE = METHOD.replace(".", "-")
 REPO = Path(__file__).resolve().parent.parent
 COLLECT_RULES = REPO / "docs/experiments/enrichment_pi12.md"
@@ -249,6 +249,7 @@ def lock_method(root: Path) -> Path:
         for name in (
             "docs/experiments/enrichment_pi12_v1_1.md",
             "docs/experiments/enrichment_pi12_v1_2.md",
+            "docs/experiments/enrichment_pi12_v1_3.md",
             "scripts/enrichment_human.py",
             "scripts/enrichment_verification.py",
         )
@@ -308,6 +309,9 @@ def access_stopped(root: Path) -> bool:
 
 def reserve(root: Path, batch: Batch, aid: str, kind: str, target: str) -> str:
     previous: list[dict[str, Any]] = []
+    domain = urlparse(target).hostname
+    if domain and any(domain == d or domain.endswith("." + d) for d in raw_stopped_domains(root)):
+        raise ValueError("Источник остановлен по первичному отказу403/429")
     for path in sorted((root / "batches").glob("*/batch.json")):
         with Batch(path.parent).locked() as log:
             domain = urlparse(target).hostname
@@ -336,6 +340,40 @@ def reserve(root: Path, batch: Batch, aid: str, kind: str, target: str) -> str:
         },
     )
     return operation
+
+
+def raw_stopped_domains(root: Path) -> set[str]:
+    """Reader-403 до ack: URL из долговременного исходного tools/call, не из ответа модели."""
+    domains = set()
+    for path in (root / "policies").glob("*.json"):
+        row = read(path)
+        if row.get("status") in (403, 429) and (domain := urlparse(row["url"]).hostname):
+            domains.add(domain)
+    for path in (root / "runs").glob("*/*/pi/*-mcp-response.json"):
+        if path.name.split("-", 1)[1] != "mcp-response.json":
+            continue
+        raw = read(path)
+        if raw.get("server") != "zai_reader":
+            continue
+        message = raw.get("message", {})
+        result = message.get("result", {})
+        text = source_text(result if result else message.get("error", {}))
+        if not (result.get("isError") or message.get("error")) or not (
+            "403" in text or "429" in text
+        ):
+            continue
+        for request_path in path.parent.glob("*-mcp-request.json"):
+            request = read(request_path)
+            call = request.get("message", {})
+            if (
+                request.get("server") == "zai_reader"
+                and call.get("id") == message.get("id")
+                and call.get("method") == "tools/call"
+            ):
+                target = call.get("params", {}).get("arguments", {}).get("url", "")
+                if domain := urlparse(target).hostname:
+                    domains.add(domain)
+    return domains
 
 
 def policy(root: Path, batch: Batch, aid: str, url: str) -> dict[str, Any]:
@@ -771,9 +809,6 @@ def validate_collection(root: Path, aid: str, raw: dict[str, Any]) -> dict[str, 
         not isinstance(refs, list) or any(ref not in pool for ref in refs) for refs in axes.values()
     ):
         raise ValueError("Профильные ссылки не принадлежат прочитанному пулу")
-    for field, status in raw["field_statuses"].items():
-        if status == "found" and not any(item["field"] == field for item in raw["items"]):
-            raise ValueError("Найденное поле без атома")
     return pool
 
 
@@ -875,6 +910,13 @@ def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
     raw = bind_sources(root, aid, raw)
     pool = validate_collection(root, aid, raw)
     collected = {k: v for k, v in raw.items() if k != "evidence_pool"}
+    schema_issues = [
+        {"kind": "found_without_atom", "field": field}
+        for field, status in raw["field_statuses"].items()
+        if status == "found" and not any(item["field"] == field for item in raw["items"])
+    ]
+    if schema_issues:
+        collected["schema_issues"] = schema_issues
     collected["collector_quoted_fragments"] = read(rawpath)["evidence_pool"]
     collected["provenance"] = receipt | {"stage": "collect"}
     with batch.locked() as log:
@@ -937,12 +979,50 @@ def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
         value = read(path)
         value["provenance"] = provenance | {"stage": "verify"}
         value["network_operations"] = []
-        validate(source, value, sha(source_path))
         normalized = root / "normalized" / aid / (name + "-verifier.json")
         immutable(normalized, encoded(value))
-        wrappers[name] = import_result(root, source_path, normalized, NAMESPACE + "-" + name)
+        try:
+            validate(source, value, sha(source_path))
+        except ValueError as exc:
+            wrapper = (
+                source_path.parent.parent / "outputs" / (NAMESPACE + "-" + name) / f"{aid}.json"
+            )
+            immutable(
+                wrapper,
+                encoded(
+                    {
+                        "input_sha256": sha(source_path),
+                        "input_relative_path": str(source_path.relative_to(root)),
+                        "result_sha256": sha(normalized),
+                        "rules_version": "semantic-v3",
+                        "result": value,
+                        "classifications": None,
+                        "validation": {"succeeded": False, "errors": [str(exc)]},
+                        "human_reviewed": False,
+                        "accepted_automatically": False,
+                    }
+                ),
+            )
+            wrappers[name] = wrapper
+        else:
+            wrappers[name] = import_result(root, source_path, normalized, NAMESPACE + "-" + name)
         if name == "pi":
-            batch.submit(aid + "-verify", normalized, value["provenance"])
+            submission = root / "queue-submissions" / aid / "verify.json"
+            immutable(
+                submission,
+                encoded(
+                    {
+                        "author_id": aid,
+                        "batch_ticket_id": aid + "-verify",
+                        "batch_input_sha256": sha(verify_ticket),
+                        "model_result_sha256": sha(normalized),
+                        "model_result_path": str(normalized.relative_to(root)),
+                        "network_operations": [],
+                        "provenance": value["provenance"],
+                    }
+                ),
+            )
+            batch.submit(aid + "-verify", submission, value["provenance"])
     immutable(
         root / "paired" / f"{aid}.json",
         encoded(
@@ -973,6 +1053,8 @@ def measurements(root: Path) -> Path:
         )
     }
     compared = 0
+    valid_pairs = 0
+    invalid_results: dict[str, int] = {"pi": 0, "native": 0}
     human_profiles: set[str] = set()
     human_grades: dict[str, dict[str, int]] = {name: {} for name in ("pi", "native")}
     human_minutes = 0.0
@@ -1015,12 +1097,21 @@ def measurements(root: Path) -> Path:
         pair = root / "paired" / f"{aid}.json"
         if pair.exists():
             value = read(pair)
-            a, b = (read(Path(value["result_paths"][name]))["result"] for name in ("pi", "native"))
-            bi = {r["item_id"]: r for r in b["items"]}
-            for item in a["items"]:
-                compared += 1
-                for key in disagreement:
-                    disagreement[key] += item[key] != bi[item["item_id"]][key]
+            wrappers = {name: read(Path(value["result_paths"][name])) for name in ("pi", "native")}
+            invalid = {
+                name: wrapper.get("validation", {}).get("succeeded") is False
+                for name, wrapper in wrappers.items()
+            }
+            for name in invalid_results:
+                invalid_results[name] += invalid[name]
+            if not any(invalid.values()):
+                valid_pairs += 1
+                a, b = (wrappers[name]["result"] for name in ("pi", "native"))
+                bi = {r["item_id"]: r for r in b["items"]}
+                for item in a["items"]:
+                    compared += 1
+                    for key in disagreement:
+                        disagreement[key] += item[key] != bi[item["item_id"]][key]
         rows.append(
             {
                 "author_id": aid,
@@ -1037,10 +1128,12 @@ def measurements(root: Path) -> Path:
         "denominators": {
             "fixed_profiles": 12,
             "paired_profiles": sum(r["paired"] for r in rows),
+            "semantically_valid_paired_profiles": valid_pairs,
             "compared_atoms": compared,
             "human_reviewed": len(human_profiles),
         },
         "disagreements": disagreement,
+        "invalid_verifier_results": invalid_results,
         "source_reservations": {
             kind: sum(
                 e.get("action") == "source_reserved" and e.get("kind") == kind for e in events(root)
@@ -1114,8 +1207,20 @@ def finish_artifacts(root: Path) -> None:
                 _result: dict[str, Any], _artifact: dict[str, Any], pair: dict[str, Any] = pair
             ) -> None:
                 source = read(Path(pair["input_path"]))
+                pi_wrapper = read(Path(pair["result_paths"]["pi"]))
+                if _result.get("model_result_sha256") != pi_wrapper["result_sha256"]:
+                    raise ValueError("Очередь ссылается на другой ответ проверяющего")
                 for path in pair["result_paths"].values():
-                    validate(source, read(Path(path))["result"], sha(Path(pair["input_path"])))
+                    wrapper = read(Path(path))
+                    if wrapper["input_sha256"] != sha(Path(pair["input_path"])):
+                        raise ValueError("Обёртка другого входа")
+                    try:
+                        validate(source, wrapper["result"], sha(Path(pair["input_path"])))
+                    except ValueError as exc:
+                        if wrapper.get("validation") != {"succeeded": False, "errors": [str(exc)]}:
+                            raise ValueError(
+                                "Не воспроизводится сохранённый отказ проверки"
+                            ) from exc
 
             previous_sha = batch.advance(aid, "validate", artifact, check)
             artifact = root / "advances" / aid / "humanpacket.json"

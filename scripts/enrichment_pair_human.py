@@ -43,13 +43,19 @@ def _save(path: Path, value: Any) -> None:
 def _response(source: dict[str, Any], path: Path, digest: str) -> dict[str, Any]:
     wrapper = read(path)
     result = wrapper.get("result", wrapper)
-    derived = validate(source, result, digest)
+    try:
+        derived = validate(source, result, digest)
+    except ValueError as exc:
+        if wrapper.get("validation") != {"succeeded": False, "errors": [str(exc)]}:
+            raise
+        derived = None
     if "input_sha256" in wrapper and wrapper["input_sha256"] != digest:
         raise ValueError("Обёртка связана с другим входом")
     if "classifications" in wrapper and wrapper["classifications"] != derived:
         raise ValueError("Производная классификация отличается")
     # Provenance, runtime and paths belong only to the separate unblinding file.
     response = {key: result[key] for key in ("items", "profile_assessments", "summary")}
+    response["validation"] = wrapper.get("validation", {"succeeded": True, "errors": []})
     narratives = [*response["summary"].values()]
     for row in [*response["items"], *response["profile_assessments"].values()]:
         narratives.extend(row.get(key, "") for key in ("explanation", "question", "value_ru"))
@@ -210,6 +216,13 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
             )
         for slot, response in profile["responses"].items():
             cards.append(f"<section><h3>Краткий ответ {slot}</h3>")
+            if not response["validation"]["succeeded"]:
+                cards.append(
+                    "<p><strong>Ответ не прошёл автоматическую проверку; "
+                    "его утверждения не приняты.</strong> "
+                    + esc("; ".join(response["validation"]["errors"]))
+                    + "</p>"
+                )
             for key, title in {
                 "known": "Что известно",
                 "unknown": "Что неизвестно",

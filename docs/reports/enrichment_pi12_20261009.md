@@ -30,11 +30,11 @@ PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py lock-method \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 3 \
-  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.2.json
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.3.json
 # Продолжение до разрешённых12; существующие выполненные стадии не вызываются снова.
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 12 \
-  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.2.json
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.3.json
 ```
 
 Заморозка однократная: 1 случайный профиль каждого из12 вузов, исключены старые100,
@@ -113,3 +113,18 @@ v1.1 не сделала новых LLM-вызовов:2 импорта оста
 ответами/валидацией/пакетом/агрегатами выполнен без сети; это регрессия, не замер
 профиля. Первые3 сборщика остаются v1, остальные9 используют фиксированную v1.2.
 Парная проверка начинается только после этой фиксации. Человеческих ответов нет.
+
+### Граница сохранения v1.2 → v1.3
+
+Первые2 парные проверки выполнены, но Pi ответы не прошли semantic-v3 валидацию:
+неверный код активности и пустой student_level. Исходные ответы и usage остаются
+неизменными; повторных модельных запусков нет.
+[pi12-v1.3](../experiments/enrichment_pi12_v1_3.md) позволяет сохранить такой исход
+отдельно с classifications=null и показать оригинал человеку с ошибкой проверки.
+Он не увеличивает покрытие и не входит в знаменатель сравнения валидных ответов.
+Сбор остальных9 и проверка после первых2 используют v1.3; исходы первых версий
+не выдаются за однородный независимый тест. Reader403 после прерывания восстанавливается
+из сохранённого RPC и блокирует повторный доступ к тому же домену.
+
+До продолжения прошли make lint/typecheck/test/docs-check:135 unittest,388 pytest,
+8 skipped,5 deselected;3 теста SDK. Это технические проверки, не человеческие оценки.
