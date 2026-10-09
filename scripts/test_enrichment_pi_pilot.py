@@ -175,3 +175,127 @@ class PilotTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "остановлен"):
                     run_pi(root, batch, "A2", "collector", {}, "rules", {})
                 launch.assert_not_called()
+
+    def test_full_pair_queue_import_with_unsupported_atom_and_no_network(self) -> None:
+        from enrichment_pi_pilot import finish_artifacts, run_profile
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            profiles = [
+                {"id": f"A{i}", "name": "Тест", "institution": "Тест", "institution_id": "I1"}
+                for i in range(1, 13)
+            ]
+            immutable(root / "sample.json", encoded(profiles))
+            immutable(root / "manifest.json", encoded({"sample_sha256": sha(root / "sample.json")}))
+            from enrichment_pi_pilot import COLLECT_RULES
+
+            batches = [
+                Batch.create(
+                    root / "batches" / f"{i + 1:02d}", root, [p["id"]], COLLECT_RULES, concurrency=1
+                )
+                for i, p in enumerate(profiles)
+            ]
+
+            def assessment(task: dict[str, Any]) -> dict[str, Any]:
+                source = task["semantic_input"]
+                axis = {
+                    "verdict": "insufficient",
+                    "evidence_refs": [],
+                    "information_date": None,
+                    "date_basis": "unknown",
+                    "explanation": "Нет оснований.",
+                }
+                return {
+                    k: task[k]
+                    for k in ("author_id", "batch_ticket_id", "batch_input_sha256", "input_sha256")
+                } | {
+                    "rules_version": "semantic-v3",
+                    "items": [
+                        {
+                            "item_id": item["item_id"],
+                            "text_verdict": "insufficient",
+                            "identity_verdict": "insufficient",
+                            "field_verdict": "insufficient",
+                            "corrected_field": None,
+                            "fact_kind": "literal",
+                            "object_type": "scientist",
+                            "object_relation": "insufficient",
+                            "student_level": ["unknown"],
+                            "information_date": None,
+                            "date_basis": "unknown",
+                            "current_applicability": "unknown",
+                            "evidence_refs": [],
+                            "explanation": "Нет прочитанного доказательства.",
+                            "question": "Есть ли первоисточник?",
+                        }
+                        for item in source["items"]
+                    ],
+                    "profile_assessments": {
+                        "identity": axis,
+                        "current_affiliation": axis,
+                        "activity": axis | {"status": "unknown"},
+                    },
+                    "summary": dict.fromkeys(
+                        ("known", "unknown", "identity", "current_opportunity"),
+                        "Основания не установлены.",
+                    ),
+                }
+
+            def pi_call(
+                root: Path, batch: Batch, aid: str, stage: str, task: dict[str, Any], *args: Any
+            ) -> Any:
+                if stage == "collector":
+                    value = {
+                        k: task[k] for k in ("author_id", "batch_ticket_id", "batch_input_sha256")
+                    } | {
+                        "items": [
+                            {
+                                "item_id": aid + "_1",
+                                "field": "personal_contact",
+                                "value": "Неподтверждённый кандидат",
+                                "evidence_refs": [],
+                            }
+                        ],
+                        "evidence_pool": {},
+                        "profile_evidence": {"identity": [], "current_affiliation": []},
+                        "field_statuses": dict.fromkeys(FIELDS, "not_checked"),
+                    }
+                else:
+                    value = assessment(task)
+                path = root / "runs" / aid / stage / "result.json"
+                immutable(path, encoded(value))
+                return path, {
+                    "agent_id": aid + "-" + stage,
+                    "model": "fake",
+                    "effort": "low",
+                    "runtime_status": "recorded",
+                    "tokens": 0,
+                    "cost_usd": None,
+                }
+
+            def native_call(directory: Path, prompt: str, *args: Any, **kwargs: Any) -> Any:
+                task = json.loads(prompt.split("\nВХОД:\n")[-1])
+                path = directory / "raw-result.json"
+                immutable(path, encoded(assessment(task)))
+                return path, {
+                    "agent_id": task["author_id"] + "-native",
+                    "runtime_status": "runtime_not_exposed",
+                    "model": None,
+                    "effort": None,
+                    "tokens": {"input_tokens": 1, "output_tokens": 1},
+                    "cost_usd": None,
+                }
+
+            with (
+                patch("enrichment_pi_pilot.run_pi", side_effect=pi_call) as pi,
+                patch("enrichment_pi_pilot.execute", side_effect=native_call) as native,
+            ):
+                for p, b in zip(profiles[:3], batches[:3], strict=True):
+                    run_profile(root, p, b)
+                finish_artifacts(root)
+                self.assertEqual(pi.call_count, 6)
+                self.assertEqual(native.call_count, 3)
+            self.assertTrue((root / "paired-human" / "packets" / "pi12-01" / "cards.html").exists())
+            for batch in batches[:3]:
+                with batch.locked() as log:
+                    self.assertIsNotNone(batch.completed(log, batch.config["ids"][0], "metrics"))

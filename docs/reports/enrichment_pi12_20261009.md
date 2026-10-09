@@ -30,11 +30,11 @@ PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py lock-method \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 3 \
-  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.1.json
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.2.json
 # Продолжение до разрешённых12; существующие выполненные стадии не вызываются снова.
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 12 \
-  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.1.json
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.2.json
 ```
 
 Заморозка однократная: 1 случайный профиль каждого из12 вузов, исключены старые100,
@@ -102,3 +102,14 @@ PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pair_human.py \
 повторы CLI не раскрыты и остаются неизвестными, а не нулём. MCP для этого
 запуска отключается штатными локальными CLI overrides, веб disabled, timeout600s.
 Pi SDK повторы отключены явно через in-memory settings. Подписочный расход null.
+
+### Граница импорта v1.1 → v1.2
+
+v1.1 не сделала новых LLM-вызовов:2 импорта остановились на точке в namespace,
+1 на атоме без доказательства. Эти ошибки и исходная версия сохранены.
+[pi12-v1.2](../experiments/enrichment_pi12_v1_2.md) сохраняет неподтверждённый атом
+с evidence_refs=[] для проверки недостаточности, а не удаляет его. Непрочитанные
+ссылки не попадают в доказательный пул. Полный тест переходов очереди с двумя
+ответами/валидацией/пакетом/агрегатами выполнен без сети; это регрессия, не замер
+профиля. Первые3 сборщика остаются v1, остальные9 используют фиксированную v1.2.
+Парная проверка начинается только после этой фиксации. Человеческих ответов нет.

@@ -26,7 +26,8 @@ from enrichment_semantics import EXTRA_FIELDS, import_result, prepare_control, v
 SEED = 19319420261009
 NATIVE_MODEL = "gpt-6.1-sol"
 NATIVE_EFFORT = "medium"
-METHOD = "pi12-v1.1"
+METHOD = "pi12-v1.2"
+NAMESPACE = METHOD.replace(".", "-")
 REPO = Path(__file__).resolve().parent.parent
 COLLECT_RULES = REPO / "docs/experiments/enrichment_pi12.md"
 RUBRIC = REPO / "docs/experiments/enrichment_verifier_v3.md"
@@ -247,6 +248,7 @@ def lock_method(root: Path) -> Path:
         REPO / name
         for name in (
             "docs/experiments/enrichment_pi12_v1_1.md",
+            "docs/experiments/enrichment_pi12_v1_2.md",
             "scripts/enrichment_human.py",
             "scripts/enrichment_verification.py",
         )
@@ -259,7 +261,7 @@ def lock_method(root: Path) -> Path:
         "rules_hashes": {str(p.relative_to(REPO)): sha(p) for p in files},
         "collector_boundary": {
             "original_v1_attempts": 3,
-            "remaining_v1_1_maximum": 9,
+            "remaining_after_boundary_maximum": 9,
             "repeat_calls_allowed": False,
         },
         "pi_version": "1.1.0",
@@ -760,8 +762,8 @@ def validate_collection(root: Path, aid: str, raw: dict[str, Any]) -> dict[str, 
             or not item["value"].strip()
         ):
             raise ValueError("Некорректное поле/значение атома")
-        if not item["evidence_refs"] or any(r not in pool for r in item["evidence_refs"]):
-            raise ValueError("Атом без прочитанного источника")
+        if any(r not in pool for r in item["evidence_refs"]):
+            raise ValueError("Атом с неизвестной ссылкой на источник")
     if len({item["item_id"] for item in raw["items"]}) != len(raw["items"]):
         raise ValueError("Повторные атомы")
     axes = raw.get("profile_evidence", {})
@@ -787,13 +789,32 @@ def bind_sources(root: Path, aid: str, original: dict[str, Any]) -> dict[str, An
         and e.get("outcome") == "ok"
     ]
     bindings = []
+    unbound = []
     for key, evidence in value["evidence_pool"].items():
         matches = [e for e in resources if e["arguments"]["url"] == evidence["url"]]
         if len(matches) != 1:
-            raise ValueError("Кандидат без единственного прочитанного источника")
+            bindings.append(
+                {
+                    "evidence_id": key,
+                    "collector_excerpt": evidence["excerpt"],
+                    "literal_quote_valid": False,
+                    "source_missing": True,
+                }
+            )
+            unbound.append(key)
+            continue
         body = reader_body(read(root / matches[0]["raw_file"])["message"].get("result", {}))
         if not body:
-            raise ValueError("Не удалось выделить тело прочитанного источника")
+            bindings.append(
+                {
+                    "evidence_id": key,
+                    "collector_excerpt": evidence["excerpt"],
+                    "literal_quote_valid": False,
+                    "source_missing": True,
+                }
+            )
+            unbound.append(key)
+            continue
         literal = bool(evidence["excerpt"].strip()) and evidence["excerpt"] in body
         bindings.append(
             {
@@ -809,7 +830,7 @@ def bind_sources(root: Path, aid: str, original: dict[str, Any]) -> dict[str, An
         if not literal:
             evidence["excerpt"] = body[:20000]
     immutable(
-        root / "source-bindings" / f"{aid}.json",
+        root / "source-bindings" / NAMESPACE / f"{aid}.json",
         encoded(
             {
                 "method": METHOD,
@@ -820,6 +841,12 @@ def bind_sources(root: Path, aid: str, original: dict[str, Any]) -> dict[str, An
             }
         ),
     )
+    for key in unbound:
+        del value["evidence_pool"][key]
+    for item in value["items"]:
+        item["evidence_refs"] = [r for r in item["evidence_refs"] if r in value["evidence_pool"]]
+    for name, refs in value["profile_evidence"].items():
+        value["profile_evidence"][name] = [r for r in refs if r in value["evidence_pool"]]
     return dict(value)
 
 
@@ -866,7 +893,7 @@ def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
         pool,
         RUBRIC,
         sha(root / "sample.json"),
-        namespace=METHOD,
+        namespace=NAMESPACE,
         source_kind="fresh_pi_collection",
     )
     source = read(source_path)
@@ -913,7 +940,7 @@ def run_profile(root: Path, profile: dict[str, Any], batch: Batch) -> None:
         validate(source, value, sha(source_path))
         normalized = root / "normalized" / aid / (name + "-verifier.json")
         immutable(normalized, encoded(value))
-        wrappers[name] = import_result(root, source_path, normalized, METHOD + "-" + name)
+        wrappers[name] = import_result(root, source_path, normalized, NAMESPACE + "-" + name)
         if name == "pi":
             batch.submit(aid + "-verify", normalized, value["provenance"])
     immutable(
@@ -1035,11 +1062,12 @@ def measurements(root: Path) -> Path:
         "quota_parallel_account_use_observed": True,
         "source_quote_errors": sum(
             not binding["literal_quote_valid"]
-            for path in (root / "source-bindings").glob("*.json")
+            for path in (root / "source-bindings" / NAMESPACE).glob("*.json")
             for binding in read(path)["bindings"]
         ),
         "source_quote_denominator": sum(
-            len(read(path)["bindings"]) for path in (root / "source-bindings").glob("*.json")
+            len(read(path)["bindings"])
+            for path in (root / "source-bindings" / NAMESPACE).glob("*.json")
         ),
     }
     payload = encoded(data)
