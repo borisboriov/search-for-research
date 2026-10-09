@@ -178,7 +178,7 @@ def freeze_saved(root: Path, previous: Path) -> None:
         raise ValueError("Нет двух разрешённых сохранённых профилей")
     immutable(root / "sample.json", encoded(selected))
     inputs = {}
-    for index, profile in enumerate(selected, 1):
+    for profile in selected:
         aid = profile["id"]
         old = checked_result(previous, aid)
         directory = previous / "runs" / aid / "collector"
@@ -195,7 +195,6 @@ def freeze_saved(root: Path, previous: Path) -> None:
             if row.get("author_id") == aid and row.get("action") == "source_finished"
         ]
         inputs[aid] = {str(path): sha(path) for path in paths}
-        Batch.create(root / "batches" / f"{index:02d}", root, [aid], RULES, concurrency=1)
     source_manifest = read(previous / "manifest.json")
     immutable(
         root / "manifest.json",
@@ -214,6 +213,8 @@ def freeze_saved(root: Path, previous: Path) -> None:
             }
         ),
     )
+    for index, profile in enumerate(selected, 1):
+        Batch.create(root / "batches" / f"{index:02d}", root, [profile["id"]], RULES, concurrency=1)
 
 
 def freeze_continuation(root: Path, previous: Path) -> None:
