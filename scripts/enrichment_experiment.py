@@ -290,7 +290,12 @@ def latest_results(root: Path) -> dict[str, dict[str, Any]]:
 
 
 def run_orcid(
-    root: Path, cohort: str, mailto: str, rules: Path, retry_transport: bool = False
+    root: Path,
+    cohort: str,
+    mailto: str,
+    rules: Path,
+    retry_transport: bool = False,
+    method_lock: Path | None = None,
 ) -> None:
     root = private_root(root)
     sample = verified_sample(root)
@@ -300,9 +305,11 @@ def run_orcid(
     if not policy.get("checked_at") or not policy.get("terms_url"):
         raise ValueError("Отсутствует доказательство проверки условий")
     if cohort != "pilot":
-        raise ValueError(
-            "Оценка 90 ещё не разрешена: сначала согласование критериев и фиксация метода"
-        )
+        if method_lock is None:
+            raise ValueError("Для 90 нужна фиксация метода после полного разбора первых 10")
+        from enrichment_protocol import validate_lock
+
+        validate_lock(root, method_lock, Path(__file__).resolve().parents[1])
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", mailto):
         raise ValueError("Нужен действительный mailto")
     write_new(root / f"access-policy-{time.time_ns()}.json", policy)
@@ -648,6 +655,7 @@ def main() -> None:
     run_parser.add_argument("--mailto", required=True)
     run_parser.add_argument("--rules", type=Path, required=True)
     run_parser.add_argument("--retry-transport", action="store_true")
+    run_parser.add_argument("--method-lock", type=Path)
     summary_parser = commands.add_parser("summary")
     summary_parser.add_argument("--root", type=Path, required=True)
     review_parser = commands.add_parser("prepare-review")
@@ -660,7 +668,9 @@ def main() -> None:
     if args.command == "freeze":
         freeze(args.index, args.db, args.deployment_proof, args.out)
     elif args.command == "orcid":
-        run_orcid(args.root, args.cohort, args.mailto, args.rules, args.retry_transport)
+        run_orcid(
+            args.root, args.cohort, args.mailto, args.rules, args.retry_transport, args.method_lock
+        )
     elif args.command == "prepare-review":
         prepare_review(args.root, args.catalog_export)
     elif args.command == "export-metrics":
