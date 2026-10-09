@@ -28,6 +28,7 @@ from enrichment_night import (
     empty_packet,
     empty_result,
     formatting_text,
+    freeze_saved,
     host_events,
     locked,
     permission,
@@ -62,6 +63,56 @@ def hanging_policy_fixture(
 
 
 class BoundedTests(unittest.TestCase):
+    def test_saved_freeze_handles_source_refusal_and_creates_batches_after_manifest(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            previous, root = Path(directory) / "old", Path(directory) / "new"
+            previous.mkdir()
+            root.mkdir()
+            profiles = [{"id": aid} for aid in ("A5011844904", "A5061174451")]
+            immutable(previous / "sample.json", encoded(profiles))
+            immutable(previous / "input.json", encoded({}))
+            immutable(
+                previous / "manifest.json",
+                encoded(
+                    {
+                        "method": "enrichment-cli-bounded-v4",
+                        "sample_sha256": sha(previous / "sample.json"),
+                        "rules_hashes": {"scripts/enrichment_night.py": "historical"},
+                        "limits": {"profiles": 12},
+                    }
+                ),
+            )
+            for profile in profiles:
+                aid = profile["id"]
+                run_dir = previous / "runs" / aid / "collector"
+                for name in ("result.json", "receipt.json"):
+                    immutable(run_dir / name, encoded({}))
+                immutable(run_dir / "completion-status.json", encoded({"model_completed": True}))
+                immutable(previous / "rejections" / f"{aid}.json", encoded([]))
+                immutable(previous / "results" / f"{aid}.json", encoded({}))
+            with (
+                patch(
+                    "enrichment_night.checked_result",
+                    return_value={
+                        "input_path": str(previous / "input.json"),
+                    },
+                ),
+                patch(
+                    "enrichment_night.events",
+                    return_value=[
+                        {
+                            "action": "source_finished",
+                            "author_id": profiles[0]["id"],
+                            "outcome": "refused",
+                        }
+                    ],
+                ),
+            ):
+                freeze_saved(root, previous)
+            self.assertEqual(locked(root)["limits"]["collector_jobs"], 0)
+            self.assertEqual(Batch(root / "batches/01").config["ids"], [profiles[0]["id"]])
+            self.assertEqual(Batch(root / "batches/02").config["ids"], [profiles[1]["id"]])
+
     def test_saved_isir_profile_contiguous_heading_and_bullet_fragment(self) -> None:
         # Public reader fragment, excluding contacts; complete private replay is separate.
         body = "- # Charline Grossard\n- Ingénieure de recherche\n- Email:"

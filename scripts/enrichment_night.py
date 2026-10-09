@@ -192,7 +192,9 @@ def freeze_saved(root: Path, previous: Path) -> None:
         paths += [
             previous / row["raw_file"]
             for row in events(previous)
-            if row.get("author_id") == aid and row.get("action") == "source_finished"
+            if row.get("author_id") == aid
+            and row.get("action") == "source_finished"
+            and row.get("raw_file")
         ]
         inputs[aid] = {str(path): sha(path) for path in paths}
     source_manifest = read(previous / "manifest.json")
