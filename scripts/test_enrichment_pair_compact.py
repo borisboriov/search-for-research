@@ -1,12 +1,13 @@
 """Отдельное представление сохраняет дословные цитаты и механизм разметки."""
 
 import html
+import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from enrichment_experiment import read, sha, write_new
-from enrichment_pair_compact import QuoteSpans, render, transform
+from enrichment_pair_compact import QuoteSpans, readable_invalid, render, transform
 
 
 class CompactTests(unittest.TestCase):
@@ -80,6 +81,114 @@ class CompactTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 render(root, "packet1", threshold=2000)
             self.assertFalse((root / "paired-human/records").exists())
+
+    def invalid_fixture(self) -> tuple[str, dict[str, object], str]:
+        value = {
+            "items": [
+                {
+                    "item_id": "i1",
+                    "text_verdict": "supported",
+                    "identity_verdict": "insufficient",
+                    "field_verdict": "correct",
+                    "student_level": [],
+                    "evidence_refs": ["missing-source"],
+                    "question": '<img src=x onerror="alert(1)">',
+                    "explanation": "Дословное объяснение",
+                    "fact_kind": "unrecognized_kind",
+                }
+            ],
+            "profile_assessments": {},
+            "summary": {
+                "known": "Нет принятого результата",
+                "unknown": "Неизвестно",
+                "identity": "Не установлено",
+                "current_opportunity": "Не установлено",
+            },
+        }
+        response = value | {
+            "validation": {"succeeded": False, "errors": ["Нужен уровень студента"]}
+        }
+        profile = {
+            "author_id": "A1",
+            "items": [{"item_id": "i1"}, {"item_id": "i2"}],
+            "responses": {"A": response},
+            "evidence_pool": {},
+        }
+        manifest = {
+            "schema": "paired_human_packet_v1",
+            "packet_id": "packet1",
+            "profiles": [profile],
+            "human_reviewed": False,
+        }
+        escaped = html.escape(json.dumps(value, ensure_ascii=False, indent=2))
+        original_pre = (
+            "<details><summary>Исходный ответ с ошибками</summary><pre>"
+            + escaped
+            + "</pre></details>"
+        )
+        source = self.source().replace("</article>", original_pre + "</article>")
+        return source, manifest, original_pre
+
+    def test_invalid_answer_readable_in_russian_and_original_json_unmodified(self) -> None:
+        source, manifest, original_pre = self.invalid_fixture()
+        result, stats = transform(source, manifest=manifest)
+        self.assertIn(original_pre, result)
+        self.assertEqual(stats["invalid_responses_rendered"], 1)
+        self.assertIn("Оригинальный ответ: НЕ ПРИНЯТ", result)
+        self.assertIn("Не указан (ошибка ответа)", result)
+        self.assertIn("Подтверждение текстом", result)
+        self.assertIn("Подтверждено", result)
+        self.assertIn("Неизвестный код: unrecognized_kind", result)
+        self.assertIn("Неизвестная ссылка; отсутствует в общем пакете: missing-source", result)
+        self.assertIn("Пропущены оценки атомов:</strong> i2", result)
+        self.assertIn("Отсутствует (ошибка ответа)", result)
+        self.assertNotIn("<img src=x onerror=", result)
+        before, after = QuoteSpans(source), QuoteSpans(result)
+        before.finish()
+        after.finish()
+        self.assertEqual(before.scripts, after.scripts)
+        self.assertEqual(before.invalid_pres[0][1], after.invalid_pres[0][1])
+
+    def test_missing_references_and_empty_references_remain_absent(self) -> None:
+        rendered = readable_invalid(
+            {"items": [{"item_id": "missing"}, {"item_id": "empty", "evidence_refs": []}]}
+        )
+        self.assertIn("Ссылки не приведены", rendered)
+        self.assertIn("Отсутствует (ошибка ответа)", rendered)
+        self.assertNotIn("Статус: Не установлено", rendered)
+
+    def test_invalid_code_is_not_translated_as_valid_in_another_dimension(self) -> None:
+        rendered = readable_invalid(
+            {
+                "items": [
+                    {"item_id": "i1", "student_level": ["supported"], "corrected_field": "masters"}
+                ]
+            }
+        )
+        self.assertIn("Неизвестный код: supported", rendered)
+        self.assertIn("Неизвестный код: masters", rendered)
+
+    def test_v2_keeps_v1_files_and_binds_manifest_before_output(self) -> None:
+        source, manifest, _ = self.invalid_fixture()
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            packet = root / "paired-human/packets/packet1"
+            packet.mkdir(parents=True)
+            (packet / "cards.html").write_text(source)
+            write_new(packet / "manifest.json", manifest)
+            v1 = root / "paired-human/compact-v1/packet1/cards.html"
+            v1.parent.mkdir(parents=True)
+            v1.write_text("Unchanged v1")
+            original_hash = sha(v1)
+            output = render(root, "packet1")
+            self.assertIn("compact-v2", str(output))
+            self.assertEqual(original_hash, sha(v1))
+            self.assertEqual(render(root, "packet1"), output)
+            receipt = read(output.parent / "receipt.json")
+            self.assertEqual(receipt["invalid_responses_rendered"], 1)
+            wrong = dict(manifest, profiles=[])
+            with self.assertRaises(ValueError):
+                transform(source, manifest=wrong)
 
     def test_malformed_html_and_unsafe_packet_rejected(self) -> None:
         for source in (
