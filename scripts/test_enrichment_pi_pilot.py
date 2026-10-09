@@ -155,3 +155,23 @@ class PilotTests(unittest.TestCase):
         self.assertEqual(
             final_json('Итоговый JSON:\n```json\n{"author_id":"A1"}\n```'), {"author_id": "A1"}
         )
+
+    def test_raw_mcp_refusal_latches_before_operation_ack(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            batch = self.fixture(root)
+            immutable(
+                root / "runs" / "A1" / "collector" / "pi" / "000003-mcp-response.json",
+                encoded(
+                    {
+                        "server": "zai_search",
+                        "message": {
+                            "result": {"isError": True, "content": [{"text": "Quota exceeded 429"}]}
+                        },
+                    }
+                ),
+            )
+            with patch("enrichment_pi_pilot.subprocess.Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "остановлен"):
+                    run_pi(root, batch, "A2", "collector", {}, "rules", {})
+                launch.assert_not_called()

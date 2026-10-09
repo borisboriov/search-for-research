@@ -180,6 +180,22 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
                 + ". Отсутствие утверждения не означает отсутствие сведений. "
                 "Вопрос человеку: видны ли пропущенные сведения в сохранённых источниках?</p>"
             )
+        statuses = {
+            "found": "Есть утверждение сборщика (ещё не принято)",
+            "not_found": "Не найдено в ограниченном поиске",
+            "not_checked": "Не проверено",
+            "inaccessible": "Источник недоступен",
+            "contradiction": "Противоречие",
+            "explicit_negative": "Явное отрицание",
+        }
+        if profile["field_statuses"]:
+            cards.append("<details><summary>Состояние полей по ответу сборщика</summary><table>")
+            for field, status in profile["field_statuses"].items():
+                cards.append(
+                    f"<tr><td>{esc(field_label(field))}</td>"
+                    f"<td>{esc(statuses.get(status, 'Неизвестно'))}</td></tr>"
+                )
+            cards.append("</table></details>")
         cards.append(
             "<details><summary>Все сохранённые фрагменты общего пакета</summary>"
             + proof(list(pool.values()))

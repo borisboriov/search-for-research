@@ -233,12 +233,61 @@ def events(root: Path) -> list[dict[str, Any]]:
     return [read(p) for p in sorted((root / "pilot-events").glob("*.json"))]
 
 
+def lock_method(root: Path) -> Path:
+    """Новая версия правил до дальнейших запросов; первоначальный manifest неизменен."""
+    root = private_root(root)
+    original = read(root / "manifest.json")
+    path = root / "method-locks" / (METHOD + ".json")
+    if path.exists():
+        if sha(path) != path.with_suffix(".sha256").read_text().strip():
+            raise ValueError("Изменён method-lock")
+        return path
+    files = [REPO / name for name in original["rules_hashes"]]
+    files.extend(
+        REPO / name
+        for name in (
+            "docs/experiments/enrichment_pi12_v1_1.md",
+            "scripts/enrichment_human.py",
+            "scripts/enrichment_verification.py",
+        )
+    )
+    value = {
+        "method": METHOD,
+        "created_at": now(),
+        "sample_sha256": sha(root / "sample.json"),
+        "original_manifest_sha256": sha(root / "manifest.json"),
+        "rules_hashes": {str(p.relative_to(REPO)): sha(p) for p in files},
+        "collector_boundary": {
+            "original_v1_attempts": 3,
+            "remaining_v1_1_maximum": 9,
+            "repeat_calls_allowed": False,
+        },
+        "pi_version": "1.1.0",
+        "native_cli_version": "0.161.0",
+        "semantic_rules_changed": False,
+    }
+    immutable(path, encoded(value))
+    immutable(path.with_suffix(".sha256"), (sha(path) + "\n").encode())
+    return path
+
+
 def access_stopped(root: Path) -> bool:
     """Восстанавливает отказ из первичных записей даже без вспомогательного события."""
     if any(e.get("action") == "service_stopped" for e in events(root)):
         return True
     for path in (root / "runs").glob("*/*/pi/*-http.json"):
         if read(path).get("status") in (403, 429):
+            return True
+    for path in (root / "runs").glob("*/*/pi/*-mcp-response.json"):
+        if path.name.split("-", 1)[1] != "mcp-response.json":
+            continue  # Не выдавать отказ самого координатора за отказ upstream.
+        raw = read(path)
+        message = raw.get("message", {})
+        result = message.get("result", {})
+        text = source_text(result if result else message.get("error", {}))
+        if (result.get("isError") or message.get("error")) and (
+            "429" in text or ("403" in text and raw.get("server") == "zai_search")
+        ):
             return True
     for path in (root / "batches").glob("*/batch.json"):
         with Batch(path.parent).locked() as log:
@@ -975,7 +1024,8 @@ def measurements(root: Path) -> Path:
         "errors": [e for e in events(root) if e.get("action") == "profile_incomplete"],
         "subscription_cost": None,
         "subscription_quota_delta": None,
-        "human_accuracy": human_grades if human_records else None,
+        "human_accuracy": None,
+        "human_grades_by_executor": human_grades if human_records else None,
         "human_completeness": None,
         "human_minutes": human_minutes if human_records else None,
         "human_records": len(human_records),
@@ -1124,7 +1174,7 @@ def run(root: Path, limit: int, method_lock: Path | None = None) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("freeze", "run"))
+    parser.add_argument("command", choices=("freeze", "run", "lock-method"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--index", type=Path)
     parser.add_argument("--db", type=Path)
@@ -1136,6 +1186,8 @@ def main() -> None:
         if not all((args.index, args.db, args.old)):
             parser.error("freeze: --index --db --old")
         freeze(args.root, args.index, args.db, args.old)
+    elif args.command == "lock-method":
+        print(lock_method(args.root))
     else:
         run(args.root, args.limit, args.method_lock)
         with (args.root / "pilot.lock").open("a+b") as lock:

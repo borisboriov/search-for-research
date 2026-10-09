@@ -26,11 +26,15 @@ PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py freeze \
   --index /Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean \
   --db /Users/boris/Projects/search-for-research/data/sfr5c.db \
   --old /private/tmp/sfr-enrichment100-evidence-20261008
+PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py lock-method \
+  --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
-  --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 3
+  --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 3 \
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.1.json
 # Продолжение до разрешённых12; существующие выполненные стадии не вызываются снова.
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
-  --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 12
+  --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 12 \
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.1.json
 ```
 
 Заморозка однократная: 1 случайный профиль каждого из12 вузов, исключены старые100,
