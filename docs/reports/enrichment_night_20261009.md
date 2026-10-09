@@ -739,3 +739,74 @@ stopped.json. Public numeric document byte-identical private. Использов
 docs-check и независимая сверка артефактов; актуальные review/CI/handoff в PR.
 #189 остаётся вне scope и препятствует готовности к merge; после передачи запись
 исполнителя прекращается, дополнительных source/model вызовов нет.
+
+
+## Canonical HTTP 10.10: тело получено, DirectHTTP binder ещё отсутствует
+
+Последний контроль наблюдаемого Location по [поручению](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6091138109),
+[freeze до calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6091160980).
+В новом immutable root закреплён exact `https://www.isir.upmc.fr/personnel/grossard/`
+из301 Location предыдущего контроля, со слешем. Это отдельный заранее разрешённый
+контроль, не автоматический переход после301. Прежняя безопасная композиция
+byte-identical: existing Budget/DomainStops/policy/httpx/extract/SimpleHTML,
+SFRExperiment/2.0 без личного mailto/projectSettings/.env. Наследованные20 roots
+проверены через raw/domain и batch stopped-domains; запрета ISIR нет.
+Лимиты прежние: 2HTTP,30с/request total,robots64KiB/HTML2MiB,concurrency1,
+без redirects/retries/search/browser/Crawl4AI/HAL. Старые roots/STOP не менялись.
+
+| Операция | Exact URL | Ответ | Полный захват |
+|---|---|---:|---:|
+| robots GET | https://www.isir.upmc.fr/robots.txt | 200, путь разрешён | 117 байт |
+| HTML GET | https://www.isir.upmc.fr/personnel/grossard/ | 200, text/html; charset=UTF-8 | 55 962 байта |
+
+Фактически2GET, **1,454400 секунды**,0redirects/retries; HTML received
+23:42:29UTC09.10 (02:42:29МСК10.10). HTML SHA
+`bd35e105d6488881ee7845d086850b09fdfbc7905077b9eac4291e4fe65e0e3b`.
+Static SimpleHTML text5241Unicode code points; original bytes/decodedHTML/text
+сохранены раздельно, дата проверки не превращена в дату информации о человеке.
+Оба frozen anchors Charline Grossard/ISIR и буквальное «Ingénieure de recherche»
+присутствуют. Existing recover_quote подтверждает единственный непрерывный
+фрагмент static-text[731:754] (zero-based/end-exclusive), без перевода/склейки.
+Это механическая проверка заранее заданного факта, **не GLM extractor output**.
+
+В именном блоке после этого факта есть один email-кандидат; ещё один относится
+к общему footer. Значения/контактные spans только private. Новых семантически
+принятых contacts/atoms0: личность каталога/текущая аффилиация/актуальность адреса
+не проверены, наличие email не означает набор/готовность руководить.
+Human_reviewed0; это положительный HTTP diagnostic, не новый человек,
+прирост покрытия/prevalence/mixed12 или третья попытка последних3ID.
+
+Body-conditionTrue, **existing strict binding-conditionFalse**. Точная недостающая
+связь: `enrichment_night.bind` фильтрует только source_finished/kind=zai_reader/
+outcomeok, затем читает raw_file.message.result.content и decoded url/content;
+`enrichment_pi_pilot.validate_collection`/`bind_sources` требуют тот же reader
+и resource_file. `prepare_control` принимает реальный collector output и уже
+связанный evidence_pool, не удостоверяет приобретение HTTP-тела.
+Нужен настоящий DirectHTTP source registry/adapter: exact URL,status/checked_at,
+raw byte SHA,static text SHA и literal spans → строгая привязка цитат;
+далее network-disabled PiCLI extraction и eligible packet/Sol. По условию
+поручения новый adapter/schema не создаётся. HTTP-источник не выдан за
+zai_reader/MCP receipt; фиктивного extractor/packet нет. Explicit model gate
+фиксирует **GLM0/Sol0/Astra0**, новых model jobs0; содержательных продолжений нет.
+
+Теперь доказана доступность **канонического адреса обычному статическому HTTP**.
+Прежний MCP500 был для URL без слеша; MCP сcanonicalURL не повторялся.
+Отличие адреса и транспорта не изолированы, поэтому нельзя объявить причиной
+MCP500 один redirect или сделать вывод о качестве extractor. Repo parser не
+чинится; следующее отдельное поручение — проверяемая DirectHTTP evidence binding
+интеграция с сохранением source_kind/атрибуции и строгих отказов.
+
+Счёт ночи прежний:43profilejobs+1 сообщённая consultation=44зачтённых задания,
+15новыхлюдей,Astra4/4. Consultationbackend/tokensunknown, receiptневыдуман.
+Последний remaining доэтапа25% откоординатора, официальныйtoolпосле24%,account-wide;
+расход source money/quota unknown, HTTP не выдан за оплаченный modelAPI.
+
+Private immutable root `enrichment-night-direct-http-canonical-20261010`:
+manifest/seal/observedLocationSHA доcalls, наследованный stop-check,byte-identical
+composition,2requests/responses/fullbytes/decoded/static extraction/text,
+source-observations.private сoffsets/контактами, binding-gap сточнымифункциями/SHA,
+conditional-model-gate,metrics-final/quota-note/stopped.json. Public numeric JSON
+byte-identical private и не содержит email-значений/source bodies. Код repo,
+старые метрики/roots и продуктовые документы/паспорт не менялись. Docs-check и
+независимая docs-only сверка; актуальные review/CI/handoff — в PR. #189 отдельный
+blocker; после передачи запись и собственные процессы остановлены.
