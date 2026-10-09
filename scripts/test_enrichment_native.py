@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import patch
 
 from enrichment_batch import Batch, digest, encoded, immutable
@@ -42,6 +42,75 @@ class NativeTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0)
 
         return call
+
+    def test_high_requires_explicit_model_effort_and_preserves_requested(self) -> None:
+        config = {"provider": "openai", "model": "gpt-6.1-sol", "effort": "high"}
+        for model, effort in ((None, None), ("other", "high"), ("gpt-6.1-sol", "low")):
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                with patch("enrichment_native.subprocess.run") as launch:
+                    with self.assertRaisesRegex(ValueError, "конфигурация"):
+                        execute(
+                            root,
+                            "input",
+                            schema("verify", strict_levels=True),
+                            root,
+                            model=model,
+                            effort=effort,
+                            required_config=config,
+                        )
+                    launch.assert_not_called()
+                    self.assertFalse((root / "started.json").exists())
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with patch(
+                "enrichment_native.subprocess.run", side_effect=self.fake_execution()
+            ) as launch:
+                path, receipt = execute(
+                    root,
+                    "input",
+                    schema("verify", strict_levels=True),
+                    root,
+                    model=config["model"],
+                    effort=config["effort"],
+                    required_config=config,
+                    disable_mcp=True,
+                )
+                self.assertIn("features.shell_tool=false", launch.call_args.args[0])
+                self.assertIn("features.unified_exec=false", launch.call_args.args[0])
+                self.assertIn("features.browser_use=false", launch.call_args.args[0])
+                self.assertEqual(receipt["requested_model"], config["model"])
+                self.assertEqual(receipt["requested_effort"], config["effort"])
+                command = launch.call_args.args[0]
+                self.assertIn("-c", command)
+                self.assertIn('model_provider="openai"', command)
+                self.assertIn('model_reasoning_effort="high"', command)
+                self.assertEqual(command[command.index("-m") + 1], config["model"])
+                self.assertIsNone(receipt["model"])
+                execute(
+                    root,
+                    "input",
+                    schema("verify", strict_levels=True),
+                    root,
+                    model=config["model"],
+                    effort=config["effort"],
+                    required_config=config,
+                )
+                self.assertEqual(launch.call_count, 1)
+                self.assertTrue(path.exists())
+
+    def test_high_schema_only_requires_nonempty_level(self) -> None:
+        def levels(strict: bool) -> dict[str, Any]:
+            return cast(
+                dict[str, Any],
+                schema("verify", strict_levels=strict)["properties"]["items"]["items"][
+                    "properties"
+                ]["student_level"],
+            )
+
+        self.assertEqual(levels(True)["minItems"], 1)
+        self.assertNotIn("minItems", levels(False))
+        self.assertEqual(schema("verify")["properties"]["rules_version"]["enum"], ["semantic-v3"])
 
     def test_usage_normalization_preserves_receipt_without_double_count(self) -> None:
         receipt = {

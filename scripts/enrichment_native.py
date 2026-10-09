@@ -53,7 +53,7 @@ def array(item: dict[str, Any]) -> dict[str, Any]:
     return {"type": "array", "items": item}
 
 
-def schema(stage: str) -> dict[str, Any]:
+def schema(stage: str, *, strict_levels: bool = False) -> dict[str, Any]:
     nullable = {"type": ["string", "null"]}
     common = {"author_id": string(), "batch_ticket_id": string(), "batch_input_sha256": string()}
     if stage == "collect":
@@ -94,7 +94,7 @@ def schema(stage: str) -> dict[str, Any]:
         "fact_kind": string(FACT_KINDS),
         "object_type": string(OBJECTS),
         "object_relation": string(("supported", "insufficient", "conflicting")),
-        "student_level": array(string(LEVELS)),
+        "student_level": array(string(LEVELS)) | ({"minItems": 1} if strict_levels else {}),
         "information_date": nullable,
         "date_basis": string(DATE_BASES),
         "current_applicability": string(APPLICABILITY),
@@ -135,15 +135,31 @@ def execute(
     timeout_seconds: int = 1200,
     skip_git_repo_check: bool = False,
     disable_mcp: bool = False,
+    required_config: dict[str, str] | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
+    if required_config is not None:
+        expected = {"provider": "openai", "model": "gpt-6.1-sol", "effort": "high"}
+        if (
+            required_config != expected
+            or model != expected["model"]
+            or effort != expected["effort"]
+        ):
+            raise ValueError("Отсутствует или неверна явная конфигурация native high-v1")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if required_config is not None:
+        immutable(directory / "requested-config.json", encoded(required_config))
     prompt_bytes = prompt.encode()
     immutable(directory / "prompt.txt", prompt_bytes)
     immutable(directory / "schema.json", encoded(output_schema))
     receipt = directory / "receipt.json"
     if receipt.exists():
         value = read(receipt)
+        if required_config and (value.get("requested_model"), value.get("requested_effort")) != (
+            model,
+            effort,
+        ):
+            raise ValueError("Сохранённый native runtime другого задания")
         if sha(directory / "raw-result.json") != value["raw_result_sha256"]:
             raise ValueError("Сырой ответ изменён")
         return directory / "raw-result.json", value
@@ -158,6 +174,7 @@ def execute(
                     "started_at_epoch": time.time(),
                     "prompt_sha256": hashlib.sha256(prompt_bytes).hexdigest(),
                     "mode": "codex exec ephemeral read-only cache-only",
+                    **({"requested_config": required_config} if required_config else {}),
                 }
             ),
         )
@@ -179,6 +196,8 @@ def execute(
             str(cwd),
             "-",
         ]
+        if required_config is not None:
+            command[2:2] = ["-c", 'model_provider="openai"']
         if model:
             command[2:2] = ["-m", model]
         if effort:
@@ -186,7 +205,21 @@ def execute(
         if skip_git_repo_check:
             command.insert(2, "--skip-git-repo-check")
         if disable_mcp:
-            command[2:2] = ["-c", "features.shell_tool=false", "-c", "features.unified_exec=false"]
+            command[2:2] = [
+                option
+                for feature in (
+                    "shell_tool",
+                    "unified_exec",
+                    "browser_use",
+                    "browser_use_external",
+                    "computer_use",
+                    "apps",
+                    "plugins",
+                    "multi_agent",
+                    "code_mode_host",
+                )
+                for option in ("-c", f"features.{feature}=false")
+            ]
             config_path = (
                 Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "config.toml"
             )
@@ -195,6 +228,8 @@ def execute(
                 if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
                     raise ValueError("Имя MCP не поддерживает безопасное CLI-переопределение")
                 command[2:2] = ["-c", f"mcp_servers.{name}.enabled=false"]
+        if required_config is not None:
+            immutable(directory / "command.json", encoded(command))
         with (
             (directory / "events.jsonl").open("xb") as event_stream,
             (directory / "stderr.log").open("xb") as errors,
@@ -211,6 +246,8 @@ def execute(
             directory / "finished.json",
             encoded({"exit_code": result.returncode, "finished_at_epoch": time.time()}),
         )
+    if required_config and read(started).get("requested_config") != required_config:
+        raise ValueError("Сохранённая native попытка другой конфигурации")
     finished = read(directory / "finished.json")
     if finished["exit_code"] != 0 or not (directory / "raw-result.json").exists():
         raise ValueError("CLI не завершил результат; доказательства сохранены, нужен разбор")
@@ -248,6 +285,7 @@ def execute(
         "requested_model": model,
         "requested_effort": effort,
         "transport_retries": None,
+        **({"automatic_cli_retries": 0, "requested_provider": "openai"} if required_config else {}),
     }
     immutable(receipt, encoded(value))
     return directory / "raw-result.json", value

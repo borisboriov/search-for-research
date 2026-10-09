@@ -7,14 +7,18 @@ import readline from 'node:readline';
 import { pathToFileURL } from 'node:url';
 
 export const SOURCE_TOOLS = Object.freeze({zai_search: 'web_search_prime', zai_reader: 'webReader'});
-export function writeOnce(file, value) {
+export function writeOnce(file, value, io = fs) {
   const temporary = `${file}.tmp-${process.pid}-${Math.random().toString(16).slice(2)}`;
   try {
-    fs.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', {flag: 'wx', mode: 0o600});
-    const descriptor = fs.openSync(temporary, 'r');
-    try {fs.fsyncSync(descriptor);} finally {fs.closeSync(descriptor);}
-    fs.linkSync(temporary, file);
-  } finally {if (fs.existsSync(temporary)) fs.unlinkSync(temporary);}
+    io.writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', {flag: 'wx', mode: 0o600});
+    const descriptor = io.openSync(temporary, 'r');
+    try {io.fsyncSync(descriptor);} finally {io.closeSync(descriptor);}
+    io.linkSync(temporary, file);
+    io.unlinkSync(temporary);
+    // A synced file alone does not make its new directory entry durable.
+    const directory = io.openSync(path.dirname(file), 'r');
+    try {io.fsyncSync(directory);} finally {io.closeSync(directory);}
+  } finally {if (io.existsSync(temporary)) io.unlinkSync(temporary);}
 }
 export function allowedCall(server, name, mode) {
   return mode === 'collect' && SOURCE_TOOLS[server] === name;
@@ -57,14 +61,155 @@ export function createGuardedFetch(realFetch, record, isAllowed = () => true) {
   };
 }
 
+export const REQUIRED_CONFIG = Object.freeze({provider: 'zai', model: 'glm-5.3-flash', effort: 'high'});
+export function validateConfig(config) {
+  if (!config || Object.entries(REQUIRED_CONFIG).some(([key, value]) => config[key] !== value))
+    throw new Error('Explicit approved provider/model/effort configuration required');
+  return {...REQUIRED_CONFIG};
+}
+export function effectiveConfig(session) {
+  return {provider: session.model?.provider ?? null, model: session.model?.id ?? null,
+    effort: session.thinkingLevel ?? null};
+}
+export function assertEffectiveConfig(session, requested) {
+  const effective = effectiveConfig(session);
+  if (Object.keys(requested).some(key => effective[key] !== requested[key]))
+    throw new Error('Runtime configuration differs from requested configuration');
+  return effective;
+}
+export function createGuardedModelStream(stream, requested, record) {
+  return (model, context, options) => {
+    const effective = {provider: model?.provider ?? null, model: model?.id ?? null,
+      effort: options?.reasoning ?? null};
+    if (Object.keys(requested).some(key => effective[key] !== requested[key]))
+      throw new Error('Model request differs from explicit configuration');
+    record({requested, effective, backend: {provider: null, model: null, effort: null, exposed: false}});
+    return stream(model, context, options);
+  };
+}
+export function assertSessionSettings(settings) {
+  const retry = settings.getRetrySettings();
+  const provider = settings.getProviderRetrySettings();
+  const effective = {cache_warming: settings.getCacheWarmingMode(), automatic_llm_retries: retry.maxRetries,
+    retry_enabled: retry.enabled, provider_retries: provider.maxRetries, timeout_ms: provider.timeoutMs};
+  if (effective.cache_warming !== 'off' || effective.retry_enabled !== false ||
+      effective.automatic_llm_retries !== 0 || effective.provider_retries !== 0 || effective.timeout_ms !== 600000)
+    throw new Error('Session retry/cache-warming settings differ from approved limits');
+  return effective;
+}
+// One queue shared by both source servers; protocol discovery bypasses it.
+export function createSourceQueue() {
+  let tail = Promise.resolve();
+  let stopped;
+  return {
+    stop(error) {stopped ??= error;},
+    run(operation) {
+      const task = tail.then(() => {
+        if (stopped) throw new Error('Source queue stopped after unknown physical outcome', {cause: stopped});
+        return operation();
+      });
+      tail = task.catch(() => {});
+      return task;
+    },
+  };
+}
+export function createSerializedTransport({inner, server, mode, queue, reserve, persist, emit,
+  timeoutMs = 600000}) {
+  const listeners = new Set();
+  const active = new Map();
+  let closed = false;
+  const deliver = message => {for (const listener of listeners) listener(message);};
+  const failActive = error => {
+    if (active.size) queue.stop(error);
+    for (const pending of active.values()) pending.reject(error);
+  };
+  inner.onError(failActive);
+  const closePending = () => {closed = true; failActive(new Error('Source transport closed'));};
+  inner.onClose(closePending);
+  inner.onMessage(message => {
+    const pending = active.get(message.id);
+    const completed = Object.hasOwn(message, 'id') &&
+      (Object.hasOwn(message, 'result') || Object.hasOwn(message, 'error'));
+    try {
+      const file = persist('mcp-response', {server, message});
+      emit({type: 'mcp_result', server, rpc_id: message.id ?? null, file});
+      // Save durable raw before delivery and before granting the next call.
+      if (pending && completed) pending.received = true;
+      deliver(server === 'zai_reader' ? readerView(message) : message);
+      if (completed) pending?.resolve();
+    } catch (error) {
+      queue.stop(error); // Failed persistence must never permit delivery or another request.
+      failActive(error);
+    }
+  });
+  const synthetic = (message, result, kind, extra = {}) => {
+    const response = {jsonrpc: '2.0', id: message.id, result};
+    const file = persist(kind, {server, message: response});
+    emit({type: 'mcp_result', server, rpc_id: message.id, file, performed: false, ...extra});
+    deliver(response);
+  };
+  return {
+    start: () => inner.start(),
+    close: () => {closePending(); return inner.close();},
+    onMessage: listener => {listeners.add(listener); return () => listeners.delete(listener);},
+    onError: listener => inner.onError(listener), onClose: listener => inner.onClose(listener),
+    setProtocolVersion: version => inner.setProtocolVersion?.(version),
+    send: async message => {
+      if (closed) throw new Error('Source transport closed');
+      if (message.method !== 'tools/call') {
+        persist('mcp-request', {server, message});
+        return inner.send(message);
+      }
+      if (!allowedCall(server, message.params?.name, mode)) throw new Error('Unapproved source tool');
+      return queue.run(async () => {
+        if (closed) throw new Error('Source transport closed');
+        const name = message.params.name;
+        const permission = await reserve({server, tool: name,
+          arguments: message.params.arguments, rpc_id: message.id});
+        persist('reservation', {server, name, rpc_id: message.id, permission});
+        if (closed) throw new Error('Source transport closed');
+        if (!permission.allowed) {
+          synthetic(message, {isError: true, content: [{type: 'text',
+            text: `Access not performed: ${permission.reason || 'host denied'}`}]}, 'denied-mcp-response');
+          return;
+        }
+        if (permission.replacement_result) {
+          synthetic(message, permission.replacement_result, 'cached-mcp-response', {cached: true});
+          return;
+        }
+        let timer;
+        let pending;
+        const response = new Promise((resolve, reject) => {
+          pending = {resolve, reject, received: false};
+          active.set(message.id, pending);
+          timer = setTimeout(() => {
+            const error = new Error('Source response timeout');
+            queue.stop(error);
+            reject(error);
+          }, timeoutMs);
+        });
+        response.catch(() => {});
+        try {
+          persist('mcp-request', {server, message});
+          await Promise.all([inner.send(message), response]);
+        } catch (error) {
+          if (!pending.received) queue.stop(error);
+          throw error;
+        } finally {clearTimeout(timer); active.delete(message.id);}
+      });
+    },
+  };
+}
+
 export async function main(requestPath) {
   const request = JSON.parse(fs.readFileSync(requestPath, 'utf8'));
+  const requested = validateConfig(request.config); // Before SDK load or network setup.
   if (!['discover', 'collect', 'verify'].includes(request.mode)) throw new Error('Invalid mode');
   if (typeof request.system_prompt !== 'string' || !request.workspace_dir || !request.run_dir)
     throw new Error('Missing isolated input');
   const runDir = path.resolve(request.run_dir);
   fs.mkdirSync(runDir, {recursive: true, mode: 0o700});
-  writeOnce(path.join(runDir, 'runner-started.json'), {at: new Date().toISOString(), mode: request.mode});
+  writeOnce(path.join(runDir, 'runner-started.json'), {at: new Date().toISOString(), mode: request.mode, requested});
   let seq = 0;
   const persist = (kind, data) => {
     const file = `${String(++seq).padStart(6, '0')}-${kind}.json`;
@@ -78,11 +223,14 @@ export async function main(requestPath) {
     let response;
     try {response = JSON.parse(line);} catch {return;}
     const waiter = pending.get(response.id);
-    if (waiter) {pending.delete(response.id); waiter(response);}
+    if (waiter) {pending.delete(response.id); clearTimeout(waiter.timer); waiter.resolve(response);}
   });
   const reserve = async data => {
     const id = `reservation-${++seq}`;
-    const response = new Promise(resolve => pending.set(id, resolve));
+    const response = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {pending.delete(id); reject(new Error('Host reservation timeout'));}, 30000);
+      pending.set(id, {resolve, reject, timer});
+    });
     emit({type: 'reserve', id, ...data});
     return response;
   };
@@ -99,10 +247,20 @@ export async function main(requestPath) {
   const {createDefaultTransport} = await import(pathToFileURL(path.join(pkg, 'extensions/mcp/runtime.js')).href);
   const agentDir = sdk.getAgentDir();
   const settings = sdk.SettingsManager.inMemory({retry: {enabled: false, maxRetries: 0,
-    provider: {maxRetries: 0, timeoutMs: 600000}}, compaction: {enabled: false}});
+    provider: {maxRetries: 0, timeoutMs: 600000}}, compaction: {enabled: false}, cacheWarming: 'off'});
+  const sessionSettings = assertSessionSettings(settings);
+  persist('runtime-settings', sessionSettings);
   const modelRuntime = await sdk.ModelRuntime.create({allowModelNetwork: false, refreshOnCreate: false});
-  const model = modelRuntime.getModel('zai', 'glm-5.3-flash');
-  if (!model) throw new Error('Required configured model unavailable');
+  const model = modelRuntime.getModel(requested.provider, requested.model);
+  if (!model || model.provider !== requested.provider || model.id !== requested.model)
+    throw new Error('Required configured model unavailable');
+  const {getSupportedThinkingLevels} = await import(pathToFileURL(path.join(release,
+    'node_modules/@earendil-works/pi-ai/dist/models.js')).href);
+  if (!getSupportedThinkingLevels(model).includes(requested.effort))
+    throw new Error('Required thinking effort unavailable; downgrade forbidden');
+  modelRuntime.streamSimple = createGuardedModelStream(modelRuntime.streamSimple.bind(modelRuntime),
+    requested, data => persist('model-request-config', data));
+  const queue = createSourceQueue();
   const mcp = sdk.createMcpExtension({
     logPath: path.join(runDir, 'mcp.log'),
     loadConfig: () => {
@@ -114,49 +272,9 @@ export async function main(requestPath) {
       return {servers: servers.map(entry => ({...entry, config: {...entry.config,
         exposure: 'direct', toolExposure: {}, enabled: true}})), errors: [], autoEnableCodemode: false};
     },
-    createTransport: (entry, cwd, auth) => {
-      const inner = createDefaultTransport(entry, cwd, auth);
-      const listeners = new Set();
-      const deliver = message => {for (const listener of listeners) listener(message);};
-      inner.onMessage(message => {
-        const file = persist('mcp-response', {server: entry.name, message});
-        emit({type: 'mcp_result', server: entry.name, rpc_id: message.id ?? null, file});
-        deliver(entry.name === 'zai_reader' ? readerView(message) : message);
-        // Full result has been saved before bounded text is delivered to model.
-      });
-      return {
-        start: () => inner.start(), close: () => inner.close(),
-        onMessage: listener => {listeners.add(listener); return () => listeners.delete(listener);},
-        onError: listener => inner.onError(listener), onClose: listener => inner.onClose(listener),
-        setProtocolVersion: version => inner.setProtocolVersion?.(version),
-        send: async message => {
-          if (message.method === 'tools/call') {
-            const name = message.params?.name;
-            if (!allowedCall(entry.name, name, request.mode)) throw new Error('Unapproved source tool');
-            const permission = await reserve({server: entry.name, tool: name,
-              arguments: message.params.arguments, rpc_id: message.id});
-            persist('reservation', {server: entry.name, name, rpc_id: message.id, permission});
-            if (!permission.allowed) {
-              const denied = {jsonrpc: '2.0', id: message.id, result: {isError: true,
-                content: [{type: 'text', text: `Access not performed: ${permission.reason || 'host denied'}`} ]}};
-              const file = persist('denied-mcp-response', {server: entry.name, message: denied});
-              emit({type: 'mcp_result', server: entry.name, rpc_id: message.id, file, performed: false});
-              deliver(denied);
-              return;
-            }
-            if (permission.replacement_result) {
-              const cached = {jsonrpc: '2.0', id: message.id, result: permission.replacement_result};
-              const file = persist('cached-mcp-response', {server: entry.name, message: cached});
-              emit({type: 'mcp_result', server: entry.name, rpc_id: message.id, file, performed: false, cached: true});
-              deliver(cached);
-              return;
-            }
-          }
-          persist('mcp-request', {server: entry.name, message});
-          await inner.send(message);
-        },
-      };
-    },
+    createTransport: (entry, cwd, auth) => createSerializedTransport({
+      inner: createDefaultTransport(entry, cwd, auth), server: entry.name,
+      mode: request.mode, queue, reserve, persist, emit}),
   });
   const loader = new sdk.DefaultResourceLoader({cwd: request.workspace_dir, agentDir,
     settingsManager: settings, noExtensions: true, noSkills: true, noPromptTemplates: true,
@@ -168,12 +286,15 @@ export async function main(requestPath) {
     throw new Error('Unexpected context resources');
   const {session} = await sdk.createAgentSession({cwd: request.workspace_dir, agentDir,
     resourceLoader: loader, settingsManager: settings, sessionManager: sdk.SessionManager.inMemory(),
-    modelRuntime, model, thinkingLevel: 'low', noTools: 'builtin',
+    modelRuntime, model, thinkingLevel: requested.effort, noTools: 'builtin',
     tools: request.mode === 'verify' ? [] : Object.entries(SOURCE_TOOLS).map(([s,t]) => `mcp__${s}__${t}`)});
   let timeout;
   let timedOut = false;
   let assistantFailure = false;
   try {
+    assertEffectiveConfig(session, requested); // Check SDK clamp before MCP discovery or prompt.
+    persist('runtime-config', {requested, effective: effectiveConfig(session),
+      backend: {provider: null, model: null, effort: null, exposed: false}, pi_version: sdk.VERSION});
     await session.bindExtensions({});
     if (request.mode !== 'verify') {
       const until = Date.now() + 30000;
@@ -193,12 +314,14 @@ export async function main(requestPath) {
     });
     timeout = setTimeout(() => {timedOut = true; session.abort();}, 600000);
     const publicInput = request.output_schema ? {task: request.task, output_json_schema: request.output_schema} : request.task;
+    assertEffectiveConfig(session, requested);
     await session.prompt(JSON.stringify(publicInput), {expandPromptTemplates: false});
     if (timedOut || assistantFailure) throw new Error('Agent did not complete normally');
     const stats = session.getSessionStats();
-    const runtime = {provider: session.model?.provider ?? null, model: session.model?.id ?? null,
-      effort: session.thinkingLevel, routed_model: session.routedModel?.model?.id ?? null,
-      pi_version: sdk.VERSION, stats, catalog_cost_is_subscription_charge: false};
+    const effective = assertEffectiveConfig(session, requested);
+    const runtime = {...effective, requested, effective,
+      backend: {provider: null, model: null, effort: null, exposed: false}, routed_model: session.routedModel?.model?.id ?? null,
+      pi_version: sdk.VERSION, settings: sessionSettings, stats, catalog_cost_is_subscription_charge: false};
     const file = persist('runtime', runtime);
     writeOnce(path.join(runDir, 'runner-finished.json'), {at: new Date().toISOString(), runtime_file: file});
     emit({type: 'done', mode: request.mode, runtime_file: file});
@@ -207,7 +330,13 @@ export async function main(requestPath) {
       at: new Date().toISOString(), timed_out: timedOut, assistant_failure: assistantFailure});
     emit({type: 'failure', file});
     throw error;
-  } finally {clearTimeout(timeout); session.dispose(); lines.close();}
+  } finally {
+    clearTimeout(timeout);
+    session.dispose();
+    for (const waiter of pending.values()) {clearTimeout(waiter.timer); waiter.reject(new Error('Runner closed'));}
+    pending.clear();
+    lines.close();
+  }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const index = process.argv.indexOf('--request');
