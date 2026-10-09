@@ -15,7 +15,7 @@ from typing import Any
 from enrichment_experiment import private_root, sha
 from enrichment_verification import identifier, immutable_bytes
 
-VERSION = "compact-v2"
+VERSION = "compact-v3"
 NOTICE = (
     '<aside class="compact-notice"><p><strong>Как читать вопросы:</strong> '
     "вопросы агентов могут быть сформулированы как обращение к учёному. "
@@ -31,9 +31,10 @@ class QuoteSpans(HTMLParser):
     def __init__(self, source: str) -> None:
         super().__init__(convert_charrefs=False)
         self.source = source
-        self.lines = [0]
-        for line in source.splitlines(keepends=True):
-            self.lines.append(self.lines[-1] + len(line))
+        # HTMLParser advances line numbers only at LF. str.splitlines() also
+        # splits U+2028/U+2029, vertical tab and bare CR found in source pages.
+        # Those would corrupt offsets while the original HTML remains valid.
+        self.lines = [0] + [index + 1 for index, char in enumerate(source) if char == "\n"]
         self.stack: list[int] = []
         self.quotes: list[tuple[int, int]] = []
         self.article: int | None = None
@@ -444,6 +445,7 @@ def render(root: Path, packet_id: str, *, threshold: int = 600) -> Path:
     receipt = {
         "schema": "paired_human_representation_v1",
         "representation_version": VERSION,
+        "script_sha256": sha(Path(__file__)),
         "packet_id": packet_id,
         "source_html_sha256": digest,
         "manifest_sha256": manifest_digest,

@@ -168,7 +168,7 @@ class CompactTests(unittest.TestCase):
         self.assertIn("Неизвестный код: supported", rendered)
         self.assertIn("Неизвестный код: masters", rendered)
 
-    def test_v2_keeps_v1_files_and_binds_manifest_before_output(self) -> None:
+    def test_new_representation_keeps_v1_v2_and_binds_manifest_before_output(self) -> None:
         source, manifest, _ = self.invalid_fixture()
         with TemporaryDirectory() as temp:
             root = Path(temp)
@@ -180,15 +180,41 @@ class CompactTests(unittest.TestCase):
             v1.parent.mkdir(parents=True)
             v1.write_text("Unchanged v1")
             original_hash = sha(v1)
+            v2 = root / "paired-human/compact-v2/packet1/cards.html"
+            v2.parent.mkdir(parents=True)
+            v2.write_text("Unchanged v2")
+            v2_hash = sha(v2)
             output = render(root, "packet1")
-            self.assertIn("compact-v2", str(output))
+            self.assertIn("compact-v3", str(output))
             self.assertEqual(original_hash, sha(v1))
+            self.assertEqual(v2_hash, sha(v2))
             self.assertEqual(render(root, "packet1"), output)
             receipt = read(output.parent / "receipt.json")
             self.assertEqual(receipt["invalid_responses_rendered"], 1)
+            self.assertEqual(
+                receipt["script_sha256"],
+                sha(Path(__file__).with_name("enrichment_pair_compact.py")),
+            )
             wrong = dict(manifest, profiles=[])
             with self.assertRaises(ValueError):
                 transform(source, manifest=wrong)
+
+    def test_unicode_line_separators_do_not_corrupt_raw_html_positions(self) -> None:
+        source, manifest, original_pre = self.invalid_fixture()
+        # Reader text can include PDF/control separators which HTMLParser does
+        # not treat as new lines. Their presence before a later pre previously
+        # shifted offsets and lost its invalid-response marker.
+        separators = "\u2028\u2029\x85\v\f\r"
+        source = source.replace("<article>", "<article><p>" + separators + "</p>")
+        result, stats = transform(source, manifest=manifest)
+        self.assertEqual(stats["invalid_responses_rendered"], 1)
+        self.assertIn(original_pre, result)
+        before, after = QuoteSpans(source), QuoteSpans(result)
+        before.finish()
+        after.finish()
+        self.assertEqual(before.scripts, after.scripts)
+        self.assertEqual(before.invalid_pres[0][1], after.invalid_pres[0][1])
+        self.assertIn(separators, result)
 
     def test_malformed_html_and_unsafe_packet_rejected(self) -> None:
         for source in (
