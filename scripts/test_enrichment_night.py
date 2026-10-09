@@ -181,9 +181,14 @@ class BoundedTests(unittest.TestCase):
             self.assertTrue(wrapper["model_not_called"])
             self.assertIsNone(wrapper["verifier_receipt"])
             self.assertEqual(validate(source, wrapper["result"], sha(source_path)), {})
+            self.assertEqual(
+                set(wrapper["result"]["summary"].values()),
+                {"Не установлено: допустимый пакет доказательств пуст."},
+            )
             for row in wrapper["result"]["profile_assessments"].values():
                 self.assertEqual(row["verdict"], "insufficient")
                 self.assertEqual(row["evidence_refs"], [])
+                self.assertEqual(row["explanation"], "Допустимых сохранённых доказательств нет.")
 
     def test_profile_evidence_without_atoms_reaches_native_verifier(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

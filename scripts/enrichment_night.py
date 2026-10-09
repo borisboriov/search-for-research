@@ -1192,7 +1192,7 @@ def empty_result(task: dict[str, Any]) -> dict[str, Any]:
         "evidence_refs": [],
         "information_date": None,
         "date_basis": "unknown",
-        "explanation": "Допустимых сохранённых доказательств нет; модель не вызывалась.",
+        "explanation": "Допустимых сохранённых доказательств нет.",
     }
     return {
         key: task[key]
@@ -1206,7 +1206,7 @@ def empty_result(task: dict[str, Any]) -> dict[str, Any]:
             "activity": assessment | {"status": "unknown"},
         },
         "summary": {
-            key: "Не установлено: допустимый пакет пуст, Sol не вызывался."
+            key: "Не установлено: допустимый пакет доказательств пуст."
             for key in ("known", "unknown", "identity", "current_opportunity")
         },
         "provenance": {

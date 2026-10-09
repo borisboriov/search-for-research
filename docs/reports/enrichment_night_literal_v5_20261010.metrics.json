@@ -196,6 +196,24 @@
         "severity": "none"
       }
     ],
+    "blinding": {
+      "affected_author_id": "A5080057408",
+      "affected_field": "profiles[2].responses.A.summary (four strings)",
+      "fully_blind_acceptance": false,
+      "future_gate_wording_fix_measured": false,
+      "grading_unchanged": true,
+      "leaked_model_name": "Sol",
+      "measured_code_head": "52c3ca25761a13db7bf484b80aa9f388a5ee577e",
+      "measured_metrics_sha256": "6eaf5a624c74c94b60b6530ff132994d8b62130a54d81bdce822ec03ad1ca74b",
+      "new_judge_calls": 0,
+      "packet_sha256": "6550e37398c332d16094bf306722c1b7d1ea7567d51988984dc0d3f89e687c75",
+      "prompt_sha256": "9411024b00089137e085a516e1ceed1f417bb50639dc9a6e982f73f825f568df",
+      "qualification_file": "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/validation/blinding-qualification.json",
+      "qualification_sha256": "5efb634dc4bfdfab6187a62c949aa14369162802e2ff5982bfb0ca8b1a4f83b8",
+      "quality_limit": "The recorded grading is a partly unblinded small agent audit, not fully blind acceptance or human truth.",
+      "reason": "The frozen gate summary disclosed that Sol was not called. This exact packet was included in the native judge prompt.",
+      "status": "partly_unblinded"
+    },
     "grades": {
       "atom_evaluations": {
         "correct": 10
