@@ -54,7 +54,10 @@ def _response(source: dict[str, Any], path: Path, digest: str) -> dict[str, Any]
     if "classifications" in wrapper and wrapper["classifications"] != derived:
         raise ValueError("Производная классификация отличается")
     # Provenance, runtime and paths belong only to the separate unblinding file.
-    response = {key: result[key] for key in ("items", "profile_assessments", "summary")}
+    response = {
+        key: result.get(key, {} if key != "items" else [])
+        for key in ("items", "profile_assessments", "summary")
+    }
     response["validation"] = wrapper.get("validation", {"succeeded": True, "errors": []})
     narratives = [*response["summary"].values()]
     for row in [*response["items"], *response["profile_assessments"].values()]:
@@ -221,7 +224,15 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
                     "<p><strong>Ответ не прошёл автоматическую проверку; "
                     "его утверждения не приняты.</strong> "
                     + esc("; ".join(response["validation"]["errors"]))
-                    + "</p>"
+                    + "</p><details><summary>Исходный ответ с ошибками</summary><pre>"
+                    + esc(
+                        json.dumps(
+                            {k: response[k] for k in ("items", "profile_assessments", "summary")},
+                            ensure_ascii=False,
+                            indent=2,
+                        )
+                    )
+                    + "</pre></details>"
                 )
             for key, title in {
                 "known": "Что известно",
@@ -229,7 +240,8 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
                 "identity": "Связь с человеком",
                 "current_opportunity": "Актуальность возможности",
             }.items():
-                cards.append(f"<p><strong>{title}:</strong> {esc(response['summary'][key])}</p>")
+                text = response["summary"].get(key, "Вывод не представлен")
+                cards.append(f"<p><strong>{title}:</strong> {esc(text)}</p>")
             cards.append(
                 "<p>Вопрос: корректен ли этот вывод по сохранённым материалам?</p>"
                 + _grade(author, slot, "summary")
@@ -238,6 +250,12 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
         for axis, title in AXES.items():
             cards.append(f"<section><h3>{title}</h3>")
             for slot, response in profile["responses"].items():
+                if not response["validation"]["succeeded"]:
+                    cards.append(
+                        f"<h4>Ответ {slot}</h4><p>Ответ не прошёл проверку; оригинал выше.</p>"
+                        + _grade(author, slot, "axis:" + axis)
+                    )
+                    continue
                 row = response["profile_assessments"][axis]
                 if axis == "activity":
                     cards.append(f"<p>Статус в ответе {slot}: {label(row.get('status'))}.</p>")
@@ -262,6 +280,12 @@ def _page(manifest: dict[str, Any], digest: str) -> str:
                 + proof([pool[key] for key in item["evidence_refs"]])
             )
             for slot, response in profile["responses"].items():
+                if not response["validation"]["succeeded"]:
+                    cards.append(
+                        f"<h4>Ответ {slot}</h4><p>Ответ не прошёл проверку; оригинал выше.</p>"
+                        + _grade(author, slot, "item:" + item["item_id"])
+                    )
+                    continue
                 row = next(row for row in response["items"] if row["item_id"] == item["item_id"])
                 levels = ", ".join(label(level) for level in row["student_level"])
                 cards.append(

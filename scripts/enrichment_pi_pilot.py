@@ -26,7 +26,7 @@ from enrichment_semantics import EXTRA_FIELDS, import_result, prepare_control, v
 SEED = 19319420261009
 NATIVE_MODEL = "gpt-6.1-sol"
 NATIVE_EFFORT = "medium"
-METHOD = "pi12-v1.3"
+METHOD = "pi12-v1.4"
 NAMESPACE = METHOD.replace(".", "-")
 REPO = Path(__file__).resolve().parent.parent
 COLLECT_RULES = REPO / "docs/experiments/enrichment_pi12.md"
@@ -250,6 +250,7 @@ def lock_method(root: Path) -> Path:
             "docs/experiments/enrichment_pi12_v1_1.md",
             "docs/experiments/enrichment_pi12_v1_2.md",
             "docs/experiments/enrichment_pi12_v1_3.md",
+            "docs/experiments/enrichment_pi12_v1_4.md",
             "scripts/enrichment_human.py",
             "scripts/enrichment_verification.py",
         )

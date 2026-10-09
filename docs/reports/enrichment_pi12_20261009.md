@@ -30,11 +30,11 @@ PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py lock-method \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 3 \
-  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.3.json
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.4.json
 # Продолжение до разрешённых12; существующие выполненные стадии не вызываются снова.
 PYTHONPATH=scripts .venv/bin/python scripts/enrichment_pi_pilot.py run \
   --root /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009 --limit 12 \
-  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.3.json
+  --method-lock /Users/boris/Experiments/search-for-research/enrichment-pi12-20261009/method-locks/pi12-v1.4.json
 ```
 
 Заморозка однократная: 1 случайный профиль каждого из12 вузов, исключены старые100,
@@ -128,3 +128,9 @@ v1.1 не сделала новых LLM-вызовов:2 импорта оста
 
 До продолжения прошли make lint/typecheck/test/docs-check:135 unittest,388 pytest,
 8 skipped,5 deselected;3 теста SDK. Это технические проверки, не человеческие оценки.
+
+### Граница карточек v1.3 → v1.4
+
+Ревью выявило падение карточек при пропущенном атоме/несуществующей ссылке
+в отвергнутом ответе. [v1.4](../experiments/enrichment_pi12_v1_4.md) показывает
+полный исходный ответ без принятия его полей. В v1.3 новых модельных вызовов нет.

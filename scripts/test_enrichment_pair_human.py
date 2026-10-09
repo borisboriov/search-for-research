@@ -62,6 +62,34 @@ class PairHumanTests(unittest.TestCase):
         path.write_text(json.dumps(value, ensure_ascii=False))
         return path
 
+    def test_invalid_missing_atoms_remain_visible_without_acceptance(self) -> None:
+        from enrichment_semantics import validate
+
+        bad = read(Path(self.paths["pi"]))
+        bad["items"] = []
+        bad["profile_assessments"]["identity"]["evidence_refs"] = ["missing-source"]
+        try:
+            validate(self.source, bad, sha(self.source_path))
+        except ValueError as exc:
+            failure = str(exc)
+        else:
+            self.fail("Invalid response unexpectedly accepted")
+        path = self.root / "invalid.json"
+        write_new(
+            path,
+            {
+                "result": bad,
+                "input_sha256": sha(self.source_path),
+                "classifications": None,
+                "validation": {"succeeded": False, "errors": [failure]},
+            },
+        )
+        self.entries[0]["result_paths"]["pi"] = str(path)
+        page = self.packet()
+        self.assertIn("Исходный ответ с ошибками", page.read_text())
+        self.assertIn("missing-source", page.read_text())
+        self.assertFalse(read(page.parent / "manifest.json")["human_reviewed"])
+
     def test_blinding_separate_and_immutable_with_exact_quote(self) -> None:
         page = self.packet()
         text = page.read_text()
