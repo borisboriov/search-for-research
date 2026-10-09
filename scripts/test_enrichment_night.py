@@ -10,7 +10,18 @@ from unittest.mock import patch
 
 from enrichment_batch import Batch, encoded, immutable
 from enrichment_experiment import FIELDS, sha
-from enrichment_night import bind, locked, permission, remaining, run
+from enrichment_native import deadline_timeout
+from enrichment_night import (
+    METHOD,
+    bind,
+    completion_status,
+    host_events,
+    locked,
+    permission,
+    remaining,
+    require_access,
+    run,
+)
 
 
 class FakeBatch:
@@ -154,7 +165,7 @@ class BoundedTests(unittest.TestCase):
                 root / "manifest.json",
                 encoded(
                     {
-                        "method": "enrichment-cli-bounded-v1",
+                        "method": METHOD,
                         "sample_sha256": sha(root / "sample.json"),
                         "rules_hashes": {"scripts/enrichment_night.py": "0" * 64},
                     }
@@ -162,6 +173,34 @@ class BoundedTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "новый раунд"):
                 locked(root)
+
+
+class SafetyRegressionTests(unittest.TestCase):
+    def test_quota_denies_completed_classification_and_dependent_job(self) -> None:
+        self.assertEqual(completion_status(True, 0, {}, True), "access_refused_partial_unknown")
+        with (
+            patch("enrichment_night.access_stopped", return_value=True),
+            self.assertRaisesRegex(ValueError, "STOP"),
+        ):
+            require_access(Path("/unused"))
+
+    def test_file_ipc_delivers_once_in_order_without_stdout(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for seq, kind in ((3, "done"), (1, "reserve"), (2, "mcp_result")):
+                immutable(root / f"{seq:06d}-host-event.json", encoded({"type": kind}))
+            seen: set[str] = set()
+            self.assertEqual(
+                [row["type"] for row in host_events(root, seen)], ["reserve", "mcp_result", "done"]
+            )
+            self.assertEqual(host_events(root, seen), [])
+
+    def test_absolute_deadline_limits_probe_and_remaining_inference_together(self) -> None:
+        with patch("enrichment_native.time.time", side_effect=[100, 125, 151]):
+            self.assertEqual(deadline_timeout(30, 150), 30)
+            self.assertEqual(deadline_timeout(600, 150), 25)
+            with self.assertRaisesRegex(ValueError, "deadline"):
+                deadline_timeout(600, 150)
 
 
 if __name__ == "__main__":

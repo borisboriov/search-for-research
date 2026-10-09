@@ -7,7 +7,12 @@ import {createHash} from 'node:crypto';
 import {SOURCE_TOOLS, writeOnce, createGuardedFetch, createSourceQueue,
   createSerializedTransport, validateConfig} from './enrichment_pi_runner.mjs';
 
-export const CLI_METHOD = 'enrichment-cli-bounded-v1';
+export const CLI_METHOD = 'enrichment-cli-bounded-v2';
+export function upstreamRefusal(raw) {
+  const message = raw.message ?? {}, result = message.result ?? {};
+  const text = JSON.stringify(result.isError ? result : message.error ?? {});
+  return /429/.test(text) || (raw.server === 'zai_search' && /403/.test(text));
+}
 export function boundedPayload(payload, budget, finalizing) {
   if (!Array.isArray(payload.messages)) throw new Error('Unknown provider payload');
   const directive = 'HOST CONTROL (not source prose): ' + JSON.stringify(budget) +
@@ -51,7 +56,12 @@ export default async function extension(pi) {
     return file;
   });
   // Protocol records consumed by the host, not diagnostic output or model context.
-  const emit = value => process.stdout.write(JSON.stringify({sfr_host: true, ...value}) + '\n');
+  // Pi redirects extension stdout to stderr. Durable files are the IPC channel.
+  const emit = value => {
+    persist('host-event', {sfr_host: true, ...value});
+    if (value.type === 'mcp_result' && upstreamRefusal(JSON.parse(fs.readFileSync(path.join(runDir, value.file), 'utf8'))))
+      queue.stop(new Error('Upstream quota/access refusal'));
+  };
   const reserve = async data => {
     const id = `reservation-${++seq}`;
     emit({type: 'reserve', id, ...data});
@@ -113,7 +123,22 @@ export default async function extension(pi) {
       while (pi.getActiveTools().length < 2 && Date.now() < until)
         await new Promise(resolve => setTimeout(resolve, 50));
       const runtime = checkRuntime(ctx);
-      persist('cli-preflight', {...runtime, model_requests: modelRequests, succeeded: modelRequests === 0});
+      // Exercise the real CLI's complete IPC sequence, with a synthetic local
+      // transport. This command cannot start inference or source requests.
+      let onMessage;
+      const inner = {start: async () => {}, close: async () => {}, onError: () => {}, onClose: () => {},
+        onMessage: listener => {onMessage = listener;},
+        send: async message => onMessage({jsonrpc: '2.0', id: message.id,
+          result: {content: [{type: 'text', text: 'offline IPC fixture'}]}})};
+      const transport = createSerializedTransport({inner, server: 'zai_search', mode: 'collect', queue,
+        reserve: data => reserve({...data, probe: true}), persist, emit, timeoutMs: 5000});
+      let delivered = false;
+      transport.onMessage(message => {delivered = message.result.content[0].text === 'offline IPC fixture';});
+      await transport.send({jsonrpc: '2.0', id: 'offline-probe', method: 'tools/call',
+        params: {name: 'web_search_prime', arguments: {search_query: 'offline IPC fixture'}}});
+      const file = persist('cli-preflight', {...runtime, model_requests: modelRequests,
+        ipc_roundtrip: delivered, succeeded: modelRequests === 0 && delivered});
+      emit({type: 'done', runtime_file: file, probe: true});
       ctx.shutdown();
     }),
   });
@@ -124,6 +149,7 @@ export default async function extension(pi) {
   }));
   pi.on('before_provider_request', safetyBoundary(queue, (event, ctx) => {
     queue.assertHealthy();
+    if (fs.existsSync(path.join(runDir, 'host-stop.json'))) throw new Error('Host access/deadline stop');
     effective(ctx);
     if (failed || modelRequests >= 6) throw new Error('Bounded model request limit');
     modelRequests++;

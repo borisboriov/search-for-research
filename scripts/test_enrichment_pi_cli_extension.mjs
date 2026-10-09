@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {boundedPayload, recordEvent, safetyBoundary} from './enrichment_pi_cli_extension.mjs';
+import {boundedPayload, recordEvent, safetyBoundary, upstreamRefusal} from './enrichment_pi_cli_extension.mjs';
 import {createSourceQueue, createGuardedFetch} from './enrichment_pi_runner.mjs';
 
 test('latest exact host budget reaches each request and finalization removes tools', () => {
@@ -29,4 +29,11 @@ test('a swallowed synchronous or async extension failure blocks the next physica
 test('only final authoritative messages and necessary lifecycle records are saved', () => {
   assert.equal(recordEvent({type: 'message_end'}), true);
   assert.equal(recordEvent({type: 'message_update', assistantMessageEvent: {type: 'text_delta'}}), false);
+});
+
+test('quota errors inside HTTP200 are refused; ordinary source403 only blocks that source', () => {
+  assert.equal(upstreamRefusal({server: 'zai_reader', message: {result: {isError: true, content: [{text: '429 quota exceeded'}]}}}), true);
+  assert.equal(upstreamRefusal({server: 'zai_search', message: {error: {message: '403 access'}}}), true);
+  assert.equal(upstreamRefusal({server: 'zai_reader', message: {result: {isError: true, content: [{text: '403 source access'}]}}}), false);
+  assert.equal(upstreamRefusal({server: 'zai_search', message: {result: {content: [{text: 'publication429'}]}}}), false);
 });

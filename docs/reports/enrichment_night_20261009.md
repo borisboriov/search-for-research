@@ -9,7 +9,8 @@ worktree `/private/tmp/sfr-enrichment100-20261008`, ветка `codex/enrichment
 
 ## Этап 1: штатный CLI и ограничение сборщика
 
-Метод [enrichment-cli-bounded-v1](../experiments/enrichment_cli_bounded_v1.md).
+Первый метод [bounded-v1](../experiments/enrichment_cli_bounded_v1.md),
+исправленный [bounded-v2](../experiments/enrichment_cli_bounded_v2.md).
 Старые SDK-runner и stopped roots сохраняются. Новое исполнение запускает штатный
 `pi --mode json`, без собственного `ModelRuntime`/`streamSimple`/model API вызова.
 Session-local расширение использует документированный MCP extension factory
@@ -61,12 +62,30 @@ research/office и автоматизацию через поддерживае�
 Подготовительные `make lint/typecheck/test` прошли:186 unittest и388 pytest,
 8 skipped/5 deselected, coverage94,06%. Профильные фикстуры —6 Python/3 Node,
 общие транспортные Node17 также проходят. Реальный CLI preflight прошёл без
-model request. `docs-check` сначала прошёл без meta; повтор с действующим
-`SFR_INDEX_META` нужен перед передачей. Strict audit, независимое ревью актуального
-диапазона, CI и readonly handoff — отдельные обязательные этапы; прежний #189
+model request. `docs-check` с действующим `SFR_INDEX_META` прошёл. Strict audit выполнен:
+FAIL deps-node/fs-trivy (HIGH sharp/source-map-js), известный #189.
+Независимое ревью первого нового head `4c6516fd` — fail, три находки
+(IPC stdout, quota stop, общий deadline). Исправления v2 проверяются отдельно.
+CI нового head и readonly handoff — обязательные этапы; прежний #189
 не исправляется этой работой и критерии не ослабляются.
 
-Содержательных collector/verifier/judge jobs этого нового этапа пока0;
+Первый v1 collector для A5079662185 занял39,996с:3440 total tokens
+(2547 input,189 output,704 cached input;132 reasoning входят в output),
+1 model request,0 source calls. Native CLI перехватил stdout extension в stderr:
+разрешение host не доставилось. Done=false, partial/unknown; Sol не запущен.
+Неизменный root `/Users/boris/Experiments/search-for-research/enrichment-night-cli-v1-20261009`
+и его STOP сохраняются.
+
+Исправленный v2 использует атомарные durable host-event файлы и учитывает
+429 внутри MCP HTTP200 до следующего модельного запроса и до зависимых/новых jobs.
+Probe+verifier ограничены единым абсолютным дедлайном с запасом5с.
+Реальный CLI preflight в `/private/tmp/sfr-night-cli-ipc-probe-v2-20261009`
+прошёл reserve→permission→result→done с локальным transport fixture:
+model requests0, физических source calls0, ipc_roundtrip=true.
+Это проверка IPC, не сбор данных. V2 закрепляет те же ID/вузы v1 с provenance
+повтора, максимум второй collector attempt первого профиля.
+
+Содержательных collector/verifier/judge jobs нового этапа пока1/0/0;
 карточек/экономии/точности/масштабируемости не заявляем. После04:30 новые
 профили и партии запрещены, до04:50 сохраняются результаты и условия продолжения,
 в05:00 работа прекращается независимо от готовности. Следующий запуск требует

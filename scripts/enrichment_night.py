@@ -35,8 +35,8 @@ from enrichment_semantics import prepare_control, validate
 from enrichment_verifier_benchmark import check_schema
 
 REPO = Path(__file__).resolve().parent.parent
-METHOD = "enrichment-cli-bounded-v1"
-RULES = REPO / "docs/experiments/enrichment_cli_bounded_v1.md"
+METHOD = "enrichment-cli-bounded-v2"
+RULES = REPO / "docs/experiments/enrichment_cli_bounded_v2.md"
 EXTENSION = REPO / "scripts/enrichment_pi_cli_extension.mjs"
 PARENT = Path("/Users/boris/Experiments/search-for-research")
 INDEX = Path("/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean")
@@ -55,7 +55,7 @@ SETTINGS = {
 }
 
 
-def freeze(root: Path) -> None:
+def freeze(root: Path, from_root: Path | None = None) -> None:
     root = private_root(root)
     if (root / "manifest.json").exists():
         raise ValueError("Уже заморожено")
@@ -74,7 +74,34 @@ def freeze(root: Path) -> None:
         exclusion_hashes[str(sample)] = sha(sample)
     if len(excluded) < 124:
         raise ValueError("Неполные исключения прежних профилей")
-    selected = select_profiles(docs, excluded, 19319420261014)
+    retry = None
+    if from_root is None:
+        selected = select_profiles(docs, excluded, 19319420261014)
+    else:
+        previous = read(from_root / "manifest.json")
+        if (
+            previous["method"] != "enrichment-cli-bounded-v1"
+            or not (from_root / "stopped.json").exists()
+        ):
+            raise ValueError("Повтор разрешён только после остановленного v1")
+        selected = verified_sample(from_root)
+        if len(selected) != 12 or len({row["institution"] for row in selected}) != 12:
+            raise ValueError("Не та первоначальная выборка")
+        previous_runs = list((from_root / "runs").glob("*/collector/started.json"))
+        if len(previous_runs) != 1 or previous_runs[0].parent.parent.name != selected[0]["id"]:
+            raise ValueError("Повтор допустим только для единственной первой попытки v1")
+        if list((from_root / "runs").glob("*/native_verifier/started.json")):
+            raise ValueError("Нельзя незаметно повторить verifier")
+        retry = {
+            "root": str(from_root),
+            "manifest_sha256": sha(from_root / "manifest.json"),
+            "sample_sha256": sha(from_root / "sample.json"),
+            "stop_sha256": sha(from_root / "stopped.json"),
+            "reason": (
+                "Исправлены IPC stdout, quota stop и общий deadline; "
+                "максимум второй collector attempt"
+            ),
+        }
     db_sha = sha(DB)
     with sqlite3.connect(DB.resolve().as_uri() + "?mode=ro", uri=True) as conn:
         rows = conn.execute(
@@ -121,6 +148,7 @@ def freeze(root: Path) -> None:
                 "created_at": now(),
                 "seed": 19319420261014,
                 "selection": "one/group; sorted institution and ID; Random.choice; no replacement",
+                "retry_of": retry,
                 "sample_sha256": sha(root / "sample.json"),
                 "excluded_count": len(excluded),
                 "exclusions": exclusion_hashes,
@@ -207,17 +235,71 @@ def preflight(root: Path) -> None:
         (directory / "stdout.jsonl").open("xb") as stdout,
         (directory / "stderr.log").open("xb") as stderr,
     ):
-        result = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=workspace,
             env=env,
             stdin=subprocess.DEVNULL,
             stdout=stdout,
             stderr=stderr,
-            timeout=50,
         )
+        seen: set[str] = set()
+        received: list[str] = []
+        until = time.monotonic() + 50
+        try:
+            while True:
+                for row in host_events(directory / "pi", seen):
+                    if row["type"] == "reserve":
+                        if not row.get("probe") or row["rpc_id"] != "offline-probe":
+                            raise ValueError("Неожиданный source call во время preflight")
+                        immutable(
+                            directory / "pi" / f"{row['id']}.permission.json",
+                            encoded(
+                                {
+                                    "id": row["id"],
+                                    "allowed": True,
+                                    "budget": {
+                                        "search_remaining": 4,
+                                        "resources_remaining_including_robots": 8,
+                                        "host_robots": 0,
+                                        "source_reads": 0,
+                                    },
+                                }
+                            ),
+                        )
+                        received.append("reserve_permission")
+                    elif row["type"] == "mcp_result" and row["rpc_id"] == "offline-probe":
+                        if "reserve_permission" not in received:
+                            raise ValueError("Нарушен порядок IPC")
+                        received.append("result")
+                    elif row["type"] == "done":
+                        received.append("done")
+                if process.poll() is not None:
+                    # Poll once more after exit to consume the final durable event.
+                    for row in host_events(directory / "pi", seen):
+                        if row["type"] == "done":
+                            received.append("done")
+                        else:
+                            raise ValueError("Недоставленное событие IPC перед exit")
+                    break
+                if time.monotonic() >= until or datetime.now(UTC) >= HARD_STOP:
+                    raise ValueError("CLI preflight timeout/deadline")
+                time.sleep(0.05)
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+            code = process.wait()
     proofs = list((directory / "pi").glob("*-cli-preflight.json"))
-    if result.returncode != 0 or len(proofs) != 1 or not read(proofs[0])["succeeded"]:
+    if (
+        code != 0
+        or received != ["reserve_permission", "result", "done"]
+        or len(proofs) != 1
+        or not read(proofs[0])["succeeded"]
+    ):
         raise ValueError("Штатный CLI preflight не пройден")
     immutable(
         root / "preflight.json",
@@ -227,9 +309,31 @@ def preflight(root: Path) -> None:
                 "proof": str(proofs[0]),
                 "proof_sha256": sha(proofs[0]),
                 "manifest_sha256": sha(root / "manifest.json"),
+                "ipc_sequence": received,
             }
         ),
     )
+
+
+def host_events(directory: Path, seen: set[str]) -> list[dict[str, Any]]:
+    """Atomic durable files: never depend on extension stdout routing."""
+    rows = []
+    for path in sorted(directory.glob("*-host-event.json")):
+        if path.name not in seen:
+            rows.append(read(path))
+            seen.add(path.name)
+    return rows
+
+
+def require_access(root: Path) -> None:
+    if access_stopped(root):
+        raise ValueError("Quota/access STOP: новые и зависимые jobs запрещены")
+
+
+def completion_status(done: bool, code: int, pending: dict[Any, Any], refused: bool) -> str:
+    if refused:
+        return "access_refused_partial_unknown"
+    return "model_completed" if done and code == 0 and not pending else "host_partial_unknown"
 
 
 def remaining(batch: Batch, aid: str) -> dict[str, int]:
@@ -345,6 +449,7 @@ def finish_source(
 
 
 def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, dict[str, Any]]:
+    require_access(root)
     aid = profile["id"]
     directory = root / "runs" / aid / "collector"
     if directory.exists():
@@ -436,6 +541,38 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
     messages: list[dict[str, Any]] = []
     partial_usage: dict[str, int] = {}
     done = False
+    seen: set[str] = set()
+
+    def consume_host() -> None:
+        nonlocal done
+        for row in host_events(directory / "pi", seen):
+            kind = row["type"]
+            if kind == "reserve":
+                if row.get("probe"):
+                    raise ValueError("Probe запрещён в содержательном job")
+                response = permission(root, batch, aid, row, started, pending)
+                immutable(directory / "pi" / f"{row['id']}.permission.json", encoded(response))
+            elif kind == "mcp_result":
+                finish_source(root, batch, aid, directory, row, pending)
+            elif kind == "http" and row["status"] in (403, 429):
+                event(
+                    root,
+                    {
+                        "action": "service_stopped",
+                        "author_id": aid,
+                        "status": row["status"],
+                        "origin": row["origin"],
+                        "pathname": row["pathname"],
+                    },
+                )
+            elif kind == "done":
+                done = True
+        if access_stopped(root) and not (directory / "pi/host-stop.json").exists():
+            immutable(
+                directory / "pi/host-stop.json",
+                encoded({"reason": "quota/access STOP", "at": now()}),
+            )
+
     with (
         (directory / "stderr.log").open("xb") as stderr,
         (directory / "stdout.jsonl").open("xb") as output,
@@ -460,6 +597,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
         threading.Thread(target=pump, daemon=True).start()
         try:
             while time.monotonic() - started < 595 and datetime.now(UTC) < HARD_STOP:
+                consume_host()
                 try:
                     line = lines.get(timeout=0.25)
                 except queue.Empty:
@@ -477,7 +615,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
                         key: row["usage"].get(key, 0)
                         for key in ("input", "output", "cacheRead", "cacheWrite", "reasoning")
                     }
-                if row.get("sfr_host") or kind in (
+                if kind in (
                     "message_end",
                     "tool_execution_start",
                     "tool_execution_end",
@@ -489,27 +627,6 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
                 if kind == "message_end" and row.get("message", {}).get("role") == "assistant":
                     messages.append(row["message"])
                     partial_usage = {}
-                if row.get("sfr_host"):
-                    if kind == "reserve":
-                        response = permission(root, batch, aid, row, started, pending)
-                        immutable(
-                            directory / "pi" / f"{row['id']}.permission.json", encoded(response)
-                        )
-                    elif kind == "mcp_result":
-                        finish_source(root, batch, aid, directory, row, pending)
-                    elif kind == "http" and row["status"] in (403, 429):
-                        event(
-                            root,
-                            {
-                                "action": "service_stopped",
-                                "author_id": aid,
-                                "status": row["status"],
-                                "origin": row["origin"],
-                                "pathname": row["pathname"],
-                            },
-                        )
-                    elif kind == "done":
-                        done = True
         finally:
             if process.poll() is None:
                 process.terminate()
@@ -518,6 +635,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
                 except subprocess.TimeoutExpired:
                     process.kill()
             code = process.wait()
+            consume_host()
     elapsed = time.monotonic() - started
     immutable(
         directory / "finished.json",
@@ -548,13 +666,13 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
         "wall_elapsed_seconds": elapsed,
         "completed_messages": len(messages),
         "model_requests": len(list((directory / "pi").glob("*-model-request-config.json"))),
-        "usage_complete": done and code == 0 and not pending,
+        "usage_complete": done and code == 0 and not pending and not access_stopped(root),
         "unfinished_usage_snapshot_not_added_to_totals": partial_usage or None,
         "budget": remaining(batch, aid),
         "subscription_quota_delta": None,
     }
     immutable(directory / "receipt.json", encoded(receipt))
-    status = "model_completed" if done and code == 0 and not pending else "host_partial_unknown"
+    status = completion_status(done, code, pending, access_stopped(root))
     raw: dict[str, Any] | None = None
     if status == "model_completed" and messages:
         try:
@@ -662,6 +780,7 @@ def bind(
 
 
 def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
+    require_access(root)
     aid = profile["id"]
     batch = Batch(root / "batches" / f"{index:02d}")
     raw_path, receipt = collect(root, profile, batch)
@@ -714,6 +833,9 @@ def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
         ensure_ascii=False,
         separators=(",", ":"),
     )
+    require_access(root)
+    if datetime.now(UTC) >= HARD_STOP:
+        raise ValueError("Дедлайн процесса: native job не запущен")
     result_path, native_receipt = execute(
         root / "runs" / aid / "native_verifier",
         prompt,
@@ -722,6 +844,7 @@ def run_profile(root: Path, index: int, profile: dict[str, Any]) -> None:
         model="gpt-6.1-sol",
         effort="high",
         timeout_seconds=600,
+        deadline_epoch=HARD_STOP.timestamp() - 5,
         skip_git_repo_check=True,
         disable_mcp=True,
         required_config=HIGH_CONFIGS["native_verifier"],
@@ -774,6 +897,7 @@ def checked_result(root: Path, aid: str) -> dict[str, Any]:
 
 def run(root: Path, limit: int) -> None:
     locked(root)
+    require_access(root)
     if (root / "stopped.json").exists() or not 1 <= limit <= 12:
         raise ValueError("STOP либо неправильный лимит")
     preflight_proof = read(root / "preflight.json")
@@ -795,6 +919,7 @@ def run(root: Path, limit: int) -> None:
         if datetime.now(UTC) >= NO_NEW_AFTER:
             raise ValueError("После04:30 новые профили запрещены")
         try:
+            require_access(root)
             run_profile(root, index, profile)
             print(json.dumps({"author_id": profile["id"], "completed": True}), flush=True)
         except Exception as exc:
@@ -860,9 +985,10 @@ def main() -> None:
     parser.add_argument("command", choices=("freeze", "preflight", "run", "cards"))
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--limit", type=int, default=1)
+    parser.add_argument("--from-root", type=Path)
     args = parser.parse_args()
     if args.command == "freeze":
-        freeze(args.root)
+        freeze(args.root, args.from_root)
     elif args.command == "preflight":
         preflight(args.root)
     elif args.command == "run":

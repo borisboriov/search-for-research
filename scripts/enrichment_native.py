@@ -170,6 +170,7 @@ def isolation_probe(
     cwd: Path,
     model: str,
     isolation_config: list[str],
+    deadline_epoch: float | None = None,
 ) -> dict[str, Any]:
     """Render task delivery, without treating unrendered API fields as absent.
 
@@ -189,7 +190,13 @@ def isolation_probe(
     started_at = time.time()
     timed_out = False
     try:
-        probe = subprocess.run(command, cwd=cwd, capture_output=True, timeout=30, check=False)
+        probe = subprocess.run(
+            command,
+            cwd=cwd,
+            capture_output=True,
+            timeout=deadline_timeout(30, deadline_epoch),
+            check=False,
+        )
         stdout, stderr, exit_code = probe.stdout, probe.stderr, probe.returncode
     except subprocess.TimeoutExpired as exc:
         timed_out = True
@@ -269,6 +276,15 @@ def isolation_probe(
     return proof
 
 
+def deadline_timeout(seconds: int, deadline_epoch: float | None) -> float:
+    remaining = (
+        float(seconds) if deadline_epoch is None else min(seconds, deadline_epoch - time.time())
+    )
+    if remaining <= 0:
+        raise ValueError("Native process deadline: новая попытка запрещена")
+    return remaining
+
+
 def execute(
     directory: Path,
     prompt: str,
@@ -282,6 +298,7 @@ def execute(
     disable_mcp: bool = False,
     required_config: dict[str, str] | None = None,
     system_prompt: str | None = None,
+    deadline_epoch: float | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     if required_config is not None:
@@ -320,7 +337,15 @@ def execute(
         isolation_config: list[str] = []
         if system_prompt is not None:
             isolation_config = isolation_options(directory)
-            isolation_probe(directory, prompt, system_prompt, cwd, model or "", isolation_config)
+            isolation_probe(
+                directory,
+                prompt,
+                system_prompt,
+                cwd,
+                model or "",
+                isolation_config,
+                deadline_epoch=deadline_epoch,
+            )
         immutable(
             started,
             encoded(
@@ -401,7 +426,7 @@ def execute(
                     input=prompt_bytes,
                     stdout=event_stream,
                     stderr=errors,
-                    timeout=timeout_seconds,
+                    timeout=deadline_timeout(timeout_seconds, deadline_epoch),
                     check=False,
                 )
             except subprocess.TimeoutExpired:
