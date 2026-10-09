@@ -124,3 +124,33 @@ SHA-индекс7 прежних roots до исправленного запу�
 388pytest,coverage94,06%; Node21 и docs-check actualmeta PASS.
 Дополнительный тест сохраняет прежний строгий запрет лишних полей; dictionary
 разрешён только явным typed additionalProperties, его вложенные поля обязательны.
+
+## Первый полный профиль
+
+Рабочий root: `/Users/boris/Experiments/search-for-research/enrichment-night-cli-v3-fixed-20261009`,
+manifestSHA `d25523d776b6d667aee04c0c3c771710421422e72972cc736150320606f9ec09`.
+Независимый recovery-review head ebf64b482cf4d2f4ad2d7d6f0edeadebac5f69e9:
+pass/blocking0; доказана пригодность сохранённого входа, не качество фактов.
+Первый independent Sol/high завершён:106,419с,17872input,3770output
+(включая1280reasoning),cached0,tool/source calls0. Общий token total21642.
+
+Sol:identity supported,activity supported,current_affiliation insufficient.
+7атомов,1полностью поддержанный дополнительный факт (nationality);
+положительное покрытие18 исходных полей0. Контакты/история из отдельного PDF
+не получили достаточной связи с личностью; сложные смешанные атомы отклонены;
+текущий набор не установлен. Завершение конвейера не доказывает качество
+обогащения, а unknown не считается отказом человека. Ещё2 профиля идут
+последовательно; переход к12 зависит от пригодности этих результатов.
+
+Квота перед следующей партией:Codex used61%/remaining39% accountwide.
+GLM фактическая квота/деньги/дельта unknown, reset-credit не используется.
+
+Метод будущего сравнения [compact-v1](../experiments/enrichment_gpt_compact_v1.md)
+фиксируется до его model calls:3 использованных сложных saved inputs,
+полный baseline vs краткий [verifier](../experiments/enrichment_verifier_compact_v1.md),
+источники побайтно одинаковы,2blind Astra/xhigh judges; пороги15%input/10%total,
+нет новых high/critical и нет снижения correct. Сравнение только после12
+пригодных pipeline results. Сейчас сравнительных jobs0, экономия не заявляется.
+Отдельный renderer карточек использует сохранённые оценки, цитаты и даты;
+поддержанные дополнительные/исторические факты не смешиваются с положительным
+покрытием исходных полей; темы берутся из каталога.
