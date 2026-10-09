@@ -8,6 +8,9 @@ test('latest exact host budget reaches each request and finalization removes too
   const budget = {search_remaining: 1, resources_remaining_including_robots: 0, host_robots: 5, source_reads: 3};
   const result = boundedPayload(original, budget, true);
   assert.equal(result.tools, undefined);
+  assert.equal(result.messages.at(-1).role, 'user');
+  assert.match(result.messages.at(-1).content, /complete final JSON/);
+  assert.match(result.messages.at(-1).content, /No acknowledgement/);
   assert.deepEqual(original.messages, [{role: 'user', content: 'frozen task'}]);
   assert.match(result.messages.at(-1).content, /"host_robots":5/);
   assert.match(result.messages.at(-1).content, /Source tools are closed/);

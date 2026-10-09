@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {SOURCE_TOOLS, writeOnce, createGuardedFetch, createSourceQueue,
   createSerializedTransport, validateConfig} from './enrichment_pi_runner.mjs';
 
-export const CLI_METHOD = 'enrichment-cli-bounded-v3';
+export const CLI_METHOD = 'enrichment-cli-bounded-v4';
 export function upstreamRefusal(raw) {
   const message = raw.message ?? {}, result = message.result ?? {};
   const text = JSON.stringify(result.isError ? result : message.error ?? {});
@@ -16,9 +16,9 @@ export function upstreamRefusal(raw) {
 export function boundedPayload(payload, budget, finalizing) {
   if (!Array.isArray(payload.messages)) throw new Error('Unknown provider payload');
   const directive = 'HOST CONTROL (not source prose): ' + JSON.stringify(budget) +
-    (finalizing ? '. Source tools are closed. Return final JSON now using saved evidence; unknown stays unknown.' :
+    (finalizing ? '. Source tools are closed. This response MUST contain the complete final JSON object matching output_json_schema. Start the answer with { and end with }. No acknowledgement, preface, code fence, promise to compose JSON, or text outside that object. Use only saved evidence; empty items/evidence_pool and unknown statuses are valid when evidence is insufficient.' :
       '. Robots are checked only by host. Do not request robots.txt. Caps are not targets.');
-  return {...payload, messages: [...payload.messages, {role: 'system', content: directive}],
+  return {...payload, messages: [...payload.messages, {role: finalizing ? 'user' : 'system', content: directive}],
     ...(finalizing ? {tools: undefined, tool_choice: undefined} : {})};
 }
 export function recordEvent(event) {
@@ -154,7 +154,7 @@ export default async function extension(pi) {
     if (failed || modelRequests >= 6) throw new Error('Bounded model request limit');
     modelRequests++;
     const seconds = (Date.now() - started) / 1000;
-    finalizing ||= seconds >= 360 || budget.resources_remaining_including_robots <= 0 || modelRequests >= 6;
+    finalizing ||= seconds >= 360 || budget.resources_remaining_including_robots <= 0 || modelRequests >= 5;
     if (finalizing) pi.setActiveTools([]);
     const live = {...budget, elapsed_seconds: seconds, seconds_remaining: Math.max(0, 590 - seconds),
       model_requests_including_this: modelRequests, finalizing};

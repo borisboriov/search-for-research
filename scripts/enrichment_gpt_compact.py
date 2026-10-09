@@ -150,15 +150,39 @@ def task_for(root: Path, aid: str) -> dict[str, Any]:
     }
 
 
+def saved_raw(directory: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+    saved = read(directory / "validated.json")
+    receipt = read(directory / "receipt.json")
+    if saved["receipt"] != receipt:
+        raise ValueError("Сохранённый receipt изменён")
+    for name, key in (
+        ("raw-result.json", "raw_result_sha256"),
+        ("events.jsonl", "events_sha256"),
+        ("prompt.txt", "prompt_sha256"),
+    ):
+        if sha(directory / name) != receipt[key]:
+            raise ValueError("Первичный native артефакт изменён")
+    return dict(saved), dict(receipt)
+
+
 def response(root: Path, aid: str, variant: str) -> dict[str, Any]:
     directory = root / "runs" / aid / variant
-    saved = read(directory / "validated.json")
-    receipt = saved["receipt"]
-    if sha(directory / "raw-result.json") != receipt["raw_result_sha256"]:
-        raise ValueError("Raw изменён")
+    saved, receipt = saved_raw(directory)
+    expected = read(directory / "raw-result.json")
+    expected["provenance"] = normalized_provenance(receipt, "verify")
+    if saved["result"] != expected:
+        raise ValueError("Verifier result отличается от raw")
     task = task_for(root, aid)
-    validate(task["semantic_input"], saved["result"], task["input_sha256"])
-    return dict(saved)
+    check_schema(expected, read(root / "schema.json"))
+    if any(
+        expected[key] != task[key]
+        for key in ("author_id", "batch_ticket_id", "batch_input_sha256", "input_sha256")
+    ):
+        raise ValueError("Ответ другого задания")
+    derived = validate(task["semantic_input"], expected, task["input_sha256"])
+    if saved["classifications"] != derived or saved["human_reviewed"] != 0:
+        raise ValueError("Производная verifier изменена")
+    return saved
 
 
 def run(root: Path, pipeline_root: Path) -> None:
@@ -245,37 +269,68 @@ def run(root: Path, pipeline_root: Path) -> None:
                 raise
 
 
+def packet_value(
+    root: Path, number: int, authors: tuple[str, ...], mapping: dict[str, Any]
+) -> dict[str, Any]:
+    if set(mapping) != set(authors):
+        raise ValueError("Другие авторы в unblinding")
+    profiles = []
+    for aid in authors:
+        slots = mapping[aid]
+        if set(slots) != {"A", "B"} or set(slots.values()) != {"baseline", "compact"}:
+            raise ValueError("Unblinding не биекция A/B")
+        source = read(root / "inputs" / f"{aid}.json")
+        row = {
+            key: source[key]
+            for key in ("author_id", "profile", "items", "evidence_pool", "profile_evidence")
+        }
+        row["responses"] = {
+            slot: {
+                key: response(root, aid, variant)["result"][key]
+                for key in ("items", "profile_assessments", "summary")
+            }
+            for slot, variant in slots.items()
+        }
+        profiles.append(row)
+    return {"packet_id": f"packet-{number:02d}", "profiles": profiles}
+
+
 def packets(root: Path) -> list[Path]:
     locked(root)
     paths = []
     for number, authors in enumerate((CASES[:1], CASES[1:]), 1):
         path = root / "judge-inputs" / f"packet-{number:02d}.json"
-        if path.exists():
-            paths.append(path)
-            continue
-        profiles = []
-        mapping = {}
-        for aid in authors:
-            source = read(root / "inputs" / f"{aid}.json")
-            variants = ["baseline", "compact"]
-            random.SystemRandom().shuffle(variants)
-            mapping[aid] = dict(zip(("A", "B"), variants, strict=True))
-            row = {
-                key: source[key]
-                for key in ("author_id", "profile", "items", "evidence_pool", "profile_evidence")
-            }
-            row["responses"] = {
-                slot: {
-                    key: response(root, aid, variant)["result"][key]
-                    for key in ("items", "profile_assessments", "summary")
-                }
-                for slot, variant in mapping[aid].items()
-            }
-            profiles.append(row)
-        immutable(root / "unblinding" / path.name, encoded(mapping))
-        immutable(path, encoded({"packet_id": f"packet-{number:02d}", "profiles": profiles}))
+        unblinding = root / "unblinding" / path.name
+        seal = root / "packet-seals" / path.name
+        if any(p.exists() for p in (path, unblinding, seal)):
+            proof = read(seal)
+            if proof != {"packet_sha256": sha(path), "unblinding_sha256": sha(unblinding)}:
+                raise ValueError("Packet/unblinding изменён")
+            expected = packet_value(root, number, authors, read(unblinding))
+            if read(path) != expected:
+                raise ValueError("Packet не соответствует проверенным ответам")
+        else:
+            mapping = {}
+            for aid in authors:
+                variants = ["baseline", "compact"]
+                random.SystemRandom().shuffle(variants)
+                mapping[aid] = dict(zip(("A", "B"), variants, strict=True))
+            immutable(unblinding, encoded(mapping))
+            immutable(path, encoded(packet_value(root, number, authors, mapping)))
+            immutable(
+                seal, encoded({"packet_sha256": sha(path), "unblinding_sha256": sha(unblinding)})
+            )
         paths.append(path)
     return paths
+
+
+def judge_response(root: Path, path: Path) -> dict[str, Any]:
+    directory = root / "judges" / path.stem
+    saved, _receipt = saved_raw(directory)
+    if saved["result"] != read(directory / "raw-result.json") or saved["human_reviewed"] != 0:
+        raise ValueError("Judge result отличается от raw")
+    validate_judge(read(path), saved["result"], sha(path))
+    return saved
 
 
 def judge(root: Path) -> None:
@@ -284,10 +339,7 @@ def judge(root: Path) -> None:
         directory = root / "judges" / path.stem
         packet = read(path)
         if (directory / "validated.json").exists():
-            saved = read(directory / "validated.json")
-            if sha(directory / "raw-result.json") != saved["receipt"]["raw_result_sha256"]:
-                raise ValueError("Raw judge изменён")
-            validate_judge(packet, saved["result"], sha(path))
+            judge_response(root, path)
             continue
         allow_new(root)
         if directory.exists():
@@ -358,13 +410,7 @@ def metrics(root: Path) -> dict[str, Any]:
         totals[variant]["wall_seconds"] = sum(row["wall_elapsed_seconds"] for row in receipts)
         totals[variant]["jobs"] = len(receipts)
     for path in packets(root):
-        saved = read(root / "judges" / path.stem / "validated.json")
-        if (
-            sha(root / "judges" / path.stem / "raw-result.json")
-            != saved["receipt"]["raw_result_sha256"]
-        ):
-            raise ValueError("Judge raw изменён")
-        validate_judge(read(path), saved["result"], sha(path))
+        saved = judge_response(root, path)
         mapping = read(root / "unblinding" / path.name)
         for kind in ("atom_evaluations", "profile_evaluations"):
             for row in saved["result"][kind]:

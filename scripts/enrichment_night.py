@@ -35,8 +35,8 @@ from enrichment_semantics import prepare_control, validate
 from enrichment_verifier_benchmark import check_schema
 
 REPO = Path(__file__).resolve().parent.parent
-METHOD = "enrichment-cli-bounded-v3"
-RULES = REPO / "docs/experiments/enrichment_cli_bounded_v2.md"
+METHOD = "enrichment-cli-bounded-v4"
+RULES = REPO / "docs/experiments/enrichment_cli_bounded_v4.md"
 EXTENSION = REPO / "scripts/enrichment_pi_cli_extension.mjs"
 PARENT = Path("/Users/boris/Experiments/search-for-research")
 INDEX = Path("/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean")
@@ -59,6 +59,12 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
     root = private_root(root)
     if (root / "manifest.json").exists():
         raise ValueError("Уже заморожено")
+    if (
+        from_root is not None
+        and read(from_root / "manifest.json")["method"] == "enrichment-cli-bounded-v3"
+    ):
+        freeze_continuation(root, from_root)
+        return
     if (
         from_root is not None
         and read(from_root / "manifest.json")["method"] == "enrichment-cli-bounded-v2"
@@ -183,6 +189,64 @@ def freeze(root: Path, from_root: Path | None = None) -> None:
         Batch.create(root / "batches" / f"{index:02d}", root, [profile["id"]], RULES, concurrency=1)
 
 
+def freeze_continuation(root: Path, previous: Path) -> None:
+    """Продолжить исходную выборку после единственного незавершённого четвёртого job."""
+    manifest = read(previous / "manifest.json")
+    sample = verified_sample(previous)
+    aid = sample[3]["id"]
+    collector = previous / "runs" / aid / "collector"
+    stop = read(previous / "stopped.json")
+    finished = read(collector / "finished.json")
+    receipt = read(collector / "receipt.json")
+    completed = list((previous / "results").glob("*.json"))
+    if (
+        len(sample) != 12
+        or len(completed) != 3
+        or {path.stem for path in completed} != {row["id"] for row in sample[:3]}
+        or stop["author_id"] != aid
+        or read(collector / "completion-status.json")["status"] != "invalid_model_output"
+        or not finished["done"]
+        or finished["exit_code"] != 0
+        or finished["pending_operations"]
+        or receipt["model_requests"] != 6
+        or not receipt["usage_complete"]
+        or access_stopped(previous)
+        or len(list((previous / "runs").glob("*/collector/started.json"))) != 4
+        or (previous / "runs" / aid / "native_verifier").exists()
+        or list(root.iterdir())
+    ):
+        raise ValueError(
+            "Нужен остановленный v3: три completed и одна невалидная попытка четвёртого"
+        )
+    copied = {}
+    for path in [previous / "sample.json", *sorted((previous / "results").iterdir())]:
+        target = root / path.relative_to(previous)
+        immutable(target, path.read_bytes())
+        copied[str(target.relative_to(root))] = sha(target)
+    for row in sample[:3]:
+        checked_result(root, row["id"])
+    for name in ("manifest.json", "stopped.json"):
+        immutable(root / "imported" / name, (previous / name).read_bytes())
+    manifest["method"] = METHOD
+    manifest["created_at"] = now()
+    manifest.pop("recovery", None)
+    manifest["continuation"] = {
+        "source_root": str(previous),
+        "source_manifest_sha256": sha(previous / "manifest.json"),
+        "source_stop_sha256": sha(previous / "stopped.json"),
+        "copied_files": copied,
+        "reused_completed_ids": [row["id"] for row in sample[:3]],
+        "retry_author_id": aid,
+        "collector_attempt": 2,
+        "reason": "Final JSON вместо обещания; закрыть источники перед пятым запросом",
+    }
+    manifest["rules_hashes"] = {name: sha(REPO / name) for name in manifest["rules_hashes"]}
+    manifest["rules_hashes"][str(RULES.relative_to(REPO))] = sha(RULES)
+    immutable(root / "manifest.json", encoded(manifest))
+    for index, profile in enumerate(sample, 1):
+        Batch.create(root / "batches" / f"{index:02d}", root, [profile["id"]], RULES, concurrency=1)
+
+
 def freeze_recovery(root: Path, previous: Path) -> None:
     """Новый root с точными копиями, восстановление без третьего collector job."""
     manifest = read(previous / "manifest.json")
@@ -289,6 +353,9 @@ def locked(root: Path) -> dict[str, Any]:
     if manifest["method"] != METHOD:
         raise ValueError("Другой метод")
     verified_sample(root)
+    for name, digest in manifest.get("continuation", {}).get("copied_files", {}).items():
+        if sha(root / name) != digest:
+            raise ValueError("Переиспользованный результат изменён")
     if any(sha(REPO / name) != value for name, value in manifest["rules_hashes"].items()):
         raise ValueError("Код/правила изменены: нужен новый раунд")
     return dict(manifest)
@@ -1019,6 +1086,12 @@ def run(root: Path, limit: int) -> None:
         and sum((root / "results" / f"{row['id']}.json").exists() for row in sample[:3]) != 3
     ):
         raise ValueError("Сначала три устойчивых профиля")
+    if (
+        locked(root).get("continuation")
+        and limit > 6
+        and any(not (root / "results" / f"{row['id']}.json").exists() for row in sample[3:6])
+    ):
+        raise ValueError("Сначала три completed профиля с исправленной финализацией v4")
     for index, profile in enumerate(sample[:limit], 1):
         if (root / "results" / f"{profile['id']}.json").exists():
             checked_result(root, profile["id"])
