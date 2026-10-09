@@ -1,5 +1,6 @@
 """Фиксация метода требует полного пилота и запрещает тихую перенастройку."""
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -34,8 +35,33 @@ class ProtocolTests(unittest.TestCase):
                         "author_id": row["id"],
                         "claims": [],
                         "field_status": dict.fromkeys(FIELDS, "not_found"),
-                        "journal": [],
-                        "sources": [],
+                        "field_search": {
+                            f: {
+                                "status": "not_found",
+                                "explanation": "bounded",
+                                "journal_refs": [0],
+                            }
+                            for f in FIELDS
+                        },
+                        "journal": [
+                            {
+                                "kind": "page",
+                                "url": "https://example.edu/person",
+                                "checked_at": "2026-10-09",
+                                "status": "ok",
+                                "elapsed_seconds": None,
+                                "cost_usd": None,
+                            }
+                        ],
+                        "sources": [
+                            {
+                                "url": "https://example.edu/person",
+                                "ownership": "example university",
+                                "purpose": "profile",
+                                "checked_at": "2026-10-09",
+                                "access_status": "ok",
+                            }
+                        ],
                         "provenance": {"agent_id": "collector"},
                     },
                 )
@@ -59,16 +85,42 @@ class ProtocolTests(unittest.TestCase):
                     "current_affiliation": verdict,
                     "claim_verdicts": [],
                     "new_findings": [],
-                    "journal": [],
+                    "journal": [
+                        {
+                            "kind": "search",
+                            "query": "independent students",
+                            "checked_at": "2026-10-09",
+                            "status": "ok",
+                            "elapsed_seconds": None,
+                            "cost_usd": None,
+                        },
+                        {
+                            "kind": "page",
+                            "url": "https://example.edu/person",
+                            "checked_at": "2026-10-09",
+                            "status": "ok",
+                            "elapsed_seconds": None,
+                            "cost_usd": None,
+                        },
+                    ],
                     "questions": [],
                     "field_search": {
-                        f: {"status": "not_found", "explanation": "bounded"} for f in FIELDS
+                        f: {"status": "not_found", "explanation": "bounded", "journal_refs": [0, 1]}
+                        for f in FIELDS
                     },
                 }
                 write_new(
                     root / "verification/v2/outputs/native" / f"{row['id']}.json",
                     {"input_sha256": sha(input_path), "result": result},
                 )
+            first_output = root / "verification/v2/outputs/native/A0.json"
+            saved = first_output.read_bytes()
+            missing_search = json.loads(saved)
+            missing_search["result"]["journal"] = []
+            first_output.write_text(json.dumps(missing_search))
+            with self.assertRaises(ValueError):
+                freeze_method(root, "v2", "native", checkout)
+            first_output.write_bytes(saved)
             path = freeze_method(root, "v2", "native", checkout)
             lock = validate_lock(root, path, checkout)
             self.assertEqual(len(lock["human_sampling"]["random_ids"]), 5)

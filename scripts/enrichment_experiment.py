@@ -304,12 +304,14 @@ def run_orcid(
         raise ValueError("Нужна датированная проверка правил ORCID")
     if not policy.get("checked_at") or not policy.get("terms_url"):
         raise ValueError("Отсутствует доказательство проверки условий")
+    stage_method = METHOD
     if cohort != "pilot":
         if method_lock is None:
             raise ValueError("Для 90 нужна фиксация метода после полного разбора первых 10")
         from enrichment_protocol import validate_lock
 
-        validate_lock(root, method_lock, Path(__file__).resolve().parents[1])
+        lock = validate_lock(root, method_lock, Path(__file__).resolve().parents[1])
+        stage_method = f"structured-orcid/{lock['version']}"
     if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", mailto):
         raise ValueError("Нужен действительный mailto")
     write_new(root / f"access-policy-{time.time_ns()}.json", policy)
@@ -342,7 +344,7 @@ def run_orcid(
             result: dict[str, Any] = {
                 "author_id": row["id"],
                 "cohort": cohort,
-                "method": METHOD,
+                "method": stage_method,
                 "checked_at": now(),
                 "identity_verdict": "not_checked",
                 "human_reviewed": False,

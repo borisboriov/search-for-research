@@ -10,6 +10,9 @@ developer_instructions = """
 не пиши людям. Верни структурированный JSON для импорта конвейером: input_sha256,
 rules_version, provenance, claim_verdicts, identity, current_affiliation,
 new_findings, field_search, journal, questions. Используй отдельный контекст.
+Для полного прохода field_search каждого поля связывай с journal_refs (индексы с нуля или уникальные journal_id
+реально использованных операций); повторные чтения фрагментов и reuse фиксируй.
+Конкретизация исполнения: docs/experiments/enrichment_method_v2_1.md.
 Для каждой находки нужны URL, точная цитата, information_date, checked_at,
 object_type и объяснение. Не выдумывай фактическую модель/effort: укажи доступные
 метаданные исполнения, при отсутствии явно null и runtime_not_exposed.

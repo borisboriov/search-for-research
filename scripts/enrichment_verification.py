@@ -5,6 +5,7 @@
 """
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -133,6 +134,12 @@ def collector_check(row: dict[str, Any]) -> None:
     journal_check(row["journal"])
     if not isinstance(row["sources"], list):
         raise ValueError("Нужен список исходных материалов")
+    for source in row["sources"]:
+        for key in ("url", "ownership", "purpose", "checked_at", "access_status"):
+            if not isinstance(source.get(key), str) or not source[key]:
+                raise ValueError(f"Неполное описание источника: {key}")
+        if urlparse(source["url"]).scheme not in ("http", "https"):
+            raise ValueError("Неизвестная схема источника")
 
 
 def immutable_json(path: Path, value: Any) -> None:
@@ -143,11 +150,49 @@ def immutable_json(path: Path, value: Any) -> None:
     write_new(path, value)
 
 
+def immutable_bytes(path: Path, payload: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if path.exists():
+        if path.read_bytes() != payload:
+            raise ValueError("Снимок исходника отличается")
+        return
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        stream.write(payload)
+        stream.flush()
+        os.fsync(stream.fileno())
+    try:
+        os.link(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def captured_collector(root: Path, source: dict[str, Any]) -> None:
+    digest = source["collector_sha256"]
+    expected = f"collector-sources/{digest}.json"
+    if source.get("collector_snapshot") != expected:
+        raise ValueError("Нужен неизменяемый снимок исходного извлечения")
+    path = root / expected
+    if sha(path) != digest:
+        raise ValueError("SHA исходного извлечения отличается")
+    original = read(path)
+    rows = original if isinstance(original, list) else [original]
+    matches = [row for row in rows if row["author_id"] == source["author_id"]]
+    if len(matches) != 1 or any(
+        matches[0].get(key) != value for key, value in source["collector"].items()
+    ):
+        raise ValueError("Вход не соответствует сохранённому извлечению")
+
+
 def prepare(root: Path, collector: Path, version: str, rubric: Path) -> list[Path]:
     root = private_root(root)
     version = identifier(version)
     sample = {row["id"]: row for row in verified_sample(root)}
-    rows = read(collector)
+    payload = collector.read_bytes()
+    digest = hashlib.sha256(payload).hexdigest()
+    snapshot = f"collector-sources/{digest}.json"
+    immutable_bytes(root / snapshot, payload)
+    rows = json.loads(payload)
     if isinstance(rows, dict):
         rows = [rows]
     paths = []
@@ -170,10 +215,12 @@ def prepare(root: Path, collector: Path, version: str, rubric: Path) -> list[Pat
                     "journal",
                     "sources",
                     "provenance",
+                    "field_search",
                 )
                 if key in row
             },
-            "collector_sha256": sha(collector),
+            "collector_sha256": digest,
+            "collector_snapshot": snapshot,
             "sample_sha256": sha(root / "sample.json"),
             "rules_version": version,
             "rubric_sha256": sha(rubric),
@@ -264,6 +311,8 @@ def import_result(root: Path, input_path: Path, result_path: Path, run_id: str) 
         raise ValueError("Профиль входа отличается от замороженного")
     if source.get("sample_sha256") != sha(root / "sample.json"):
         raise ValueError("Вход относится к другой выборке")
+    if "collector_snapshot" in source:
+        captured_collector(root, source)
     result = read(result_path)
     validate_result(input_path, result)
     path = (
@@ -445,7 +494,57 @@ def packet(root: Path, inputs: Path, run_id: str, ids: list[str], name: str) -> 
     return directory / "review.html"
 
 
-def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
+def operation_failed(row: dict[str, Any]) -> bool:
+    """Явная классификация старых статусов без изменения журналов источника."""
+    outcome = row.get("outcome")
+    if outcome is not None:
+        if outcome not in ("ok", "inaccessible", "blocked", "error", "timeout"):
+            raise ValueError("Неизвестный канонический исход операции")
+        return bool(outcome != "ok")
+    tokens = set(re.split(r"[_\s-]+", row["status"].casefold()))
+    return bool(
+        tokens
+        & {
+            "inaccessible",
+            "blocked",
+            "error",
+            "failed",
+            "timeout",
+            "unavailable",
+            "denied",
+            "403",
+            "404",
+            "429",
+        }
+    )
+
+
+def operation_category(row: dict[str, Any]) -> str:
+    if "rules" in row["status"] or "robots" in row.get("url", ""):
+        return "rules"
+    return str(row["kind"])
+
+
+def source_family(url: str) -> str:
+    """Диагностические группы URL; это не оценка достоверности источника."""
+    parsed = urlparse(url)
+    host, path = parsed.hostname or "", parsed.path.casefold()
+    if host == "orcid.org" or host.endswith(".orcid.org"):
+        return "structured_orcid"
+    if host.endswith("linkedin.com") or host in ("t.me", "vk.com"):
+        return "public_channel"
+    if any(word in path for word in ("/vkr", "/theses", "/dissert")):
+        return "thesis_source"
+    if any(word in path for word in ("/vac", "/application", "/summer")):
+        return "offer_or_program_page"
+    if any(word in path for word in ("/people", "/persons", "/employee", "/scientists", "/team")):
+        return "person_page"
+    return "other_source"
+
+
+def metrics(
+    root: Path, version: str, run_id: str, out: Path, author_ids: list[str] | None = None
+) -> dict[str, Any]:
     """Только белый список агрегатов; нулевая human-проверка не означает нулевую ошибку."""
     sample = verified_sample(root)
     manifest = read(root / "manifest.json")
@@ -459,6 +558,12 @@ def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
         if wrapper.get("human_reviewed"):
             raise ValueError("Агентский агрегатор не оценивает человеческие результаты")
         outputs[path.stem] = result
+    if author_ids is not None:
+        requested = set(author_ids)
+        if len(requested) != len(author_ids) or not requested <= inputs.keys():
+            raise ValueError("Поднабор должен содержать уникальные существующие входы")
+        inputs = {key: value for key, value in inputs.items() if key in requested}
+        outputs = {key: value for key, value in outputs.items() if key in requested}
     cohort_counts = {}
     for cohort in ("pilot", "evaluation"):
         ids = set(manifest.get(f"{cohort}_ids", []))
@@ -475,6 +580,13 @@ def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
     fresh: Counter[str] = Counter()
     collector_log = []
     verifier_log = []
+    contributions: dict[str, Counter[str]] = {}
+
+    def contribution(key: str, evidence_rows: list[dict[str, Any]]) -> None:
+        for url in {item["url"] for item in evidence_rows}:
+            family = source_family(url)
+            contributions.setdefault(family, Counter())[key] += 1
+
     for field in FIELDS:
         original_profiles = set()
         new_profiles = set()
@@ -505,14 +617,19 @@ def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
         }
     for source in inputs.values():
         collector_log.extend(source["collector"]["journal"])
+        for claim in source["collector"]["claims"]:
+            contribution("collector_claim_evidence", claim["evidence"])
     for result in outputs.values():
         verifier_log.extend(result["journal"])
         identity[result["identity"]["verdict"]] += 1
         affiliation[result["current_affiliation"]["verdict"]] += 1
         for verdict in result["claim_verdicts"]:
             all_verdicts[verdict["verdict"]] += 1
+            if verdict["verdict"] == "confirmed_by_source":
+                contribution("verifier_confirmed_claim_evidence", verdict["evidence"])
         for finding in result["new_findings"]:
             omissions[finding["field"]] += 1
+            contribution("verifier_new_finding_evidence", finding["evidence"])
         for row in [
             result["identity"],
             result["current_affiliation"],
@@ -528,9 +645,9 @@ def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
         return {
             "search_queries": sum(row["kind"] == "search" for row in rows),
             "pages": sum(row["kind"] == "page" for row in rows),
-            "access_failures": sum(
-                row["status"] in ("inaccessible", "blocked", "error", "failed", "timeout")
-                for row in rows
+            "access_failures": sum(operation_failed(row) for row in rows),
+            "access_failures_by_operation": dict(
+                Counter(operation_category(row) for row in rows if operation_failed(row))
             ),
             "cost_usd_known_sum": sum(
                 row["cost_usd"] for row in rows if row["cost_usd"] is not None
@@ -544,6 +661,7 @@ def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
 
     value = {
         "method_version": identifier(version),
+        "subset_requested": author_ids is not None,
         "denominators": {
             "sample": len(sample),
             "inputs": len(inputs),
@@ -559,6 +677,17 @@ def metrics(root: Path, version: str, run_id: str, out: Path) -> dict[str, Any]:
         "freshness": dict(fresh),
         "collector_operations": costs(collector_log),
         "verifier_operations": costs(verifier_log),
+        "page_read_operations_known_sum": sum(
+            result["page_read_operations"]
+            for result in outputs.values()
+            if isinstance(result.get("page_read_operations"), int)
+        ),
+        "page_read_operations_unknown_profiles": sum(
+            not isinstance(result.get("page_read_operations"), int) for result in outputs.values()
+        ),
+        "failure_classification_version": "v2_1",
+        "source_family_contributions": {key: dict(value) for key, value in contributions.items()},
+        "source_family_note": "URL grouping diagnostics; evidence counts, not people or accuracy",
         "human_claim_error_rate": None,
         "human_identity_error_rate": None,
         "human_verifier_disagreement_rate": None,
@@ -593,6 +722,7 @@ def main() -> None:
     met.add_argument("--version", required=True)
     met.add_argument("--run-id", required=True)
     met.add_argument("--out", type=Path, required=True)
+    met.add_argument("--ids", nargs="+")
     args = parser.parse_args()
     if args.command == "prepare":
         result: Any = [
@@ -601,7 +731,7 @@ def main() -> None:
     elif args.command == "import":
         result = str(import_result(args.root, args.input, args.result, args.run_id))
     elif args.command == "metrics":
-        result = metrics(args.root, args.version, args.run_id, args.out)
+        result = metrics(args.root, args.version, args.run_id, args.out, args.ids)
     else:
         result = str(packet(args.root, args.inputs, args.run_id, args.ids, args.name))
     print(json.dumps(result, ensure_ascii=False))

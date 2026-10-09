@@ -11,6 +11,7 @@ from enrichment_verification import (
     import_result,
     journal_check,
     metrics,
+    operation_failed,
     packet,
     prepare,
     validate_result,
@@ -87,6 +88,21 @@ class VerificationTests(unittest.TestCase):
         self.rubric.write_text("different rules")
         with self.assertRaises(ValueError):
             prepare(self.root, self.collector, "v2", self.rubric)
+
+    def test_source_snapshot_survives_spool_mutation(self) -> None:
+        source = read(self.input)
+        snapshot = self.root / source["collector_snapshot"]
+        self.assertEqual(sha(snapshot), source["collector_sha256"])
+        self.collector.write_text("[]")
+        self.assertEqual(sha(snapshot), source["collector_sha256"])
+        result_file = self.root / "result-source.json"
+        write_new(result_file, self.result())
+        import_result(self.root, self.input, result_file, "after-spool-mutation")
+
+    def test_access_failure_aliases_are_not_lost(self) -> None:
+        for status in ("inaccessible_rules_lookup", "rules_unavailable", "404_page_not_found"):
+            self.assertTrue(operation_failed({"status": status}))
+        self.assertFalse(operation_failed({"status": "search_engine_index_cache"}))
 
     def test_author_questions_are_not_verifier_inputs(self) -> None:
         value = read(self.collector)
