@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import readline from 'node:readline';
 import { pathToFileURL } from 'node:url';
+import { createHash } from 'node:crypto';
 
 export const SOURCE_TOOLS = Object.freeze({zai_search: 'web_search_prime', zai_reader: 'webReader'});
 export function writeOnce(file, value, io = fs) {
@@ -77,15 +78,27 @@ export function assertEffectiveConfig(session, requested) {
     throw new Error('Runtime configuration differs from requested configuration');
   return effective;
 }
-export function createGuardedModelStream(stream, requested, record, assertHealthy = () => {}) {
+export function verifierContext(context, instruction, userPrompt) {
+  const users = context.messages.filter(message => message.role !== 'system');
+  if (context.tools?.length || context.messages.some(message => message.toolsAdded?.length) ||
+      users.length !== 1 || users[0].role !== 'user' || users[0].content.length !== 1 ||
+      users[0].content[0].type !== 'text' || users[0].content[0].text !== userPrompt)
+    throw new Error('Cache verifier context differs from the frozen input');
+  // Pi normally appends its cwd section. Project exactly the shared instruction at this public API boundary.
+  return {messages: [{role: 'system', content: instruction, timestamp: 0}, users[0]], tools: []};
+}
+export function createGuardedModelStream(stream, requested, record, assertHealthy = () => {}, input = null) {
   return (model, context, options) => {
     assertHealthy(); // SDK can swallow tool errors; never allow another physical model request.
     const effective = {provider: model?.provider ?? null, model: model?.id ?? null,
       effort: options?.reasoning ?? null};
     if (Object.keys(requested).some(key => effective[key] !== requested[key]))
       throw new Error('Model request differs from explicit configuration');
-    record({requested, effective, backend: {provider: null, model: null, effort: null, exposed: false}});
-    return stream(model, context, options);
+    const projected = input ? verifierContext(context, input.instruction, input.userPrompt) : context;
+    const hash = value => createHash('sha256').update(value).digest('hex');
+    record({requested, effective, backend: {provider: null, model: null, effort: null, exposed: false},
+      ...(input ? {instruction_sha256: hash(input.instruction), user_prompt_sha256: hash(input.userPrompt), tools: []} : {})});
+    return stream(model, projected, options);
   };
 }
 export function assertSessionSettings(settings) {
@@ -270,8 +283,10 @@ export async function main(requestPath) {
     throw new Error('Required thinking effort unavailable; downgrade forbidden');
   const queue = createSourceQueue();
   modelRuntime.streamSimple = createGuardedModelStream(modelRuntime.streamSimple.bind(modelRuntime),
-    requested, data => persist('model-request-config', data), queue.assertHealthy);
-  const mcp = sdk.createMcpExtension({
+    requested, data => persist('model-request-config', data), queue.assertHealthy,
+    request.method === 'cache-verifier-v1' ? {instruction: request.system_prompt,
+      userPrompt: JSON.stringify({task: request.task, output_json_schema: request.output_schema})} : null);
+  const mcp = request.mode === 'verify' ? null : sdk.createMcpExtension({
     logPath: path.join(runDir, 'mcp.log'),
     loadConfig: () => {
       const config = loadMcpConfig({agentDir, cwd: request.workspace_dir, projectTrusted: false});
@@ -298,6 +313,11 @@ export async function main(requestPath) {
     resourceLoader: loader, settingsManager: settings, sessionManager: sdk.SessionManager.inMemory(),
     modelRuntime, model, thinkingLevel: requested.effort, noTools: 'builtin',
     tools: request.mode === 'verify' ? [] : Object.entries(SOURCE_TOOLS).map(([s,t]) => `mcp__${s}__${t}`)});
+  if (request.mode === 'verify' &&
+      (session.getActiveToolNames().length || session.getCallableToolNames().length))
+    throw new Error('Cache verifier unexpectedly exposes tools');
+  if (request.mode === 'verify') persist('tool-inventory', {mode: request.mode,
+    tools: session.getActiveToolNames(), callable_tools: session.getCallableToolNames()});
   let timeout;
   let timedOut = false;
   let assistantFailure = false;

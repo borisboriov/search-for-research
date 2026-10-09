@@ -6,7 +6,20 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {test} from 'node:test';
 import {allowedCall, createGuardedFetch, writeOnce, main, validateConfig, assertEffectiveConfig,
-  createGuardedModelStream, createSourceQueue, createSerializedTransport, assertSessionSettings} from './enrichment_pi_runner.mjs';
+  createGuardedModelStream, createSourceQueue, createSerializedTransport, assertSessionSettings,
+  verifierContext} from './enrichment_pi_runner.mjs';
+
+test('cache verifier projects shared instruction and exactly one frozen user, without tools', () => {
+  const user = {role: 'user', content: [{type: 'text', text: 'frozen task'}], timestamp: 0};
+  const projected = verifierContext({messages: [{role: 'system', content: 'instruction plus cwd'}, user]}, 'shared instruction', 'frozen task');
+  assert.deepEqual(projected.tools, []);
+  assert.equal(projected.messages[0].content, 'shared instruction');
+  assert.equal(projected.messages[1], user);
+  for (const context of [{messages: [user], tools: [{name: 'read'}]},
+    {messages: [user, {role: 'assistant', content: []}]},
+    {messages: [{role: 'system', toolsAdded: [{name: 'read'}]}, user]}])
+    assert.throws(() => verifierContext(context, 'shared instruction', 'frozen task'));
+});
 
 test('only actual source tools in collect stage; no verifier web', () => {
   assert.equal(allowedCall('zai_search', 'web_search_prime', 'collect'), true);

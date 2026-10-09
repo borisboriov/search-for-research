@@ -124,6 +124,119 @@ def schema(stage: str, *, strict_levels: bool = False) -> dict[str, Any]:
     )
 
 
+def isolation_options(directory: Path) -> list[str]:
+    """Session-only options shared by the offline renderer and isolated inference."""
+    options = [
+        'model_provider="openai"',
+        'developer_instructions=""',
+        "project_doc_max_bytes=0",
+        f"model_instructions_file={json.dumps(str(directory / 'instructions.txt'))}",
+        "include_permissions_instructions=false",
+        "include_apps_instructions=false",
+        "include_collaboration_mode_instructions=false",
+        "include_environment_context=false",
+        'web_search="disabled"',
+        'sandbox_mode="read-only"',
+        "model_providers.openai.request_max_retries=0",
+        "model_providers.openai.stream_max_retries=0",
+        "features.unbounded_connection_retries=false",
+    ]
+    options += [
+        f"features.{feature}=false"
+        for feature in (
+            "hooks",
+            "shell_tool",
+            "unified_exec",
+            "browser_use",
+            "browser_use_external",
+            "computer_use",
+            "apps",
+            "plugins",
+            "multi_agent",
+            "code_mode_host",
+            "image_generation",
+            "view_image",
+            "sleep_tool",
+            "skill_search",
+            "tool_suggest",
+        )
+    ]
+    config_path = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))) / "config.toml"
+    config = tomllib.loads(config_path.read_text()) if config_path.exists() else {}
+    for name in config.get("mcp_servers", {}):
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
+            raise ValueError("Имя MCP не поддерживает безопасное CLI-переопределение")
+        options.append(f"mcp_servers.{name}.enabled=false")
+    return options
+
+
+def isolation_probe(
+    directory: Path,
+    prompt: str,
+    system_prompt: str,
+    cwd: Path,
+    model: str,
+    isolation_config: list[str],
+) -> dict[str, Any]:
+    """Render only; never launch a turn or accept extra model-visible context."""
+
+    probe = subprocess.run(
+        [
+            "codex",
+            "debug",
+            "prompt-input",
+            *[a for c in isolation_config for a in ("-c", c)],
+            "-c",
+            f"model={json.dumps(model)}",
+            prompt,
+        ],
+        cwd=cwd,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    proof: dict[str, Any] = {
+        "exit_code": probe.returncode,
+        "stdout_sha256": hashlib.sha256(probe.stdout).hexdigest(),
+        "stderr_sha256": hashlib.sha256(probe.stderr).hexdigest(),
+        "instruction_sha256": hashlib.sha256(system_prompt.encode()).hexdigest(),
+        "user_prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+        "available_tool_inventory": None,
+        "tool_inventory_contract": "prompt-input renders messages, not separate API tools",
+    }
+    immutable(
+        directory / ("isolation-render-" + proof["stdout_sha256"][:16] + ".json"), encoded(proof)
+    )
+    if probe.returncode:
+        immutable(
+            directory / ("isolation-probe-failed-" + proof["stderr_sha256"][:16] + ".json"),
+            encoded(proof),
+        )
+        raise ValueError("Не доказана изоляция native prompt: offline render отказал")
+    rendered = json.loads(probe.stdout)
+    if not isinstance(rendered, list):
+        raise ValueError("Неизвестный контракт offline native prompt")
+    texts = []
+    for message in rendered:
+        if message.get("type") != "message" or message.get("role") not in (
+            "user",
+            "developer",
+            "system",
+        ):
+            raise ValueError("Посторонний элемент native prompt")
+        content = message.get("content")
+        if not isinstance(content, list) or any(
+            c.get("type") not in ("input_text", "text") for c in content
+        ):
+            raise ValueError("Постороннее содержимое native prompt")
+        texts.append("".join(c["text"] for c in content))
+    texts = [text for text in texts if text]
+    if texts not in ([prompt], [system_prompt, prompt]):
+        raise ValueError("Native prompt содержит домашние/посторонние инструкции")
+    immutable(directory / "isolation-probe.json", encoded(proof))
+    return proof
+
+
 def execute(
     directory: Path,
     prompt: str,
@@ -136,10 +249,13 @@ def execute(
     skip_git_repo_check: bool = False,
     disable_mcp: bool = False,
     required_config: dict[str, str] | None = None,
+    system_prompt: str | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     if required_config is not None:
         expected = {"provider": "openai", "model": "gpt-6.1-sol", "effort": "high"}
+        if system_prompt is not None and model == "gpt-6-astra" and effort == "xhigh":
+            expected = {"provider": "openai", "model": model, "effort": effort}
         if (
             required_config != expected
             or model != expected["model"]
@@ -152,6 +268,8 @@ def execute(
     prompt_bytes = prompt.encode()
     immutable(directory / "prompt.txt", prompt_bytes)
     immutable(directory / "schema.json", encoded(output_schema))
+    if system_prompt is not None:
+        immutable(directory / "instructions.txt", system_prompt.encode())
     receipt = directory / "receipt.json"
     if receipt.exists():
         value = read(receipt)
@@ -167,6 +285,10 @@ def execute(
     if started.exists() and not (directory / "finished.json").exists():
         raise ValueError("Исход CLI-попытки неизвестен: автоматический повтор запрещён")
     if not started.exists():
+        isolation_config: list[str] = []
+        if system_prompt is not None:
+            isolation_config = isolation_options(directory)
+            isolation_probe(directory, prompt, system_prompt, cwd, model or "", isolation_config)
         immutable(
             started,
             encoded(
@@ -202,6 +324,8 @@ def execute(
             command[2:2] = ["-m", model]
         if effort:
             command[2:2] = ["-c", f'model_reasoning_effort="{effort}"']
+        if system_prompt is not None:
+            command[2:2] = [option for config in isolation_config for option in ("-c", config)]
         if skip_git_repo_check:
             command.insert(2, "--skip-git-repo-check")
         if disable_mcp:
@@ -217,6 +341,11 @@ def execute(
                     "plugins",
                     "multi_agent",
                     "code_mode_host",
+                    "image_generation",
+                    "view_image",
+                    "sleep_tool",
+                    "skill_search",
+                    "tool_suggest",
                 )
                 for option in ("-c", f"features.{feature}=false")
             ]
@@ -234,14 +363,28 @@ def execute(
             (directory / "events.jsonl").open("xb") as event_stream,
             (directory / "stderr.log").open("xb") as errors,
         ):
-            result = subprocess.run(
-                command,
-                input=prompt_bytes,
-                stdout=event_stream,
-                stderr=errors,
-                timeout=timeout_seconds,
-                check=False,
-            )
+            try:
+                result = subprocess.run(
+                    command,
+                    input=prompt_bytes,
+                    stdout=event_stream,
+                    stderr=errors,
+                    timeout=timeout_seconds,
+                    check=False,
+                )
+            except subprocess.TimeoutExpired:
+                immutable(
+                    directory / "finished.json",
+                    encoded(
+                        {
+                            "exit_code": -9,
+                            "finished_at_epoch": time.time(),
+                            "timed_out": True,
+                            "full_job_usage": None,
+                        }
+                    ),
+                )
+                raise ValueError("Native timeout: исход сохранён, повтор запрещён") from None
         immutable(
             directory / "finished.json",
             encoded({"exit_code": result.returncode, "finished_at_epoch": time.time()}),
@@ -258,6 +401,11 @@ def execute(
     ]
     if any(
         event.get("item", {}).get("type") in ("web_search", "command_execution", "mcp_tool_call")
+        or (
+            system_prompt is not None
+            and "item" in event
+            and event["item"].get("type") not in ("agent_message", "reasoning")
+        )
         for event in events
     ):
         raise ValueError(

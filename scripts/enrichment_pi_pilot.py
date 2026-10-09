@@ -573,14 +573,27 @@ def policy(root: Path, batch: Batch, aid: str, url: str) -> dict[str, Any]:
 
 def run_pi(
     root: Path,
-    batch: Batch,
+    batch: Batch | None,
     aid: str,
     stage: str,
     task: dict[str, Any],
     system_prompt: str,
     output_schema: dict[str, Any],
+    *,
+    config_override: dict[str, str] | None = None,
+    method_override: str | None = None,
 ) -> tuple[Path, dict[str, Any]]:
-    config = stage_config(root, stage)
+    config: dict[str, str] | None
+    if config_override is not None:
+        if (
+            stage != "pi_verifier"
+            or config_override != HIGH_CONFIGS[stage]
+            or method_override != "cache-verifier-v1"
+        ):
+            raise ValueError("Неверная явная cache verifier конфигурация")
+        config = config_override
+    else:
+        config = stage_config(root, stage)
     directory = root / "runs" / aid / stage
     receipt = directory / "receipt.json"
     if receipt.exists():
@@ -610,7 +623,7 @@ def run_pi(
         encoded(
             {
                 "mode": "collect" if stage == "collector" else "verify",
-                **({"config": config, "method": HIGH_METHOD} if config else {}),
+                **({"config": config, "method": method_override or HIGH_METHOD} if config else {}),
                 "task": task,
                 "system_prompt": system_prompt,
                 "output_schema": output_schema,
@@ -675,6 +688,8 @@ def run_pi(
                 try:
                     if stage != "collector" or stopped:
                         raise ValueError("Доступ источников остановлен или стадия проверки")
+                    if batch is None:
+                        raise ValueError("Отсутствует очередь сборщика")
                     args = row["arguments"]
                     if row["server"] == "zai_search" and row["tool"] == "web_search_prime":
                         kind, target = "search", args["search_query"]
@@ -727,6 +742,8 @@ def run_pi(
                         outcome, stopped = "429", True
                     elif "403" in text:
                         outcome, stopped = "403", True
+                if batch is None:
+                    raise ValueError("Запрещённая source операция без очереди")
                 batch.finish_operation(operation, outcome, time.time() - at)
                 if outcome == "429" or (outcome == "403" and reservation["server"] == "zai_search"):
                     event(
@@ -790,7 +807,19 @@ def import_pi(directory: Path, aid: str, stage: str) -> tuple[Path, dict[str, An
     finished = read(directory / "finished.json")
     if not finished["done"] or finished["exit_code"] != 0 or finished["pending_operations"]:
         raise ValueError("Pi не завершён: исход и материалы сохранены")
-    session_events = [read(p) for p in sorted((directory / "pi").glob("*-session-event.json"))]
+    if (directory / "stdout.jsonl").exists():
+        controls = [
+            json.loads(line)
+            for line in (directory / "stdout.jsonl").read_text().splitlines()
+            if line.strip()
+        ]
+        session_events = [
+            read(directory / "pi" / row["file"])
+            for row in controls
+            if row.get("event_type") == "message_end"
+        ]
+    else:
+        session_events = [read(p) for p in sorted((directory / "pi").glob("*-session-event.json"))]
     messages = [
         e["message"]
         for e in session_events
@@ -804,13 +833,18 @@ def import_pi(directory: Path, aid: str, stage: str) -> tuple[Path, dict[str, An
     value = final_json(text)
     immutable(directory / "result.json", encoded(value))
     runtime = read(next((directory / "pi").glob("*-runtime.json")))
-    requested_config = read(directory / "request.json").get("config")
+    request = read(directory / "request.json")
+    requested_config = request.get("config")
     if requested_config and any(runtime.get(k) != v for k, v in requested_config.items()):
         raise ValueError("Фактический Pi runtime отличается от задания")
+    if requested_config and stage == "pi_verifier":
+        inventory = read(next((directory / "pi").glob("*-tool-inventory.json")))
+        if inventory != {"mode": "verify", "tools": [], "callable_tools": []}:
+            raise ValueError("Cache verifier expose tools")
     usage = [m.get("usage", {}) for m in messages]
     total = {
         k: sum(u.get(k, 0) for u in usage)
-        for k in ("input", "output", "cacheRead", "cacheWrite", "totalTokens")
+        for k in ("input", "output", "cacheRead", "cacheWrite", "totalTokens", "reasoning")
     }
     receipt = {
         "agent_id": f"pi:{aid}:{stage}:{sha(directory / 'request.json')[:16]}",
@@ -822,6 +856,7 @@ def import_pi(directory: Path, aid: str, stage: str) -> tuple[Path, dict[str, An
                 "backend": runtime.get("backend"),
                 "effective_settings": runtime.get("settings"),
                 "input_sha256": read(directory / "request.json")["task"].get("input_sha256"),
+                "tool_inventory": [] if stage == "pi_verifier" else None,
             }
             if requested_config
             else {}
@@ -833,7 +868,7 @@ def import_pi(directory: Path, aid: str, stage: str) -> tuple[Path, dict[str, An
         "token_usage": total,
         "token_contract": (
             "Pi input/output/cacheRead/cacheWrite disjoint; totalTokens "
-            "authoritative; reasoning not separately exposed"
+            "authoritative; reasoning is a subset of output, never added"
         ),
         "cost_usd": None,
         "subscription_quota_delta": None,
@@ -844,6 +879,23 @@ def import_pi(directory: Path, aid: str, stage: str) -> tuple[Path, dict[str, An
         "automatic_retries": 0,
         "stage": stage,
     }
+    if request.get("method") == "cache-verifier-v1":
+        configs = [read(p) for p in (directory / "pi").glob("*-model-request-config.json")]
+        expected_prompt = json.dumps(
+            {"task": request["task"], "output_json_schema": request["output_schema"]},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        if len(configs) != 1 or configs[0].get("tools") != []:
+            raise ValueError("Cache verifier должен иметь один tool-less model request")
+        for key, text in (
+            ("instruction_sha256", request["system_prompt"]),
+            ("user_prompt_sha256", expected_prompt),
+        ):
+            if configs[0].get(key) != hashlib.sha256(text.encode()).hexdigest():
+                raise ValueError("Model-visible Pi input отличается от общего входа")
+            receipt[key] = configs[0][key]
+        receipt.update(runtime_status="runtime_not_exposed", model=None, effort=None)
     immutable(directory / "receipt.json", encoded(receipt))
     return directory / "result.json", receipt
 
