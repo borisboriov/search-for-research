@@ -39,8 +39,8 @@ from enrichment_semantics import prepare_control, validate
 from enrichment_verifier_benchmark import check_schema
 
 REPO = Path(__file__).resolve().parent.parent
-METHOD = "enrichment-cli-literal-format-v5"
-RULES = REPO / "docs/experiments/enrichment_cli_bounded_v4.md"
+METHOD = "enrichment-cli-early-read-v6"
+RULES = REPO / "docs/experiments/enrichment_cli_early_read_v6.md"
 EXTENSION = REPO / "scripts/enrichment_pi_cli_extension.mjs"
 PARENT = Path("/Users/boris/Experiments/search-for-research")
 INDEX = Path("/Users/boris/Projects/search-for-research/data/indexes_sfr5c/frida_clean")
@@ -60,7 +60,12 @@ SETTINGS = {
 
 
 def freeze(
-    root: Path, from_root: Path | None = None, *, profiles: int = 3, recover_saved: bool = False
+    root: Path,
+    from_root: Path | None = None,
+    *,
+    profiles: int = 1,
+    recover_saved: bool = False,
+    paired_root: Path | None = None,
 ) -> None:
     root = private_root(root)
     if (root / "manifest.json").exists():
@@ -70,8 +75,8 @@ def freeze(
             raise ValueError("Нужен исходный root для восстановления")
         freeze_saved(root, from_root)
         return
-    if not 1 <= profiles <= 3:
-        raise ValueError("Новый контроль ограничен тремя профилями")
+    if profiles != 1:
+        raise ValueError("V6 допускает только один условный новый профиль")
     if from_root is not None:
         raise ValueError(
             "V5 не возобновляет старые STOP: нужен --recover-saved либо свежий контроль"
@@ -91,7 +96,16 @@ def freeze(
         exclusion_hashes[str(sample)] = sha(sample)
     if len(excluded) < 124:
         raise ValueError("Неполные исключения прежних профилей")
-    selected = select_profiles(docs, excluded, 19319420261016)[:profiles]
+    comparison: dict[str, Any] = {}
+    if paired_root is not None:
+        selected, comparison = paired_profiles(paired_root)
+    else:
+        candidates = select_profiles(docs, excluded, 19319420261017)
+        prior = read(PARENT / "enrichment-night-literal-format-v5-fresh-20261010/sample.json")
+        universities = {row["institution"] for row in prior}
+        selected = [row for row in candidates if row["institution"] not in universities][:1]
+        if len(selected) != 1:
+            raise ValueError("Нет нового профиля другого вуза")
     db_sha = sha(DB)
     with sqlite3.connect(DB.resolve().as_uri() + "?mode=ro", uri=True) as conn:
         rows = conn.execute(
@@ -137,8 +151,9 @@ def freeze(
             {
                 "method": METHOD,
                 "created_at": now(),
-                "seed": 19319420261016,
-                "selection": "one/group; sorted institution and ID; Random.choice; no replacement",
+                "seed": None if paired_root else 19319420261017,
+                "selection": "paired saved order" if paired_root else "one new distinct university",
+                "paired_comparison": comparison,
                 "retry_of": None,
                 "sample_sha256": sha(root / "sample.json"),
                 "excluded_count": len(excluded),
@@ -159,6 +174,15 @@ def freeze(
                     "process_deadline": HARD_STOP.isoformat(),
                 },
                 "human_reviewed": 0,
+                "route_metrics": {
+                    "substantive_body_min_chars": 200,
+                    "substantive_body_min_words": 30,
+                    "first_substantive_reader_by_model_request": 3,
+                    "alternative_reader_model_request": 4,
+                    "conditional_fresh_min_profiles_with_body": 2,
+                    "conditional_fresh_min_profiles_with_supported_identity_or_fact": 1,
+                    "substantive_body_is_not_identity_proof": True,
+                },
                 "collector_config": HIGH_CONFIGS["collector"],
                 "verifier_config": HIGH_CONFIGS["native_verifier"],
             }
@@ -166,6 +190,71 @@ def freeze(
     )
     for index, profile in enumerate(selected, 1):
         Batch.create(root / "batches" / f"{index:02d}", root, [profile["id"]], RULES, concurrency=1)
+
+
+def paired_profiles(previous: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Только последняя вторая попытка трёх заранее указанных профилей."""
+    if read(previous / "manifest.json")["method"] != "enrichment-cli-literal-format-v5":
+        raise ValueError("Нужен исходный свежий v5")
+    selected = verified_sample(previous)
+    if [row["id"] for row in selected] != ["A5080057408", "A5101711419", "A5111695924"]:
+        raise ValueError("Не разрешённая тройка")
+    refs = {str(previous / "manifest.json"): sha(previous / "manifest.json")}
+    refs[str(previous / "sample.json")] = sha(previous / "sample.json")
+    for row in selected:
+        aid = row["id"]
+        attempts = list(PARENT.glob(f"*/runs/{aid}/collector/started.json"))
+        if attempts != [previous / "runs" / aid / "collector/started.json"]:
+            raise ValueError("Третья попытка collector запрещена")
+        result = checked_result(previous, aid)
+        if (
+            not result["model_not_called"]
+            or not read(previous / "runs" / aid / "collector/completion-status.json")[
+                "model_completed"
+            ]
+        ):
+            raise ValueError("Нужен штатный исход пустого свежего v5")
+        for path in (
+            previous / "results" / f"{aid}.json",
+            Path(result["input_path"]),
+            previous / "runs" / aid / "collector/receipt.json",
+            previous / "runs" / aid / "collector/finished.json",
+        ):
+            refs[str(path)] = sha(path)
+        row["route_origin"] = str(previous)
+        discovered, unusable, source_refs = saved_routes(previous, aid)
+        row["discovered_urls"] = discovered
+        row["prior_unusable_urls"] = unusable
+        refs.update(source_refs)
+    return selected, {"root": str(previous), "collector_attempt": 2, "source_hashes": refs}
+
+
+def saved_routes(previous: Path, aid: str) -> tuple[list[str], list[str], dict[str, str]]:
+    found: set[str] = set()
+    unusable: set[str] = set()
+    refs = {}
+    for row in events(previous):
+        if row.get("author_id") != aid:
+            continue
+        if row.get("action") == "source_denied" and row.get("server") == "zai_reader":
+            unusable.add(row["arguments"]["url"])
+        if row.get("action") != "source_finished" or not row.get("raw_file"):
+            continue
+        path = previous / row["raw_file"]
+        refs[str(path)] = sha(path)
+        result = read(path)["message"].get("result", {})
+        for block in result.get("content", []):
+            value = unwrap(block.get("text"))
+            if row.get("kind") == "zai_search" and isinstance(value, list):
+                for entry in value:
+                    if isinstance(entry, dict) and isinstance(entry.get("title"), str):
+                        link = entry.get("link")
+                        if isinstance(link, str) and urlparse(link).scheme in ("http", "https"):
+                            found.add(link)
+        if row.get("kind") == "zai_reader":
+            # Все прежние reader здесь бесполезны: три raw пакета были пусты.
+            unusable.add(row["arguments"]["url"])
+    return sorted(found), sorted(unusable), refs
 
 
 def freeze_saved(root: Path, previous: Path) -> None:
@@ -396,6 +485,9 @@ def locked(root: Path) -> dict[str, Any]:
     for files in manifest.get("saved_recovery", {}).get("inputs", {}).values():
         if any(sha(Path(path)) != digest for path, digest in files.items()):
             raise ValueError("Исходные материалы восстановления изменены")
+    for path, digest in manifest.get("paired_comparison", {}).get("source_hashes", {}).items():
+        if sha(Path(path)) != digest:
+            raise ValueError("Исходный парный маршрут изменён")
     return dict(manifest)
 
 
@@ -723,6 +815,10 @@ def finish_source(
 
 
 def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, dict[str, Any]]:
+    if profile.get("route_origin"):
+        original = Path(profile["route_origin"]) / "runs" / profile["id"] / "collector/started.json"
+        if list(PARENT.glob(f"*/runs/{profile['id']}/collector/started.json")) != [original]:
+            raise ValueError("Третья попытка collector запрещена перед запуском")
     require_access(root)
     aid = profile["id"]
     directory = root / "runs" / aid / "collector"
@@ -733,10 +829,9 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
     (workspace / ".pi").mkdir(mode=0o700)
     immutable(workspace / ".pi/settings.json", encoded(SETTINGS))
     task_path = batch.ticket(aid, "collect")
-    basic = [
-        f'"{profile["name"]}" "{profile["institution"]}"',
-        f'"{profile["name"]}" laboratory students supervisor',
-    ]
+    titles = re.findall("«([^»]+)»", profile.get("profile_text", ""))
+    anchor = profile.get("orcid") or (titles[0] if titles else "official profile")
+    basic = [f'"{profile["name"]}" "{anchor}"', f'"{profile["name"]}" official profile']
     public_profile: dict[str, Any] = {
         key: profile[key]
         for key in (
@@ -757,6 +852,8 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
         "batch_input_sha256": sha(task_path),
         "profile": public_profile,
         "basic_queries": basic,
+        "discovered_urls": profile.get("discovered_urls", []),
+        "prior_unusable_urls": profile.get("prior_unusable_urls", []),
         "checked_at": now(),
         "budget": {"search": 4, "resources_including_robots": 8},
     }
@@ -1431,11 +1528,18 @@ def main() -> None:
     parser.add_argument("--root", required=True, type=Path)
     parser.add_argument("--limit", type=int, default=1)
     parser.add_argument("--from-root", type=Path)
-    parser.add_argument("--profiles", type=int, default=3)
+    parser.add_argument("--paired-root", type=Path)
+    parser.add_argument("--profiles", type=int, default=1)
     parser.add_argument("--recover-saved", action="store_true")
     args = parser.parse_args()
     if args.command == "freeze":
-        freeze(args.root, args.from_root, profiles=args.profiles, recover_saved=args.recover_saved)
+        freeze(
+            args.root,
+            args.from_root,
+            profiles=args.profiles,
+            recover_saved=args.recover_saved,
+            paired_root=args.paired_root,
+        )
     elif args.command == "preflight":
         preflight(args.root)
     elif args.command == "run":

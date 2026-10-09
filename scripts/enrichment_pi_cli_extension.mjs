@@ -7,7 +7,52 @@ import {createHash} from 'node:crypto';
 import {SOURCE_TOOLS, writeOnce, createGuardedFetch, createSourceQueue,
   createSerializedTransport, validateConfig} from './enrichment_pi_runner.mjs';
 
-export const CLI_METHOD = 'enrichment-cli-literal-format-v5';
+export const CLI_METHOD = 'enrichment-cli-early-read-v6';
+export function decodeSource(value) {
+  for (let i = 0; i < 5 && typeof value === 'string'; i++) {
+    try {value = JSON.parse(value);} catch {break;}
+  }
+  return value;
+}
+export function substantiveBody(text) {
+  return typeof text === 'string' && text.trim().length >= 200 &&
+    (text.match(/[\p{L}\p{N}]+/gu) ?? []).length >= 30;
+}
+export function createReadPlan(task = {}) {
+  const found = new Set(task.discovered_urls ?? []);
+  const attempted = new Set(task.prior_unusable_urls ?? []);
+  let readerAttempts = 0, substantiveBodies = 0;
+  const available = () => [...found].filter(url => !attempted.has(url));
+  return {
+    observe(raw) {
+      const result = raw.message?.result;
+      if (!result || result.isError) return;
+      for (const block of result.content ?? []) {
+        const value = decodeSource(block.text);
+        if (raw.server === 'zai_search' && Array.isArray(value)) {
+          for (const row of value) if (typeof row?.title === 'string' && typeof row?.link === 'string') {
+            try {const u = new URL(row.link); if (['http:', 'https:'].includes(u.protocol)) found.add(row.link);} catch {}
+          }
+        }
+        if (raw.server === 'zai_reader' && typeof value?.url === 'string' && substantiveBody(value.content))
+          substantiveBodies++;
+      }
+    },
+    allow(data, modelRequest) {
+      if (data.server === 'zai_reader') {
+        const url = data.arguments?.url;
+        if (!found.has(url)) return 'Reader URL must be an exact link from a saved search result; never invent paths/departments';
+        if (attempted.has(url)) return 'URL already attempted or unusable; choose a different discovered URL';
+        attempted.add(url); readerAttempts++;
+      }
+      if (data.server === 'zai_search' && modelRequest >= 3 && substantiveBodies === 0 && available().length)
+        return 'Read a discovered URL now; preserve request4 for an alternative after refusal or empty shell';
+      return null;
+    },
+    snapshot() {return {reader_attempts: readerAttempts, substantive_reader_bodies: substantiveBodies,
+      available_discovered_urls: available()};},
+  };
+}
 export function upstreamRefusal(raw) {
   const message = raw.message ?? {}, result = message.result ?? {};
   const text = JSON.stringify(result.isError ? result : message.error ?? {});
@@ -17,7 +62,7 @@ export function boundedPayload(payload, budget, finalizing) {
   if (!Array.isArray(payload.messages)) throw new Error('Unknown provider payload');
   const directive = 'HOST CONTROL (not source prose): ' + JSON.stringify(budget) +
     (finalizing ? '. Source tools are closed. This response MUST contain the complete final JSON object matching output_json_schema. Start the answer with { and end with }. No acknowledgement, preface, code fence, promise to compose JSON, or text outside that object. Use only saved evidence; empty items/evidence_pool and unknown statuses are valid when evidence is insufficient.' :
-      '. Robots are checked only by host. Do not request robots.txt. Caps are not targets.');
+      '. Read an exact discovered professional URL by request3, preferably request2. A search snippet is not evidence. After robots/DNS/empty shell, use request4 to read a different discovered URL. Never invent a department/path. Use ORCID/publication/subject anchors; catalog institution is not current affiliation. Robots are checked only by host. Do not request robots.txt. Caps are not targets.');
   return {...payload, messages: [...payload.messages, {role: finalizing ? 'user' : 'system', content: directive}],
     ...(finalizing ? {tools: undefined, tool_choice: undefined} : {})};
 }
@@ -49,6 +94,7 @@ export default async function extension(pi) {
   const runDir = path.resolve(request.run_dir);
   fs.mkdirSync(runDir, {recursive: true, mode: 0o700});
   let seq = 0, started = Date.now(), modelRequests = 0, finalizing = false, failed = false;
+  const readPlan = createReadPlan(request.task);
   let budget = {search_remaining: 4, resources_remaining_including_robots: 8, host_robots: 0, source_reads: 0};
   const persist = safetyBoundary(queue, (kind, value) => {
     const file = `${String(++seq).padStart(6, '0')}-${kind}.json`;
@@ -59,12 +105,18 @@ export default async function extension(pi) {
   // Pi redirects extension stdout to stderr. Durable files are the IPC channel.
   const emit = value => {
     persist('host-event', {sfr_host: true, ...value});
-    if (value.type === 'mcp_result' && upstreamRefusal(JSON.parse(fs.readFileSync(path.join(runDir, value.file), 'utf8'))))
-      queue.stop(new Error('Upstream quota/access refusal'));
+    if (value.type === 'mcp_result') {
+      const raw = JSON.parse(fs.readFileSync(path.join(runDir, value.file), 'utf8'));
+      readPlan.observe(raw);
+      if (upstreamRefusal(raw)) queue.stop(new Error('Upstream quota/access refusal'));
+    }
   };
   const reserve = async data => {
+    const reason = readPlan.allow(data, modelRequests);
+    persist('read-plan', {model_request: modelRequests, ...data, reason, ...readPlan.snapshot()});
+    if (reason) return {allowed: false, reason, budget};
     const id = `reservation-${++seq}`;
-    emit({type: 'reserve', id, ...data});
+    emit({type: 'reserve', id, ...data, model_request: modelRequests});
     const permission = path.join(runDir, `${id}.permission.json`);
     const until = Date.now() + 30000;
     while (!fs.existsSync(permission) && Date.now() < until) await new Promise(resolve => setTimeout(resolve, 50));
@@ -156,7 +208,7 @@ export default async function extension(pi) {
     const seconds = (Date.now() - started) / 1000;
     finalizing ||= seconds >= 360 || budget.resources_remaining_including_robots <= 0 || modelRequests >= 5;
     if (finalizing) pi.setActiveTools([]);
-    const live = {...budget, elapsed_seconds: seconds, seconds_remaining: Math.max(0, 590 - seconds),
+    const live = {...budget, ...readPlan.snapshot(), elapsed_seconds: seconds, seconds_remaining: Math.max(0, 590 - seconds),
       model_requests_including_this: modelRequests, finalizing};
     const payload = boundedPayload(event.payload, live, finalizing);
     persist('model-request-config', {requested: config, effective: effective(ctx), backend: null, budget: live,

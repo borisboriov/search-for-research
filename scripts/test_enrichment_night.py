@@ -31,6 +31,7 @@ from enrichment_night import (
     freeze_saved,
     host_events,
     locked,
+    paired_profiles,
     permission,
     policy_until,
     recover_quote,
@@ -63,6 +64,49 @@ def hanging_policy_fixture(
 
 
 class BoundedTests(unittest.TestCase):
+    def test_paired_freeze_denies_a_third_collector_attempt(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            previous = parent / "old"
+            profiles = [{"id": aid} for aid in ("A5080057408", "A5101711419", "A5111695924")]
+            immutable(previous / "sample.json", encoded(profiles))
+            immutable(
+                previous / "manifest.json",
+                encoded(
+                    {
+                        "method": "enrichment-cli-literal-format-v5",
+                        "sample_sha256": sha(previous / "sample.json"),
+                    }
+                ),
+            )
+            for row in profiles:
+                aid = row["id"]
+                for name in ("started.json", "receipt.json", "finished.json"):
+                    immutable(previous / "runs" / aid / "collector" / name, encoded({}))
+                immutable(
+                    previous / "runs" / aid / "collector/completion-status.json",
+                    encoded({"model_completed": True}),
+                )
+                immutable(previous / "results" / f"{aid}.json", encoded({}))
+            source = previous / "input.json"
+            immutable(source, encoded({}))
+            with (
+                patch("enrichment_night.PARENT", parent),
+                patch(
+                    "enrichment_night.checked_result",
+                    return_value={"model_not_called": True, "input_path": str(source)},
+                ),
+                patch("enrichment_night.events", return_value=[]),
+            ):
+                selected, proof = paired_profiles(previous)
+                self.assertEqual([row["id"] for row in selected], [row["id"] for row in profiles])
+                self.assertEqual(proof["collector_attempt"], 2)
+                immutable(parent / "second/runs/A5080057408/collector/started.json", encoded({}))
+                with self.assertRaisesRegex(ValueError, "Третья попытка"):
+                    paired_profiles(previous)
+                with self.assertRaisesRegex(ValueError, "Третья попытка"):
+                    collect(parent / "third", selected[0], Mock(spec=Batch))
+
     def test_saved_freeze_handles_source_refusal_and_creates_batches_after_manifest(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             previous, root = Path(directory) / "old", Path(directory) / "new"
