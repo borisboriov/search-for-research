@@ -203,3 +203,11 @@ null при неполном учёте. Число native provider requests н�
 сохраняется как известный subtotal, не как доказанный полный job outcome.
 Checkpoint03 — прежний проверенный снимок3completed с предположением requests3,
 не текущий итог; его не перезаписываем.
+
+Следующий условный этап реализован отдельно: `enrichment_night_control.py`,
+[одноответный контроль](../experiments/enrichment_fresh_compact_control_v1.md).
+До eligible сравнения root/выборка/calls этого этапа не создаются.
+Только2 новых ID после исключения всех прежних sample, тот же bounded-v4
+collector, выбранный компактныйSol и1 дополнительный одноответныйAstra.
+Native raw/receipt/wrapper сверяются, B не выдумывается. Метрики перечисляют
+comparison_verifier и judge отдельными стадиями, включая partial/unknown.

@@ -102,6 +102,21 @@ class NightMetricsTests(unittest.TestCase):
             self.assertIsNone(known["tokens"]["input_plus_output"])
             self.assertEqual(known["known_token_subtotals"]["input_plus_output"], 130)
 
+    def test_comparison_and_judge_attempts_are_kept_as_separate_stages(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            for relative in ("runs/a/baseline", "judges/packet-01"):
+                run = parent / "one" / relative
+                immutable(run / "started.json", encoded({"started_at_epoch": 100}))
+                immutable(
+                    run / "finished.json", encoded({"finished_at_epoch": 200, "exit_code": -9})
+                )
+            with patch("enrichment_night_metrics.NIGHT_ROOTS", ("one",)):
+                jobs = physical_jobs(parent)
+            self.assertEqual({row["stage"] for row in jobs}, {"comparison_verifier", "judge"})
+            self.assertEqual(total(jobs)["jobs"], 2)
+            self.assertIsNone(next(row for row in jobs if row["stage"] == "judge")["author_id"])
+
     def test_native_cached_and_reasoning_are_subsets(self) -> None:
         result = tokens(
             {

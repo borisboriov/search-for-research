@@ -16,6 +16,8 @@ NIGHT_ROOTS = (
     "enrichment-night-cli-v2-20261009",
     "enrichment-night-cli-v3-fixed-20261009",
     "enrichment-night-cli-v4-20261009",
+    "enrichment-gpt-compact-v1-fixed-20261009",
+    "enrichment-fresh-compact-control-v1-20261009",
 )
 IMPORTANT = (
     "personal_contact",
@@ -57,7 +59,7 @@ def partial_job(directory: Path, stage: str, root_name: str) -> dict[str, Any]:
     )
     usage: dict[str, Any] = {"usage_complete": False}
     events_path = directory / "events.jsonl"
-    if stage == "native_verifier" and events_path.exists():
+    if stage != "collector" and events_path.exists():
         for line in events_path.read_text().splitlines():
             try:
                 event = json.loads(line)
@@ -77,7 +79,7 @@ def partial_job(directory: Path, stage: str, root_name: str) -> dict[str, Any]:
         + directory.parent.name
         + ":"
         + sha(directory / "started.json"),
-        "author_id": directory.parent.name,
+        "author_id": None if stage == "judge" else directory.parent.name,
         "stage": stage,
         "root": root_name,
         "started_sha256": sha(directory / "started.json"),
@@ -108,11 +110,15 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
         directories = {
             path.parent
             for file in ("started.json", "receipt.json")
-            for path in (root / "runs").glob(f"*/*/{file}")
+            for path in [*(root / "runs").glob(f"*/*/{file}"), *(root / "judges").glob(f"*/{file}")]
         }
         for directory in sorted(directories):
             stage = directory.name
-            if stage not in ("collector", "native_verifier"):
+            if directory.parent.name == "judges":
+                stage = "judge"
+            elif stage in ("baseline", "compact"):
+                stage = "comparison_verifier"
+            if stage not in ("collector", "native_verifier", "comparison_verifier", "judge"):
                 continue
             path = directory / "receipt.json"
             if not path.exists():
@@ -132,7 +138,7 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
                 jobs[agent]["receipt_copies"].append(str(path))
                 jobs[agent]["attempt_copies"].append(str(directory))
                 continue
-            if stage == "native_verifier":
+            if stage != "collector":
                 for file, key in (
                     ("raw-result.json", "raw_result_sha256"),
                     ("events.jsonl", "events_sha256"),
@@ -143,7 +149,7 @@ def physical_jobs(parent: Path) -> list[dict[str, Any]]:
             fingerprints[agent] = digest
             jobs[agent] = {
                 "agent_id": agent,
-                "author_id": directory.parent.name,
+                "author_id": None if stage == "judge" else directory.parent.name,
                 "stage": stage,
                 "root": name,
                 "receipt_sha256": digest,
@@ -320,7 +326,7 @@ def measured(root: Path) -> dict[str, Any]:
         "physical_job_attempts": jobs,
         "physical_totals": {
             stage: total([row for row in jobs if row["stage"] == stage])
-            for stage in ("collector", "native_verifier")
+            for stage in ("collector", "native_verifier", "comparison_verifier", "judge")
         },
         "conditional_scale_scenarios": scenarios,
         "human_reviewed": 0,
