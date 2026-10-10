@@ -1,5 +1,6 @@
 """Offline source boundaries and lossless comparison projection."""
 
+import argparse
 import asyncio
 import json
 import tempfile
@@ -11,12 +12,123 @@ from unittest.mock import AsyncMock, patch
 from enrichment_contact_first import digest
 from enrichment_experiment import sha
 from enrichment_glm_compare import compact, legacy_pdf_text, summarize
-from enrichment_glm_runner import drain_provider_refusals, frozen
+from enrichment_glm_runner import (
+    check_job_budget,
+    continuation_plan,
+    drain_provider_refusals,
+    experiment,
+    frozen,
+    run_pi,
+    source_bound_candidate,
+)
 from enrichment_glm_tools import SourceHost, search_links
 from enrichment_verification import immutable_json
 
 
 class GLMRunnerTests(unittest.TestCase):
+    def test_continuation_excludes_spent_jobs_and_enforces_shared_30_cap(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sample = [{"id": f"A{i}"} for i in range(10)]
+            immutable_json(root / "sample.json", sample)
+            immutable_json(root / "manifest.json", {"sample_sha256": sha(root / "sample.json")})
+            immutable_json(root / "stopped.json", {})
+            immutable_json(root / "metrics-reconciled.json", {"day_jobs_after": 19})
+            for aid in ("A0", "A1"):
+                immutable_json(
+                    root / "model-jobs" / f"{aid}.json", {"stage": "collect", "author_id": aid}
+                )
+            immutable_json(
+                root / "transfer-SHA-index-test.json",
+                {
+                    "private_file_sha256": {
+                        str(p.relative_to(root)): sha(p) for p in root.rglob("*") if p.is_file()
+                    }
+                },
+            )
+            plan = continuation_plan(sample, root)
+            self.assertEqual(plan["groups"], [["A2"], ["A3", "A4", "A5"], ["A6", "A7", "A8", "A9"]])
+            self.assertEqual(plan["day_jobs_before"], 19)
+            new = root / "new"
+            manifest = plan | {"day_cap": 30, "max_Sol_jobs": 3}
+            with (
+                patch("enrichment_glm_runner.frozen", return_value=manifest),
+                self.assertRaisesRegex(ValueError, "excluded"),
+            ):
+                run_pi(new, sample[0])
+            for i in range(8):
+                immutable_json(new / "model-jobs" / f"G{i}.json", {"stage": "collect"})
+            with self.assertRaisesRegex(ValueError, "job cap"):
+                check_job_budget(new, manifest, "collect")
+            self.assertEqual(len(check_job_budget(new, manifest, "verify")), 8)
+            for i in range(3):
+                immutable_json(new / "model-jobs" / f"S{i}.json", {"stage": "verify"})
+            with self.assertRaisesRegex(ValueError, "job cap"):
+                check_job_budget(new, manifest, "verify")
+            (root / "sample.json").write_text("[]")
+            with self.assertRaisesRegex(ValueError, "seal mismatch"):
+                continuation_plan(sample, root)
+
+    def test_first_nonempty_pair_precedes_further_collection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sample = [{"id": f"A{i}"} for i in range(10)]
+            immutable_json(root / "sample.json", sample)
+            immutable_json(
+                root / "manifest.json",
+                {
+                    "groups": [["A2"], ["A3", "A4", "A5"], ["A6", "A7", "A8", "A9"]],
+                    "first_usable_pair_before_further_collection": True,
+                },
+            )
+            calls = []
+
+            def collect(
+                _root: Path, profile: dict[str, Any], *, probe: bool = False
+            ) -> dict[str, Any]:
+                if not probe:
+                    calls.append(profile["id"])
+                return {"done": True, "model_requests": 1}
+
+            def verify(_root: Path, index: int, _remaining: float) -> dict[str, Any]:
+                calls.append(f"verify{index}")
+                return {"index": index}
+
+            args = argparse.Namespace(
+                root=root,
+                baseline=root,
+                mode="live",
+                scope=root,
+                scope_url="scope",
+                baseline_pdf_module_path=root,
+                remaining_percent=6,
+            )
+            with (
+                patch("enrichment_glm_runner.freeze"),
+                patch("enrichment_glm_runner.run_pi", side_effect=collect),
+                patch(
+                    "enrichment_glm_runner.source_bound_candidate",
+                    side_effect=lambda _r, aid: aid != "A2",
+                ),
+                patch("enrichment_glm_compare.verify_group", side_effect=verify),
+                patch("enrichment_glm_compare.summarize", return_value={}),
+            ):
+                experiment(args)
+            self.assertEqual(calls[:5], ["A2", "verify0", "A3", "verify1", "A4"])
+            self.assertEqual(calls.count("verify1"), 1)
+            self.assertEqual(
+                [c for c in calls if c.startswith("A")], [f"A{i}" for i in range(2, 10)]
+            )
+            self.assertFalse(source_bound_candidate(root, "A2"))
+            empty = root / "empty.json"
+            immutable_json(
+                empty, {"evidence_pool": {}, "items": [], "profile_evidence": {"identity": []}}
+            )
+            immutable_json(
+                root / "prepared/A2.json", {"input_path": str(empty), "sha256": sha(empty)}
+            )
+            self.assertFalse(source_bound_candidate(root, "A2"))
+
     def test_search_requires_actual_title_link_rows_not_snippets(self) -> None:
         raw: dict[str, Any] = {
             "message": {

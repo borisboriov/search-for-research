@@ -86,8 +86,71 @@ def frozen(root: Path) -> dict[str, Any]:
     return manifest
 
 
+def continuation_plan(sample: list[dict[str, Any]], previous: Path | None) -> dict[str, Any]:
+    ids = [p["id"] for p in sample]
+    if previous is None:
+        return {
+            "day_jobs_before": 17,
+            "max_GLM_jobs": 10,
+            "groups": [ids[:2], ids[2:6], ids[6:]],
+            "scheduled_profile_ids": ids,
+            "deadline_minutes": 90,
+        }
+    ensure_not_stopped(previous.parent)
+    if not (previous / "stopped.json").exists():
+        raise ValueError("Continuation requires a stopped sealed predecessor")
+    seals = list(previous.glob("transfer-SHA-index-*.json"))
+    if len(seals) != 1:
+        raise ValueError("One immutable predecessor seal required")
+    for name, digest in read(seals[0])["private_file_sha256"].items():
+        if sha(previous / name) != digest:
+            raise ValueError("Predecessor seal mismatch")
+    old = read(previous / "manifest.json")
+    actual = read(previous / "metrics-reconciled.json")
+    jobs = [read(p) for p in (previous / "model-jobs").glob("*.json")]
+    if (
+        old["sample_sha256"] != sha(previous / "sample.json")
+        or read(previous / "sample.json") != sample
+        or actual["day_jobs_after"] != 19
+        or len(jobs) != 2
+        or {j.get("author_id") for j in jobs} != set(ids[:2])
+        or any(j.get("stage") != "collect" for j in jobs)
+    ):
+        raise ValueError("Continuation must exclude exactly the two spent frozen10 jobs")
+    remaining = ids[2:]
+    return {
+        "day_jobs_before": 19,
+        "max_GLM_jobs": 8,
+        "groups": [remaining[:1], remaining[1:4], remaining[4:]],
+        "scheduled_profile_ids": remaining,
+        "excluded_spent_profile_ids": ids[:2],
+        "deadline_minutes": 150,
+        "continuation_from": str(previous),
+        "predecessor_index_sha256": sha(seals[0]),
+        "first_usable_pair_before_further_collection": True,
+        "evaluation_scope": "remaining8 devset; agent baseline, human gold 0",
+    }
+
+
+def check_job_budget(root: Path, manifest: dict[str, Any], stage: str) -> list[dict[str, Any]]:
+    jobs = [read(p) for p in (root / "model-jobs").glob("*.json")]
+    maximum = manifest["max_GLM_jobs"] if stage == "collect" else manifest["max_Sol_jobs"]
+    if (
+        manifest["day_jobs_before"] + len(jobs) >= manifest["day_cap"]
+        or sum(j["stage"] == stage for j in jobs) >= maximum
+    ):
+        raise ValueError("Day/profile job cap")
+    return jobs
+
+
 def freeze(
-    root: Path, baseline: Path, mode: str, scope: Path, scope_url: str, pdf_support: Path
+    root: Path,
+    baseline: Path,
+    mode: str,
+    scope: Path,
+    scope_url: str,
+    pdf_support: Path,
+    continuation_from: Path | None = None,
 ) -> None:
     if root.exists():
         raise ValueError("Root already exists; no overwrite/retry")
@@ -157,6 +220,9 @@ def freeze(
     sample = read(root / "sample.json")
     if len(sample) != 10:
         raise ValueError("This bounded experiment requires frozen10")
+    if continuation_from is not None and mode != "live":
+        raise ValueError("Continuation is a distinct live remaining8 experiment")
+    plan = continuation_plan(sample, continuation_from)
     started = datetime.now(UTC)
     immutable_json(
         root / "manifest.json",
@@ -167,7 +233,9 @@ def freeze(
             "executed_head_sha": subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=REPO, text=True
             ).strip(),
-            "deadline_acquisition": (started + timedelta(minutes=90)).isoformat(),
+            "deadline_acquisition": (
+                started + timedelta(minutes=plan["deadline_minutes"])
+            ).isoformat(),
             "baseline_root": str(baseline),
             "baseline_index_sha256": sha(seal),
             "baseline_pdf_parser_sha256": parser_sha,
@@ -177,9 +245,8 @@ def freeze(
             "scope_sha256": sha(root / "scope.md"),
             "scope_url": scope_url,
             "code_sha256": snapshots,
-            "day_jobs_before": 17,
+            **plan,
             "day_cap": 30,
-            "max_GLM_jobs": 10,
             "max_Sol_jobs": 3,
             "max_model_requests_per_GLM": 12,
             "source_tool_calls_per_profile": 24,
@@ -188,11 +255,6 @@ def freeze(
             "HTTP_total_cap": 200,
             "HTTP_per_profile_cap": 20,
             "reserve_percent": 0,
-            "groups": [
-                [p["id"] for p in sample[:2]],
-                [p["id"] for p in sample[2:6]],
-                [p["id"] for p in sample[6:]],
-            ],
             "group_prompt_utf8_cap": 600000,
             "GLM_timeout_seconds": 600,
             "Sol_timeout_seconds": 900,
@@ -233,6 +295,10 @@ def drain_provider_refusals(root: Path, run: Path) -> None:
 def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[str, Any]:
     manifest = frozen(root)
     aid = profile["id"]
+    if not probe and aid not in (
+        manifest.get("scheduled_profile_ids") or [p["id"] for p in read(root / "sample.json")]
+    ):
+        raise ValueError("Profile excluded from frozen schedule")
     directory = root / ("preflight" if probe else "runs") / aid / "collector"
     if directory.exists():
         raise ValueError("No automatic repeat of a CLI job")
@@ -295,9 +361,7 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
     env = os.environ.copy()
     env["SFR_PI_REQUEST_PATH"] = str(directory / "request.json")
     if not probe:
-        jobs = list((root / "model-jobs").glob("*.json"))
-        if len(jobs) >= 13 or sum(read(p)["stage"] == "collect" for p in jobs) >= 10:
-            raise ValueError("Day/profile job cap")
+        jobs = check_job_budget(root, manifest, "collect")
         immutable_json(
             root / "model-jobs" / f"{aid}-GLM-reserved.json",
             {
@@ -306,7 +370,7 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                 "stage": "collect",
                 "model": "glm-5.3-flash",
                 "effort": "high",
-                "day_jobs_before": 17 + len(jobs),
+                "day_jobs_before": manifest["day_jobs_before"] + len(jobs),
                 "retries": 0,
             },
         )
@@ -536,6 +600,20 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
     return receipt
 
 
+def source_bound_candidate(root: Path, aid: str) -> bool:
+    prepared = root / "prepared" / f"{aid}.json"
+    if not prepared.exists():
+        return False
+    info = read(prepared)
+    path = Path(info["input_path"])
+    if sha(path) != info["sha256"]:
+        raise ValueError("Prepared input changed")
+    value = read(path)
+    return bool(value["evidence_pool"]) and bool(
+        value["items"] or any(value["profile_evidence"].values())
+    )
+
+
 def experiment(args: argparse.Namespace) -> dict[str, Any]:
     from enrichment_glm_compare import summarize, verify_group
 
@@ -546,13 +624,16 @@ def experiment(args: argparse.Namespace) -> dict[str, Any]:
         args.scope,
         args.scope_url,
         args.baseline_pdf_module_path,
+        getattr(args, "continuation_from", None),
     )
     try:
         sample = read(args.root / "sample.json")
         run_pi(args.root, sample[0], probe=True)
         manifest = read(args.root / "manifest.json")
         by_id = {p["id"]: p for p in sample}
+        first_pair_attempted = False
         for index, group in enumerate(manifest["groups"]):
+            verified_early = False
             for aid in group:
                 receipt = run_pi(args.root, by_id[aid])
                 print(
@@ -566,6 +647,19 @@ def experiment(args: argparse.Namespace) -> dict[str, Any]:
                     ),
                     flush=True,
                 )
+                if (
+                    manifest.get("first_usable_pair_before_further_collection")
+                    and not first_pair_attempted
+                    and source_bound_candidate(args.root, aid)
+                ):
+                    first_pair_attempted = True
+                    verified_early = True
+                    result = verify_group(args.root, index, args.remaining_percent)
+                    print(json.dumps({"phase": "first-pair-verify", **result}), flush=True)
+                    if result.get("error"):
+                        raise ValueError("Independent verifier chain failed; " + result["error"])
+            if verified_early:
+                continue
             result = verify_group(args.root, index, args.remaining_percent)
             print(json.dumps({"phase": "verify", **result}), flush=True)
             if result.get("error"):
@@ -595,6 +689,7 @@ def main() -> None:
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--baseline-pdf-module-path", type=Path)
+    parser.add_argument("--continuation-from", type=Path)
     parser.add_argument("--mode", choices=("live", "replay"), default="live")
     parser.add_argument("--scope", type=Path)
     parser.add_argument("--scope-url")
@@ -624,6 +719,7 @@ def main() -> None:
                 args.scope,
                 args.scope_url,
                 args.baseline_pdf_module_path,
+                args.continuation_from,
             )
             value = {"root": str(args.root), "frozen": True}
     elif args.command in ("preflight", "collect"):

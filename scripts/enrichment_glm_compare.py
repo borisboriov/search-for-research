@@ -103,14 +103,12 @@ def compact(
 
 
 def verify_group(root: Path, index: int, remaining: float) -> dict[str, Any]:
-    from enrichment_glm_runner import frozen
+    from enrichment_glm_runner import check_job_budget, frozen, source_bound_candidate
 
     manifest = frozen(root)
     if not 0 <= remaining <= 100:
         raise ValueError("Invalid official quota reading")
-    jobs = list((root / "model-jobs").glob("*.json"))
-    if len(jobs) >= 13 or sum(read(p)["stage"] == "verify" for p in jobs) >= 3:
-        raise ValueError("Day/profile job cap")
+    jobs = check_job_budget(root, manifest, "verify")
     directory = root / "groups" / f"{index:02d}"
     if directory.exists():
         raise ValueError("No repeat of a comparison group")
@@ -127,8 +125,8 @@ def verify_group(root: Path, index: int, remaining: float) -> dict[str, Any]:
     mapping: dict[str, Any] = {}
     skipped: list[dict[str, Any]] = []
     for aid in manifest["groups"][index]:
-        if not (root / "prepared" / f"{aid}.json").exists():
-            skipped.append({"author_id": aid, "reason": "collector_not_source_bound"})
+        if not source_bound_candidate(root, aid):
+            skipped.append({"author_id": aid, "reason": "collector_not_nonempty_source_bound"})
             continue
         legs = []
         for leg, parent in (("baseline", baseline), ("GLM", root)):
@@ -215,7 +213,7 @@ def verify_group(root: Path, index: int, remaining: float) -> dict[str, Any]:
             "effort": "high",
             "profiles": sorted({x["author_id"] for x in tasks}),
             "individual_tasks": len(tasks),
-            "day_jobs_before": 17 + len(jobs),
+            "day_jobs_before": manifest["day_jobs_before"] + len(jobs),
             "remaining_percent": remaining,
             "retries": 0,
         },
@@ -469,8 +467,16 @@ def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
             for p in root.glob("runs/*/collector/pi/*-http.json")
         ),
         "Sol_group_jobs": len(list((root / "model-jobs").glob("group-*-Sol-reserved.json"))),
-        "day_jobs_before": 17,
-        "day_jobs_after": 17 + len(list((root / "model-jobs").glob("*.json"))),
+        "day_jobs_before": manifest.get("day_jobs_before", 17),
+        "day_jobs_after": manifest.get("day_jobs_before", 17)
+        + len(list((root / "model-jobs").glob("*.json"))),
+        "scheduled_profile_ids": manifest.get(
+            "scheduled_profile_ids", [r["author_id"] for r in rows]
+        ),
+        "profiles_scheduled": len(manifest.get("scheduled_profile_ids", rows)),
+        "all_scheduled_profiles_nonregression": len(judged)
+        == len(manifest.get("scheduled_profile_ids", rows))
+        and all(r["meets_small_sample_nonregression"] for r in judged),
         "GLM_model_requests": sum(r["model_requests"] for r in glm),
         "GLM_usage": usage,
         "GLM_total_token_usage_exact": usage if glm_complete else None,
