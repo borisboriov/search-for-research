@@ -1,0 +1,313 @@
+{
+  "method": "glm-public-runner-v1",
+  "mode": "live",
+  "sample_sha256": "07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387",
+  "profiles_frozen": 10,
+  "profiles_paired_verified": 1,
+  "GLM_profiles_with_accepted_contact": 0,
+  "GLM_identity_counts": {
+    "supported": 1
+  },
+  "GLM_affiliation_counts": {
+    "insufficient": 1
+  },
+  "all_paired_profiles_nonregression": false,
+  "GLM_jobs": 6,
+  "GLM_jobs_with_receipt": 6,
+  "GLM_jobs_started": 6,
+  "GLM_jobs_completed": 6,
+  "GLM_jobs_source_bound": 1,
+  "Sol_jobs_started": 1,
+  "Sol_jobs_with_receipt": 1,
+  "GLM_usage_complete": true,
+  "GLM_usage_observation": "exact_reported_completed_jobs",
+  "GLM_model_requests_observed": 62,
+  "GLM_physical_model_HTTP_headers_observed": 62,
+  "Sol_group_jobs": 1,
+  "day_jobs_before": 21,
+  "day_jobs_after": 28,
+  "scheduled_profile_ids": [
+    "A5069670094",
+    "A5054791318",
+    "A5065694561",
+    "A5054586424",
+    "A5089458364",
+    "A5042154547"
+  ],
+  "profiles_scheduled": 6,
+  "all_scheduled_profiles_nonregression": false,
+  "GLM_model_requests": 62,
+  "GLM_usage": {
+    "input": 264361,
+    "output": 55727,
+    "cacheRead": 429952,
+    "cacheWrite": 0,
+    "totalTokens": 750040,
+    "reasoning_included_output": null
+  },
+  "GLM_total_token_usage_exact": {
+    "input": 264361,
+    "output": 55727,
+    "cacheRead": 429952,
+    "cacheWrite": 0,
+    "totalTokens": 750040,
+    "reasoning_included_output": null
+  },
+  "GLM_wall_seconds_exact": 1309.130956915993,
+  "Sol_total_token_usage_exact": {
+    "input_tokens": 27240,
+    "cached_input_tokens": 0,
+    "output_tokens": 3602,
+    "reasoning_output_tokens": 755
+  },
+  "Sol_wall_seconds_exact": 67.07115077972412,
+  "GLM_uncached_input": 264361,
+  "GLM_cached_input_separate": 429952,
+  "Sol_usage": {
+    "input_tokens": 27240,
+    "cached_input_tokens": 0,
+    "output_tokens": 3602,
+    "reasoning_output_tokens": 755
+  },
+  "Sol_usage_observed_lower_bound": {
+    "input_tokens": 27240,
+    "cached_input_tokens": 0,
+    "output_tokens": 3602,
+    "reasoning_output_tokens": 755
+  },
+  "Sol_usage_observation": "reported_receipts; missing_fields_unknown",
+  "missing_token_fields_are_zero": false,
+  "partial_sum_interpretation": "Numeric sums are observed lower bounds if any job/field is incomplete; never an exact total.",
+  "Sol_uncached_input": 27240,
+  "baseline_verifier_usage_same_evaluated_profiles": {
+    "input_tokens": 33821,
+    "cached_input_tokens": 0,
+    "output_tokens": 2440,
+    "reasoning_output_tokens": 505
+  },
+  "baseline_verifier_wall_seconds_same_evaluated_profiles": 56.21970725059509,
+  "GLM_wall_seconds_sum": 1309.130956915993,
+  "Sol_wall_seconds_sum": 67.07115077972412,
+  "HTTP_reserved": 45,
+  "HTTP_started": 45,
+  "logical_search_queries": 23,
+  "coordinator_tokens": null,
+  "coordinator_wall_seconds": null,
+  "subscription_cost_usd": null,
+  "human_reviewed": 0,
+  "human_gold": 0,
+  "Astra_jobs": 0,
+  "scope_equality": "Only paired evaluated profiles and role-specific costs are comparable. Baseline coordination/search is unknown; grouped verifier differs in batching. No API-dollar or 1000/10000 scaling claim.",
+  "profiles": [
+    {
+      "author_id": "A5070748575",
+      "name": "Salman Ahmadi‐Asl",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "historical": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "supported",
+        "readiness": "unknown",
+        "unaccepted_atoms": 0
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5047877230",
+      "name": "Evgeny Styrin",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 0,
+        "contact_applicability": {},
+        "identity": "supported",
+        "current_affiliation": "supported",
+        "readiness": "unknown",
+        "unaccepted_atoms": 1
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5006480668",
+      "name": "О. В. Тушавина",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "historical": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 4
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5011172734",
+      "name": "Alena Nastulyavichus",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "undated": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 1
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5069670094",
+      "name": "И. В. Морозов",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "undated": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "supported",
+        "readiness": "unknown",
+        "unaccepted_atoms": 0
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5054791318",
+      "name": "Alexey K. Kovalev",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 0,
+        "contact_applicability": {},
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 8
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5065694561",
+      "name": "Mikhail Derkach",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "undated": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "supported",
+        "readiness": "unknown",
+        "unaccepted_atoms": 18
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5054586424",
+      "name": "Alexey Maslov",
+      "status": "paired_agent_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "historical": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 4
+      },
+      "rechecked_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "historical": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 4
+      },
+      "GLM": {
+        "contacts": 0,
+        "contact_applicability": {},
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 0
+      },
+      "meets_small_sample_nonregression": false,
+      "differences": {
+        "lost_rechecked_contacts": 1,
+        "identity_loss": false,
+        "affiliation_loss": false,
+        "unaccepted_GLM_atoms": 0,
+        "contact_date_applicability_changes_needing_explanation": 0,
+        "original_baseline_changed_on_recheck": true
+      }
+    },
+    {
+      "author_id": "A5089458364",
+      "name": "Д. В. Исангулова",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "undated": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "insufficient",
+        "readiness": "unknown",
+        "unaccepted_atoms": 1
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    },
+    {
+      "author_id": "A5042154547",
+      "name": "Maria S. Ledovskaya",
+      "status": "not_independently_verified",
+      "human_reviewed": 0,
+      "original_baseline": {
+        "contacts": 1,
+        "contact_applicability": {
+          "undated": 1
+        },
+        "identity": "supported",
+        "current_affiliation": "supported",
+        "readiness": "unknown",
+        "unaccepted_atoms": 0
+      },
+      "rechecked_baseline": null,
+      "GLM": null,
+      "meets_small_sample_nonregression": null
+    }
+  ]
+}

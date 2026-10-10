@@ -1584,3 +1584,118 @@ quotes/source bodies/receipts, recovery provenance, STOP, code snapshots и
 проверки остаются в новом private root; в git нет emails/сырых цитат. Старые
 baseline/partial/seals не перезаписывались. Итоговый SHA-index и подтверждение
 прекращения процессов сохраняются перед передачей.
+
+
+### GLM remaining6: завершённый проход, непригодные пакеты и потеря исторического контакта
+
+**Вывод.** Единственный frozen40e560d прошёл все6 оставшихся профилей без
+нового системного блокера: source-bound1/6, independently paired1/6.
+Четыре пакета отвергнуты за недословные цитаты, один — за URL без сохранённого
+тела. В единственной паре Alexey Maslov сохранена supported identity, но GLM
+не сохранил один подтверждённый повторной агентской проверкой исторический
+личный контакт2007. Это **не потеря подтверждённого нынешнего адреса**:
+applicability baseline historical. Данная ограниченная версия автономного
+GLM-сборщика ненадёжна и не выполняет критерий сохранения полезных фактов.
+Качество остальных5 семантически не сравнено; общий вывод «GLM слабее Sol»
+из этого devset не следует. Human/gold0, baseline8contacts не человеческий gold.
+
+Постановка — [remaining6 scope](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6102719319).
+Frozen head `40e560deac8049828cab3c347e307bf352bea411`, base/merge base
+`accc508cd398b5e57105fe1c45f906f89330d636`. Pre-live расширен только план:
+две chain seals, excluded4, счёт21→≤30, groups2+2+2; по независимому замечанию
+добавлен global STOP при systemic host_error, включая пустой текст ошибки.
+[Fail5e](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6102752412)
+закрыт [Pass40e](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6102776693)
+до source/model calls. Instruction/schema AST, binder, decoderb810 и полная
+semantic-v3 неизменны. Ни код, ни план, ни prompt во время прохода не менялись.
+
+Root `enrichment-glm-remaining6-20261011`, freeze 2026-10-10T22:18:46.073540+00:00;
+новый finite deadline 2026-10-11T00:48:46.073540+00:00 (150минут),
+STOP 2026-10-10T22:41:47.327516+00:00; full root wall 1381.254s.
+Предыдущие2+2 attempts, их STOP/raw/metrics/seals и deadlines сохранены;
+четыре ID не повторялись. Новые6 и старые2+2 — разные версии/проходы,
+не чистый единый10-run. Старый агентский baseline на scheduled6 имел
+5contact profiles, supported identity6,
+current affiliation3; это не gold.
+
+| Профиль | GLM requests | Пригодный packet | Парная проверка | Итог |
+|---|---:|---|---|---|
+| И. В. Морозов (A5069670094) | 11 | нет | нет | Недословная цитата |
+| Alexey K. Kovalev (A5054791318) | 11 | нет | нет | Недословная цитата |
+| Mikhail Derkach (A5065694561) | 7 | нет | нет | URL без сохранённого тела |
+| Alexey Maslov (A5054586424) | 11 | да | да | Потерян исторический контакт2007; identity сохранена |
+| Д. В. Исангулова (A5089458364) | 11 | нет | нет | Недословная цитата |
+| Maria S. Ledovskaya (A5042154547) | 11 | нет | нет | Недословная цитата |
+
+**Семантика только одной пары.** Повторно проверенный baseline1 исторический
+контакт, GLM0: lost contact1. Supported identity1→1; current affiliation
+insufficient→insufficient, readiness unknown→unknown. Identity/affiliation
+loss0, непринятых GLM atoms0 и изменений даты/применимости общих контактов0
+**только в этой паре**; у остальных5 эти показатели unknown/null.
+`original_baseline_changed_on_recheck=true` сохранён в первичных метриках:
+полное структурное сравнение видит дедупликацию одинакового source URL3→1
+при lossless compaction. После нормализации списка источников факты,
+значения, дата2007 и historical applicability совпадают; это не смысловая
+смена baseline-оценки. Отдельный private annotation фиксирует эту оговорку.
+
+**Источники и ошибки извлечения.** Ошибки source tool возвращались локально,
+счётчик их вызовов — 27, категории {"other_local_source_error": 6, "cached_unsuccessful_source": 3, "unregistered_URL": 8, "robots_refusal": 10}.
+Это не число уникальных недоступных источников:14 первичных source refusals
+(9robots,4access,1invalid UTF-8),4 cached failures без нового HTTP retry,
+8 незарегистрированных URL в выборе GLM и1 попытка превысить profile search
+limit. Последние9 относятся к использованию инструментов моделью, а не
+недоступности сайта. Подробная атрибуция сохранена отдельным private JSON;
+первичная более грубая группировка не переписана. Controlled HTTP45reserved/45started,
+20accepted source records: {"direct_http": 14, "structured_orcid": 6}.
+Search23 logical query reservations (не23 успешных поиска): {"public_DuckDuckGo_HTML": 4, "native_Zai_search": 19}; source tool calls70.
+Native Pi/Z.ai сам выбирал реальные search rows/наблюдённые href и атомы;
+main Sol source choices0, baselineemails/deepURLs/verdicts не передавались.
+Source-binding failures4+1 отделены от source availability: они означают
+непригодные доказательства в output, а не отсутствие контактов или пять
+семантически измеренных потерь. Непригодные packets не расходовали Sol.
+Группы00/02 skipped без modeljob; группа01 проверила только пригодный Maslov.
+Полные индивидуальные inputs/рубрика не сокращались ради context cap.
+
+**Расходы.** New GLM6 reserved/started/completed/receipts;62 physical model
+requests и62 headers observations200. Max12/model requests,24/source calls,
+4/search на человека не превышены. Sol1 groupjob,2 individual tasks,1paired;
+shared cycle21→28/30, Astra0, retry0; providerquota отказа и общего runtime
+сбоя не наблюдалось. GLM reported usage complete: input uncached264361,
+cacheRead429952, cacheWrite0, output55727, total750040; reasoning отдельно
+не раскрыт и входит в output. Collector wall1309.131s включает source I/O.
+Sol reported input27240 (cached0), output3602 (reasoning755 уже внутри),
+total30842, wall67.071s. Новый измеренный model total780882, сумма wall1376.202s;
+эти суммы не включают неизвестную стоимость search/backend/разработки.
+Native Sol requested6.1/high, tools0; actual server model/effort/runtime
+не раскрыты receipt. Клиент сообщил CodeMode host disabled, но вернул
+полный schema/SHA-valid результат; code tools этому verifier не требовались.
+
+Для того же одного профиля прежний verifier: input33821, output2440,
+total36261, wall56.220s. Нынешний verifier оценивает две стороны, прежний одну;
+малое различие этих затрат не доказывает экономию сборщика. Baseline459511
+tokens/645.630s — только10 verifier, collector/coordinator/search неизвестны.
+Прежний первый GLM2:17requests/минимум167753tokens/day17→19;
+следующий GLM2:19requests/минимум222035tokens/day19→21;
+нынешний GLM6:62requests/750040tokens/Sol1/day21→28. Старые partial totals
+не превращены в точные; даты не сбрасывают30-job cap. Покупок/reset/paid API
+и новых аккаунтов не было; official quota перед freeze4%, reserve0 разрешён.
+Accountwide delta не приписывается эксперименту. Экономия полного цикла,
+APIUSD и масштабирование1000/10000 не установлены.
+
+**Проверки и передача.** До freeze lint/typecheck/255unittest388pytestPASS,
+docs-check с actual meta9002PASS, независимый pre-livePASS. Audit strict
+раскрывает только deps-node/fs-trivy из #189; текущие frozen40e checks/webPASS,
+auditFAIL, реальный CI checkout/parents сохранены private. Финальное ревью
+docs/results и CI финального head закрепляются в PR отдельно; handoff до
+зелёного audit не подтверждён. DoD bounded6 выполнен по scope/лимитам/
+immutable evidence/пригодной полной паре/STOP; критерий nonregression и
+надёжного контакта не выполнен. Merge/deploy/продуктовая приёмка не заявлены.
+
+Источник чисел — immutable private `metrics.json`, `execution-status.json`,
+`execution-evidence-summary.json`, receipts и source/model ledgers. Public
+JSON [metrics](enrichment_glm_remaining6_20261011.metrics.json) и
+[status](enrichment_glm_remaining6_20261011.status.json) совпадают байт-в-байт
+с private projections. Primary metrics не переписаны, private контакты и
+quotes вне git. Итоговый transfer SHA-index и прекращение процессов/записи
+будут зафиксированы в комментарии PR. Новых экспериментов после этого STOP
+не назначено; #189 не исправлялась попутно.

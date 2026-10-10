@@ -169,3 +169,13 @@ remaining8 root: проверяются обе предыдущие SHA-печа
 При новом общем системном блокере, quota refusal или deadline — итоговый
 STOP, без новой серии починок и повторных model jobs. Это третья отдельная
 попытка на том же devset, прежние2+2 учитываются раздельно, human/gold0.
+
+
+Последний frozen40e560d завершил6/6 collect без общего runtime сбоя;
+source-bound1/6, paired1/6. Binder отверг4 недословные цитаты и1 URL без
+savedbody. В одной паре потерян historical контакт2007; identity сохранена,
+current affiliation/readiness не подтверждены. GLM62requests/750040tokens,
+Sol1/30842tokens, cycle28/30. Эта версия метода ненадёжна, nonregression
+не выполнен; остальные5 без семантической оценки, human/gold0, экономия
+полного цикла неизвестна. Данные и ограничения — в отдельном разделе
+[отчёта](../reports/enrichment_night_20261009.md) и generated remaining6 JSON.
