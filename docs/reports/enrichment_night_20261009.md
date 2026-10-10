@@ -1266,3 +1266,71 @@ eligible packet,4search/8resources/6modelrequests/600s/direct≤6HTTP. День7
 полного code test suite. #189 вне scope, audit не ослабляется. Product docs,
 паспорт/main/merge/deploy/globalconfig не менялись; полезный сбор по-прежнему
 не доказан и техническая достоверность не заменяет продуктовую приёмку.
+
+### 10.10: ограниченный проход по наблюдаемым href ВШЭ
+
+[Новое поручение до source calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6100274477):
+root → HTML href → каталог/персональная страница, максимум2перехода и6новыхHTTP
+includingrobots, concurrency1,30s/request, robots64KiB/HTML2MiB, без
+redirects/retries/LLMplanner/JSbrowser/OCR/новых библиотек. Новый private root
+`enrichment-observed-links-hse-20261010`. Baseaccc/head854fa3b подтверждены API,
+собственная ветка clean, другого writer в этом checkout нет. Цель — A5047877230
+из прежнего frozen sample; имя/ORCID/публикационные якоря сохранены без ожидаемого
+email. Не новый профиль и не collector attempt#3. GLM/Astra0; максимум1полный
+Sol6.1/high только при полученной person page с предметными identity anchors
+и буквальным контактом. Reserve0 до фактического отказа, без покупок/reset/обхода.
+
+Saved reader content сначала прочитан офлайн через HTMLParser: actual `<a href>`0.
+Это Markdown с текстовыми ссылками, не исходный HTML; metadata не авторизуют
+неизвестный URL. Поэтому использовано разрешённое исключение — один direct
+HTML GET exact `https://www.hse.ru`, дословно из saved search/reader, после fresh
+robots. Frozen runner SHA и source module SHA, профиль и source SHA записаны
+до calls. Существующий `Loader.load` переиспользован с private diagnostic request
+adapter: root+2observedHTML допустимы до3HTML, общий бюджет6; старые collector
+лимиты не менялись. HTTP receipts/body сохраняются прежним способом внеgit;
+headers/credentials не экспортируются. Поиск/reader MCP не вызывались.
+
+| Физический новый запрос | HTTP | Полное тело | Результат |
+|---|---:|---|---|
+| `https://www.hse.ru/robots.txt` | 200 | 3412bytes | Root разрешён для прежнего SFRExperiment user-agent, Crawl-delay3 соблюдён |
+| `https://www.hse.ru` | 302 | Нет; savedbytes0 | Redirect не переходили, retry нет; actual HTML не получен |
+
+**До href/целевой страницы не дошли.** Non200 body не сохраняется действующим
+bounded loader; `Location` также не захвачен, конечный адрес неизвестен и не
+угадывается. Это HTTP302, не ошибочно названный403/CAPTCHA или quota отказ.
+Сетевой проход остановлен после2/6HTTP, link transitions0/2; нет основания
+использовать остаток бюджета на произвольные пути или повтор root. Inherited
+domain-stop scan пяти прошлых contact roots не обнаружил domain bans; старые
+job STOP не снимаются и не превращаются в новый live run. ACM не трогали.
+
+Person HTML0, предметные identity evidence0, буквальные контакты цели0;
+GLM/Sol/Astra jobs0, profiletokens0, день остаётся7/30. Sol не вызван из-за
+отсутствия допустимого материала; output/receipt/verdict модели не выдуманы.
+Official Codex remaining14% после прохода совпадает с переданным координатором
+remaining14%, account-wide; затраты разработки/ревью не измерены как profilejobs.
+HTTP latency sum и исходные секунды — в [числовом snapshot](enrichment_observed_links_hse_20261010.metrics.json);
+общий wall неизвестен и не заменён суммой latency. Root STOP; остальные8/A500
+не запускались. Полезный результат отсутствует, поэтому переиспользуемая
+link-discovery функция в коде репозитория не оставлена: private diagnostic
+runner сохранён с измеренным SHA, без заявления о работающем crawler.
+
+Пять meaningful offline MockTransport проверок PASS: дословный starttag/href,
+anchor/parent/sourceSHA и отказ чужогоhost/изменяющего basehref; redirect без
+followup/retry; bounded body отказ;6HTTP/3HTMLbudget до сети; root STOP/domain403
+до сети. Дополнительных реальных HTTP0; actual measurement неизменён. Предыдущие
+23sealedSHA офлайн-диагноза854 повторно совпали, его результаты/STOP сохранены.
+
+**Одна конкретная альтернатива:** отдельно разрешить новый ограниченный проход
+с максимум одним университетским redirect от exact root. Сначала сохранить
+дословный `Location`, закрепить observed destination, проверить его robots,
+только затем GET; без guessed paths/цепочек redirect, прежних403/429/login/
+CAPTCHA обходов и новых сервисов. Общий HTTPbudget обязан включать root302,
+destination robots/HTML и последующие переходы; два href-перехода остаются
+отдельным лимитом. Это изменение текущего no-redirect разрешения, здесь оно
+не реализовано и не выполнялось. Вузовский catalogue/API в HTML не наблюдался,
+поэтому его наличие или конкретный путь не заявляются.
+
+Изменения в git только документов: отчёт и новый numeric snapshot. Нужны
+docs-check с actualmeta, независимое ревью новой дельты и актуальные CI/handoff;
+полные кодовые проверки повторно не запускаются. #189 вне scope, критерии audit
+не меняются. Product docs/паспорт/main/merge/deploy/globalconfig не менялись.
