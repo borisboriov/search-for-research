@@ -1639,13 +1639,18 @@ loss0, непринятых GLM atoms0 и изменений даты/приме
 смена baseline-оценки. Отдельный private annotation фиксирует эту оговорку.
 
 **Источники и ошибки извлечения.** Ошибки source tool возвращались локально,
-счётчик их вызовов — 27, категории {"other_local_source_error": 6, "cached_unsuccessful_source": 3, "unregistered_URL": 8, "robots_refusal": 10}.
+счётчик ошибок именно `sfr_source` — 27, категории {"other_local_source_error": 6, "cached_unsuccessful_source": 3, "unregistered_URL": 8, "robots_refusal": 10}.
 Это не число уникальных недоступных источников:14 первичных source refusals
 (9robots,4access,1invalid UTF-8),4 cached failures без нового HTTP retry,
 8 незарегистрированных URL в выборе GLM и1 попытка превысить profile search
 limit. Последние9 относятся к использованию инструментов моделью, а не
 недоступности сайта. Подробная атрибуция сохранена отдельным private JSON;
-первичная более грубая группировка не переписана. Controlled HTTP45reserved/45started,
+первичная более грубая группировка не переписана. Отдельно native_search
+отклонил ещё6 IPC запросов по Frozen search cap без новых search reservations:
+это дополнительно к1 limit отказу public_search внутри sfr_source. Всего
+наблюдаемых denied IPC tool requests33; дополнительные6 не увеличивают
+23 logical queries, не являются provider quota refusal и не превышают cap.
+Controlled HTTP45reserved/45started,
 20accepted source records: {"direct_http": 14, "structured_orcid": 6}.
 Search23 logical query reservations (не23 успешных поиска): {"public_DuckDuckGo_HTML": 4, "native_Zai_search": 19}; source tool calls70.
 Native Pi/Z.ai сам выбирал реальные search rows/наблюдённые href и атомы;
