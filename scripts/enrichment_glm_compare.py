@@ -457,12 +457,9 @@ def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
         "GLM_jobs_source_bound": len(list((root / "prepared").glob("*.json"))),
         "Sol_jobs_started": len(list(root.glob("groups/*/native_verifier/started.json"))),
         "Sol_jobs_with_receipt": len(sol),
-        "GLM_usage_complete": len(glm)
-        == len(list((root / "model-jobs").glob("*-GLM-reserved.json")))
-        and all(r["usage_complete"] for r in glm),
+        "GLM_usage_complete": glm_complete,
         "GLM_usage_observation": "exact_reported_completed_jobs"
-        if len(glm) == len(list((root / "model-jobs").glob("*-GLM-reserved.json")))
-        and all(r["usage_complete"] for r in glm)
+        if glm_complete
         else "observed_lower_bound_incomplete_jobs",
         "GLM_model_requests_observed": len(
             list(root.glob("runs/*/collector/pi/*-model-request-config.json"))

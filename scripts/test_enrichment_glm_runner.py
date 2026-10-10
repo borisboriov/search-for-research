@@ -234,6 +234,25 @@ class GLMRunnerTests(unittest.TestCase):
             self.assertIsNone(partial["Sol_uncached_input"])
             self.assertIsNone(partial["Sol_total_token_usage_exact"])
             self.assertNotEqual(partial["Sol_usage_observation"], "no_jobs")
+            immutable_json(
+                root / "runs/A0/collector/receipt.json",
+                {
+                    "author_id": "A0",
+                    "usage_complete": True,
+                    "token_fields_complete": False,
+                    "token_usage": {},
+                    "model_requests": 1,
+                    "wall_elapsed_seconds": 1,
+                },
+            )
+            with patch("enrichment_glm_compare.facts", return_value=unknown):
+                summarize(root, suffix="-missing-GLM-fields")
+            missing = json.loads((root / "metrics-missing-GLM-fields.json").read_text())
+            self.assertFalse(missing["GLM_usage_complete"])
+            self.assertIsNone(missing["GLM_total_token_usage_exact"])
+            self.assertEqual(
+                missing["GLM_usage_observation"], "observed_lower_bound_incomplete_jobs"
+            )
 
     def test_late_refusal_durable_drain_blocks_next_job(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
