@@ -1,6 +1,7 @@
 """Офлайн: observed links, API policy, общий бюджет и literal source seals."""
 
 import asyncio
+import shutil
 import socket
 import tempfile
 import unittest
@@ -11,9 +12,15 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import httpx
-from enrichment_contact_first import check_quota, checked_source, contact_packet
-from enrichment_public_sources import PublicLoader, observed_links
-from enrichment_verification import immutable_json
+from enrichment_compare_loading import extract
+from enrichment_contact_first import check_quota, checked_source, contact_packet, digest
+from enrichment_public_sources import (
+    MATHNET_DECODER,
+    PublicLoader,
+    observed_links,
+    render_mathnet_contacts,
+)
+from enrichment_verification import immutable_bytes, immutable_json
 
 URL = "https://university.example/person"
 API = "https://pub.orcid.org/v3.0/0000-0002-2614-0146/record"
@@ -187,3 +194,63 @@ class PublicSourceTests(unittest.TestCase):
             check_quota(root, 13, "verify")
         with tempfile.TemporaryDirectory() as temp, self.assertRaises(ValueError):
             check_quota(Path(temp), 13, "verify")
+
+    def test_public_decoder_derivation_is_reproducible_and_tamper_blocks(self) -> None:
+        rendered = '<a href="mailto:jane@example.edu">jane@example.edu</a>'
+        encoded = "".join(chr(65 + ord(c) // 16) + chr(65 + ord(c) % 16) for c in rendered)
+        tag = '<script src="/js/func_string.js?v=8.7"></script>'
+        body = (
+            "<h1>Jane Doe</h1>"
+            + tag
+            + ("<script>document.write(decode_email('" + encoded + "'));</script>")
+        )
+        js_bytes = MATHNET_DECODER.encode()
+        self.assertIn(rendered, render_mathnet_contacts(body, js_bytes))
+        with self.assertRaises(ValueError):
+            render_mathnet_contacts(body, js_bytes.replace(b"16", b"15"))
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.prepare(root)
+            source = self.load(
+                root,
+                lambda req: httpx.Response(
+                    404 if req.url.path == "/robots.txt" else 200,
+                    text=body,
+                    headers={"content-type": "text/html"},
+                ),
+            )
+            original = root / "sources" / f"source-{digest(URL.encode())}.json"
+            target = root / "rendered"
+            shutil.copytree(root / "sources", target)
+            (target / original.name).unlink()
+            js_path = root / "decoder-receipt.json"
+            immutable_bytes(root / "decoder.js", js_bytes)
+            immutable_json(
+                js_path,
+                {
+                    "url": "https://university.example/js/func_string.js?v=8.7",
+                    "status": 200,
+                    "complete": True,
+                    "content_type": "application/javascript",
+                    "body_path": "decoder.js",
+                    "body_sha256": digest(js_bytes),
+                },
+            )
+            static = extract(render_mathnet_contacts(body, js_bytes), URL)["text"]
+            (target / source["text_path"]).write_text(static)
+            derived = source | {
+                "rendering_method": "mathnet-email-v1",
+                "parent_source_path": str(original),
+                "parent_source_sha256": digest(original.read_bytes()),
+                "decoder_receipt_path": str(js_path),
+                "decoder_receipt_sha256": digest(js_path.read_bytes()),
+                "decoder_literal_tag": tag,
+                "decoder_literal_src": "/js/func_string.js?v=8.7",
+                "text_sha256": digest(static.encode()),
+            }
+            immutable_json(target / original.name, derived)
+            packet = contact_packet(target, {"id": "a"}, [derived], candidate_cap=32)
+            self.assertEqual(packet["items"][0]["value"], "jane@example.edu")
+            (root / "decoder.js").write_bytes(b"changed")
+            with self.assertRaises(ValueError):
+                checked_source(target, derived)

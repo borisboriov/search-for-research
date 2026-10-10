@@ -265,6 +265,43 @@ def checked_source(root: Path, source: dict[str, Any]) -> tuple[str, str]:
     response = read(root / f"request-result-{request_key}.json")
     if any(response[k] != source[k] for k in response):
         raise ValueError("Источник не совпадает с HTTP receipt")
+    if source.get("api_policy_record_path"):
+        policy_path = Path(source["api_policy_record_path"])
+        if digest(policy_path.read_bytes()) != source["api_policy_sha256"]:
+            raise ValueError("API access policy changed")
+    rendered_body = None
+    if source.get("rendering_method"):
+        from enrichment_public_sources import render_mathnet_contacts
+
+        if source["rendering_method"] != "mathnet-email-v1":
+            raise ValueError("Unknown rendering method")
+        parent_path = Path(source["parent_source_path"])
+        if digest(parent_path.read_bytes()) != source["parent_source_sha256"]:
+            raise ValueError("Parent source changed")
+        parent_source = read(parent_path)
+        parent_body, _ = checked_source(parent_path.parent, parent_source)
+        if any(parent_source[k] != source[k] for k in ("url", "body_sha256", "decoded_sha256")):
+            raise ValueError("Rendered source differs from parent bytes")
+        js_path = Path(source["decoder_receipt_path"])
+        if digest(js_path.read_bytes()) != source["decoder_receipt_sha256"]:
+            raise ValueError("Decoder receipt changed")
+        js = read(js_path)
+        if Path(js["body_path"]).name != js["body_path"]:
+            raise ValueError("Decoder body path leaves source root")
+        js_body = (js_path.parent / js["body_path"]).read_bytes()
+        tag = source["decoder_literal_tag"]
+        src = source["decoder_literal_src"]
+        if (
+            js["status"] != 200
+            or not js["complete"]
+            or "javascript" not in js["content_type"]
+            or digest(js_body) != js["body_sha256"]
+            or tag not in parent_body
+            or src not in tag
+            or urljoin(source["url"], src) != js["url"]
+        ):
+            raise ValueError("Decoder not bound to literal parent script")
+        rendered_body = render_mathnet_contacts(parent_body, js_body)
     raw = (root / source["body_path"]).read_bytes()
     # read_text() нормализует CRLF и ломает SHA/offsets сохранённых исходников.
     decoded = (root / source["decoded_path"]).read_bytes().decode("utf-8")
@@ -288,7 +325,7 @@ def checked_source(root: Path, source: dict[str, Any]) -> tuple[str, str]:
     if expected_decoded != decoded:
         raise ValueError("Декодированное тело не совпадает с HTTP bytes")
     expected = (
-        extract(decoded, source["url"])["text"]
+        extract(rendered_body or decoded, source["url"])["text"]
         if source["source_kind"] == "direct_http"
         else decoded
         if source["source_kind"] == "direct_pdf"
@@ -307,9 +344,11 @@ async def structured_orcid(loader: Loader, profile: dict[str, Any]) -> dict[str,
 
 
 def contact_packet(
-    root: Path, profile: dict[str, Any], sources: list[dict[str, Any]]
+    root: Path, profile: dict[str, Any], sources: list[dict[str, Any]], *, candidate_cap: int = 8
 ) -> dict[str, Any]:
     """Код извлекает кандидаты, Sol решает attribution; receipts моделей не выдумываются."""
+    if type(candidate_cap) is not int or not 1 <= candidate_cap <= 32:
+        raise ValueError("Candidate cap must be an integer in 1..32")
     pool: dict[str, Any] = {}
     items: list[dict[str, Any]] = []
     identity = []
@@ -395,7 +434,7 @@ def contact_packet(
                         (address, start, start + len(needle), static, "structured_json")
                     )
         seen = set()
-        for address, start, end, body, representation in candidates[:8]:
+        for address, start, end, body, representation in candidates[:candidate_cap]:
             if address in seen:
                 continue
             seen.add(address)
@@ -426,7 +465,7 @@ def contact_packet(
         },
         "limits": {
             "context_chars_per_source": 20000,
-            "candidates_per_source": 8,
+            "candidates_per_source": candidate_cap,
             "absence_outside_sources": "unknown",
         },
     }

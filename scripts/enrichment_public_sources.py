@@ -94,6 +94,47 @@ def pdf_text(raw: bytes) -> str:
     return text
 
 
+MATHNET_DECODER = """function decode_email(a) {
+    var t = '';
+    for (i = 0; i < a.length; i++) {
+        if (a.charCodeAt(i) <= 127) {
+            t += String.fromCharCode((a.charCodeAt(i) - 65) * 16 + (a.charCodeAt(++i) - 65))
+        } else { t += a.charAt(i); }
+    }
+    return t;
+}"""
+
+
+def render_mathnet_contacts(body: str, script: bytes) -> str:
+    """Воспроизвести точную публичную функцию, без исполнения произвольного JS."""
+    text = script.decode("latin1")
+    start = text.find("function decode_email(a)")
+    if start < 0:
+        raise ValueError("No public decode_email function")
+    first_brace, depth = text.find("{", start), 0
+    for end in range(first_brace, len(text)):
+        depth += (text[end] == "{") - (text[end] == "}")
+        if depth == 0:
+            break
+    if re.sub(r"\s+", "", text[start : end + 1]) != re.sub(r"\s+", "", MATHNET_DECODER):
+        raise ValueError("Public decoder differs from supported literal function")
+
+    def replace(match: re.Match[str]) -> str:
+        value = match[1]
+        if len(value) % 2 or not re.fullmatch(r"[A-P]+", value):
+            raise ValueError("Unsupported public email encoding")
+        return "".join(
+            chr((ord(value[i]) - 65) * 16 + ord(value[i + 1]) - 65) for i in range(0, len(value), 2)
+        )
+
+    return re.sub(
+        r"<script\b[^>]*>\s*document\.write\(decode_email\(['\"]([A-Za-z]+)['\"]\)\);?\s*</script>",
+        replace,
+        body,
+        flags=re.I,
+    )
+
+
 def protection(body: str) -> bool:
     title = re.search(r"<title[^>]*>(.*?)</title", body, re.I | re.S)
     markers = ("captcha", "just a moment", "access denied", "вход в систему")
