@@ -810,3 +810,156 @@ byte-identical private и не содержит email-значений/source bo
 старые метрики/roots и продуктовые документы/паспорт не менялись. Docs-check и
 независимая docs-only сверка; актуальные review/CI/handoff — в PR. #189 отдельный
 blocker; после передачи запись и собственные процессы остановлены.
+
+
+## Дневной contact-first 10.10: три регрессии, свежий запуск заблокирован approval
+
+[Постановка до calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097281300),
+[частичная обратная связь Бориса](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097216802).
+Новый ограниченный дневной проход; прежняя ночь, STOP, входы и результаты не
+возобновляются. Три отзыва — качественный сигнал, не полный человеческий эталон.
+Новая информация пользователя хранится отдельно; expected email/ручные вердикты
+не добавлены в model-visible inputs. Известные положительные примеры — regression,
+они не дают prevalence или оценку покрытия новых людей.
+
+### Получение и привязка
+
+Композиция существующих enrichment компонентов: SimpleHTML/extract, robots policy,
+DomainStops/Budget, public_candidates/orcid_id, prepare_control/semantic-v3,
+штатный PiCLI fallback и native Sol verifier. Production/каталог не меняются;
+новых зависимостей/сервисов/фреймворка/биллинг-пути нет. Добавлен отдельный
+`enrichment_contact_first.py` для bounded загрузки, code candidates и strict seals;
+в существующем ORCID фильтре учитываются PUBLIC/public и только публичные links.
+
+DirectHTTP имеет собственные URL/checked_at/status/raw-byte SHA/decoded SHA/text SHA,
+registry path/SHA и точные Unicode offsets. Перед prepare и verifier bytes,
+декодирование, SimpleHTML derivation, registry/receipt и literal spans сверяются;
+готовым произвольным packet binder не обходится. MCP fallback перепривязывается
+существующим MCP binder и сохраняет настоящий receipt; HTTP не выдаётся за MCP.
+Code collector честно записывает model_called=false. Студентский набор не следует
+из email. Дата HTTP-проверки не становится датой сведений о человеке.
+
+Адрес Шумейко хранится в **параметре mail URL изображения** (`mail.php?mail=…`)
+в исходном HTML; mailto отсутствует. Код разбирает тот же same-origin img attribute,
+без загрузки изображения/OCR/угадывания/хардкода адреса. Полное тело7201байт,
+static text829символов; имя, Бауман и предметный якорь присутствуют.
+Статус аспиранта недатирован; актуальная должность и готовность брать студентов
+unknown. Первый native Sol/high подтвердил принадлежность контакта.
+
+ORCID ранний кэшируемый этап реализован через существующий structured parser,
+публичные emails/researcher URLs остаются кандидатами. Live `pub.orcid.org/robots.txt`
+вернул200/Disallow; API record GET **0**. Запрет сохраняется; для следующих профилей
+использована та же проверка без новых robots-запросов. Это inaccessible, не отсутствие
+контакта в других источниках. Качество нового live ORCID извлечения не измерено.
+Публичные ссылки доступны в candidates для последующего ограниченного чтения;
+автоматический неограниченный обход ссылок не добавлен.
+
+Лимиты до calls:6HTTP/profile включая ORCID/robots/image,1robots/host/attempt,
+2HTML/attempt,1observed image,30s total/request,64KiB/2MiB/1MiB,
+concurrency1/delay≥1s,redirects/retries0. No .env/Settings/private mailto/cookies;
+client trust_env=false. HTTP403/429 и Disallow останавливают источник.
+Первый inherited check ошибочно искал config.json вместо batch.json; исправление
+сохранено отдельным artifact:20roots/96настоящих batches проверены,
+активные четыре домена не имели унаследованного STOP. Старые roots не изменялись.
+
+### Регрессии и конкретные исправления
+
+| Фиксированный профиль | Полное HTTP тело | Code candidates в конечном packet | Подтверждённые контакты |
+|---|---:|---:|---:|
+| A5068285041 Шумейко |7201байт|1|1|
+| A5026442137 Пархомчук |13129байт|1|1|
+| A5061174451 Знаменская, сотрудники кафедры |38783байта|8|1|
+
+У двух сайтов robots404 ошибочно блокировал HTML. По
+[RFC9309§2.3.1.3](https://www.rfc-editor.org/rfc/rfc9309.html#section-2.3.1.3)
+в новой композиции разрешён только404 как отсутствие robots;
+301/401/403/429/5xx/обрыв и200Disallow сохраняют отказ. Статус не подменяется200.
+[Конкретный fix и единственный повтор loading stage](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097392011)
+в новых attempt2 roots. Личная страница Знаменской затем далаHTML404;
+[второй отличный known URL из отзыва](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097429402)
+(сотрудники кафедры) дал200. Всего по Знаменской4HTTP включая первую robots-ошибку,
+по Пархомчук3,по Шумейко3; общий потолок6/profile не увеличен.
+
+Проверка кафедрального body выявила CRLF: read_text нормализовал переносы и
+нарушал SHA. Исправлено чтение UTF-8 bytes без нормализации; packet восстановлен
+offline из тех же saved bytes, HTTP0. Первая Sol Знаменской отвергла все8кандидатов:
+отдельный mailto не сохранял именную HTML-связь. Адрес из человеческого отзыва
+фактически уже был извлечён, лимитом не отсеян. Минимальный fix сохраняет только
+непрерывное HTML окно700символовперед/500после атрибута плюс отдельный static context.
+Ни склейки, ни ожидаемого вердикта. [Повторная verifier стадия2/2](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097493246)
+в новом root: Sol подтвердил один контакт, семь чужих остались отклонёнными.
+Других попыток нет; первые inputs/results сохранены.
+
+Итог известных примеров:3/3контакта supported полной Sol/high, identity отдельно
+поддержана, нынешние аффилиации/индивидуальные даты не равны каталожным или
+общему обновлению сайта. Актуальность email человеком не удостоверена;
+готовность/набор студентов не установлены. Результат модели не человеческий gold.
+На кафедральной странице код видел16distinctemails, packet ограничен8;
+контексты≤20000символов/source. Это не исчерпывающая экстракция.
+Доля без агентского поиска **3/3** только на этих заранее знакомых примерах.
+
+### Свежая выборка и точный blocker
+
+Кодовый freeze `a045eccdee696ab9986034ef79a643267bffd1b8`,
+[10 ID и критерии до live](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097528437):
+10разныхвузов,seed19319420261010,140исключённыхID, SHAsample/index/DB/code/rules.
+Первый `A5070748575` (Salman Ahmadi‐Asl, Автономная некоммерческая организация высшего образования Университет Иннополис).
+Запланировано1→3суммарно→до10 при подтверждённом источнике/контакте;
+первыйнеуспех→конкретныйfix+одинновыйrootrepeat, остальныхнежечь.
+
+Свежие profiles **0/10**, GLM **0**: первый штатный PiCLI/GLM5.3Flash/high
+fallback не был исполнен. Automatic approval review отклонил payload/destination
+и расход подписки до процесса. Проверка исходного native userMessage Бориса
+«ок. что дальше?» после явного плана GLM/10новых также не была принята как
+достаточное явное согласие на передачу конкретного профиля/текста в api.z.ai.
+Вторая проверка разрешений тоже отклонила тот же action до исполнения;
+обхода, другого транспорта или дальнейших повторов нет. Для live нужны явное
+разрешение на public profile payload → existing api.z.ai подписку и новый root;
+нынешний fresh root STOP. Его frozen manifest относится к a045ecc; позднейшие
+STOP-guards требуют нового code freeze при будущем разрешённом запуске.
+
+Fallback подключён к существующему PiCLI,4search/8resources/6requests/600s,
+без увеличенияcaps. Новый ограниченный deadline принимается только новым
+contact-first root без STOP, совпадающим с manifest; старые ночные deadline
+не изменены. Live fallback не проверен. GLM/MCP source binding и DirectHTTP
+имеют разные реальные acquisition chains. Пустой packet не расходует GPT.
+Новые source/GPT jobs из STOP root запрещены; cached sources читаются offline.
+
+### Фактические расходы, проверки и ограничения
+
+День: **10HTTP** (6robots/4HTML,recordORCID0/image0), download-only
+7.132871s (rate waits и время разработки отдельно, полного pipelinewalltime нет).
+**4Soljobs** (3первичные регрессии+один verifier repeat), input81099/output10139,
+итого**91238tokens**; reasoning2793 — subset output, не добавлен к total.
+Sol walltime **281.875112s**. GLM/jobs/search/tokens0,Astra0; subscription debit,
+денежный debit источников и GLM balance unknown, API-цены не подставлены.
+Все Sol запросы6.1/high с полной прежней инструкцией/strict semantic-v3 schema,
+tool-less/MCP-disabled; фактический undisclosed backend не выдуман.
+Ночь остаётся44(43profile+1consultation),15новыхлюдей,Astra4/4;
+день считается отдельно, новыхлюдей0. Официальный Codex remaining20%вначале,
+19% передпоследнимэтапом,account-wide; threshold15% не достигнут.
+
+Python lint/typecheck/test PASS: 231unittest,388pytest/8skip/5deselect,
+coverage94,06%;14новых офлайнтестов на URI candidates/cache/SHA/CRLF/STOP/quota/
+404-vs403429/non200/повторныеreservations/daydeadline/inputtampering.
+Strict audit FAIL только deps-node/fs-trivy, прежние HIGH sharp/source-map-js
+(#189 вне scope). Требования и зависимости не ослаблены. Node26.8.2/Pi1.1.0
+установлены; CLI GLM не запускался. Web source не менялся; currentCI/review/handoff
+в PR отдельно после финального commit.
+
+Один ранний test-final.log случайно перезаписан финальной проверкой;
+source bytes/text,inputs/results/receipts и числовые измерения не изменены.
+Исходный metrics-final сохранён с прежним hash этого журнала; отдельный erratum
+и v2 меняют только verification log fingerprint. Оба numeric snapshots сохранены,
+[актуальная версия](enrichment_contact_first_20261010.metrics.v2.json) byte-identical
+private. Проверка source/model SHA остаётся полной; исходные bytes раннего testlog
+не восстановлены. Прежние ночные roots/снимки не затронуты.
+
+Private roots `enrichment-contact-first-20261010` и
+`enrichment-contact-first-fresh-20261010`: scope/seals/feedback separate,
+regression source bytes/registry/statictext,actual Sol receipts/inputs/outputs,
+partial/recovery results,metrics-v1/v2/erratum,code/sample freeze/approval rejection,
+STOP и checks/review/CI/transfer evidence. Контактные значения/source bodies только
+private. Это ограниченный технический результат с approval blocker,
+не измерение покрытия fresh10 и не завершение #193/#47/#103.
+Production/product docs/passport, merge/deploy/main push не выполнялись.

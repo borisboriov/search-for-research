@@ -212,6 +212,22 @@ class ContactFirstTests(unittest.TestCase):
                     Path("/missing"), Path("/missing/input"), remaining_percent=value
                 )
 
+    def test_stopped_parent_prevents_new_HTTP_and_model_jobs(self) -> None:
+        from enrichment_verification import immutable_json
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            immutable_json(root / "stopped.json", {"reason": "done"})
+            loader = Loader(root / "profile", [URL])
+            client = httpx.AsyncClient()
+            try:
+                with self.assertRaisesRegex(ValueError, "STOP root"):
+                    asyncio.run(loader.request(client, URL, "direct_http", 100))
+            finally:
+                asyncio.run(client.aclose())
+            with self.assertRaisesRegex(ValueError, "STOP root"):
+                verify_contact_input(root, root / "absent.json", remaining_percent=19)
+
     def test_daytime_deadline_cannot_resume_legacy_or_stopped_root(self) -> None:
         from datetime import UTC, datetime, timedelta
 

@@ -84,6 +84,8 @@ class Loader:
         self, client: httpx.AsyncClient, url: str, kind: str, cap: int
     ) -> dict[str, Any]:
         safe_url(url)
+        if any((p / "stopped.json").exists() for p in (self.root, *self.root.parents)):
+            raise ValueError("STOP root: новые HTTP запросы запрещены")
         host = urlsplit(url).netloc
         if host in self.inherited_stops or self.stops.blocked(url):
             raise ValueError("Источник остановлен после 403/429")
@@ -546,6 +548,8 @@ def verify_contact_input(root: Path, input_path: Path, *, remaining_percent: flo
 
     if not 15 < remaining_percent <= 100:
         raise ValueError("Codex remaining≤15%; новые GPT jobs запрещены")
+    if (root / "stopped.json").exists():
+        raise ValueError("STOP root: новые GPT jobs запрещены")
     task_input = check_contact_input(root, input_path)
     aid = task_input["author_id"]
     if not task_input["items"]:
