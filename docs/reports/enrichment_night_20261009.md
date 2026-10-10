@@ -1167,3 +1167,102 @@ docs-check PASS. Initial strict audit потребовал восстановл�
 приходят корни сайтов и можно ли получить точные target URLs; отдельно остаётся
 ошибка literal quote. Дальнейшие live profiles/framework/API в это поручение
 не входят. Product docs/паспорт/production/main/merge/deploy не менялись.
+
+### 10.10: офлайн-локализация root-only search и metadata quote
+
+[Следующее поручение PR194](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6100035162)
+разрешает локализацию цепочки URL и цитаты; reserve5% отменён Борисом для этого
+цикла («квоту можно жечь в 0»), до фактического отказа подписки без покупки,
+reset-credit, смены аккаунта или обхода429. Native human turn/message IDs сохранены.
+Текущий clean code freeze650029d, baseaccc508cd398b5e57105fe1c45f906f89330d636
+подтверждены API; единственный writer этой копии — техническая сессия.
+Продуктовый координатор прочитал outputs; независимые локальные SHA/handoff
+им не повторены. Новый immutable root `enrichment-search-contract-offline-20261010`,
+прежние184SHA и STOP перепроверены без изменений.
+
+**Точный путь не теряется локально.** Saved native RPC двух успешных поисков
+и actual `tool_execution_end` сопоставлены по текстовым bytes, а не по display.
+Установленный Pi1.1.0 `parseJsonRpcMessage` возвращает исходный объект;
+JSON/SSE transport не переписывает поля result. Offline replay actual saved RPC
+через этот parser и `convertMcpResult` совпал с записанным model tool-result.
+SSE framing в replay синтетический; исторический HTTP wire body не был сохранён.
+Это не новый сетевой захват. Уже сохранённых RPC + прозрачного parser + actual
+model-result достаточно установить отсутствие локального path stripping;
+диагностический live search не понадобился.
+
+| Этап / точное поле | A5070748575 | A5047877230 | Проверенный вывод |
+|---|---|---|---|
+| Saved native `result.content[0].text` после двух JSON decode | 6 rows, только `title/link/content/refer` | 4 rows, те же поля | В самом возвращённом result нет отдельного document URL |
+| `row.link` | `https://orcid.org`, `https://www.wikidata.org`, `https://epubs.siam.org`, `https://link.springer.com`, `https://iopscience.iop.org`, `https://www.researchgate.net` | `https://www.hse.ru`, `https://researchlink.ardc.edu.au`, `https://dl.acm.org`, `https://status.researchdata.ardc.edu.au` | Все10 links — корни без пути/query/fragment |
+| `row.url`, structured `row.metadata` | Поля отсутствуют | Поля отсутствуют | Нет пропущенного alternate URL field; snippet anchor не document URL |
+| Native parsing → model tool-result | Text bytes равны saved RPC, без truncation | То же | Путь не удаляет ни native parser, ни model conversion |
+| Registered links до попытки reader | Ровно6 `row.link` | Ровно4 `row.link` | Snapshot3 перед первым чтением ВШЭ — уже после маркировки выбранного URL attempted; четвёртая ссылка не потеряна |
+| Выбранный reader URL | Catalog ORCID path отсутствует в `row.link`, отказ | Два roots: ВШЭ/ACM, exact accepted | Exact selection не восстанавливает отсутствующий адрес человека |
+
+Фактический input проверен по saved `tools/list` и разрешённому `tools/call`,
+не по памяти документации. Tool name `web_search_prime`, required `search_query`,
+пять properties: query, domain filter, recency filter, content size, location;
+`additionalProperties:false`. A507: frozen имя/full ORCID URL, location`us`,
+content_size`high`. A504: frozen имя/full ORCID URL, location`cn`, content_size
+не передан (schema default medium). Оба возвращённых результата root-only;
+это разные люди, не A/B параметров. `content_size` описывает длину summary,
+`location` — регион, не точность URL. Неиспользованного output/URL-precision
+переключателя в фактической схеме нет.
+
+[Официальная subscription MCP документация](https://docs.z.ai/devpack/mcp/search-mcp-server)
+описывает title/URL/summary и совпадающий endpoint, но не гарантирует глубинный
+person/document URL и не документирует recovery mode. Название `webSearchPrime`
+на странице отличается от фактического tool ID; использовался сохранённый ID.
+[Standalone Web Search API](https://docs.z.ai/api-reference/tools/web-search)
+— другой endpoint; его `search_engine/count` нельзя переносить в установленную
+MCP schema или считать разрешённой заменой транспорта. Этот API не вызывался.
+[FAQ](https://docs.z.ai/devpack/faq) связывает модели/MCP с credits подписки;
+текущий остаток Z.ai credits неизвестен. Внутренняя причина upstream root-only
+не установлена; доказано отсутствие target URL именно в этих двух ответах,
+без утверждения, что любой запрос сервиса всегда возвращает корни.
+
+**Причина quote rejection — неверное представление источника.** Единственная
+цитата ВШЭ дословно совпадает с `reader.description`, двумя элементами
+`reader.metadata.description`, `og:description`, `mrc__share_description`,
+`twitter:description`: шесть точных мест. В `reader.content` её нет, нет и в
+search snippets. В показанном модели reader description цитата сохранена;
+body10228chars показан целиком, `model_view_truncated:false`. Это не выдуманный
+текст, не whitespace/обрезка и не цитата другого прочитанного сайта. Модель
+использовала description/metadata вместо допустимого body. Source — общая
+страница организации; metadata `og:url=https://www.hse.ru/en/` также не адрес
+учёного. ACM challenge не источник факта. Строгий body-only binder отклонил
+цитату корректно; метаданные не переименованы в body и не склеены с его строками.
+
+Офлайн проверки: два actual saved cases/10rows, native JSON parser, synthetic
+SSE framing, conversion→actual model-result equality, точное registered set;
+fixtures root-only/exact URL with query/double JSON/metadata-vs-link/empty/error.
+Replay запрещает fetch и зафиксировал network attempts0. Никаких source/model
+jobs для ожидания или диагностики нет. [Числовой snapshot](enrichment_search_contract_offline_20261010.metrics.json):
+diagnostic search0/reader0, newGLM/Sol/Astra0, profiletokens0, день по-прежнему7/30.
+Documentation web reads отделены от subscription MCP diagnostic calls;
+разработка/ревью не названы profile jobs и их token total не измерен.
+Official Codex remaining перед этапом15%, reserve0. Старые thresholds5/15 в
+замороженных прежних manifests остаются историей, не текущим разрешением.
+
+**Блокер и решение.** Малой подтверждённой локальной потери URL нет;
+документированной малой поддержанной настройки recovery не найдено.
+Условие нового A5006480668 поэтому не выполнено: он не запускался, первые2
+не повторялись, остальные8 не запускались. Root STOP. Для продолжения нужен
+reproducibility packet провайдеру штатного subscription MCP и подтверждённый
+способ вернуть exact document URLs; сообщения провайдеру здесь не отправлялись.
+После исправленного native ответа — offline replay без угадывания путей,
+затем один новый immutable A500 контроль:≤1GLM job,≤1fullSol только nonempty
+eligible packet,4search/8resources/6modelrequests/600s/direct≤6HTTP. День7/30,
+максимум23 свободных jobs до других исполнителей; этот контроль максимум2,
+остаток credits неизвестен, при фактическом отказеSTOP безпереброса billing.
+Если провайдер не даёт document URLs, конкретная отдельная альтернатива —
+ограниченное извлечение реально наблюдённых navigation/person-directory links
+из сохранённого HTML с frozen frontier, source budget и identity evidence;
+новое поручение нужно до live реализации такого метода. Scrapy/Crawl4AI,
+другие поисковые сервисы/платные endpoints не добавлены.
+
+Код/измерители не изменены: нужны docs-check с actual meta, независимое ревью
+этой диагностической дельты и CI/handoff актуального head, без повторного
+полного code test suite. #189 вне scope, audit не ослабляется. Product docs,
+паспорт/main/merge/deploy/globalconfig не менялись; полезный сбор по-прежнему
+не доказан и техническая достоверность не заменяет продуктовую приёмку.
