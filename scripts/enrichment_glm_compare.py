@@ -327,7 +327,7 @@ def facts(wrapper: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def summarize(root: Path) -> dict[str, Any]:
+def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
     manifest = read(root / "manifest.json")
     baseline = Path(manifest["baseline_root"])
     rows = []
@@ -375,7 +375,10 @@ def summarize(root: Path) -> dict[str, Any]:
                 "contact_date_applicability_changes_needing_explanation": date_changes,
                 "original_baseline_changed_on_recheck": original != a,
             }
-            row["meets_small_sample_nonregression"] = not (
+            row["quality_eligible"] = b["identity"] == "supported" and (
+                bool(b["contacts"]) or b["current_affiliation"] == "supported"
+            )
+            row["meets_small_sample_nonregression"] = row["quality_eligible"] and not (
                 missing
                 or row["differences"]["identity_loss"]
                 or row["differences"]["affiliation_loss"]
@@ -384,6 +387,14 @@ def summarize(root: Path) -> dict[str, Any]:
             )
         rows.append(row)
     glm = [read(p) for p in (root / "runs").glob("*/collector/receipt.json")]
+    completed_ids = {r["author_id"] for r in glm}
+    glm.extend(
+        read(p)
+        for p in (root / "recovery-receipts").glob("*.json")
+        if read(p)["author_id"] not in completed_ids
+    )
+    glm_reserved = len(list((root / "model-jobs").glob("*-GLM-reserved.json")))
+    sol_reserved = len(list((root / "model-jobs").glob("group-*-Sol-reserved.json")))
     sol = [read(p) for p in (root / "groups").glob("*/native_verifier/receipt.json")]
     operations = [read(p) for p in (root / "HTTP-ledger").glob("*-finished.json")]
     judged = [r for r in rows if r["status"] == "paired_agent_verified"]
@@ -423,15 +434,60 @@ def summarize(root: Path) -> dict[str, Any]:
         "GLM_affiliation_counts": dict(Counter(r["GLM"]["current_affiliation"] for r in judged)),
         "all_paired_profiles_nonregression": len(judged) == 10
         and all(r["meets_small_sample_nonregression"] for r in judged),
-        "GLM_jobs": len(glm),
+        "GLM_jobs": len(list((root / "model-jobs").glob("*-GLM-reserved.json"))),
+        "GLM_jobs_with_receipt": len(glm),
+        "GLM_jobs_started": len(list(root.glob("runs/*/collector/started.json"))),
+        "GLM_jobs_completed": sum(r["usage_complete"] for r in glm),
+        "GLM_jobs_source_bound": len(list((root / "prepared").glob("*.json"))),
+        "Sol_jobs_started": len(list(root.glob("groups/*/native_verifier/started.json"))),
+        "Sol_jobs_with_receipt": len(sol),
+        "GLM_usage_complete": len(glm)
+        == len(list((root / "model-jobs").glob("*-GLM-reserved.json")))
+        and all(r["usage_complete"] for r in glm),
+        "GLM_usage_observation": "exact_reported_completed_jobs"
+        if len(glm) == len(list((root / "model-jobs").glob("*-GLM-reserved.json")))
+        and all(r["usage_complete"] for r in glm)
+        else "observed_lower_bound_incomplete_jobs",
+        "GLM_model_requests_observed": len(
+            list(root.glob("runs/*/collector/pi/*-model-request-config.json"))
+        ),
+        "GLM_physical_model_HTTP_headers_observed": sum(
+            read(p).get("pathname") == "/api/coding/paas/v4/chat/completions"
+            for p in root.glob("runs/*/collector/pi/*-http.json")
+        ),
         "Sol_group_jobs": len(list((root / "model-jobs").glob("group-*-Sol-reserved.json"))),
         "day_jobs_before": 17,
         "day_jobs_after": 17 + len(list((root / "model-jobs").glob("*.json"))),
         "GLM_model_requests": sum(r["model_requests"] for r in glm),
         "GLM_usage": usage,
+        "GLM_total_token_usage_exact": usage
+        if len(glm) == glm_reserved and all(r["usage_complete"] for r in glm)
+        else None,
+        "GLM_wall_seconds_exact": sum(r["wall_elapsed_seconds"] for r in glm)
+        if len(glm) == glm_reserved and all(r["usage_complete"] for r in glm)
+        else None,
+        "Sol_total_token_usage_exact": sol_usage
+        if len(sol) == sol_reserved
+        and all(
+            isinstance(r.get("tokens"), dict)
+            and all(isinstance(r["tokens"].get(k), int) for k in ("input_tokens", "output_tokens"))
+            for r in sol
+        )
+        else None,
+        "Sol_wall_seconds_exact": sum(r["wall_elapsed_seconds"] for r in sol)
+        if len(sol) == sol_reserved
+        else None,
         "GLM_uncached_input": usage["input"],
         "GLM_cached_input_separate": usage["cacheRead"],
         "Sol_usage": sol_usage,
+        "Sol_usage_observation": "no_jobs"
+        if not sol
+        else "reported_receipts; missing_fields_unknown",
+        "missing_token_fields_are_zero": False,
+        "partial_sum_interpretation": (
+            "Numeric sums are observed lower bounds if any job/field is incomplete; "
+            "never an exact total."
+        ),
         "Sol_uncached_input": sol_usage["input_tokens"] - sol_usage["cached_input_tokens"],
         "baseline_verifier_usage_same_evaluated_profiles": previous_usage,
         "baseline_verifier_wall_seconds_same_evaluated_profiles": sum(
@@ -454,7 +510,7 @@ def summarize(root: Path) -> dict[str, Any]:
             "No API-dollar or 1000/10000 scaling claim."
         ),
     }
-    immutable_json(root / "metrics.json", metrics)
+    immutable_json(root / f"metrics{suffix}.json", metrics)
     public = {k: v for k, v in metrics.items() if k != "profiles"}
     public["profiles"] = []
     table = [
@@ -491,10 +547,10 @@ def summarize(root: Path) -> dict[str, Any]:
             f"{b['contacts'] if b else '—'} | "
             f"{projected['meets_small_sample_nonregression']} |"
         )
-    immutable_json(root / "public-metrics.json", public)
+    immutable_json(root / f"public-metrics{suffix}.json", public)
     from enrichment_verification import immutable_bytes
 
-    immutable_bytes(root / "comparison-table.md", ("\n".join(table) + "\n").encode())
+    immutable_bytes(root / f"comparison-table{suffix}.md", ("\n".join(table) + "\n").encode())
     return {
         k: metrics[k]
         for k in (

@@ -134,6 +134,7 @@ def freeze(
             "enrichment_native.py",
             "enrichment_semantics.py",
             "enrichment_pi_runner.mjs",
+            "enrichment_pi_cli_extension.mjs",
             "enrichment_pi_pilot.py",
             "enrichment_verifier_benchmark.py",
             "enrichment_experiment.py",
@@ -318,14 +319,17 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                     kind = event["type"]
                     if kind == "done":
                         done = True
-                    elif kind == "http" and event["status"] in (403, 429):
+                    elif kind == "upstream_refusal" or (
+                        kind == "http" and event["status"] in (403, 429)
+                    ):
                         if not (root / "quota-stopped.json").exists():
                             immutable_json(
                                 root / "quota-stopped.json",
                                 {
                                     "at": now(),
                                     "provider": "zai",
-                                    "status": event["status"],
+                                    "status": event.get("status"),
+                                    "reason": kind,
                                     "source_event": str(path),
                                 },
                             )
@@ -418,8 +422,8 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                     and row.get("message", {}).get("role") == "assistant"
                 ):
                     messages.append(row["message"])
-        except (ValueError, OSError, KeyError) as exc:
-            host_failure = str(exc)
+        except (ValueError, OSError, KeyError, KeyboardInterrupt) as exc:
+            host_failure = "operator_interrupt" if isinstance(exc, KeyboardInterrupt) else str(exc)
         finally:
             if process.poll() is None:
                 process.terminate()
@@ -502,6 +506,8 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
         immutable_json(
             root / "failures" / f"{aid}.json", {"at": now(), "reason": str(exc), "no_retry": True}
         )
+    if host_failure == "operator_interrupt":
+        raise KeyboardInterrupt
     return receipt
 
 
@@ -539,10 +545,14 @@ def experiment(args: argparse.Namespace) -> dict[str, Any]:
             print(json.dumps({"phase": "verify", **result}), flush=True)
             if result.get("error"):
                 break
-    except (ValueError, OSError) as exc:
+    except (ValueError, OSError, KeyboardInterrupt) as exc:
         immutable_json(
             args.root / "experiment-partial.json",
-            {"at": now(), "reason": str(exc), "no_retry": True},
+            {
+                "at": now(),
+                "reason": "operator_interrupt" if isinstance(exc, KeyboardInterrupt) else str(exc),
+                "no_retry": True,
+            },
         )
     finally:
         value = summarize(args.root)
@@ -563,6 +573,7 @@ def main() -> None:
     parser.add_argument("--mode", choices=("live", "replay"), default="live")
     parser.add_argument("--scope", type=Path)
     parser.add_argument("--scope-url")
+    parser.add_argument("--summary-suffix", choices=("", "-reconciled"), default="")
     parser.add_argument("--index", type=int, default=0)
     parser.add_argument("--remaining-percent", type=float)
     args = parser.parse_args()
@@ -602,7 +613,7 @@ def main() -> None:
     elif args.command == "summarize":
         from enrichment_glm_compare import summarize
 
-        value = summarize(args.root)
+        value = summarize(args.root, suffix=args.summary_suffix)
     else:
         immutable_json(
             args.root / "stopped.json", {"at": now(), "new_source_model_jobs": "forbidden"}

@@ -18,26 +18,41 @@ from enrichment_verification import immutable_bytes, immutable_json
 def search_links(raw: Any) -> list[str]:
     """Only actual title/link rows from native search; snippets are never evidence."""
     links: list[str] = []
-
-    def walk(value: Any) -> None:
-        if isinstance(value, str):
-            with suppress(ValueError, RecursionError):
-                walk(json.loads(value))
-        elif isinstance(value, list):
-            for row in value:
-                walk(row)
-        elif isinstance(value, dict):
-            if isinstance(value.get("title"), str) and isinstance(value.get("link"), str):
-                try:
-                    safe_url(value["link"])
-                    links.append(value["link"])
-                except ValueError:
-                    pass
-            for key in ("content", "text", "result", "message"):
-                if key in value:
-                    walk(value[key])
-
-    walk(raw)
+    envelope = raw.get("message", raw) if isinstance(raw, dict) else raw
+    envelope = envelope.get("result", envelope) if isinstance(envelope, dict) else envelope
+    if isinstance(envelope, dict) and (envelope.get("isError") or envelope.get("error")):
+        return []
+    blocks = envelope.get("content", []) if isinstance(envelope, dict) else []
+    payloads = [
+        block["text"]
+        for block in blocks
+        if isinstance(block, dict)
+        and block.get("type", "text") == "text"
+        and isinstance(block.get("text"), str)
+    ]
+    if isinstance(envelope, list):
+        payloads.append(envelope)
+    for payload in payloads:
+        for _ in range(8):
+            if not isinstance(payload, str):
+                break
+            try:
+                payload = json.loads(payload)
+            except (ValueError, RecursionError):
+                break
+        if not isinstance(payload, list):
+            continue
+        for row in payload:
+            if (
+                not isinstance(row, dict)
+                or not isinstance(row.get("title"), str)
+                or not isinstance(row.get("link"), str)
+            ):
+                continue
+            # A row is a leaf: never decode JSON/URLs embedded in its snippet.
+            with suppress(ValueError):
+                safe_url(row["link"])
+                links.append(row["link"])
     return list(dict.fromkeys(links))
 
 

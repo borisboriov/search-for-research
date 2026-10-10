@@ -1396,3 +1396,91 @@ live discovery GLM-5.3-Flash/high на неизменном frozen10. Полна
 не получает прежние контакты, deep URL или verdicts. Sol 6.1/high повторно
 оценивает обе стороны с полной semantic-v3; результаты добавляются после
 фактического запуска. Измерения стоимости разных ролей разделены.
+
+
+### GLM runner: частичный остановленный live-проход
+
+**Вывод.** Повторяемый CLI и безопасные source tools реализованы, но перенос
+рабочего сбора на GLM и отсутствие ухудшения **не подтверждены**. Единственный
+live-проход frozen `f5454ea1950cdf3ecc14a2c9247eb379ce7a4eaa` остановлен по
+High замечанию независимого ревью. Новых профильных/source jobs после STOP нет;
+исправленную версию проверяли offline, а не повторным подбором на этих людях.
+Постановка до первого вызова — [PR comment6101794842](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6101794842),
+исходный fail — отдельный комментарий с точным диапазоном. Методика и команда —
+[GLM runner](../experiments/enrichment_glm_runner.md).
+
+**Фактическая цепочка.** Zero-inference Pi live/replay preflight и offline
+source binding проверки прошли. Baseline seal865 файлов сохранён; исходный
+pypdf6.10.0 воспроизвёл четыре allowlisted PDF и все10 source-bound входов,
+а live dependency обновлён до6.19.0 без audit исключений. GLM не получал прежние
+emails, deep URL, нормализованные факты или verdicts. Он сам выполнил7 native
+Z.ai search и1 ordinary DuckDuckGo HTML query; поиск возвращал преимущественно
+корни. Код сохранил5 source records (2 ORCID,3 HTML) и9 controlled HTTP
+reservations/started requests. Поисковые сниппеты не использовались как факты.
+
+| Автор в frozen порядке | Baseline: принятые контакты прежним Sol | Новый GLM status | Новая независимая пара |
+|---|---:|---|---|
+| Salman Ahmadi‐Asl | 1 | Завершён, source binder отклонил цитату | Не проверена |
+| Evgeny Styrin | 0 | Прерван после review STOP | Не проверена |
+| О. В. Тушавина | 1 | Не запускался | Не проверена |
+| Alena Nastulyavichus | 1 | Не запускался | Не проверена |
+| И. В. Морозов | 1 | Не запускался | Не проверена |
+| Alexey K. Kovalev | 0 | Не запускался | Не проверена |
+| Mikhail Derkach | 1 | Не запускался | Не проверена |
+| Alexey Maslov | 1 | Не запускался | Не проверена |
+| Д. В. Исангулова | 1 | Не запускался | Не проверена |
+| Maria S. Ledovskaya | 1 | Не запускался | Не проверена |
+
+Прежние оценки в таблице — история baseline, не gold и не повторная проверка.
+Новых source-bound GLM inputs0, новых Sol пар0. Поэтому новые identity,
+контакты, current_affiliation и readiness неизвестны; ноль проверенных пар
+не означает нулевое качество GLM или доказанную регрессию. Human0.
+
+**Остановка и исправления.** Независимый sfr-reviewer установил пять блокеров
+f5454ea: swallowed hook exception допускает fail-open cap/model/STOP; MCP
+semantic refusal при HTTP200 не ставит latch; nested JSON snippet может
+зарегистрировать URL; partial receipts недосчитываются; empty unknown pairs
+могут получить vacuous nonregression. Запуск остановлен в20:26:10UTC после
+11+6 model requests, до превышения12/person; фактического quota refusal и
+превышения cap не наблюдали. Первый job имел корректно отклонённую недословную
+quote; второй завершён внешним SIGINT. Сохранены первичные metrics, receipt,
+request payloads и frozen snapshots. Recovery receipt восстановлен из SHA
+зафиксированных events, started и STOP; reconciled metrics дописаны отдельными
+файлами. Primary metrics показывали только первый receipt и11requests;
+пользоваться следует reconciled projection, не первичным недосчётом.
+
+Исправленная версия ставит terminal STOP на callback failures, отдельно
+ограничивает физический fetch, прекращает MCP quota/access refusal, разбирает
+только actual search rows без snippet recursion, сохраняет interrupt receipt,
+разделяет неизвестные полные расходы и observed sums и требует quality
+eligibility. Восемь meaningful Python tests и два JS tests проверяют эти
+границы без сети/model jobs, включая имитацию Pi swallowing и запрет13-го
+физического fetch. Исправленный runner ещё не прошёл полный live comparison.
+
+**Расходы и знаменатели.** [Reconciled metrics](enrichment_glm_runner_20261010.metrics.json)
+и [статусы](enrichment_glm_runner_20261010.status.json) — точные копии
+детерминированных публичных проекций private root
+`/Users/boris/Experiments/search-for-research/enrichment-glm-runner-live10-20261010`.
+Начаты2 GLM jobs, завершён1 (без допустимого извлечения), второй прерван.
+Сохранены17 model configs и17 native model HTTP200 observations; контролируемых
+HTTP9, логических search8. Отдельно записаны native MCP protocol/search HTTP,
+включая инициализацию; они не приравниваются к числу поисковых запросов.
+
+Наблюдённые Pi usage: uncached input72897, cacheRead88320, cacheWrite0,
+output6536, всего167753. Cache уже исключён из Pi input; reasoning отдельно
+не раскрыт и входит в output. Это **нижний предел частичного прохода**, полный
+job usage неизвестен (`null`). Сумма observed wall213.975s включает прекращение
+второго процесса, не является точным inference time. Sol jobs0, Astra0,
+день17→19/30. Остаток Codex до запуска9%, ordinaryUsageAllowedtrue, резерв0
+разрешён; reset/покупок не было. Доля квоты общая для аккаунта: разработку и
+ревью нельзя выделить из неё. Baseline verifier459511 tokens/645.630s на10
+людей, его главная сессия неизвестна; сопоставимых новых Sol пар нет.
+Полную экономию цикла, стоимость в долларах и масштабирование не заявляем.
+
+**Передача.** Source/model процессы остановлены; первоначальный baseline и
+старые seals повторно сверяются. Независимая повторная проверка исправлений,
+итоговый head, CI и readonly handoff фиксируются в PR. #189 вне scope:
+локальный strict audit остаётся FAIL по прежним sharp/source-map-js, при
+исправленном pypdf. Merge/deploy/продуктовая приёмка не заявляются. Для вывода
+«качество не хуже» нужен отдельный ограниченный прогон исправленной цепочки
+и полная независимая проверка; этот раунд не подменяет её partial-цифрами.

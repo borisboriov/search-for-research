@@ -10,21 +10,32 @@ from unittest.mock import AsyncMock, patch
 
 from enrichment_contact_first import digest
 from enrichment_experiment import sha
-from enrichment_glm_compare import compact, legacy_pdf_text
+from enrichment_glm_compare import compact, legacy_pdf_text, summarize
 from enrichment_glm_tools import SourceHost, search_links
 from enrichment_verification import immutable_json
 
 
 class GLMRunnerTests(unittest.TestCase):
     def test_search_requires_actual_title_link_rows_not_snippets(self) -> None:
-        raw = {
+        raw: dict[str, Any] = {
             "message": {
                 "result": {
                     "content": [
                         {
                             "text": json.dumps(
                                 [
-                                    {"title": "Institute", "link": "https://example.org/"},
+                                    {
+                                        "title": "Institute",
+                                        "link": "https://example.org/",
+                                        "content": json.dumps(
+                                            [
+                                                {
+                                                    "title": "Snippet trap",
+                                                    "link": "https://example.org/forbidden",
+                                                }
+                                            ]
+                                        ),
+                                    },
                                     {"title": "Snippet", "content": "https://example.org/person"},
                                     {"title": "Private", "link": "file:///private/person"},
                                 ]
@@ -35,6 +46,8 @@ class GLMRunnerTests(unittest.TestCase):
             }
         }
         self.assertEqual(search_links(raw), ["https://example.org/"])
+        raw["message"]["result"]["isError"] = True
+        self.assertEqual(search_links(raw), [])
 
     def test_live_gets_only_known_orcid_and_cannot_open_guessed_page(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -163,6 +176,50 @@ class GLMRunnerTests(unittest.TestCase):
             self.assertFalse(host.records)
             with self.assertRaisesRegex(ValueError, "identical search retry"):
                 asyncio.run(host.public_search("Name"))
+
+    def test_empty_unknown_pairs_do_not_pass_quality_and_missing_cost_is_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "run"
+            baseline = Path(temporary) / "baseline"
+            unknown = {
+                "identity": "unknown",
+                "current_affiliation": "unknown",
+                "contacts": [],
+                "unaccepted_contacts": [],
+                "unaccepted_atoms": [],
+                "readiness": "unknown",
+            }
+            immutable_json(
+                root / "manifest.json",
+                {
+                    "baseline_root": str(baseline),
+                    "method": "glm-public-runner-v1",
+                    "mode": "live",
+                    "sample_sha256": "frozen",
+                },
+            )
+            immutable_json(
+                root / "sample.json", [{"id": f"A{i}", "name": f"Person{i}"} for i in range(10)]
+            )
+            for i in range(10):
+                aid = f"A{i}"
+                immutable_json(baseline / "results" / f"{aid}.json", {})
+                immutable_json(baseline / "prepared" / f"{aid}.json", {"input_path": "unused"})
+                immutable_json(
+                    baseline / "runs" / aid / "native_verifier/receipt.json",
+                    {"tokens": {}, "wall_elapsed_seconds": 0},
+                )
+                for leg in ("baseline", "GLM"):
+                    immutable_json(root / "comparison-results" / leg / f"{aid}.json", {})
+            immutable_json(root / "model-jobs" / "A0-GLM-reserved.json", {})
+            with patch("enrichment_glm_compare.facts", return_value=unknown):
+                summarize(root)
+            metrics = json.loads((root / "metrics.json").read_text())
+            self.assertEqual(metrics["profiles_paired_verified"], 10)
+            self.assertFalse(metrics["all_paired_profiles_nonregression"])
+            self.assertFalse(metrics["GLM_usage_complete"])
+            self.assertIsNone(metrics["GLM_total_token_usage_exact"])
+            self.assertIsNone(metrics["GLM_wall_seconds_exact"])
 
     def test_replay_has_no_live_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

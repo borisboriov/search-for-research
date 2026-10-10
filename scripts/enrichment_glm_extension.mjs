@@ -5,6 +5,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createGuardedFetch, createSourceQueue, createSerializedTransport,
   validateConfig, writeOnce} from './enrichment_pi_runner.mjs';
+import {safetyBoundary, upstreamRefusal} from './enrichment_pi_cli_extension.mjs';
 
 export function finalPayload(payload, budget) {
   return {...payload, messages: [...payload.messages, {role: 'system', content:
@@ -14,6 +15,21 @@ export function finalPayload(payload, budget) {
     ...(budget.finalizing ? {tools: undefined, tool_choice: undefined} : {})};
 }
 
+export function createModelBudget(cap, queue) {
+  let hooks = 0, physical = 0;
+  const reserve = key => {
+    queue.assertHealthy();
+    const used = key === 'hook' ? hooks : physical;
+    if (used >= cap) {
+      const error = new Error('Frozen model request budget/STOP');
+      queue.stop(error); throw error;
+    }
+    if (key === 'hook') hooks++; else physical++;
+    return key === 'hook' ? hooks : physical;
+  };
+  return {hook: () => reserve('hook'), fetch: () => reserve('fetch')};
+}
+
 export default async function extension(pi) {
   const queue = createSourceQueue(), nativeFetch = globalThis.fetch;
   globalThis.fetch = (...args) => {queue.assertHealthy(); return nativeFetch(...args);};
@@ -21,6 +37,8 @@ export default async function extension(pi) {
     const req = JSON.parse(fs.readFileSync(process.env.SFR_PI_REQUEST_PATH, 'utf8'));
     if (req.method !== 'glm-public-runner-v1') throw new Error('Unknown method');
     const config = validateConfig(req.config), run = req.run_dir;
+    const modelBudget = createModelBudget(req.max_model_requests, queue);
+    const boundary = handler => safetyBoundary(queue, handler);
     fs.mkdirSync(run, {recursive: true, mode: 0o700});
     let sequence = 0, requests = 0, started = Date.now();
     const persist = (kind, value) => {
@@ -29,7 +47,18 @@ export default async function extension(pi) {
         writeOnce(path.join(run, name), value); return name;
       } catch (error) {queue.stop(error); throw error;}
     };
-    const emit = event => persist('host-event', event);
+    const emit = event => {
+      const file = persist('host-event', event);
+      if (event.type === 'mcp_result') {
+        const raw = JSON.parse(fs.readFileSync(path.join(run, event.file), 'utf8'));
+        if (upstreamRefusal(raw)) {
+          persist('host-event', {type: 'upstream_refusal', server: raw.server,
+            source_file: event.file, status: null});
+          queue.stop(new Error('Upstream quota/access refusal'));
+        }
+      }
+      return file;
+    };
     let budget = {source_calls: 0, search_queries: 0};
     const host = async data => {
       queue.assertHealthy();
@@ -47,9 +76,18 @@ export default async function extension(pi) {
     };
     globalThis.fetch = createGuardedFetch(globalThis.fetch, info => {
       const file = persist('http', info); emit({type: 'http', file, status: info.status});
-    }, url => {queue.assertHealthy(); return url.origin === 'https://api.z.ai' &&
-      (url.pathname.startsWith('/api/coding/paas/v4/') ||
-       url.pathname === '/api/mcp/web_search_prime/mcp');});
+    }, boundary(url => {
+      queue.assertHealthy();
+      if (fs.existsSync(path.join(run, 'host-stop.json'))) {
+        const error = new Error('Host STOP'); queue.stop(error); throw error;
+      }
+      if (url.origin !== 'https://api.z.ai') throw new Error('Unapproved endpoint');
+      if (url.pathname === '/api/coding/paas/v4/chat/completions') {
+        modelBudget.fetch(); return true;
+      }
+      if (url.pathname === '/api/mcp/web_search_prime/mcp') return true;
+      throw new Error('Unapproved endpoint');
+    }));
     pi.registerTool({name: 'sfr_source', label: 'Public source',
       description: 'read exact registered URL; inspect text by literal query/start; links lists observed href; render public email decoder; public_search uses ordinary DuckDuckGo HTML/robots (shared four-query cap, discovery only); replay_search is fixture ONLY. No shell/filesystem.',
       parameters: {type: 'object', properties: {
@@ -101,7 +139,7 @@ export default async function extension(pi) {
           cacheWarming: settings.cacheWarming}, model_requests: requests};
     };
     pi.registerCommand('sfr-preflight', {description: 'Zero inference local IPC probe',
-      handler: async (_args, ctx) => {
+      handler: boundary(async (_args, ctx) => {
         const until = Date.now() + 30000;
         while (req.mode === 'live' && !pi.getActiveTools().includes('mcp__zai_search__web_search_prime') && Date.now() < until)
           await new Promise(resolve => setTimeout(resolve, 50));
@@ -110,24 +148,24 @@ export default async function extension(pi) {
         if (!response.allowed || requests !== 0) throw new Error('Preflight failed');
         persist('preflight', {...proof, ipc_roundtrip: true, source_calls: 0});
         emit({type: 'done', probe: true}); ctx.shutdown();
-      }});
-    pi.on('before_agent_start', (_event, ctx) => {
+      })});
+    pi.on('before_agent_start', boundary((_event, ctx) => {
       started = Date.now(); persist('runtime-config', runtime(ctx));
       return {systemPrompt: req.system_prompt};
-    });
-    pi.on('before_provider_request', (event, ctx) => {
+    }));
+    pi.on('before_provider_request', boundary((event, ctx) => {
       queue.assertHealthy(); effective(ctx);
       if (fs.existsSync(path.join(run, 'host-stop.json')) || requests >= req.max_model_requests)
         throw new Error('Frozen model request budget/STOP');
-      requests++;
+      requests = modelBudget.hook();
       const finalizing = requests >= req.max_model_requests - 1 || Date.now() - started >= 480000;
       const payload = finalPayload(event.payload, {...budget, model_requests: requests, finalizing});
       persist('model-request-config', {...runtime(ctx), finalizing});
       persist('model-payload', payload); return payload;
-    });
-    pi.on('agent_settled', (event, ctx) => {
+    }));
+    pi.on('agent_settled', boundary((event, ctx) => {
       if (event.aborted) throw new Error('Aborted job');
       persist('runtime', runtime(ctx)); emit({type: 'done'});
-    });
+    }));
   } catch (error) {queue.stop(error); throw error;}
 }
