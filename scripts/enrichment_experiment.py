@@ -269,9 +269,13 @@ def public_candidates(record: dict[str, Any]) -> dict[str, Any]:
         "emails": [
             entry
             for entry in (person.get("emails") or {}).get("email", [])
-            if entry.get("visibility") == "public" and entry.get("email")
+            if str(entry.get("visibility", "")).lower() == "public" and entry.get("email")
         ],
-        "links": (person.get("researcher-urls") or {}).get("researcher-url", []),
+        "links": [
+            entry
+            for entry in (person.get("researcher-urls") or {}).get("researcher-url", [])
+            if str(entry.get("visibility", "")).lower() == "public"
+        ],
         "activities": record.get("activities-summary"),
         "record_last_modified": (record.get("history") or {}).get("last-modified-date"),
         "identity_verdict": "not_checked",

@@ -724,6 +724,8 @@ def permission(
     row: dict[str, Any],
     started: float,
     pending: dict[tuple[str, Any], tuple[str, float, dict[str, Any]]],
+    *,
+    hard_stop: datetime | None = None,
 ) -> dict[str, Any]:
     response: dict[str, Any] = {"id": row["id"], "allowed": False}
     try:
@@ -745,7 +747,7 @@ def permission(
             deadline = min(
                 time.monotonic() + 25,
                 started + 360,
-                time.monotonic() + HARD_STOP.timestamp() - time.time() - 5,
+                time.monotonic() + (hard_stop or HARD_STOP).timestamp() - time.time() - 5,
             )
             policy_until(root, batch, aid, target, deadline)
         else:
@@ -814,7 +816,18 @@ def finish_source(
     )
 
 
-def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, dict[str, Any]]:
+def collect(
+    root: Path, profile: dict[str, Any], batch: Batch, *, hard_stop: datetime | None = None
+) -> tuple[Path, dict[str, Any]]:
+    if hard_stop is not None:
+        manifest = read(root / "manifest.json")
+        if manifest.get("method") != "contact-first-v1" or (root / "stopped.json").exists():
+            raise ValueError("Дневной deadline только для нового contact-first root без STOP")
+        if hard_stop.isoformat() != manifest.get("fallback_deadline"):
+            raise ValueError("Deadline отличается от frozen manifest")
+    deadline = hard_stop or HARD_STOP
+    if hard_stop is not None and datetime.now(UTC) >= deadline:
+        raise ValueError("Дневной deadline истёк; collector не запущен")
     if profile.get("route_origin"):
         original = Path(profile["route_origin"]) / "runs" / profile["id"] / "collector/started.json"
         if list(PARENT.glob(f"*/runs/{profile['id']}/collector/started.json")) != [original]:
@@ -923,7 +936,9 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
                 if row.get("probe"):
                     raise ValueError("Probe запрещён в содержательном job")
                 if accept_reservations:
-                    response = permission(root, batch, aid, row, started, pending)
+                    response = permission(
+                        root, batch, aid, row, started, pending, hard_stop=hard_stop
+                    )
                 else:
                     response = {
                         "id": row["id"],
@@ -976,7 +991,7 @@ def collect(root: Path, profile: dict[str, Any], batch: Batch) -> tuple[Path, di
 
         threading.Thread(target=pump, daemon=True).start()
         try:
-            while time.monotonic() - started < 595 and datetime.now(UTC) < HARD_STOP:
+            while time.monotonic() - started < 595 and datetime.now(UTC) < deadline:
                 try:
                     consume_host()
                 except HostPolicyError as exc:
