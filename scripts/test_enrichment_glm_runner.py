@@ -26,6 +26,47 @@ from enrichment_verification import immutable_json
 
 
 class GLMRunnerTests(unittest.TestCase):
+    def test_collector_host_failure_stops_before_next_profile_or_verifier(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sample = [{"id": f"A{i}"} for i in range(10)]
+            immutable_json(root / "sample.json", sample)
+            immutable_json(root / "manifest.json", {"groups": [["A4", "A5"], ["A6", "A7"]]})
+            calls = []
+
+            def collect(
+                _root: Path, profile: dict[str, Any], *, probe: bool = False
+            ) -> dict[str, Any]:
+                if probe:
+                    return {"done": True, "model_requests": 0}
+                calls.append(profile["id"])
+                # A real exception can have an empty message; it is still a host failure.
+                return {"done": False, "model_requests": 1, "host_error": ""}
+
+            args = argparse.Namespace(
+                root=root,
+                baseline=root,
+                mode="live",
+                scope=root,
+                scope_url="scope",
+                baseline_pdf_module_path=root,
+                remaining_percent=4,
+            )
+            with (
+                patch("enrichment_glm_runner.freeze"),
+                patch("enrichment_glm_runner.run_pi", side_effect=collect),
+                patch("enrichment_glm_compare.verify_group") as verifier,
+                patch("enrichment_glm_compare.summarize", return_value={}),
+            ):
+                experiment(args)
+            self.assertEqual(calls, ["A4"])
+            verifier.assert_not_called()
+            self.assertTrue((root / "stopped.json").exists())
+            self.assertIn(
+                "Collector host failure",
+                json.loads((root / "experiment-partial.json").read_text())["reason"],
+            )
+
     def test_remaining6_validates_both_seals_and_excludes_four_spent_profiles(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             parent = Path(temporary)

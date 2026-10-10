@@ -677,6 +677,8 @@ def experiment(args: argparse.Namespace) -> dict[str, Any]:
                     ),
                     flush=True,
                 )
+                if receipt.get("host_error") is not None:
+                    raise ValueError("Collector host failure; " + str(receipt["host_error"]))
                 if (
                     manifest.get("first_usable_pair_before_further_collection")
                     and not first_pair_attempted
