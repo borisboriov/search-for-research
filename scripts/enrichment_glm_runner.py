@@ -111,11 +111,41 @@ def continuation_plan(sample: list[dict[str, Any]], previous: Path | None) -> di
     if (
         old["sample_sha256"] != sha(previous / "sample.json")
         or read(previous / "sample.json") != sample
-        or actual["day_jobs_after"] != 19
         or len(jobs) != 2
-        or {j.get("author_id") for j in jobs} != set(ids[:2])
         or any(j.get("stage") != "collect" for j in jobs)
     ):
+        raise ValueError("Continuation requires the same frozen10 and two collect-only jobs")
+    spent = {j.get("author_id") for j in jobs}
+    if actual["day_jobs_after"] == 21:
+        if (
+            spent != set(ids[2:4])
+            or old.get("day_jobs_before") != 19
+            or old.get("scheduled_profile_ids") != ids[2:]
+            or old.get("excluded_spent_profile_ids") != ids[:2]
+            or not old.get("continuation_from")
+        ):
+            raise ValueError("Remaining6 requires the exact spent remaining8 predecessor")
+        ancestor = Path(old["continuation_from"])
+        ancestor_plan = continuation_plan(sample, ancestor)
+        ancestor_seals = list(ancestor.glob("transfer-SHA-index-*.json"))
+        if ancestor_plan["day_jobs_before"] != 19 or sha(ancestor_seals[0]) != old.get(
+            "predecessor_index_sha256"
+        ):
+            raise ValueError("Remaining6 ancestor seal changed")
+        remaining = ids[4:]
+        return {
+            "day_jobs_before": 21,
+            "max_GLM_jobs": 6,
+            "groups": [remaining[:2], remaining[2:4], remaining[4:]],
+            "scheduled_profile_ids": remaining,
+            "excluded_spent_profile_ids": ids[:4],
+            "deadline_minutes": 150,
+            "continuation_from": str(previous),
+            "predecessor_index_sha256": sha(seals[0]),
+            "first_usable_pair_before_further_collection": False,
+            "evaluation_scope": "remaining6 devset; agent baseline, human gold 0",
+        }
+    if actual["day_jobs_after"] != 19 or spent != set(ids[:2]):
         raise ValueError("Continuation must exclude exactly the two spent frozen10 jobs")
     remaining = ids[2:]
     return {
@@ -221,7 +251,7 @@ def freeze(
     if len(sample) != 10:
         raise ValueError("This bounded experiment requires frozen10")
     if continuation_from is not None and mode != "live":
-        raise ValueError("Continuation is a distinct live remaining8 experiment")
+        raise ValueError("Continuation is a distinct live remaining-profile experiment")
     plan = continuation_plan(sample, continuation_from)
     started = datetime.now(UTC)
     immutable_json(

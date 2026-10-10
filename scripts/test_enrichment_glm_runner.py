@@ -26,6 +26,60 @@ from enrichment_verification import immutable_json
 
 
 class GLMRunnerTests(unittest.TestCase):
+    def test_remaining6_validates_both_seals_and_excludes_four_spent_profiles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            sample = [{"id": f"A{i}"} for i in range(10)]
+
+            def predecessor(root: Path, manifest: dict[str, Any], start: int) -> None:
+                immutable_json(root / "sample.json", sample)
+                immutable_json(
+                    root / "manifest.json", manifest | {"sample_sha256": sha(root / "sample.json")}
+                )
+                immutable_json(root / "stopped.json", {})
+                immutable_json(root / "metrics-reconciled.json", {"day_jobs_after": 17 + start + 2})
+                for aid in (f"A{start}", f"A{start + 1}"):
+                    immutable_json(
+                        root / "model-jobs" / f"{aid}.json", {"stage": "collect", "author_id": aid}
+                    )
+                immutable_json(
+                    root / "transfer-SHA-index-test.json",
+                    {
+                        "private_file_sha256": {
+                            str(p.relative_to(root)): sha(p) for p in root.rglob("*") if p.is_file()
+                        }
+                    },
+                )
+
+            first, second = parent / "first", parent / "second"
+            predecessor(first, {}, 0)
+            predecessor(second, continuation_plan(sample, first), 2)
+            plan = continuation_plan(sample, second)
+            self.assertEqual(plan["scheduled_profile_ids"], [f"A{i}" for i in range(4, 10)])
+            self.assertEqual(plan["excluded_spent_profile_ids"], [f"A{i}" for i in range(4)])
+            self.assertEqual(plan["groups"], [["A4", "A5"], ["A6", "A7"], ["A8", "A9"]])
+            self.assertEqual(plan["day_jobs_before"], 21)
+            self.assertFalse(plan["first_usable_pair_before_further_collection"])
+            new = parent / "new"
+            manifest = plan | {"day_cap": 30, "max_Sol_jobs": 3}
+            for i in range(4):
+                with (
+                    patch("enrichment_glm_runner.frozen", return_value=manifest),
+                    self.assertRaisesRegex(ValueError, "excluded"),
+                ):
+                    run_pi(new, sample[i])
+            for i in range(6):
+                immutable_json(new / "model-jobs" / f"G{i}.json", {"stage": "collect"})
+            with self.assertRaisesRegex(ValueError, "job cap"):
+                check_job_budget(new, manifest, "collect")
+            for i in range(3):
+                immutable_json(new / "model-jobs" / f"S{i}.json", {"stage": "verify"})
+            with self.assertRaisesRegex(ValueError, "job cap"):
+                check_job_budget(new, manifest, "verify")
+            (first / "model-jobs/A0.json").write_text("{}")
+            with self.assertRaisesRegex(ValueError, "seal mismatch"):
+                continuation_plan(sample, second)
+
     def test_continuation_excludes_spent_jobs_and_enforces_shared_30_cap(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
