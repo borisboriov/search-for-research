@@ -656,8 +656,8 @@ def experiment(args: argparse.Namespace) -> dict[str, Any]:
                     verified_early = True
                     result = verify_group(args.root, index, args.remaining_percent)
                     print(json.dumps({"phase": "first-pair-verify", **result}), flush=True)
-                    if result.get("error"):
-                        raise ValueError("Independent verifier chain failed; " + result["error"])
+                    if result.get("error") or not result.get("profiles_verified", 0):
+                        raise ValueError("First independent pair not verified; " + str(result))
             if verified_early:
                 continue
             result = verify_group(args.root, index, args.remaining_percent)

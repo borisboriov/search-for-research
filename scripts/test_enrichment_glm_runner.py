@@ -92,7 +92,7 @@ class GLMRunnerTests(unittest.TestCase):
 
             def verify(_root: Path, index: int, _remaining: float) -> dict[str, Any]:
                 calls.append(f"verify{index}")
-                return {"index": index}
+                return {"index": index, "profiles_verified": 0 if index == 0 else 1}
 
             args = argparse.Namespace(
                 root=root,
@@ -119,6 +119,41 @@ class GLMRunnerTests(unittest.TestCase):
             self.assertEqual(
                 [c for c in calls if c.startswith("A")], [f"A{i}" for i in range(2, 10)]
             )
+            # A first nonempty packet that cannot fit the full context is not a verified pair.
+            blocked = root / "blocked"
+            immutable_json(blocked / "sample.json", sample)
+            immutable_json(
+                blocked / "manifest.json",
+                read_manifest := json.loads((root / "manifest.json").read_text()),
+            )
+            calls.clear()
+            args.root = blocked
+
+            def skip(_root: Path, index: int, _remaining: float) -> dict[str, Any]:
+                calls.append(f"verify{index}")
+                return {"index": index, "partial": True, "model_jobs": 0}
+
+            with (
+                patch("enrichment_glm_runner.freeze"),
+                patch("enrichment_glm_runner.run_pi", side_effect=collect),
+                patch(
+                    "enrichment_glm_runner.source_bound_candidate",
+                    side_effect=lambda _r, aid: aid != "A2",
+                ),
+                patch(
+                    "enrichment_glm_compare.verify_group",
+                    side_effect=skip,
+                ),
+                patch("enrichment_glm_compare.summarize", return_value={}),
+            ):
+                experiment(args)
+            self.assertEqual(calls, ["A2", "verify0", "A3", "verify1"])
+            self.assertIn(
+                "not verified",
+                json.loads((blocked / "experiment-partial.json").read_text())["reason"],
+            )
+            self.assertTrue((blocked / "stopped.json").exists())
+            self.assertEqual(read_manifest["groups"][0], ["A2"])
             self.assertFalse(source_bound_candidate(root, "A2"))
             empty = root / "empty.json"
             immutable_json(
