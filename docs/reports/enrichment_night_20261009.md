@@ -974,3 +974,104 @@ STOP общего root не распространялся на новый вл�
 gitleaks history log с 0 commits не доказывает проверку истории; staged hook
 и актуальный CI рассматриваются отдельно. Legacy диапазон PR до c83fb35
 полностью повторно не ревьюился; готовность всего PR не заявлена.
+
+## Разрешённый свежий contact-first контроль 10.10: first-profile gate STOP
+
+Этот раздел продолжает только ранее заблокированную frozen десятку. Прежний
+дневной regression результат, numeric v1/v2/erratum, старые inputs/STOP
+сохранены без изменений. Прямое native human разрешение Бориса на публичные
+данные этих10ID → Z.ai/Pi по существующей GLM подписке и новый quota stop5%
+зафиксировано [в PR](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097877495).
+Платный API billing, покупки/reset-credit, новые аккаунты и Astra исключены.
+Новый immutable top-level root и [freeze до вызова](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097905660)
+используют тот же sample SHA `07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387`,
+10ID из10вузов, прежние критерии и code freeze `e266bf3b43da3ba8841d49a59f22252573e8aaa8`.
+Порог нового запуска читается из frozen manifest:5%, legacy/default остаётся15%.
+Новый offline fixture проверяет5%/NaN/invalid threshold STOP и default15%.
+Предел30 дневных профильных model jobs начинает с4 исполненных regression Sol;
+прежние два approval denial до исполнения не считаются jobs. Новых отказов
+разрешений при нынешних двух запусках нет. Старые roots не возобновлены.
+
+Первый и единственный новый человек — A5070748575, Salman Ahmadi‐Asl.
+Early source stage: известных author URLs в каталоге нет, ORCID API остаётся
+закрытым saved current-day robots Disallow; record API GET0. Это не вывод об
+отсутствии публичного контакта. GLM collector — штатный Pi/GLM5.3Flash/high,
+полная прежняя Sol6.1/high инструкция сохранена, но пустой пакет не расходует GPT.
+
+### Две попытки первого collector; остальные9 не запускались
+
+Первая попытка: один GLM job,4 model request config receipts /3 actual chat HTTP
+metadata, один поиск,0 host robots/reader source calls. Private runner автора
+не имел main guard. При multiprocessing spawn host policy worker импортировал
+runner и повторно выполнил quota write; immutable artifact отличался и worker
+завершился без результата. Не было повторного GLM job внутри worker: отказ
+случился до collector invocation. Pi завершён exit143, model_completed=false,
+usage incomplete, partial/receipts сохранены, root STOP. Это ошибка оркестрации
+автора, не ошибка источника и не отсутствие контакта.
+
+Конкретное исправление: main guard только в новом immutable private runner.
+Офлайн импорт с `run_name=__mp_main__` подтвердил0 collector/verifier calls и
+отсутствие quota/action writes. Рубрика, binder, extractor и измерители не менялись.
+[Единственная разрешённая повторная попытка](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6097926772)
+в новом top-level root, attempt2/2; исходный общий35min deadline не продлён,
+прежние4search/8resources/6requests/600s сохранены.
+
+Retry: один GLM job /5 configs и5 actual chat HTTP metadata, один поиск,
+0 host robots и0 reader source calls. Search вернул6 точных ссылок. Collector
+выбрал ORCID URL, отсутствующий в allowed exact links сохранённого search
+ответа; policy отклонила URL до host/reader reservation. Дополнительный search
+был отклонён read-now gate при наличии discovered links. Первый search с
+нормализованным дефисом тоже был отклонён до сети: frozen basic query должен
+совпадать буквально; следующий exact query выполнен. Эти denials не source calls.
+Search snippets не использованы как доказательства. Collector завершён exit0,
+model_completed=true, но normalized eligible packet содержит0 items/0 evidence.
+Источник/контакт содержательно не подтверждены, поэтому gate1→3 не пройден.
+Sol не запускался; третьей попытки, нового исправления во время прогона или
+другого транспорта нет. Retry root STOP, остальные9 не запускались.
+
+### Измерения и границы результата
+
+[Числовой артефакт](enrichment_contact_first_fresh_20261010.metrics.json)
+byte-identical private `metrics-fresh-final.json`; числа получены из actual
+receipts/status/HTTP metadata,217 ссылочных SHA заморожены. Fresh:1 уникальный
+профиль из10 frozen,2 GLM collector jobs,9 request config receipts и8 actual
+chat HTTP metadata,2 search calls,source reads/host robots/direct source HTTP0,
+Sol/Astra0,confirmed contacts/source rows0. Это1 attempted case, не coverage,
+prevalence или accuracy каталога; невозможность пройти acquisition gate не
+означает отсутствие контакта у человека. Agent-free contact fraction unknown:
+0 найденных контактов, знаменатель0. Identity/currentness/recruitment не установлены.
+
+У первой partial попытки сохранились7970 tokens завершённых сообщений;
+полная стоимость/usage неизвестна. У retry complete usage27391 tokens.
+Вместе наблюдалось35361 tokens: input20624,output3857,cacheRead10880;
+reasoning3211 уже входит вoutput. Это incomplete lower bound, не полный debit:
+незавершённые сообщения первого collector не превращены в нули и не добавлены
+по guessed snapshots. Collector wall22.225943+85.709339=107.935282s; полного
+pipelinewalltime с разработкой/ожиданием нет. Actual model/effort/backend в
+receipts undisclosed; requested configs GLM5.3Flash/high зафиксированы.
+API price/subscription balance/debit не выдуманы.
+
+Сохранено30 Z.ai HTTP metadata:12 search-MCP,10 reader-MCP,8 chat. MCP числа
+включают initialize/list/transport/cleanup, не30source calls. Два405 на root
+MCP transports в каждой попытке не относятся к robots/источникам. Caps соблюдены:
+по одному выполненному search на collector,0readers/robots,4и5 model configs≤6,
+22и86s≤600. День теперь6 исполненных profile model jobs (4known Sol+2freshGLM),
+известных upstream model HTTP12 (4Sol+8GLM); ночь44/15/Astra4 прежняя отдельно.
+Официальная квота Codex18% перед первым запуском,17% после содержательного
+этапа,account-wide; новыйstop5% не достигнут. Human feedback прежняя частичная,
+fullgold0; oldhuman_reviewed0 не переписан.
+
+Для quota code change: lint/typecheck/test PASS,234unittest/388pytest,
+coverage94,06%. Strict audit снова FAIL только прежний#189 deps-node/fs-trivy
+sharp/source-map-js; критерии/зависимости не ослаблены. Docs-check, независимый
+review/currentCI/handoff окончательного report commit фиксируются в PR;
+зелёная готовность к merge не заявлена. Новых интеграций/библиотек/профилей нет.
+Паспорт/product docs/production/main/merge/deploy/global config не менялись.
+
+Private roots `enrichment-contact-first-authorized-20261010` и
+`enrichment-contact-first-authorized-retry-20261010` сохраняют direct human
+permission, sample/code/runner freezes, raw events/requests/responses,
+receipts/partial/empty packet, guard test/diagnosis, STOP, checks/review/CI
+и финальный SHA index. Первоначальные regression и blocked fresh roots
+остаются отдельными STOP. Результат — проверяемый первый acquisition gate failure;
+это не завершённый fresh10 и не доказательство готовности масштабировать каталог.
