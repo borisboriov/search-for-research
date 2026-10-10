@@ -9,6 +9,7 @@ import hashlib
 import json
 import re
 import time
+from collections.abc import Callable
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -242,7 +243,9 @@ class Loader:
         return source
 
 
-def checked_source(root: Path, source: dict[str, Any]) -> tuple[str, str]:
+def checked_source(
+    root: Path, source: dict[str, Any], *, pdf_extractor: Callable[[bytes], str] | None = None
+) -> tuple[str, str]:
     """Повторно сверить bytes/derivation и seals перед любым model-visible packet."""
     safe_url(source["url"])
     registered = root / f"source-{digest(source['url'].encode())}.json"
@@ -319,7 +322,7 @@ def checked_source(root: Path, source: dict[str, Any]) -> tuple[str, str]:
     if source["source_kind"] == "direct_pdf":
         from enrichment_public_sources import pdf_text
 
-        expected_decoded = pdf_text(raw)
+        expected_decoded = (pdf_extractor or pdf_text)(raw)
     else:
         expected_decoded = raw.decode(charset[1] if charset else "utf-8", errors="strict")
     if expected_decoded != decoded:
@@ -494,7 +497,9 @@ def prepare_contact_input(
     )
 
 
-def check_contact_input(root: Path, input_path: Path) -> dict[str, Any]:
+def check_contact_input(
+    root: Path, input_path: Path, *, pdf_extractor: Callable[[bytes], str] | None = None
+) -> dict[str, Any]:
     """Нельзя обойти binder передачей произвольного готового semantic input."""
     from enrichment_experiment import sha, verified_sample
 
@@ -535,7 +540,7 @@ def check_contact_input(root: Path, input_path: Path) -> dict[str, Any]:
         if sha(path) != row["source_record_sha256"]:
             raise ValueError("Изменён source registry")
         source = read(path)
-        decoded, static = checked_source(path.parent, source)
+        decoded, static = checked_source(path.parent, source, pdf_extractor=pdf_extractor)
         body = decoded if row["representation"].startswith("html_") else static
         if (
             not 0 <= row["start"] < row["end"] <= len(body)
