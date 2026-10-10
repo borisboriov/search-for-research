@@ -1089,3 +1089,78 @@ GLM HTTP8, Sol physical HTTP и общий физический model HTTP count
 новых содержательных jobs нет. Reviewer подтвердил217 новых и169 прежних SHA,
 оба runner/sample/code freeze, два first-profile attempts и STOP остальных9.
 Повторное review/CI/handoff исправления фиксируются на окончательном head в PR.
+
+### 10.10: точные ссылки reader и один следующий frozen профиль
+
+Поручение и граница проверки — [комментарий PR194](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6099201308).
+После офлайн-разбора разрешён только следующий A5047877230 из прежних frozen10:
+один collector, полная прежняя Sol/high только при непустом допущенном пакете.
+Остальные8 не запускались, A5070748575 третьей попытки не получил.
+Исчезнувший собственный temporary checkout восстановлен из сохранённого f9cd0ef;
+primary main и чужое удаление CLAUDE.md не менялись. Координатор пока прочитал
+outputs/артефакты; независимые локальные SHA/handoff им не повторены из-за
+CreateProcess os error2. Техническое восстановление не заменяет продуктовую приёмку.
+
+**Причина прежнего отказа.** Saved native search возвращает шесть `row.link`
+только на корни сайтов. Выбранный полный ORCID совпадает с frozen catalog ORCID
+и встречается в snippets, но не с точными ссылками поиска. Модель видела
+double-encoded исходный результат и host список exact URL. Это смешение якоря
+личности с provenance поиска; считать сам ORCID выдуманным оснований нет.
+Exact-match отказ был корректен. Existing extension теперь передаёт native
+reader enum точных unused URL, не подставляя/не нормализуя пути. При отказе
+показывает допустимые ссылки; search временно скрыт при unread links без
+содержательного тела. При неверной схеме инструмента — fail closed.
+Host reservation, STOP, robots, caps и literal binder сохранены.
+
+Офлайн replay actual saved response проверяет прежний отказ и следующий exact
+URL без сети/модели. Новые тесты проверяют catalog/snippet substitution,
+различия scheme/trailing slash, неизменность payload/budget, отсутствие
+source reservation при отказе, последующее разрешённое чтение и STOP транспорта.
+Private runner импортирован как `__mp_main__` без аргументов: collector/verifier
+calls0 и action/quota writes0. Freeze: **91bade4aa555e1988a789b2f4a8fcf7ee00a60f8**,
+тот же sample SHA `07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387`.
+Новый private root `enrichment-contact-first-exact-links-20261010` отдельный;
+его runner допускает только A5047877230, один collect и максимум один verify.
+Ранний этап: target author URL в frozen каталоге отсутствует; сохранённый
+current-day robots200/Disallow проверен по SHA и применён к точному ORCID API
+record URL. Direct HTTP0, ORCID API GET0; запрет не обходился.
+
+**Live результат — gate FAIL.** Один GLM collector штатно завершился.
+Один выполненный search снова дал корни сайтов. Два exact reader URL приняты,
+host robots2 и reader2 выполнены: главная ВШЭ (10228 chars) и ACM challenge
+«Just a moment…» (257 chars). Обе страницы проходят технический минимум
+длины/слов, но он не подтверждает target identity/полезность источника.
+Единственная raw цитата об организации ВШЭ не совпала дословно с сохранённым
+reader body: `quote_not_literal_or_unread`. Candidate/rejection/source сохранены;
+допущенные quotes/items/profile refs0. Identity/contact/currency/recruitment
+unknown, information_date null. Пустой пакет не передавался Sol. Принятый URL
+и общая главная страница не выполняют критерий target-source + literal quote.
+
+[Числовой snapshot v2](enrichment_contact_first_exact_links_20261010.metrics.v2.json):
+28026 tokens complete (input23961, output2593, cacheRead1472, cacheWrite0;
+reasoning2083 — часть output, не дополнительное слагаемое), collector79,955410с,
+host stage80,042890с. Пять model-request configs/пять chat HTTP200;
+13 MCP HTTP metadata включают handshake/cleanup и не являются13source calls.
+Source calls: search1, reader2, host robots HTTP2; early directHTTP0.
+Requested Pi/GLM5.3Flash/high по существующей подписке; actual model/effort/backend,
+денежный debit и subscription quota delta не раскрыты. Новых Sol/Astra0;
+день7profile jobs (прежние4Sol+2GLM и этот1GLM), cap30 не сбрасывался.
+Официальный Codex remaining16% до/после измерения, новый stop≤5% не достигнут.
+Это отдельный человек, не A/B предыдущего случая и не измерение fresh10 coverage.
+
+Original числовой snapshot сохранён; v2/erratum исправляют только технический
+body counter1→2 по финальному request5 receipt. Эти две страницы остаются
+неподтверждёнными источниками для человека. Все source/model данные, gate,
+quotes/contact/token/time/job числа прежние. Offline diagnosis v2 также
+уточняет имя существующего request4 config вместо ошибочной ссылки v1;
+исходный diagnostic файл сохранён. 248 прежних private SHA перепроверены без
+изменений. Новый root имеет STOP; повторов, остальных8 и третьей попытки первого
+профиля нет. Более широкий запуск остановлен.
+
+Локальные lint/typecheck/test PASS:234unittest,388pytest,coverage94,06%; Node25/25,
+docs-check PASS. Initial strict audit потребовал восстановления node_modules
+из lock; полный повтор и актуальные CI/review/handoff фиксируются в PR.
+Следующее решение: сначала выяснить по штатному search contract/raw, почему
+приходят корни сайтов и можно ли получить точные target URLs; отдельно остаётся
+ошибка literal quote. Дальнейшие live profiles/framework/API в это поручение
+не входят. Product docs/паспорт/production/main/merge/deploy не менялись.
