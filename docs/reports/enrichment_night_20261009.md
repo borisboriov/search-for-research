@@ -1031,9 +1031,10 @@ Sol не запускался; третьей попытки, нового ис�
 
 ### Измерения и границы результата
 
-[Числовой артефакт](enrichment_contact_first_fresh_20261010.metrics.json)
-byte-identical private `metrics-fresh-final.json`; числа получены из actual
-receipts/status/HTTP metadata,217 ссылочных SHA заморожены. Fresh:1 уникальный
+[Актуальный числовой артефакт](enrichment_contact_first_fresh_20261010.metrics.v2.json)
+byte-identical private `metrics-fresh-v2.json`; исходный v1/217 SHA сохранён,
+v2 добавляет SHA erratum и оригинала (219refs). Числа получены из actual
+receipts/status/HTTP metadata. Fresh:1 уникальный
 профиль из10 frozen,2 GLM collector jobs,9 request config receipts и8 actual
 chat HTTP metadata,2 search calls,source reads/host robots/direct source HTTP0,
 Sol/Astra0,confirmed contacts/source rows0. Это1 attempted case, не coverage,
@@ -1056,7 +1057,10 @@ API price/subscription balance/debit не выдуманы.
 MCP transports в каждой попытке не относятся к robots/источникам. Caps соблюдены:
 по одному выполненному search на collector,0readers/robots,4и5 model configs≤6,
 22и86s≤600. День теперь6 исполненных profile model jobs (4known Sol+2freshGLM),
-известных upstream model HTTP12 (4Sol+8GLM); ночь44/15/Astra4 прежняя отдельно.
+наблюдаемых GLM chat HTTP metadata8. Число физических HTTP Sol неизвестно:
+четыре Sol jobs не раскрывают provider transport/retries и не складываются с
+HTTP записями GLM. Общий физический HTTP count моделей unknown.
+Ночь44/15/Astra4 прежняя отдельно.
 Официальная квота Codex18% перед первым запуском,17% после содержательного
 этапа,account-wide; новыйstop5% не достигнут. Human feedback прежняя частичная,
 fullgold0; oldhuman_reviewed0 не переписан.
@@ -1075,3 +1079,13 @@ receipts/partial/empty packet, guard test/diagnosis, STOP, checks/review/CI
 и финальный SHA index. Первоначальные regression и blocked fresh roots
 остаются отдельными STOP. Результат — проверяемый первый acquisition gate failure;
 это не завершённый fresh10 и не доказательство готовности масштабировать каталог.
+
+Независимый fresh reviewer проверил b907152 и подтвердил один Medium blocker
+атрибуции: original numeric v1 ошибочно обозначал4Soljobs+8GLM HTTP как12
+известных upstream HTTP. Выпущены отдельные immutable erratum/v2: observed
+GLM HTTP8, Sol physical HTTP и общий физический model HTTP count unknown.
+Исходный v1 сохранён byte-for-byte; его ошибочное поле нельзя использовать.
+Остальные source/job/token/time/gate числа и217 исходных SHA не изменены;
+новых содержательных jobs нет. Reviewer подтвердил217 новых и169 прежних SHA,
+оба runner/sample/code freeze, два first-profile attempts и STOP остальных9.
+Повторное review/CI/handoff исправления фиксируются на окончательном head в PR.
