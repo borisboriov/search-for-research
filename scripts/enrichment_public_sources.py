@@ -371,7 +371,11 @@ class PublicLoader(Loader):
                     decoded = static = pdf_text(raw)
                 else:
                     charset = re.search(r"charset=([\w-]+)", ctype, re.I)
-                    decoded = raw.decode(charset[1] if charset else "utf-8", errors="strict")
+                    try:
+                        decoded = raw.decode(charset[1] if charset else "utf-8", errors="strict")
+                    except LookupError as exc:
+                        # Preserve the saved bytes; reject only this source, without guessing text.
+                        raise ValueError("Unsupported declared source encoding") from exc
                     if api:
                         if "json" not in ctype:
                             raise ValueError("Not public API JSON")

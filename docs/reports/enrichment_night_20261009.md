@@ -1484,3 +1484,103 @@ job usage неизвестен (`null`). Сумма observed wall213.975s вкл
 исправленном pypdf. Merge/deploy/продуктовая приёмка не заявляются. Для вывода
 «качество не хуже» нужен отдельный ограниченный прогон исправленной цепочки
 и полная независимая проверка; этот раунд не подменяет её partial-цифрами.
+
+
+### GLM remaining8: новый freeze и STOP на кодировке источника
+
+**Вывод.** Разрешённое продолжение на ещё не пройденных этим методом восьми
+профилях осталось техническим partial. Новых independently verified пар —
+0; неухудшение качества и преимущество полного цикла по расходам
+не установлены. Это devset с известным агентским baseline, human0;
+восемь не подменяют единый чистый новый10-run. Исходный baseline для remaining8
+имел 7 принятых агентом контактов, supported identity8 и current affiliation3;
+эти старые оценки не являются human gold и не были переданы GLM.
+
+**Постановка и версия.** [Продолжение в PR](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6102242505),
+[pre-live независимое pass](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6102293012).
+Frozen `4e85631cfd79e84398a9ffacdc7bbfaf23509d17`; новый root
+`/Users/boris/Experiments/search-for-research/enrichment-glm-remaining8-20261011`.
+Старые STOP и метрики не менялись. Перед запуском проверены refs/чистый own
+checkout/единственный исполнитель, seals605 файлов предшественника и865 baseline,
+252 unittest,388pytest,11offlinePython и2JS. Минимальный native Pi preflight
+завершился без inference/source/search:0/0/0. Narrow schedule/budget patch
+сохранил collector instruction/schema (AST SHA proof), source binder и полную
+semantic-v3. Исходное Medium замечание first-pair context skip исправлено
+**до** freeze; продолжение требует фактически проверенной первой пары.
+
+Новый freeze: `2026-10-10T21:20:16.107438+00:00`, finite deadline
+`2026-10-10T23:50:16.107438+00:00` (150минут), фиксированные группы1+3+4,
+max8GLM+3Sol. Общий счётчик цикла начат с19 и не сброшен при смене даты;
+первые два прежних ID A5070748575/A5047877230 исключены до reservation.
+Astra0, reserveCodex0 разрешён, покупок/reset/API billing нет. На старте
+официальный остаток6% account-wide, ordinaryUsageAllowed=true. Чтение логов
+продуктовым координатором не является его независимой локальной перепроверкой файлов.
+
+| Scheduled ID | Фактический исход нового прохода | Новая Sol-пара |
+|---|---|---|
+| A5006480668 | Завершён, цитата не найдена в saved body; весь packet отклонён | Не проверена |
+| A5011172734 | Прерван необработанным LookupError charset windows-874 | Не проверена |
+| A5069670094 | Не запускался | Не проверена |
+| A5054791318 | Не запускался | Не проверена |
+| A5065694561 | Не запускался | Не проверена |
+| A5054586424 | Не запускался | Не проверена |
+| A5089458364 | Не запускался | Не проверена |
+| A5042154547 | Не запускался | Не проверена |
+
+**STOP и строгая граница.** Первый job прошёл transport/schema, но дословный
+binder отверг цитату; готового source-bound input нет. Это отдельная ошибка
+профиля, поэтому второй job начался без повтора первого и без пустой Sol-проверки.
+На втором обычный публичный HTML объявил charset `windows-874`; Python
+`raw.decode` выбросил `LookupError`, не преобразованный loader в локальный
+отказ источника. Common local цепочка прервана, native Pi завершён, outer finally
+сохранил STOP `2026-10-10T21:26:26.049670+00:00`; runner exit1.
+Исходный `metrics.json` не переписан. Recovery receipt имеет SHA первичных
+started/events/STOP, отдельные `metrics-reconciled.json`/public/status фиксируют
+прерванный job. Остальные шесть не запускались. Provider quota refusal не
+наблюдался; общий profile count `19→21/30`.
+После STOP новые источники/модели не вызывались.
+
+**Автономность и расходы.** GLM сам выбрал 6 native Z.ai search и
+2 ordinary DuckDuckGo HTML query. Snippets — только discovery;
+ручной подбор URL главной Sol-сессией0, baseline emails/deep URLs/verdicts
+в collector0. Код сохранил 7 источников
+(ORCID2,HTML5,PDF0),
+14 HTTP reservations/14 started, 8 логических поисков.
+New GLM jobs2: один completed, второй interrupted; Sol jobs0, пары0.
+19 model request configs и 19 native model HTTP observations.
+
+| Наблюдаемое GLM usage | Токены |
+|---|---:|
+| Uncached input | 87355 |
+| cacheRead отдельно | 118784 |
+| cacheWrite | 0 |
+| Output, включая невыделенный reasoning | 15896 |
+| Наблюдаемая сумма | 222035 |
+
+Суммы — наблюдённый нижний предел прерванного прохода, полнота job accounting
+false; полные точные tokens/wall `null`. Reasoning отдельно не раскрыт и не
+прибавляется к output; backend/USD неизвестны. Наблюдаемая wall-сумма
+366.476759сек включает bounded termination overhead для recovery,
+а не точное время полного цикла. Sol input/cached/uncached/output расходов новых
+проверок0: jobs не было. Контакты сохранены/потеряны, ложные добавления,
+identity/affiliation/date/readiness **не переоценены**, это не качество0/8.
+Старые459511 токенов относятся только к10 baseline verifier jobs; coordinator,
+поиск и оркестрация baseline неизвестны. Поэтому отношение этих сумм не является
+экономией, API-цена/масштаб1000–10000 не заявлены.
+
+**Исправление после STOP и передача.** Unsupported codec теперь преобразуется
+в ValueError отдельного source call: raw bytes сохранены, guessed decoding нет,
+иной публичный источник может быть прочитан. Регрессия проверяется offline
+mock HTTP: unknown charset оставляет body/ledger без accepted source, следующая
+обычная UTF-8 страница проходит, исходный URL не повторяется. Эта корректировка
+не запускалась live на тех же людях; frozen4e и STOP сохранены. Финальное
+независимое ревью/CI/handoff относятся к окончательному head PR и опубликованы
+там отдельно. Строгий аудит продолжает раскрывать #189; merge/deploy нет.
+
+**Воспроизводимость.** [Публичные числовые метрики](enrichment_glm_remaining8_20261011.metrics.json)
+и [состояние расписания](enrichment_glm_remaining8_20261011.status.json) — точные
+bytes private projections, а не вручную пересчитанные значения. Primary raw,
+quotes/source bodies/receipts, recovery provenance, STOP, code snapshots и
+проверки остаются в новом private root; в git нет emails/сырых цитат. Старые
+baseline/partial/seals не перезаписывались. Итоговый SHA-index и подтверждение
+прекращения процессов сохраняются перед передачей.

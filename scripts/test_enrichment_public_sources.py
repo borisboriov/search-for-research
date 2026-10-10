@@ -65,6 +65,38 @@ class PublicSourceTests(unittest.TestCase):
                 PublicLoader(root / "sources", [url], root, "a").load(url, kind=kind)
             )
 
+    def test_unsupported_charset_preserves_body_and_allows_another_public_source(self) -> None:
+        calls = []
+        raw = b"<h1>Saved undecodable source</h1>"
+
+        def respond(req: httpx.Request) -> httpx.Response:
+            calls.append(str(req.url))
+            if req.url.path == "/robots.txt":
+                return httpx.Response(200, text="User-agent: *\nAllow: /")
+            if req.url.path == "/person":
+                return httpx.Response(
+                    200, content=raw, headers={"content-type": "text/html; charset=windows-874"}
+                )
+            return httpx.Response(
+                200, text="<h1>Jane Doe</h1>", headers={"content-type": "text/html; charset=utf-8"}
+            )
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.prepare(root)
+            with self.assertRaisesRegex(ValueError, "Unsupported declared source encoding"):
+                self.load(root, respond)
+            records = list((root / "HTTP-ledger").glob("*-finished.json"))
+            self.assertEqual(len(records), 2)
+            self.assertFalse(list((root / "sources").glob("source-*.json")))
+            self.assertTrue(
+                any(p.read_bytes() == raw for p in (root / "sources").rglob("body-*.bin"))
+            )
+            source = self.load(root, respond, url="https://university.example/other")
+            self.assertIn("Jane Doe", (root / "sources" / source["text_path"]).read_text())
+            self.assertEqual(calls.count(URL), 1)
+            self.assertFalse((root / "stopped.json").exists())
+
     def test_links_preserve_literal_parent_and_reject_foreign_base_interpretation(self) -> None:
         body = '<a href="/p?x=1&amp;y=2"><b>Jane</b> Doe</a><a href="javascript:foo">x</a>'
         rows = observed_links(URL, body)

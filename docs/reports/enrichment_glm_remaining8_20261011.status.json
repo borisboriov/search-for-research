@@ -1,0 +1,96 @@
+{
+  "at": "2026-10-10T21:28:26.985976+00:00",
+  "frozen_head": "4e85631cfd79e84398a9ffacdc7bbfaf23509d17",
+  "profiles_frozen": 10,
+  "profiles_scheduled": 8,
+  "profiles": [
+    {
+      "author_id": "A5006480668",
+      "status": "completed_source_binder_rejected",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5011172734",
+      "status": "interrupted_source_decoding_exception",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5069670094",
+      "status": "not_started",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5054791318",
+      "status": "not_started",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5065694561",
+      "status": "not_started",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5054586424",
+      "status": "not_started",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5089458364",
+      "status": "not_started",
+      "new_paired_verification": false
+    },
+    {
+      "author_id": "A5042154547",
+      "status": "not_started",
+      "new_paired_verification": false
+    }
+  ],
+  "excluded_previously_spent": [
+    "A5070748575",
+    "A5047877230"
+  ],
+  "state_counts": {
+    "completed_source_binder_rejected": 1,
+    "interrupted_source_decoding_exception": 1,
+    "not_started": 6
+  },
+  "day_jobs_before": 19,
+  "day_jobs_after": 21,
+  "GLM_jobs": 2,
+  "Sol_group_jobs": 0,
+  "profiles_paired_verified": 0,
+  "GLM_model_requests_observed": 19,
+  "GLM_usage": {
+    "input": 87355,
+    "output": 15896,
+    "cacheRead": 118784,
+    "cacheWrite": 0,
+    "totalTokens": 222035,
+    "reasoning_included_output": null
+  },
+  "GLM_usage_complete": false,
+  "full_exact_tokens": null,
+  "full_exact_wall": null,
+  "GLM_wall_seconds_observed_sum": 366.47675891700317,
+  "HTTP_reserved": 14,
+  "HTTP_started": 14,
+  "logical_search_queries": 8,
+  "source_kind_counts": {
+    "direct_http": 5,
+    "structured_orcid": 2
+  },
+  "native_http_status_counts": {
+    "200": 31,
+    "202": 2,
+    "405": 2
+  },
+  "native_physical_model_HTTP_headers_observed": 19,
+  "source_model_STOP": true,
+  "provider_quota_refusal_observed": false,
+  "quality_nonregression_established": false,
+  "whole_cycle_cost_advantage_established": false,
+  "comparison": "remaining8 devset, agent baseline, human gold0; not a new clean10-run",
+  "human_reviewed": 0,
+  "human_gold": 0,
+  "Astra_jobs": 0
+}
