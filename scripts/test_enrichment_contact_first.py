@@ -240,7 +240,7 @@ class ContactFirstTests(unittest.TestCase):
                 verify_contact_input(allowed, allowed / "input", remaining_percent=6)
             with self.assertRaisesRegex(ValueError, "≤15%"):
                 verify_contact_input(root, root / "input", remaining_percent=6)
-            for floor in (0, 1, 4, 6, True):
+            for floor in (-1, 1, 4, 6, True):
                 invalid = root / ("floor" + str(floor))
                 invalid.mkdir()
                 immutable_json(invalid / "manifest.json", {"remaining_stop": floor})

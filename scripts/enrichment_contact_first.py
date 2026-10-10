@@ -253,16 +253,16 @@ def checked_source(root: Path, source: dict[str, Any]) -> tuple[str, str]:
         not in (
             "direct_http",
             "structured_orcid",
+            "direct_pdf",
         )
     ):
         raise ValueError("Источник не совпадает с реестром")
     for key in ("body_path", "decoded_path", "text_path"):
         if Path(source[key]).name != source[key]:
             raise ValueError("Путь источника выходит за private root")
-    response = read(
-        root
-        / f"request-result-{digest((source['source_kind'] + chr(0) + source['url']).encode())}.json"
-    )
+    request_kind = source.get("request_kind", source["source_kind"])
+    request_key = digest((request_kind + chr(0) + source["url"]).encode())
+    response = read(root / f"request-result-{request_key}.json")
     if any(response[k] != source[k] for k in response):
         raise ValueError("Источник не совпадает с HTTP receipt")
     raw = (root / source["body_path"]).read_bytes()
@@ -279,11 +279,19 @@ def checked_source(root: Path, source: dict[str, Any]) -> tuple[str, str]:
     ):
         raise ValueError("Источник/отпечаток изменён")
     charset = re.search(r"charset=([\w-]+)", source["content_type"], re.I)
-    if raw.decode(charset[1] if charset else "utf-8", errors="strict") != decoded:
+    if source["source_kind"] == "direct_pdf":
+        from enrichment_public_sources import pdf_text
+
+        expected_decoded = pdf_text(raw)
+    else:
+        expected_decoded = raw.decode(charset[1] if charset else "utf-8", errors="strict")
+    if expected_decoded != decoded:
         raise ValueError("Декодированное тело не совпадает с HTTP bytes")
     expected = (
         extract(decoded, source["url"])["text"]
         if source["source_kind"] == "direct_http"
+        else decoded
+        if source["source_kind"] == "direct_pdf"
         else json.dumps(json.loads(decoded), ensure_ascii=False, indent=2)
     )
     if expected != static:
@@ -338,6 +346,13 @@ def contact_packet(
         # Ограничение model-visible размера явно записано, не оценка полноты страницы.
         context = quote(static, 0, min(len(static), 20000), "static_text")
         identity.append(context)
+        if source["source_kind"] == "structured_orcid" and '"person": {' in static:
+            start_person = static.index('"person": {')
+            identity.append(
+                quote(
+                    static, start_person, min(len(static), start_person + 20000), "structured_json"
+                )
+            )
         if source["source_kind"] == "direct_http":
             parser = ContactsHTML(source["url"])
             parser.feed(decoded)
@@ -362,6 +377,10 @@ def contact_packet(
                 for row in parser.image_contacts
             ]
             candidates += [
+                (m[0], m.start(), m.end(), static, "static_text") for m in EMAIL.finditer(static)
+            ]
+        elif source["source_kind"] == "direct_pdf":
+            candidates = [
                 (m[0], m.start(), m.end(), static, "static_text") for m in EMAIL.finditer(static)
             ]
         else:
@@ -495,9 +514,9 @@ def check_quota(root: Path, remaining_percent: float, stage: str) -> None:
     """Порог нового запуска из frozen manifest; прежние roots сохраняют 15%."""
     manifest_path = root / "manifest.json"
     floor = read(manifest_path).get("remaining_stop", 15) if manifest_path.exists() else 15
-    if floor not in (5, 15) or isinstance(floor, bool):
+    if floor not in (0, 5, 15) or isinstance(floor, bool):
         raise ValueError("Неподдерживаемый frozen порог Codex")
-    if not floor < remaining_percent <= 100:
+    if not (0 <= remaining_percent <= 100 if floor == 0 else floor < remaining_percent <= 100):
         raise ValueError(f"Codex remaining≤{floor}%; {stage} остановлен")
 
 
@@ -555,7 +574,9 @@ def collect_fallback(
     )
 
 
-def verify_contact_input(root: Path, input_path: Path, *, remaining_percent: float) -> Path:
+def verify_contact_input(
+    root: Path, input_path: Path, *, remaining_percent: float, allow_profile_evidence: bool = False
+) -> Path:
     """Один полный native Sol/high, текущая квота передаётся из официальной сверки."""
     from enrichment_experiment import sha
     from enrichment_native import execute, normalized_provenance, schema
@@ -567,7 +588,8 @@ def verify_contact_input(root: Path, input_path: Path, *, remaining_percent: flo
     ensure_not_stopped(root)
     task_input = check_contact_input(root, input_path)
     aid = task_input["author_id"]
-    if not task_input["items"]:
+    has_profile_evidence = any(task_input["profile_evidence"].values())
+    if not task_input["items"] and not (allow_profile_evidence and has_profile_evidence):
         raise ValueError("Нет контактных кандидатов: сохранить partial без GPT")
     if len(list((root / "runs").glob("*/native_verifier/started.json"))) >= 30:
         raise ValueError("Профильный model budget исчерпан")
