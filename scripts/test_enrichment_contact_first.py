@@ -213,6 +213,40 @@ class ContactFirstTests(unittest.TestCase):
                     Path("/missing"), Path("/missing/input"), remaining_percent=value
                 )
 
+    def test_authorized_manifest_quota_floor_and_legacy_default(self) -> None:
+        from enrichment_verification import immutable_json
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for value in (5, 0, float("nan")):
+                immutable = root / str(value)
+                immutable.mkdir()
+                immutable_json(immutable / "manifest.json", {"remaining_stop": 5})
+                with self.assertRaisesRegex(ValueError, "≤5%"):
+                    verify_contact_input(immutable, immutable / "input", remaining_percent=value)
+                with self.assertRaisesRegex(ValueError, "≤5%"):
+                    collect_fallback(
+                        immutable, {"id": "a"}, remaining_percent=value, stopped_domains=[]
+                    )
+            allowed = root / "allowed"
+            allowed.mkdir()
+            immutable_json(allowed / "manifest.json", {"remaining_stop": 5})
+            with (
+                patch(
+                    "enrichment_contact_first.check_contact_input", side_effect=RuntimeError("gate")
+                ),
+                self.assertRaisesRegex(RuntimeError, "gate"),
+            ):
+                verify_contact_input(allowed, allowed / "input", remaining_percent=6)
+            with self.assertRaisesRegex(ValueError, "≤15%"):
+                verify_contact_input(root, root / "input", remaining_percent=6)
+            for floor in (0, 1, 4, 6, True):
+                invalid = root / ("floor" + str(floor))
+                invalid.mkdir()
+                immutable_json(invalid / "manifest.json", {"remaining_stop": floor})
+                with self.assertRaisesRegex(ValueError, "Неподдерживаемый"):
+                    verify_contact_input(invalid, invalid / "input", remaining_percent=18)
+
     def test_stopped_parent_prevents_new_HTTP_and_model_jobs(self) -> None:
         from enrichment_verification import immutable_json
 

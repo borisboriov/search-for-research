@@ -491,6 +491,16 @@ def check_contact_input(root: Path, input_path: Path) -> dict[str, Any]:
     return task_input
 
 
+def check_quota(root: Path, remaining_percent: float, stage: str) -> None:
+    """Порог нового запуска из frozen manifest; прежние roots сохраняют 15%."""
+    manifest_path = root / "manifest.json"
+    floor = read(manifest_path).get("remaining_stop", 15) if manifest_path.exists() else 15
+    if floor not in (5, 15) or isinstance(floor, bool):
+        raise ValueError("Неподдерживаемый frozen порог Codex")
+    if not floor < remaining_percent <= 100:
+        raise ValueError(f"Codex remaining≤{floor}%; {stage} остановлен")
+
+
 def collect_fallback(
     root: Path, profile: dict[str, Any], *, remaining_percent: float, stopped_domains: list[str]
 ) -> Path:
@@ -503,8 +513,7 @@ def collect_fallback(
     from enrichment_pi_pilot import RUBRIC
     from enrichment_semantics import prepare_control
 
-    if not 15 < remaining_percent <= 100:
-        raise ValueError("Codex remaining≤15%; fallback цепочка остановлена")
+    check_quota(root, remaining_percent, "fallback")
     ensure_not_stopped(root)
     if profile not in verified_sample(root):
         raise ValueError("Незамороженный профиль")
@@ -554,8 +563,7 @@ def verify_contact_input(root: Path, input_path: Path, *, remaining_percent: flo
     from enrichment_semantics import validate
     from enrichment_verifier_benchmark import check_schema
 
-    if not 15 < remaining_percent <= 100:
-        raise ValueError("Codex remaining≤15%; новые GPT jobs запрещены")
+    check_quota(root, remaining_percent, "GPT jobs")
     ensure_not_stopped(root)
     task_input = check_contact_input(root, input_path)
     aid = task_input["author_id"]
