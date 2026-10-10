@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 from enrichment_contact_first import digest
 from enrichment_experiment import sha
 from enrichment_glm_compare import compact, legacy_pdf_text, summarize
+from enrichment_glm_runner import drain_provider_refusals, frozen
 from enrichment_glm_tools import SourceHost, search_links
 from enrichment_verification import immutable_json
 
@@ -220,6 +221,44 @@ class GLMRunnerTests(unittest.TestCase):
             self.assertFalse(metrics["GLM_usage_complete"])
             self.assertIsNone(metrics["GLM_total_token_usage_exact"])
             self.assertIsNone(metrics["GLM_wall_seconds_exact"])
+            immutable_json(root / "model-jobs/group-00-Sol-reserved.json", {})
+            immutable_json(
+                root / "groups/00/native_verifier/receipt.json",
+                {"tokens": {"input_tokens": 100, "output_tokens": 10}, "wall_elapsed_seconds": 1},
+            )
+            with patch("enrichment_glm_compare.facts", return_value=unknown):
+                summarize(root, suffix="-reconciled")
+            partial = json.loads((root / "metrics-reconciled.json").read_text())
+            self.assertIsNone(partial["Sol_usage"]["cached_input_tokens"])
+            self.assertIsNone(partial["Sol_usage"]["reasoning_output_tokens"])
+            self.assertIsNone(partial["Sol_uncached_input"])
+            self.assertIsNone(partial["Sol_total_token_usage_exact"])
+            self.assertNotEqual(partial["Sol_usage_observation"], "no_jobs")
+
+    def test_late_refusal_durable_drain_blocks_next_job(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            run = root / "pi"
+            immutable_json(run / "000001-host-event.json", {"type": "done"})
+            # Written after the live host scan and just before stdout EOF.
+            immutable_json(
+                run / "000002-host-event.json", {"type": "upstream_refusal", "status": None}
+            )
+            immutable_json(root / "sample.json", [])
+            immutable_json(
+                root / "manifest.json",
+                {
+                    "method": "glm-public-runner-v1",
+                    "sample_sha256": sha(root / "sample.json"),
+                    "code_sha256": {},
+                    "deadline_acquisition": "2099-01-01T00:00:00+00:00",
+                },
+            )
+            drain_provider_refusals(root, run)
+            with self.assertRaisesRegex(ValueError, "quota refusal"):
+                frozen(root)
+            receipt = json.loads((root / "quota-stopped.json").read_text())
+            self.assertEqual(receipt["source_event_sha256"], sha(run / "000002-host-event.json"))
 
     def test_replay_has_no_live_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

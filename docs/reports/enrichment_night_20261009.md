@@ -1453,7 +1453,7 @@ request payloads и frozen snapshots. Recovery receipt восстановлен 
 ограничивает физический fetch, прекращает MCP quota/access refusal, разбирает
 только actual search rows без snippet recursion, сохраняет interrupt receipt,
 разделяет неизвестные полные расходы и observed sums и требует quality
-eligibility. Восемь meaningful Python tests и два JS tests проверяют эти
+eligibility. Девять meaningful Python tests и два JS tests проверяют эти
 границы без сети/model jobs, включая имитацию Pi swallowing и запрет13-го
 физического fetch. Исправленный runner ещё не прошёл полный live comparison.
 

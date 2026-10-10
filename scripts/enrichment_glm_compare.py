@@ -375,9 +375,7 @@ def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
                 "contact_date_applicability_changes_needing_explanation": date_changes,
                 "original_baseline_changed_on_recheck": original != a,
             }
-            row["quality_eligible"] = b["identity"] == "supported" and (
-                bool(b["contacts"]) or b["current_affiliation"] == "supported"
-            )
+            row["quality_eligible"] = b["identity"] == "supported"
             row["meets_small_sample_nonregression"] = row["quality_eligible"] and not (
                 missing
                 or row["differences"]["identity_loss"]
@@ -418,10 +416,28 @@ def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
     }
     if not glm or any(x["token_usage"].get("reasoning_included_output") is None for x in glm):
         usage["reasoning_included_output"] = None
-    sol_usage = {
-        k: sum((x.get("tokens") or {}).get(k, 0) or 0 for x in sol)
-        for k in ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
+    sol_keys = ("input_tokens", "cached_input_tokens", "output_tokens", "reasoning_output_tokens")
+    sol_observed = {
+        k: sum(r.get("tokens", {}).get(k, 0) or 0 for r in sol if isinstance(r.get("tokens"), dict))
+        for k in sol_keys
     }
+    sol_usage = {
+        k: (
+            0
+            if sol_reserved == 0
+            else sol_observed[k]
+            if len(sol) == sol_reserved
+            and all(
+                isinstance(r.get("tokens"), dict) and isinstance(r["tokens"].get(k), int)
+                for r in sol
+            )
+            else None
+        )
+        for k in sol_keys
+    }
+    glm_complete = len(glm) == glm_reserved and all(
+        r["usage_complete"] and r.get("token_fields_complete", True) for r in glm
+    )
     metrics = {
         "method": manifest["method"],
         "mode": manifest["mode"],
@@ -460,19 +476,12 @@ def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
         "day_jobs_after": 17 + len(list((root / "model-jobs").glob("*.json"))),
         "GLM_model_requests": sum(r["model_requests"] for r in glm),
         "GLM_usage": usage,
-        "GLM_total_token_usage_exact": usage
-        if len(glm) == glm_reserved and all(r["usage_complete"] for r in glm)
-        else None,
+        "GLM_total_token_usage_exact": usage if glm_complete else None,
         "GLM_wall_seconds_exact": sum(r["wall_elapsed_seconds"] for r in glm)
         if len(glm) == glm_reserved and all(r["usage_complete"] for r in glm)
         else None,
         "Sol_total_token_usage_exact": sol_usage
-        if len(sol) == sol_reserved
-        and all(
-            isinstance(r.get("tokens"), dict)
-            and all(isinstance(r["tokens"].get(k), int) for k in ("input_tokens", "output_tokens"))
-            for r in sol
-        )
+        if len(sol) == sol_reserved and all(isinstance(v, int) for v in sol_usage.values())
         else None,
         "Sol_wall_seconds_exact": sum(r["wall_elapsed_seconds"] for r in sol)
         if len(sol) == sol_reserved
@@ -480,15 +489,19 @@ def summarize(root: Path, *, suffix: str = "") -> dict[str, Any]:
         "GLM_uncached_input": usage["input"],
         "GLM_cached_input_separate": usage["cacheRead"],
         "Sol_usage": sol_usage,
+        "Sol_usage_observed_lower_bound": sol_observed,
         "Sol_usage_observation": "no_jobs"
-        if not sol
+        if sol_reserved == 0
         else "reported_receipts; missing_fields_unknown",
         "missing_token_fields_are_zero": False,
         "partial_sum_interpretation": (
             "Numeric sums are observed lower bounds if any job/field is incomplete; "
             "never an exact total."
         ),
-        "Sol_uncached_input": sol_usage["input_tokens"] - sol_usage["cached_input_tokens"],
+        "Sol_uncached_input": sol_usage["input_tokens"] - sol_usage["cached_input_tokens"]
+        if isinstance(sol_usage["input_tokens"], int)
+        and isinstance(sol_usage["cached_input_tokens"], int)
+        else None,
         "baseline_verifier_usage_same_evaluated_profiles": previous_usage,
         "baseline_verifier_wall_seconds_same_evaluated_profiles": sum(
             r["wall_elapsed_seconds"] for r in previous_receipts

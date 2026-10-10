@@ -76,8 +76,9 @@ Sol получает индивидуальные входы со своими S
 сохранены полезные контакты, личность и подтверждённая аффилиация, нет
 непринятых GLM атомов и необъяснённых изменений даты/применимости контакта.
 Различия, в том числе изменение самого baseline при повторной оценке, видны
-в private metrics и pair explanations. Пустой/непроверенный результат не PASS: GLM identity должен быть supported,
-и нужен хотя бы принятый контакт или supported current_affiliation.
+в private metrics и pair explanations. Пустой/непроверенный результат не PASS: GLM identity должен быть supported по сохранённым
+доказательствам. Контакты/аффилиация могут оставаться unknown, если полезные
+baseline факты не потеряны; равенство двух пустых unknown входов не достаточно.
 
 `metrics.json` содержит private контакты и source URLs; его не переносить в git.
 `public-metrics.json` — детерминированная числовая проекция, пригодная для отчёта;
@@ -104,7 +105,7 @@ GLM jobs2, Sol0, день19/30. Первое извлечение отвергн
 второй job прерван; сравнительных пар0. Исправленная версия имеет terminal latch
 на sync/async callback boundaries, физический model fetch cap, MCP semantic
 refusal STOP, запрет snippet URLs и явные eligibility/partial cost состояния.
-Восемь Python и две JS offline проверки проходят; новый live/replay inference
+Девять Python и две JS offline проверки проходят; новый live/replay inference
 после просмотра исходов не выполнялся. Полное неухудшение/экономия не доказаны;
 исправленная цепочка требует отдельного ограниченного эксперимента по новой
 постановке. См. [фактический отчёт](../reports/enrichment_night_20261009.md).

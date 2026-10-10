@@ -205,6 +205,31 @@ def freeze(
     immutable_bytes(root / "collector-instruction.txt", INSTRUCTION.encode())
 
 
+def provider_refusal(root: Path, path: Path, event: dict[str, Any]) -> bool:
+    kind = event.get("type")
+    refused = kind == "upstream_refusal" or (kind == "http" and event.get("status") in (403, 429))
+    if refused and not (root / "quota-stopped.json").exists():
+        immutable_json(
+            root / "quota-stopped.json",
+            {
+                "at": now(),
+                "provider": "zai",
+                "status": event.get("status"),
+                "reason": kind,
+                "source_event": str(path),
+                "source_event_sha256": sha(path),
+            },
+        )
+    return refused
+
+
+def drain_provider_refusals(root: Path, run: Path) -> None:
+    # EOF may arrive after the last live scan. Durable refusal must cross the
+    # process boundary before another job can be granted.
+    for path in sorted(run.glob("*-host-event.json")):
+        provider_refusal(root, path, read(path))
+
+
 def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[str, Any]:
     manifest = frozen(root)
     aid = profile["id"]
@@ -319,20 +344,8 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                     kind = event["type"]
                     if kind == "done":
                         done = True
-                    elif kind == "upstream_refusal" or (
-                        kind == "http" and event["status"] in (403, 429)
-                    ):
-                        if not (root / "quota-stopped.json").exists():
-                            immutable_json(
-                                root / "quota-stopped.json",
-                                {
-                                    "at": now(),
-                                    "provider": "zai",
-                                    "status": event.get("status"),
-                                    "reason": kind,
-                                    "source_event": str(path),
-                                },
-                            )
+                    elif provider_refusal(root, path, event):
+                        pass
                     elif kind == "mcp_result":
                         raw = read(run / event["file"])
                         source.register_search(raw)
@@ -433,6 +446,7 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                     process.kill()
             code = process.wait()
     # agent_settled may be persisted after stdout EOF; capture without initiating any work.
+    drain_provider_refusals(root, run)
     done = done or any(read(p).get("type") == "done" for p in run.glob("*-host-event.json"))
     usage = {
         k: sum(m.get("usage", {}).get(k, 0) for m in messages)
@@ -462,7 +476,18 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
         "model_requests": len(list(run.glob("*-model-request-config.json"))),
         "source_tool_calls": source.calls,
         "search_queries": source.searches,
-        "usage_complete": code == 0 and done and host_failure is None,
+        "token_fields_complete": (probe or bool(messages))
+        and all(
+            all(
+                isinstance(m.get("usage", {}).get(k), int)
+                for k in ("input", "output", "cacheRead", "cacheWrite", "totalTokens")
+            )
+            for m in messages
+        ),
+        "usage_complete": code == 0
+        and done
+        and host_failure is None
+        and all(m.get("stopReason") not in ("error", "aborted") for m in messages),
     }
     immutable_json(directory / "receipt.json", receipt)
     immutable_json(directory / "finished.json", {"at": now(), "exit_code": code, "done": done})
