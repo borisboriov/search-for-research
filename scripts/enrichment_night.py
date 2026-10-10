@@ -19,7 +19,15 @@ from typing import Any
 from urllib.parse import urlparse
 
 from enrichment_batch import Batch, encoded, immutable
-from enrichment_experiment import FIELDS, now, private_root, read, sha, verified_sample
+from enrichment_experiment import (
+    FIELDS,
+    ensure_not_stopped,
+    now,
+    private_root,
+    read,
+    sha,
+    verified_sample,
+)
 from enrichment_native import execute, normalized_provenance, schema
 from enrichment_pi_pilot import (
     HIGH_CONFIGS,
@@ -819,9 +827,10 @@ def finish_source(
 def collect(
     root: Path, profile: dict[str, Any], batch: Batch, *, hard_stop: datetime | None = None
 ) -> tuple[Path, dict[str, Any]]:
+    ensure_not_stopped(root)
     if hard_stop is not None:
         manifest = read(root / "manifest.json")
-        if manifest.get("method") != "contact-first-v1" or (root / "stopped.json").exists():
+        if manifest.get("method") != "contact-first-v1":
             raise ValueError("Дневной deadline только для нового contact-first root без STOP")
         if hard_stop.isoformat() != manifest.get("fallback_deadline"):
             raise ValueError("Deadline отличается от frozen manifest")

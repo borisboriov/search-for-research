@@ -13,6 +13,7 @@ from enrichment_contact_first import (
     Loader,
     check_contact_input,
     checked_source,
+    collect_fallback,
     contact_packet,
     prepare_contact_input,
     verify_contact_input,
@@ -226,7 +227,42 @@ class ContactFirstTests(unittest.TestCase):
             finally:
                 asyncio.run(client.aclose())
             with self.assertRaisesRegex(ValueError, "STOP root"):
-                verify_contact_input(root, root / "absent.json", remaining_percent=19)
+                verify_contact_input(root / "attemptN", root / "absent.json", remaining_percent=19)
+
+    def test_parent_STOP_prevents_fallback_before_batch_or_Pi(self) -> None:
+        from enrichment_verification import immutable_json
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            immutable_json(root / "stopped.json", {"reason": "done"})
+            with (
+                patch("enrichment_batch.Batch.create") as create,
+                patch("enrichment_night.collect") as collect,
+                self.assertRaisesRegex(ValueError, "STOP root"),
+            ):
+                collect_fallback(
+                    root / "attemptN", {"id": "a"}, remaining_percent=19, stopped_domains=[]
+                )
+            create.assert_not_called()
+            collect.assert_not_called()
+
+    def test_parent_STOP_prevents_direct_collector_before_workspace(self) -> None:
+        from datetime import UTC, datetime, timedelta
+
+        from enrichment_night import collect
+        from enrichment_verification import immutable_json
+
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            immutable_json(root / "stopped.json", {"reason": "done"})
+            for deadline in (None, datetime.now(UTC) + timedelta(minutes=10)):
+                with (
+                    patch("enrichment_night.require_access") as access,
+                    self.assertRaisesRegex(ValueError, "STOP root"),
+                ):
+                    collect(root / "attemptN", {"id": "a"}, Mock(), hard_stop=deadline)
+                access.assert_not_called()
+                self.assertFalse((root / "attemptN").exists())
 
     def test_daytime_deadline_cannot_resume_legacy_or_stopped_root(self) -> None:
         from datetime import UTC, datetime, timedelta
@@ -247,7 +283,9 @@ class ContactFirstTests(unittest.TestCase):
                 )
                 if stopped:
                     immutable_json(root / "stopped.json", {"reason": "done"})
-                with self.assertRaisesRegex(ValueError, "нового contact-first"):
+                with self.assertRaisesRegex(
+                    ValueError, "STOP root" if stopped else "нового contact-first"
+                ):
                     collect(root, {"id": "a"}, Mock(), hard_stop=deadline)
 
 

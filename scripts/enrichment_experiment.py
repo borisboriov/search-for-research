@@ -56,6 +56,13 @@ def now() -> str:
     return datetime.now(UTC).isoformat()
 
 
+def ensure_not_stopped(root: Path) -> None:
+    """STOP общего эксперимента действует и на новые вложенные попытки."""
+    resolved = root.resolve()
+    if any((parent / "stopped.json").exists() for parent in (resolved, *resolved.parents)):
+        raise ValueError("STOP root: новые source/model jobs запрещены")
+
+
 def sha(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:

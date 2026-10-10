@@ -939,8 +939,8 @@ tool-less/MCP-disabled; фактический undisclosed backend не выду
 день считается отдельно, новыхлюдей0. Официальный Codex remaining20%вначале,
 19% передпоследнимэтапом,account-wide; threshold15% не достигнут.
 
-Python lint/typecheck/test PASS: 231unittest,388pytest/8skip/5deselect,
-coverage94,06%;14новых офлайнтестов на URI candidates/cache/SHA/CRLF/STOP/quota/
+Python lint/typecheck/test PASS: 233unittest,388pytest/8skip/5deselect,
+coverage94,06%;16новых офлайнтестов на URI candidates/cache/SHA/CRLF/STOP/quota/
 404-vs403429/non200/повторныеreservations/daydeadline/inputtampering.
 Strict audit FAIL только deps-node/fs-trivy, прежние HIGH sharp/source-map-js
 (#189 вне scope). Требования и зависимости не ослаблены. Node26.8.2/Pi1.1.0
@@ -963,3 +963,14 @@ STOP и checks/review/CI/transfer evidence. Контактные значени�
 private. Это ограниченный технический результат с approval blocker,
 не измерение покрытия fresh10 и не завершение #193/#47/#103.
 Production/product docs/passport, merge/deploy/main push не выполнялись.
+
+Независимый дневной reviewer проверил e4e9539 и подтвердил один Medium blocker:
+STOP общего root не распространялся на новый вложенный model/fallback root.
+Фактических запусков после STOP не найдено. Исправление объединяет ancestry
+проверку HTTP, Sol и Pi collector до Batch/workspace/process; офлайн regression
+проверяет child-root для всех трёх путей. Новых live/source/model jobs нет.
+Повторное ревью исправления и CI окончательной версии фиксируются в PR.
+Ревью сверило 169 SHA v2 и 22 literal spans четырёх входов Sol. Сохранённый
+gitleaks history log с 0 commits не доказывает проверку истории; staged hook
+и актуальный CI рассматриваются отдельно. Legacy диапазон PR до c83fb35
+полностью повторно не ревьюился; готовность всего PR не заявлена.

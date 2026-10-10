@@ -16,7 +16,15 @@ from urllib.parse import parse_qsl, unquote, urljoin, urlsplit
 
 import httpx
 from enrichment_compare_loading import AGENT, Budget, DomainStops, extract, policy
-from enrichment_experiment import ORCID_API, now, orcid_id, private_root, public_candidates, read
+from enrichment_experiment import (
+    ORCID_API,
+    ensure_not_stopped,
+    now,
+    orcid_id,
+    private_root,
+    public_candidates,
+    read,
+)
 from enrichment_verification import immutable_bytes, immutable_json
 
 EMAIL = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -84,8 +92,7 @@ class Loader:
         self, client: httpx.AsyncClient, url: str, kind: str, cap: int
     ) -> dict[str, Any]:
         safe_url(url)
-        if any((p / "stopped.json").exists() for p in (self.root, *self.root.parents)):
-            raise ValueError("STOP root: новые HTTP запросы запрещены")
+        ensure_not_stopped(self.root)
         host = urlsplit(url).netloc
         if host in self.inherited_stops or self.stops.blocked(url):
             raise ValueError("Источник остановлен после 403/429")
@@ -498,8 +505,9 @@ def collect_fallback(
 
     if not 15 < remaining_percent <= 100:
         raise ValueError("Codex remaining≤15%; fallback цепочка остановлена")
-    if profile not in verified_sample(root) or (root / "stopped.json").exists():
-        raise ValueError("Незамороженный профиль/старый STOP")
+    ensure_not_stopped(root)
+    if profile not in verified_sample(root):
+        raise ValueError("Незамороженный профиль")
     early = read(root / "early-contact-gate.json")
     if early["author_id"] != profile["id"] or early["contact_candidates"] != 0:
         raise ValueError("Fallback разрешён только после отсутствия early кандидата")
@@ -548,8 +556,7 @@ def verify_contact_input(root: Path, input_path: Path, *, remaining_percent: flo
 
     if not 15 < remaining_percent <= 100:
         raise ValueError("Codex remaining≤15%; новые GPT jobs запрещены")
-    if (root / "stopped.json").exists():
-        raise ValueError("STOP root: новые GPT jobs запрещены")
+    ensure_not_stopped(root)
     task_input = check_contact_input(root, input_path)
     aid = task_input["author_id"]
     if not task_input["items"]:
