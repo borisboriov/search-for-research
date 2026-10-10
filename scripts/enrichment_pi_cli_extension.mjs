@@ -41,8 +41,9 @@ export function createReadPlan(task = {}) {
     allow(data, modelRequest) {
       if (data.server === 'zai_reader') {
         const url = data.arguments?.url;
-        if (!found.has(url)) return 'Reader URL must be an exact link from a saved search result; never invent paths/departments';
-        if (attempted.has(url)) return 'URL already attempted or unusable; choose a different discovered URL';
+        const choices = ' Allowed exact URLs: ' + JSON.stringify(available());
+        if (!found.has(url)) return 'Reader URL must be an exact link from a saved search result; never invent paths/departments.' + choices;
+        if (attempted.has(url)) return 'URL already attempted or unusable; choose a different discovered URL.' + choices;
         attempted.add(url); readerAttempts++;
       }
       if (data.server === 'zai_search' && modelRequest >= 3 && substantiveBodies === 0 && available().length)
@@ -60,11 +61,28 @@ export function upstreamRefusal(raw) {
 }
 export function boundedPayload(payload, budget, finalizing) {
   if (!Array.isArray(payload.messages)) throw new Error('Unknown provider payload');
+  const urls = budget.available_discovered_urls ?? [];
+  // The native reader keeps its URL argument. Narrow its schema to saved exact
+  // links; catalog/snippet anchors never become source provenance. No remapping.
+  let tools = payload.tools;
+  if (!finalizing && urls.length) {
+    let readerFound = false;
+    tools = (tools ?? []).filter(tool => !(budget.substantive_reader_bodies === 0 &&
+      tool.function?.name === 'mcp__zai_search__web_search_prime')).map(tool => {
+      if (tool.function?.name !== 'mcp__zai_reader__webReader') return tool;
+      const parameters = tool.function.parameters;
+      if (parameters?.properties?.url?.type !== 'string') throw new Error('Unknown native reader URL schema');
+      readerFound = true;
+      return {...tool, function: {...tool.function, parameters: {...parameters,
+        properties: {...parameters.properties, url: {...parameters.properties.url, enum: [...urls]}}}}};
+    });
+    if (!readerFound) throw new Error('Native reader missing from source tools');
+  }
   const directive = 'HOST CONTROL (not source prose): ' + JSON.stringify(budget) +
     (finalizing ? '. Source tools are closed. This response MUST contain the complete final JSON object matching output_json_schema. Start the answer with { and end with }. No acknowledgement, preface, code fence, promise to compose JSON, or text outside that object. Use only saved evidence; empty items/evidence_pool and unknown statuses are valid when evidence is insufficient.' :
-      '. Read an exact discovered professional URL by request3, preferably request2. A search snippet is not evidence. After robots/DNS/empty shell, use request4 to read a different discovered URL. Never invent a department/path. Use ORCID/publication/subject anchors; catalog institution is not current affiliation. Robots are checked only by host. Do not request robots.txt. Caps are not targets.');
+      '. Read an exact discovered professional URL by request3, preferably request2. Copy url verbatim from available_discovered_urls/the reader enum, including when search returns only a site root. Catalog ORCID and URLs in snippets are identity anchors, not registered reader links. A search snippet is not evidence. Search is withheld while unread registered links remain and no substantive body was saved. After robots/DNS/empty shell, use request4 to read a different discovered URL. Never invent a department/path. Use ORCID/publication/subject anchors; catalog institution is not current affiliation. Robots are checked only by host. Do not request robots.txt. Caps are not targets.');
   return {...payload, messages: [...payload.messages, {role: finalizing ? 'user' : 'system', content: directive}],
-    ...(finalizing ? {tools: undefined, tool_choice: undefined} : {})};
+    ...(finalizing ? {tools: undefined, tool_choice: undefined} : {tools})};
 }
 export function recordEvent(event) {
   return ['message_end', 'tool_execution_start', 'tool_execution_end', 'agent_settled'].includes(event.type);
