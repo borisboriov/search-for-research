@@ -740,6 +740,7 @@ def main() -> None:
     parser.add_argument("--index", type=int, default=0)
     parser.add_argument("--remaining-percent", type=float)
     parser.add_argument("--deadline")
+    parser.add_argument("--offline-repeat-from", type=Path)
     args = parser.parse_args()
     if args.command in ("offline-freeze", "offline-run"):
         from enrichment_fragments import freeze as offline_freeze

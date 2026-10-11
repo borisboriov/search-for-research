@@ -21,6 +21,8 @@ from enrichment_verification import immutable_bytes, immutable_json
 from enrichment_verifier_benchmark import check_schema
 
 METHOD = "fragment-offline3-v1"
+REPEAT_INDEX = "transfer-SHA-index-977a58b.json"
+REPEAT_SEAL = "5939d28edbaadf94e2ab0439f772365254a55674bb06607306b001732370f742"
 CASES = [
     {"author_id": "A5089458364", "reason": "previous literal quote failure; smaller saved corpus"},
     {
@@ -289,6 +291,22 @@ def freeze(args: Any) -> dict[str, Any]:
         (previous, "transfer-SHA-index-92482b6.json"),
     ]
     seals = [seal_check(r, i) for r, i in roots]
+    repeated = getattr(args, "offline_repeat_from", None)
+    prior_partial = 0
+    if repeated is not None:
+        if sha(repeated / REPEAT_INDEX) != REPEAT_SEAL:
+            raise ValueError("Repeat must preserve the explicitly authorized partial seal")
+        seals.append(seal_check(repeated, REPEAT_INDEX))
+        old = read(repeated / "execution-result.json")
+        if (
+            read(repeated / "stopped.json")["new_model_jobs"] != "forbidden"
+            or old["stage_jobs_reserved"] != 1
+            or old["stage_jobs_completed"] != 0
+            or old["cumulative_reserved"] != 29
+            or read(repeated / "manifest.json")["cases"] != CASES
+        ):
+            raise ValueError("Repeat parent is not the authorized terminal partial1")
+        prior_partial = 1
     if (baseline / "sample.json").read_bytes() != (previous / "sample.json").read_bytes():
         raise ValueError("Different frozen10")
     if read(previous / "execution-status.json")["day_jobs_after"] != 28:
@@ -297,6 +315,8 @@ def freeze(args: Any) -> dict[str, Any]:
     immutable_bytes(root / "sample.json", (baseline / "sample.json").read_bytes())
     immutable_bytes(root / "scope.md", args.scope.read_bytes())
     instruction = INSTRUCTION + "\n" + RUBRIC.read_text()
+    if repeated is not None and (repeated / "instruction.txt").read_bytes() != instruction.encode():
+        raise ValueError("Repeat instruction differs from the frozen common rubric")
     immutable_bytes(root / "instruction.txt", instruction.encode())
     immutable_json(
         root / "case-selection.json",
@@ -373,6 +393,14 @@ def freeze(args: Any) -> dict[str, Any]:
             "fragments": len(corpus["fragments"]),
             "literal_email_values": sum(v["kind"] == "email" for v in corpus["values"].values()),
         }
+        if repeated is not None:
+            for folder in ("corpora", "tasks"):
+                if (root / folder / f"{aid}.json").read_bytes() != (
+                    repeated / folder / f"{aid}.json"
+                ).read_bytes():
+                    raise ValueError("Repeat changed saved corpus, order or task bytes")
+            if corpora[aid] != read(repeated / "manifest.json")["corpora"][aid]:
+                raise ValueError("Repeat prompt/schema metadata differs")
     for name in CODE:
         immutable_bytes(root / "code-snapshots" / name, (REPO / name).read_bytes())
     manifest = {
@@ -382,8 +410,13 @@ def freeze(args: Any) -> dict[str, Any]:
         "deadline": args.deadline,
         "prior_cycle_jobs": 28,
         "prior_cycle_cap": 30,
+        "prior_partial_jobs": prior_partial,
+        "prior_partial_stage_cap": 6 if repeated is not None else None,
+        "repeat_from": str(repeated) if repeated is not None else None,
+        "cumulative_start": 28 + prior_partial,
         "stage_cap": 6,
-        "cumulative_cap": 34,
+        "cumulative_cap": 34 + prior_partial,
+        "continue_independent_output_failures": repeated is not None,
         "cases": CASES,
         "job_order": [model for _ in CASES for model in ("GLM", "Sol")],
         "source_calls_allowed": 0,
@@ -442,11 +475,27 @@ def frozen(root: Path) -> dict[str, Any]:
     return manifest
 
 
+def pi_common_input_proved(root: Path, aid: str, manifest: dict[str, Any]) -> bool:
+    """A partial model reply can be local only after the actual common request is proved."""
+    paths = list((root / "runs" / aid / "pi_verifier" / "pi").glob("*-model-request-config.json"))
+    if len(paths) != 1:
+        return False
+    config = read(paths[0])
+    return bool(
+        config.get("user_prompt_sha256") == manifest["corpora"][aid]["prompt_sha256"]
+        and config.get("instruction_sha256") == manifest["instruction_sha256"]
+        and config.get("effective") == HIGH_CONFIGS["pi_verifier"]
+        and config.get("tools") == []
+    )
+
+
 def run(root: Path, remaining_percent: float) -> dict[str, Any]:
     manifest = frozen(root)
     if not 0 <= remaining_percent <= 100:
         raise ValueError("Official quota reading required")
     completed = []
+    failures: list[dict[str, Any]] = []
+    cumulative_start = manifest.get("cumulative_start", 28)
     reason = None
     try:
         for case in manifest["cases"]:
@@ -490,26 +539,46 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
                         "model": model,
                         "author_id": aid,
                         "stage_jobs_before": len(reserved),
-                        "cumulative_before": 28 + len(reserved),
+                        "cumulative_before": cumulative_start + len(reserved),
                         "remaining_percent": remaining_percent,
                         "retry": 0,
                         "job_deadline_epoch": deadline,
                     },
                 )
                 if model == "GLM":
-                    result_path, receipt = run_pi(
-                        root,
-                        None,
-                        aid,
-                        "pi_verifier",
-                        task,
-                        instruction,
-                        shared_schema,
-                        config_override=HIGH_CONFIGS["pi_verifier"],
-                        method_override=METHOD,
-                        deadline_epoch=deadline,
-                        expected_user_prompt_sha256=manifest["corpora"][aid]["prompt_sha256"],
-                    )
+                    try:
+                        result_path, receipt = run_pi(
+                            root,
+                            None,
+                            aid,
+                            "pi_verifier",
+                            task,
+                            instruction,
+                            shared_schema,
+                            config_override=HIGH_CONFIGS["pi_verifier"],
+                            method_override=METHOD,
+                            deadline_epoch=deadline,
+                            expected_user_prompt_sha256=manifest["corpora"][aid]["prompt_sha256"],
+                        )
+                    except (ValueError, OSError, KeyError) as exc:
+                        if (
+                            not manifest.get("continue_independent_output_failures", False)
+                            or access_stopped(root)
+                            or not pi_common_input_proved(root, aid, manifest)
+                        ):
+                            raise
+                        failure = {
+                            "author_id": aid,
+                            "model": model,
+                            "phase": "runtime",
+                            "reason": str(exc),
+                            "receipt": None,
+                            "actual_common_prompt_verified": True,
+                            "repeat": False,
+                        }
+                        immutable_json(root / "failures" / f"{aid}-{model}.json", failure)
+                        failures.append(failure)
+                        continue
                 else:
                     result_path, receipt = execute(
                         root / "runs" / aid / "native_verifier",
@@ -530,9 +599,29 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
                 )
                 if actual_prompt != manifest["corpora"][aid]["prompt_sha256"]:
                     raise ValueError("Actual model prompt differs from the frozen common input")
-                normalized = hydrate(
-                    task, read(result_path), normalized_provenance(receipt, "fragment_analysis")
-                )
+                try:
+                    normalized = hydrate(
+                        task, read(result_path), normalized_provenance(receipt, "fragment_analysis")
+                    )
+                except (ValueError, KeyError) as exc:
+                    if not manifest.get("continue_independent_output_failures", False):
+                        raise
+                    failure = {
+                        "author_id": aid,
+                        "model": model,
+                        "phase": "output_validation",
+                        "reason": str(exc),
+                        "receipt": receipt,
+                        "raw_result_sha256": sha(result_path),
+                        "actual_common_prompt_verified": True,
+                        "repeat": False,
+                    }
+                    immutable_json(root / "failures" / f"{aid}-{model}.json", failure)
+                    failures.append(failure)
+                    print(
+                        json.dumps({"author_id": aid, "model": model, "valid": False}), flush=True
+                    )
+                    continue
                 immutable_json(root / "normalized" / f"{aid}-{model}.json", normalized)
                 completed.append(
                     {
@@ -550,11 +639,13 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
         result = {
             "at": now(),
             "completed": completed,
-            "partial_reason": reason,
+            "failures": failures,
+            "partial_reason": reason or ("individual_outputs_rejected" if failures else None),
             "stage_jobs_reserved": len(reserved),
             "stage_jobs_completed": len(completed),
             "prior_cycle_jobs_unchanged": 28,
-            "cumulative_reserved": 28 + len(reserved),
+            "prior_partial_jobs_unchanged": manifest.get("prior_partial_jobs", 0),
+            "cumulative_reserved": cumulative_start + len(reserved),
             "source_calls": 0,
             "human_gold": 0,
             "full_collector_economy_established": False,

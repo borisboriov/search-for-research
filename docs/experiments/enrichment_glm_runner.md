@@ -262,3 +262,27 @@ offline proof через mocked `Popen` и реальный JS helper подтв
 frozen prompt SHA без model/source calls. Нового freeze/inference после STOP нет.
 Подробности, ограничения и generated JSON — в следующем разделе
 [отчёта](../reports/enrichment_night_20261009.md#offline-fragment-id-paired3-11102026-partialstop).
+
+### Отдельно разрешённый повтор после merge main
+
+Повторная постановка PR194 разрешает обычный merge актуального main с fix189,
+затем новый root/freeze на тех же трёх corpus/task/instruction bytes и semantic-v3.
+`offline-freeze --offline-repeat-from` указывает на прежний terminal partial1:
+проверяются его полный SHA-index5939d28e…, STOP, cases и cumulative29.
+Все старые капы/факты сохраняются: cycle28/30, partial1/6, новыйstage≤6,
+cumulative29→≤35. Дедлайн повторного этапа09:07:02UTC11.10.2026, job≤600s;
+search/source/live/newpeople/Astra0, без повторов сверх нового cap.
+
+До calls actual `run_pi` serializer с mocked process и реальный JS helper
+должны воспроизвести SHA/bytes всех трёх frozen prompts. Python/JS guard остаётся
+в реальном пути до отправки. Freeze дополнительно отвергает любое отличие
+corpus/task/instruction/prompt metadata от прежнего immutable root.
+
+Отдельный невалидный semantic output сохраняется как failure с raw SHA/receipt;
+прочие jobs продолжаются без повтора. Неполный Pi reply допускает продолжение
+только при доказанных actual common prompt/instruction SHA, approved SDK config,
+empty tools и отсутствии provider access/quota STOP. Общая ошибка входа/метода,
+неподтверждённый runtime, native отказ, quota/deadline/operator interrupt
+останавливают этап. Каждый outcome сохраняется; normalized result требуется
+для пригодной пары. Unknown usage не0, sourcebound неsemanticcorrect, human0.
+Крон остаётся PAUSED; новое сопровождение/следующий эксперимент не назначены.

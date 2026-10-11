@@ -315,6 +315,111 @@ class FragmentTests(unittest.TestCase):
             self.assertEqual(failed["exit_code"], -9)
             self.assertFalse(failed["done"])
 
+    def test_repeat_counts_local_failures_without_retry_and_stops_common_input_failure(
+        self,
+    ) -> None:
+        from enrichment_fragments import output_schema
+        from enrichment_pi_pilot import HIGH_CONFIGS
+
+        for mode in ("output", "runtime", "common"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                (root / "instruction.txt").write_text("instruction")
+                manifest: dict[str, Any] = {
+                    "cases": CASES,
+                    "stage_cap": 6,
+                    "deadline": "2099-01-01T00:00:00+00:00",
+                    "cumulative_start": 29,
+                    "prior_partial_jobs": 1,
+                    "continue_independent_output_failures": True,
+                    "instruction_sha256": "instruction-sha",
+                    "corpora": {},
+                }
+                for case in CASES:
+                    aid = case["author_id"]
+                    task, _, _ = fixture()
+                    task["author_id"] = aid
+                    for folder, value in (("corpora", task["corpus"]), ("tasks", task)):
+                        (root / folder).mkdir(exist_ok=True)
+                        if folder == "tasks":
+                            task["input_sha256"] = hashlib.sha256(
+                                (root / "corpora" / f"{aid}.json").read_bytes()
+                            ).hexdigest()
+                        (root / folder / f"{aid}.json").write_text(json.dumps(value))
+                    prompt = json.dumps(
+                        {"task": task, "output_json_schema": output_schema(task["corpus"])},
+                        ensure_ascii=False,
+                        separators=(",", ":"),
+                    )
+                    manifest["corpora"][aid] = {
+                        "task_sha256": hashlib.sha256(
+                            (root / "tasks" / f"{aid}.json").read_bytes()
+                        ).hexdigest(),
+                        "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+                    }
+                raw = root / "raw.json"
+                raw.write_text("{}")
+                glm_calls = 0
+
+                def glm(
+                    *args: Any,
+                    _manifest: dict[str, Any] = manifest,
+                    _mode: str = mode,
+                    _root: Path = root,
+                    _raw: Path = raw,
+                    **kwargs: Any,
+                ) -> tuple[Path, dict[str, Any]]:
+                    nonlocal glm_calls
+                    glm_calls += 1
+                    aid = args[2]
+                    digest = _manifest["corpora"][aid]["prompt_sha256"]
+                    if glm_calls == 1 and _mode == "runtime":
+                        p = _root / "runs" / aid / "pi_verifier" / "pi"
+                        p.mkdir(parents=True)
+                        (p / "001-model-request-config.json").write_text(
+                            json.dumps(
+                                {
+                                    "user_prompt_sha256": digest,
+                                    "instruction_sha256": "instruction-sha",
+                                    "effective": HIGH_CONFIGS["pi_verifier"],
+                                    "tools": [],
+                                }
+                            )
+                        )
+                        raise ValueError("unfinished local reply")
+                    return _raw, {"user_prompt_sha256": "wrong" if _mode == "common" else digest}
+
+                def sol(*args: Any, _raw: Path = raw, **kwargs: Any) -> tuple[Path, dict[str, Any]]:
+                    return _raw, {"prompt_sha256": hashlib.sha256(args[1].encode()).hexdigest()}
+
+                normalized: list[Any] = [{"ok": True} for _ in range(6)]
+                if mode == "output":
+                    normalized[0] = ValueError("invalid date")
+                with (
+                    patch("enrichment_fragments.frozen", return_value=manifest),
+                    patch("enrichment_fragments.access_stopped", return_value=False),
+                    patch("enrichment_fragments.run_pi", side_effect=glm) as g,
+                    patch("enrichment_fragments.execute", side_effect=sol) as s,
+                    patch("enrichment_fragments.normalized_provenance", return_value={}),
+                    patch("enrichment_fragments.hydrate", side_effect=normalized),
+                ):
+                    result = run(root, 0)
+                if mode == "common":
+                    self.assertEqual(g.call_count, 1)
+                    s.assert_not_called()
+                    self.assertEqual(result["cumulative_reserved"], 30)
+                    self.assertIn("differs", result["partial_reason"])
+                else:
+                    self.assertEqual((g.call_count, s.call_count), (3, 3))
+                    self.assertEqual(result["cumulative_reserved"], 35)
+                    self.assertEqual(result["stage_jobs_completed"], 5)
+                    self.assertEqual(len(result["failures"]), 1)
+                    self.assertEqual(
+                        result["failures"][0]["phase"],
+                        mode if mode == "runtime" else "output_validation",
+                    )
+                self.assertTrue((root / "stopped.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()
