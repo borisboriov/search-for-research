@@ -1,4 +1,5 @@
 import hashlib
+import importlib
 import json
 import subprocess
 import sys
@@ -8,12 +9,66 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
-from sfr_enrichment import native, runner
+from sfr_enrichment import batch, contacts, native, replay, runner
 from sfr_enrichment.common import read
 from sfr_enrichment.config import repository_root
 
 
 class ModuleBoundaryTests(unittest.TestCase):
+    def old_module(self, name: str) -> Any:
+        with patch.object(sys, "path", [str(repository_root() / "scripts"), *sys.path]):
+            return importlib.import_module(name)
+
+    def test_all_saved_old_patch_targets_resolve_without_invoking_clients(self) -> None:
+        fixture = read(Path(__file__).parent / "fixtures/compat-patch-targets.json")
+        with patch.object(sys, "path", [str(repository_root() / "scripts"), *sys.path]):
+            for target in fixture["targets"]:
+                with self.subTest(target=target):
+                    original, _ = patch(target).get_original()
+                    self.assertIsNotNone(original)
+
+    def test_old_native_patch_targets_reach_runtime_and_restore(self) -> None:
+        compat = self.old_module("enrichment_native")
+        execute, probe = native.execute, native.isolation_probe
+        with patch("enrichment_native.execute") as mocked:
+            self.assertIs(native.execute, mocked)
+            native.execute(Path("unused"), "fixture", {}, Path("unused"))
+            mocked.assert_called_once()
+        self.assertIs(native.execute, execute)
+        self.assertIs(compat.execute, execute)
+        with patch("enrichment_native.isolation_probe") as mocked:
+            self.assertIs(execute.__globals__["isolation_probe"], mocked)
+        self.assertIs(native.isolation_probe, probe)
+        self.assertIs(compat.subprocess, native.__dict__["subprocess"])
+
+    def test_old_batch_patch_targets_reach_actual_globals_and_restore(self) -> None:
+        compat = self.old_module("enrichment_batch")
+        self.assertIs(compat.os, batch.__dict__["os"])
+        immutable = batch.immutable
+        with patch("enrichment_batch.immutable") as mocked:
+            self.assertIs(batch.immutable, mocked)
+        self.assertIs(batch.immutable, immutable)
+        with tempfile.TemporaryDirectory() as directory:
+            with (
+                patch("enrichment_batch.os.link", side_effect=OSError("offline failure")),
+                self.assertRaisesRegex(OSError, "offline failure"),
+            ):
+                batch.immutable(Path(directory) / "output", b"fixture")
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_old_source_and_replay_transport_symbols_remain_patchable(self) -> None:
+        contact = self.old_module("enrichment_contact_first")
+        compare = self.old_module("enrichment_glm_compare")
+        self.assertIs(contact.httpx, contacts.__dict__["httpx"])
+        self.assertIs(contact.Budget, contacts.__dict__["Budget"])
+        self.assertIs(compare.subprocess, replay.__dict__["subprocess"])
+        with patch("enrichment_contact_first.httpx.AsyncClient") as mocked:
+            self.assertIs(contacts.Loader.__init__.__globals__["httpx"].AsyncClient, mocked)
+        with patch("enrichment_contact_first.Budget.wait") as mocked:
+            self.assertIs(contacts.Loader.__init__.__globals__["Budget"].wait, mocked)
+        with patch("enrichment_glm_compare.subprocess.run") as mocked:
+            self.assertIs(replay.legacy_pdf_text.__globals__["subprocess"].run, mocked)
+
     def test_supported_cli_has_no_historical_imports_or_pi_entry(self) -> None:
         script = (
             "import sys; import sfr_enrichment.cli; "
@@ -61,6 +116,7 @@ class ModuleBoundaryTests(unittest.TestCase):
                 runner.frozen(root)
 
     def test_native_stream_preserves_raw_usage_and_exact_bytes_without_snapshots(self) -> None:
+        self.old_module("enrichment_native")
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             output = {"status": "fixture"}
@@ -87,7 +143,7 @@ class ModuleBoundaryTests(unittest.TestCase):
                 (root / "job/raw-result.json").write_text(json.dumps(output))
                 return subprocess.CompletedProcess(command, 0)
 
-            with patch("sfr_enrichment.native.subprocess.run", side_effect=fake_run) as call:
+            with patch("enrichment_native.subprocess.run", side_effect=fake_run) as call:
                 path, receipt = native.execute(
                     root / "job", "fixture", {}, root, model="gpt-6.1-sol", effort="high"
                 )

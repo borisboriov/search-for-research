@@ -78,7 +78,9 @@ robots, deadlines и полноты сохраняются; provenance не вы
 ## Совместимость и хранение
 
 Прежние Python entrypoints в `scripts/enrichment_*.py` — тонкие адаптеры к новым
-модулям, сохраняющие identity импорта для mocks. JS-адаптеры ведут в
+модулям. Для извлечённых helpers compatibility adapter сохраняет старые
+patch targets и передаёт подмены фактическим runtime globals; проверяются все
+87 прежних строковых targets, включая native/source transports и восстановление. JS-адаптеры ведут в
 `research/legacy/js/`. Исторические команды относятся к прежнему протоколу;
 старый sealed live root возобновляют только его точной исторической версией.
 
