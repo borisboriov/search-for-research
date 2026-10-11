@@ -58,7 +58,9 @@ DIMENSIONS = {
     "field": "Смысл поля",
     "object": "Объект утверждения",
     "current": "Актуальность",
+    "source_date": "Дата источника",
 }
+CONTACT_AXES = ("text", "identity", "source_date", "current")
 DECISIONS = {"agree": "Согласен", "disagree": "Не согласен", "uncertain": "Недостаточно оснований"}
 DATE_BASES = {
     "content": "Указана в содержании источника",
@@ -192,6 +194,19 @@ def assessment_rows(assessment: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
+def contact_source_date(assessment: dict[str, Any]) -> str:
+    """Датированность источника отдельно от доказательства нынешней применимости."""
+    date = (
+        assessment.get("information_date")
+        if assessment.get("date_basis") in ("content", "source_metadata")
+        else None
+    )
+    text = "Есть дата: " + str(date) if date else "Без установленной даты"
+    if assessment.get("current_applicability") == "historical":
+        text += "; исторический источник"
+    return text
+
+
 def normalize(
     source: dict[str, Any], wrapper: dict[str, Any]
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -305,13 +320,13 @@ def make_packet(
             }
         )
     manifest = {
-        "schema": "human_packet_v3",
+        "schema": "human_packet_v4" if contact_review else "human_packet_v3",
         "packet_id": packet_id,
         "profiles": profiles,
         "human_reviewed": False,
         **({"review_scope": "selected_personal_contacts"} if contact_review else {}),
     }
-    directory = root / "human-v3" / "packets" / packet_id
+    directory = root / ("human-v4" if contact_review else "human-v3") / "packets" / packet_id
     manifest_path = directory / "manifest.json"
     if manifest_path.exists():
         if read(manifest_path) != manifest:
@@ -407,8 +422,12 @@ def make_packet(
                 f"{label(assessed.get('field_verdict'))}. Объект: "
                 f"{label(assessed.get('object_type'))}. Уровень студента: "
                 f"{esc(levels)}. "
-                f"Актуальность: "
-                f"{label(assessed.get('current_applicability'))}.</p><p>"
+                + (
+                    "Датированность контактного источника: " + esc(contact_source_date(assessed))
+                    if contact_review
+                    else "Актуальность: " + label(assessed.get("current_applicability"))
+                )
+                + ".</p><p>"
                 f"{esc(assessed.get('explanation'))}</p>"
             )
             cards.append(assessed_date_summary(assessed))
@@ -433,16 +452,23 @@ def make_packet(
                 f'data-note="{esc(key)}"></textarea></label></section>'
             )
             dimensions = []
-            for axis, axis_label in DIMENSIONS.items():
-                if contact_review and axis not in ("text", "identity", "current"):
+            axes = CONTACT_AXES if contact_review else tuple(DIMENSIONS)
+            for axis in axes:
+                if not contact_review and axis == "source_date":
                     continue
+                axis_label = DIMENSIONS[axis]
                 axis_question = {
                     "text": "Цитата действительно содержит этот контакт и совпадает с источником?",
                     "identity": "Контакт принадлежит именно указанному учёному?",
-                    "current": (
+                    "source_date": (
                         "Согласны с оценкой датированности «"
-                        + label(assessed.get("current_applicability"))
-                        + "»? Нынешняя доставляемость адреса отдельно не проверена."
+                        + contact_source_date(assessed)
+                        + "» и приведённым основанием даты? Это вопрос о сохранённом источнике."
+                    ),
+                    "current": (
+                        "Есть ли в приведённых источниках основание считать контакт актуальным "
+                        "сейчас? Если основания нет или вы не знаете, выберите «Недостаточно "
+                        "оснований». Проверять адрес письмом или доказывать актуальность не нужно."
                     ),
                 }.get(axis, axis_label + ": согласны с решением проверяющего?")
                 question_text = (
@@ -468,13 +494,14 @@ def make_packet(
             )
             cards.append(
                 (
-                    "<details open><summary>Три отдельные проверки контакта</summary>"
+                    "<details open><summary>Четыре отдельные проверки контакта</summary>"
                     if contact_review
                     else "<details><summary>Уточнить решение по отдельным вопросам "
                     "или исправить поле</summary>"
                 )
                 + "".join(dimensions)
-                + f'<label>Правильное поле <select data-correction="{esc(key)}">'
+                + "<label>Исправить категорию (необязательно) "
+                + f'<select data-correction="{esc(key)}">'
                 '<option value="">Исправление не записано</option>'
                 + corrections
                 + "</select></label></details>"
@@ -520,11 +547,12 @@ def make_packet(
     config = (
         json.dumps(
             {
-                "schema": "human_answers_v3",
+                "schema": "human_answers_v4" if contact_review else "human_answers_v3",
                 "packet_id": packet_id,
                 "packet_sha256": digest,
                 "questions": questions,
                 "contact_review": contact_review,
+                "required_axes": list(CONTACT_AXES) if contact_review else [],
             },
             ensure_ascii=False,
         )
@@ -552,10 +580,10 @@ corrected_field:document.querySelector('select[data-correction="'+s.dataset.key+
 }});
 if(!answers.length){alert('Запишите хотя бы одно фактическое решение.');
 return;
-}if(cfg.contact_review&&answers.some(a=>['text','identity','current'].some(k=>
+}if(cfg.contact_review&&answers.some(a=>cfg.required_axes.some(k=>
 !a.dimensions[k]||a.dimensions[k]==='not_reviewed'))){
 alert('Для каждого записанного контакта ответьте отдельно: цитата, принадлежность, '
-+'актуальность. Можно выбрать «Недостаточно оснований».');return;
++'дата источника и актуальность. Можно выбрать «Недостаточно оснований».');return;
 }const out={schema:cfg.schema,packet_id:cfg.packet_id,packet_sha256:cfg.packet_sha256,
 human_name:name,reviewed_at:new Date().toISOString(),
 minutes,actual_human_attestation:true,answers};
@@ -592,8 +620,12 @@ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
         )
         + (
             "<p>Узкая проверка выбранных личных контактов: отдельно подтвердите цитату, "
-            "принадлежность человеку и согласие с датированностью. Если не знаете — "
-            "«Недостаточно оснований». Это не проверка доставляемости адреса или набора "
+            "принадлежность человеку, дату источника и наличие оснований актуальности. "
+            "Если не знаете — «Недостаточно оснований»: это не подтверждение актуальности. "
+            "Публикация email не доказывает доставляемость. Текущий список сотрудников "
+            "может подтверждать аффилиацию на дату наблюдения (observed_at); просто живая "
+            "персональная страница может содержать старые сведения. Письма и SMTP-проверки "
+            "не нужны. Это не проверка набора "
             "студентов и не приёмка остальных утверждений профиля. Перед закрытием "
             "страницы скачайте JSON: автоматического сохранения или отправки нет.</p>"
             if contact_review
@@ -634,8 +666,11 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
     root = private_root(root)
     identifier(record_id)
     packet, answers = read(manifest_path), read(answers_path)
+    version = {"human_packet_v3": "v3", "human_packet_v4": "v4"}.get(packet.get("schema"))
     if (
-        answers.get("schema") != "human_answers_v3"
+        version is None
+        or (version == "v4" and packet.get("review_scope") != "selected_personal_contacts")
+        or answers.get("schema") != "human_answers_" + version
         or answers.get("packet_sha256") != sha(manifest_path)
         or answers.get("packet_id") != packet["packet_id"]
     ):
@@ -680,10 +715,11 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
             for axis, verdict in dimensions.items()
         ):
             raise ValueError("Неизвестное решение по отдельному вопросу")
+        required_axes = CONTACT_AXES if version == "v4" else ("text", "identity", "current")
         if packet.get("review_scope") == "selected_personal_contacts" and any(
-            dimensions.get(axis) not in DECISIONS for axis in ("text", "identity", "current")
+            dimensions.get(axis) not in DECISIONS for axis in required_axes
         ):
-            raise ValueError("Для контакта нужны отдельные text/identity/current решения")
+            raise ValueError("Для контакта нужны отдельные " + "/".join(required_axes) + " решения")
         correction = answer.get("corrected_field")
         if correction is not None and correction not in (
             *LABELS,
@@ -710,7 +746,7 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
             }
         )
     value = {
-        "schema": "human_record_v3",
+        "schema": "human_record_" + version,
         "review_scope": packet.get("review_scope", "all_original_claims"),
         "record_id": record_id,
         "packet_sha256": sha(manifest_path),
@@ -737,7 +773,7 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
             for p in packet["profiles"]
         ],
     }
-    path = root / "human-v3" / "records" / f"{record_id}.json"
+    path = root / ("human-" + version) / "records" / f"{record_id}.json"
     write_new(path, value)
     return path
 
@@ -751,7 +787,7 @@ def human_metrics(paths: list[Path]) -> dict[str, Any]:
     for path in paths:
         record = read(path)
         if (
-            record.get("schema") != "human_record_v3"
+            record.get("schema") not in ("human_record_v3", "human_record_v4")
             or record["human"]["actual_human_attestation"] is not True
         ):
             raise ValueError("Не фактическая человеческая запись")
@@ -771,6 +807,14 @@ def human_metrics(paths: list[Path]) -> dict[str, Any]:
             counter[item["human"]["decision"]] += 1
             for axis, decision in item["human"].get("dimensions", {}).items():
                 if decision != "not_reviewed":
+                    # Старый контактный вопрос смешивал дату и current: не переименовывать
+                    # его ответы в новую оценку наличия доказательств актуальности.
+                    if (
+                        axis == "current"
+                        and record["schema"] == "human_record_v3"
+                        and record.get("review_scope") == "selected_personal_contacts"
+                    ):
+                        axis = "legacy_contact_current_v3"
                     counter[f"{axis}_reviewed"] += 1
                     counter[f"{axis}_{decision}"] += 1
             if item["human"].get("corrected_field") is not None:

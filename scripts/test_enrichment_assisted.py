@@ -23,7 +23,7 @@ from enrichment_assisted import (
 )
 from enrichment_contact_first import verify_contact_input
 from enrichment_experiment import read, sha
-from enrichment_human import import_human
+from enrichment_human import human_metrics, import_human
 from enrichment_public_sources import MATHNET_DECODER
 from enrichment_verification import immutable_json
 from test_enrichment_semantics import assessment, fixture
@@ -206,7 +206,10 @@ class AssistedTests(unittest.TestCase):
             "а не доказательство", html
         )
         self.assertEqual(html.count("<article id="), 2)
-        self.assertIn("Три отдельные проверки контакта", html)
+        self.assertIn("Четыре отдельные проверки контакта", html)
+        self.assertIn("Исправить категорию (необязательно)", html)
+        self.assertIn("просто живая персональная страница", html)
+        self.assertEqual(manifest["schema"], "human_packet_v4")
         self.assertIn(URL + "A1", html)
         before = {
             str(p.relative_to(self.root)): sha(p) for p in self.root.rglob("*") if p.is_file()
@@ -225,12 +228,12 @@ class AssistedTests(unittest.TestCase):
         pool = read(Path(read(self.root / "prepared/A1.json")["input_path"]))["evidence_pool"]
         self.assertTrue(any("-F" in ref for ref in pool))
 
-    def test_selected_human_scope_three_axes_required_and_hidden_claim_rejected(self) -> None:
+    def test_selected_human_scope_four_axes_required_and_hidden_claim_rejected(self) -> None:
         cards, _ = self.mocked_run()
         manifest = cards.parent / "manifest.json"
         claim = read(manifest)["profiles"][0]["review_claim_ids"][0]
         answer: dict[str, Any] = {
-            "schema": "human_answers_v3",
+            "schema": "human_answers_v4",
             "packet_id": "assisted-contacts",
             "packet_sha256": sha(manifest),
             "human_name": "Synthetic test fixture",
@@ -246,6 +249,7 @@ class AssistedTests(unittest.TestCase):
                     "dimensions": {
                         "text": "agree",
                         "identity": "uncertain",
+                        "source_date": "agree",
                         "current": "uncertain",
                     },
                 }
@@ -257,16 +261,54 @@ class AssistedTests(unittest.TestCase):
             import_human(self.base / "synthetic-records", manifest, path, "fixture-record")
         )
         self.assertEqual(record["reviewed_claims"], 1)
+        self.assertEqual(record["schema"], "human_record_v4")
         self.assertEqual(record["review_scope"], "selected_personal_contacts")
         self.assertFalse(record["profile_review"][1]["human_reviewed"])
         del answer["answers"][0]["dimensions"]["current"]
         path.write_text(json.dumps(answer))
-        with self.assertRaisesRegex(ValueError, "text/identity/current"):
+        with self.assertRaisesRegex(ValueError, "text/identity/source_date/current"):
             import_human(self.base / "bad", manifest, path, "bad")
         answer["answers"][0]["author_id"] = "A2"
         path.write_text(json.dumps(answer))
         with self.assertRaisesRegex(ValueError, "Неизвестное"):
             import_human(self.base / "hidden", manifest, path, "hidden")
+
+    def test_legacy_contact_answers_remain_separate_from_new_current_axis(self) -> None:
+        cards, _ = self.mocked_run()
+        packet = read(cards.parent / "manifest.json")
+        packet["schema"] = "human_packet_v3"
+        manifest = self.base / "legacy-manifest.json"
+        immutable_json(manifest, packet)
+        answers = {
+            "schema": "human_answers_v3",
+            "packet_id": packet["packet_id"],
+            "packet_sha256": sha(manifest),
+            "human_name": "Synthetic test fixture",
+            "reviewed_at": "2026-10-11T12:00:00Z",
+            "minutes": 1,
+            "actual_human_attestation": True,
+            "answers": [
+                {
+                    "author_id": "A1",
+                    "claim_id": packet["profiles"][0]["review_claim_ids"][0],
+                    "decision": "agree",
+                    "note": "synthetic compatibility test",
+                    "dimensions": {"text": "agree", "identity": "agree", "current": "uncertain"},
+                }
+            ],
+        }
+        path = self.base / "legacy-answers.json"
+        immutable_json(path, answers)
+        record = import_human(self.base / "compatibility", manifest, path, "legacy")
+        self.assertEqual(read(record)["comparisons"][0]["human"], answers["answers"][0])
+        metrics = human_metrics([record])["strata"]["targeted"]
+        self.assertEqual(metrics["legacy_contact_current_v3_uncertain"], 1)
+        self.assertNotIn("current_agree", metrics)
+        self.assertNotIn("source_date_reviewed", metrics)
+        answers["schema"] = "human_answers_v4"
+        path.write_text(json.dumps(answers))
+        with self.assertRaisesRegex(ValueError, "другому пакету"):
+            import_human(self.base / "cross-version", manifest, path, "bad")
 
     def test_parent_stop_and_concurrent_run_do_not_touch_http_or_model(self) -> None:
         with (self.root / "run.lock").open("a") as lock:
