@@ -730,3 +730,142 @@ identity в более узком новом корпусе. **Для следу
 контакта остаются; качество, переносимость и экономия полного процесса не
 доказаны. Human0, deliverability unknown, личная готовность не установлена.
 Новые вызовы не назначены; cron PAUSED, source/model/process STOP.
+
+## Sol-assisted контакты: переносимый offline-tested workflow (11.10.2026)
+
+После отказа автономного GLM поиска закреплён отдельный тонкий процесс
+`scripts/enrichment_assisted.py`. Поиск выполняет Sol-агент с доступным ему
+поисковым инструментом; **этот CLI поиска не предоставляет**. Наличие
+`web.run` в приложении не означает его доступность в произвольной CLI-сессии.
+Автоматическая часть после передачи наблюдённых URL: существующий `PublicLoader`
+→ буквальные кандидаты/проверка source SHA и непрерывных spans → отдельный native
+`gpt-6.1-sol/high` без веба и MCP → semantic-v3/date guards → локальные карточки
+и прогресс. GLM/fallback/repair не вызываются. Это контактный процесс, не полный
+сборщик всех 18 полей. Новых live jobs в этом раунде не было.
+
+### Вход, assisted шаг и команды
+
+Зависимости — текущий `uv.lock`, Python 3.12, штатный `codex` CLI с уже имеющимся
+доступом по подписке. Fresh PDF читает locked `pypdf`; HTML — существующий parser.
+Общий браузер/Playwright/OCR не нужны. Для известного literal MathNet decoder
+есть явный `render_mathnet: true`: код читает наблюдённый script URL по прежней
+robots/access policy и проверяет точную поддержанную функцию, не исполняет
+произвольный JS. Decoder HTTP учитывается в общем бюджете. Иной рендеринг,
+защита сайта, неполные источники и недоступность остаются ограничениями.
+
+До нового live запуска требуется отдельное разрешение выборки, search/HTTP/model
+лимитов и deadlines. Этот offline scope его не даёт. Передать Sol-агенту:
+«Для фиксированных id/name/institution/ORCID найди публичные персональные страницы
+и публикации. Сохрани фактические запросы, наблюдённые URL и происхождение ссылок;
+не конструируй неизвестные пути. Не переносить сниппеты или предполагаемые ответы
+в доказательства. Requested модель/effort — gpt-6.1-sol/high; фактически не exposed
+сведения и стоимость оставить unknown. Передать profiles.json и plan.json коду».
+Доступность инструмента поиска подтверждает конкретная агентская среда.
+
+`profiles.json` — список каталоговых профилей с уникальными `id` (1..10).
+`plan.json` содержит `schema: sol-assisted-contacts-v1`,
+`requested_search_model: gpt-6.1-sol`, `requested_search_effort: high`,
+`profiles: [{author_id, sources: [...]}]`. Для каждого source нужны `url`,
+`kind` (`direct_http`, `direct_pdf`, `structured_orcid`) и
+`discovery: {method, observed_url, note, query}`; method — `agent_search`,
+`observed_href` либо `known_orcid`, query обязателен для agent_search.
+`observed_url` должен буквально совпадать с URL. Это запись агента о поиске,
+**не независимое доказательство физического search call**. Сохранять доступные
+tool receipts отдельно; неизвестный транспорт, physical calls и usage не выдумывать.
+
+`scope.json` содержит `authorization_reference`, `live_authorized` (для offline
+fixture — false), timezone-aware `deadline_acquisition` и `deadline_verification`,
+целые `HTTP_total_cap` (1..200), `HTTP_per_profile_cap` (1..30), `remaining_stop`
+(0/5/15; значение0 только по прямому разрешению), при ORCID — `ORCID_policy` с
+`access: allowed`, `source: https://pub.orcid.org/v3.0` и сохранённым основанием.
+Числа — верхние возможности CLI; фактический разрешённый scope может быть строже.
+Model cap фиксируется числом профилей, один независимый Sol на профиль.
+
+```sh
+.venv/bin/python scripts/enrichment_assisted.py prepare \
+  --root /absolute/new-authorized-root --profiles /absolute/profiles.json \
+  --plan /absolute/plan.json --scope /absolute/scope.json
+.venv/bin/python scripts/enrichment_assisted.py dry-run --root /absolute/new-authorized-root
+.venv/bin/python scripts/enrichment_assisted.py status --root /absolute/new-authorized-root
+# Только после отдельного live разрешения и официальной сверки остатка:
+.venv/bin/python scripts/enrichment_assisted.py run --live \
+  --root /absolute/new-authorized-root --remaining-percent ACTUAL_OFFICIAL_PERCENT
+```
+
+Последняя строка — **одна команда для доступных автоматических стадий** после
+assisted поиска. `prepare` фиксирует sample/plan/scope/policy/code/lock/rubric SHA,
+ничего не вызывает; `dry-run` проверяет freeze и выводит progress. `run` использует
+один writer lock, долговечные HTTP reservations/native receipts. Завершённые
+outputs повторно проверяются без calls; неизвестный started job никогда не
+повторяется. Root/parent STOP запрещает новые jobs. Старые terminal roots не
+возобновляются. При недоступном источнике/guard/deadline команда останавливается
+с сохранёнными промежуточными файлами: это не обещание полного покрытия каждого
+профиля. Возобновление того же разрешённого незавершённого root допускается лишь
+при прежнем freeze и guards; нельзя менять caps/удалять STOP или unknown attempt.
+
+Буквальная нормализация ограничена пробелами вокруг `@`, без OCR или угадывания.
+Кандидаты сохраняют непрерывный локальный контекст, source URL/representation/
+bytes/text/registry SHA. Sol получает все static fragments реально прочитанных
+источников, включая контекст, который сборщик не выбрал; cap кандидатов32/source
+не доказывает полноты контактов. Весь prompt с rubric должен помещаться в1MB:
+превышение останавливает профиль, не обрезает evidence. Raw/schema/date failures
+не исправляются и не получают автоматической повторной модели. Карточки выдаются
+только после всех обязательных guards; saved native output и validated result
+показаны раздельно. Usage completed native jobs — из receipts; search/development/
+review usage, реальный подписочный debit и доллары неизвестны, пока не измерены.
+
+### Пересоздать baseline карточки без вызовов
+
+Команда `saved` читает sealed flexible10 и allowlisted исторический PDF parser,
+проверяет оба transfer index и их mapped files, prepared input/source binding и
+полные старые semantic-v3 classifications. Исторические verdicts/45atoms не
+пересуждаются и не выдаются за результаты новых date guards. Новый packet показывает
+все10профилей: выбранные8личныхконтактов (3historical/5undated), два случая без
+принятого контакта с причинами отказа кандидатов. Новая человеческая проверка ещё
+не состоялась. Старые исходники, metrics, STOP, Pi12/live3/ранние humanrecords
+остаются отдельными.
+
+```sh
+.venv/bin/python scripts/enrichment_assisted.py saved \
+  --root /absolute/new-human-packet-root \
+  --baseline /absolute/enrichment-flexible10-20261010 \
+  --index /absolute/enrichment-flexible10-20261010/transfer-SHA-index-d7883ed.json \
+  --index-sha256 051331260c38f35cadbf3580cbddec217710a00550dde97791b73b36bdc251fc \
+  --legacy-pdf-root /absolute/enrichment-glm-remaining6-20261011 \
+  --legacy-index /absolute/enrichment-glm-remaining6-20261011/transfer-SHA-index-92482b6.json \
+  --legacy-index-sha256 a8413a08783b48e56fb46e5b9e4710c16a5d3b8bd63aa19683f9f2e75154dd85
+```
+
+Открыть выведенный `human-v3/packets/baseline-contacts/review.html` локально.
+Для реально просмотренного контакта записать общее решение и отдельно text
+(цитата), identity (принадлежность), current (согласие с historical/undated оценкой).
+«Недостаточно оснований» разрешено по каждой оси: это не подтверждение текущей
+доставляемости. Комментарий позволяет пояснить сомнение или дату. Не просмотренные
+контакты не включать. Для двух профилей без принятого контакта answers не требуются;
+отсутствие принятого контакта не доказывает его отсутствия у человека.
+
+Ввести фактическое имя/минуты, подтвердить личный просмотр и нажать «Скачать мои
+решения». Автосохранения/отправки нет; скачать до закрытия страницы. Полученный
+`baseline-contacts-human.json` передать Борису/продуктовому потоку как локальный
+файл; импортировать **в отдельный новый private root**, а не в sealed baseline:
+
+```sh
+.venv/bin/python scripts/enrichment_human.py import \
+  --root /absolute/separate-human-answers-root \
+  --manifest /absolute/new-human-packet-root/human-v3/packets/baseline-contacts/manifest.json \
+  --answers /absolute/baseline-contacts-human.json --record-id boris-baseline-contacts
+```
+
+Контракт прежний `human_answers_v3`: packet SHA, claim IDs, реальные attestation/
+время, частичные answers; selected contact mode требует все3оси и отвергает скрытые
+claim IDs. Record помечен `review_scope: selected_personal_contacts`;
+`total_claims` — выбранные contacts, `total_original_claims` — исходные atoms.
+`all_selected_claims_reviewed` не означает `all_original_claims_reviewed` или
+приёмку профиля, а отсутствие человеческих ответов не превращается в gold.
+Email не означает набор студентов. Ответы с именем/заметками не публиковать в git.
+
+[Результат offline проверки](../reports/enrichment_night_20261009.md#sol-assisted-workflow-и-baseline-contact-cards--11102026)
+и [сгенерированные агрегаты](../metrics/enrichment_sol_assisted_offline_20261011.json)
+фиксируют границу: mocked automatic pipeline и реальный saved export проверены,
+новый live assisted end-to-end запуск, массовая экономия и качество после human
+приёмки ещё не доказаны.

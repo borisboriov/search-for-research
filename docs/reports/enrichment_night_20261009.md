@@ -2519,3 +2519,81 @@ GLM→Sol контроля. То же прямое действие после �
 пользы. Экспериментальное сопровождение этой гипотезы закончено: никакой следующей
 десятки/минираунда/monitor/followup. Cron PAUSED; merge/mainpush/deploy/productdocs
 не выполнялись. Итоговая передача — собственные процессы/запись STOP.
+
+## Sol-assisted workflow и baseline contact cards — 11.10.2026
+
+По [новому offline scope PR194](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6108925959)
+закреплён переносимый контактный процесс и подготовлен отдельный human packet.
+[Контракт/минимальные команды](../experiments/enrichment_glm_runner.md#sol-assisted-контакты-переносимый-offline-tested-workflow-11102026)
+разделяют явный поисковый шаг Sol-агента и автоматические стадии имеющегося кода.
+CLI не предоставляет search tool; записанный план наблюдённых URL не доказывает
+физические search calls. GLM0, новых profile model/source/search calls0,
+cumulative43 неизменен. Cron PAUSED, следующий batch/monitor не разрешён.
+
+`scripts/enrichment_assisted.py` использует PublicLoader, буквальный binder,
+полный checked static corpus, отдельный native Sol6.1/high и прежнюю semantic-v3.
+Добавлены явные freeze/deadline/model/HTTP/prompt caps, single writer lock,
+запрет повторения unknown attempts, reuse только сверенных raw/receipt/input/
+source bindings. Date gate обязателен до cards; raw failures остаются неизменными.
+HTML/ORCID/PDF и literal MathNet decoder переиспользуются; общего crawler,
+универсального рендера, платного API и GLM fallback нет. Контактный collector
+поддерживает непрерывный контекст и пробелы вокруг `@`; остальные18полей полно
+не собирает. Fresh live end-to-end с новым CLI **не запускался**.
+
+Новый локальный root `enrichment-sol-assisted-offline-20261011` содержит packet
+`human-v3/packets/baseline-contacts/review.html`, полную manifest связь45atoms,
+`entries.json`, `offline-progress.json`, frozen offline fixtures и инженерные
+proofs. Выход создан из unchanged flexible10: baseline index SHA
+`051331260c38f35cadbf3580cbddec217710a00550dde97791b73b36bdc251fc`, проверено865mappedfiles;
+legacy parser archive index SHA
+`a8413a08783b48e56fb46e5b9e4710c16a5d3b8bd63aa19683f9f2e75154dd85`, проверено1316mappedfiles.
+Исторический parser принимает только4allowlistedPDF и проверяет собственные SHA;
+новые PDF им не читаются. Старые roots/STOP/metrics не переписаны.
+
+[Агрегаты](../metrics/enrichment_sol_assisted_offline_20261011.json) сгенерированы
+из actual saved wrapper receipts и manifest:10профилей,8selectedcontacts,
+3historical/5undated,2безпринятогоконтакта. У каждой карточки есть имя/ID/вуз,
+точный URL, буквальный фрагмент/полный сохранённый контекст, принадлежность,
+датированность и ограничения/конфликты. Длинный контекст раскрывается без
+удаления текста; навигация показывает все10профилей. Для двух непринятых случаев
+показаны причины отказа кандидатов, отсутствие контакта не утверждается.
+
+Пакет не содержит предзаполненных человеческих решений. Selected-contact режим
+старого human_answers_v3 требует отдельные text/identity/current ответы;
+uncertain допустим, unknown нельзя заменить согласием автоматически. Export
+связан с packet SHA; importer отвергает скрытые/повторные claim IDs, отсутствие осей
+и чужой packet. Реальные будущие answers импортируются отдельно. Проверка8контактов
+не принимает45atoms или целый профиль; contact≠student intake/deliverability.
+Human records0/human_reviewed0, прежние Znamenskaya/Parkhomchuk/Shumeyko,
+Pi12/live3/remaining6 assessments не смешаны с этой приёмкой.
+
+Исторический native usage flexible10:459511input+output tokens/645.630s wall
+для10jobs. Это прежний расход, не новая цена workflow. Поиск ведущего Sol,
+разработка/ревью, общий подписочный debit и dollars остаются unknown/null;
+ни API pricing, ни ноль не подменяют стоимость подписки.
+
+14meaningful mocked pipeline tests покрывают prepare/freeze/dry-run, неправильные
+планы, полный source context, literal whitespace/renderer, SHA tamper, receipt
+reuse, STOP/lock/unknown no-retry, quotas/deadlines/full prompt cap, date failure
+и selected human import. Real saved export подтвердил10articles/8contactsections;
+JS export исполнен на synthetic in-memory ответе: no answers и missing axes
+блокируются, three-axis uncertain export связан с правильным SHA; реальный
+human result не записан. Browser UI visual inspection недоступен: политика
+отклонила file URL, обход не выполнялся. Структура/код экспорта проверены; внешний
+вид в настоящем браузере остаётся пределом проверки.
+
+Подготовка/dry-run/status фактического offline fixture повторены без calls;
+`live_authorized:false` предотвращает случайный будущий запуск. Initial fixture
+ошибочно пометил скопированный PDF как MathNet derivative, validation остановила
+его до calls; исправленный plan сохранён отдельно. Initial PR scope publication
+отклонила автоматическая approval проверка из-за payload/consent; доверенное
+разрешение Бориса повторно сверено, локальные пути/internal IDs убраны, тот же
+PR comment разрешён. Смена транспорта/обход/дополнительные profile jobs не было.
+
+Локальные make lint/typecheck/docs-check PASS, 294unittest и388pytest PASS
+(8skip/5deselect), coverage94.06%; strict audit без images PASS. Отдельное
+сканирование actual common Git history, независимое ревью конкретного head, актуальный
+CI merge/base/head и окончательный transfer index/process-write STOP фиксируются
+в итоговом комментарии PR194. Вне результата остаются свежая live проверка нового
+CLI, человеческая приёмка и измерение полной assisted экономии; старые метрики
+не превращены в новый quality score. Merge/mainpush/deploy/productdocs не выполнялись.

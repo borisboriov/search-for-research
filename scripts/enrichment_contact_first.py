@@ -347,7 +347,12 @@ async def structured_orcid(loader: Loader, profile: dict[str, Any]) -> dict[str,
 
 
 def contact_packet(
-    root: Path, profile: dict[str, Any], sources: list[dict[str, Any]], *, candidate_cap: int = 8
+    root: Path,
+    profile: dict[str, Any],
+    sources: list[dict[str, Any]],
+    *,
+    candidate_cap: int = 8,
+    flexible_literals: bool = False,
 ) -> dict[str, Any]:
     """Код извлекает кандидаты, Sol решает attribution; receipts моделей не выдумываются."""
     if type(candidate_cap) is not int or not 1 <= candidate_cap <= 32:
@@ -436,12 +441,26 @@ def contact_packet(
                     candidates.append(
                         (address, start, start + len(needle), static, "structured_json")
                     )
-        seen = set()
-        for address, start, end, body, representation in candidates[:candidate_cap]:
+        if flexible_literals and source["source_kind"] in ("direct_http", "direct_pdf"):
+            # Единственная явная нормализация: пробелы вокруг @, без OCR/угадывания.
+            for match in re.finditer(
+                r"([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+)\s*@\s*"
+                r"([A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+                static,
+            ):
+                address = match[1] + "@" + match[2]
+                if EMAIL.fullmatch(address):
+                    candidates.append((address, match.start(), match.end(), static, "static_text"))
+        seen: set[str] = set()
+        for address, start, end, body, representation in (
+            candidates if flexible_literals else candidates[:candidate_cap]
+        ):
             if address in seen:
                 continue
+            if len(seen) >= candidate_cap:
+                break
             seen.add(address)
-            if representation.startswith("html_"):
+            if representation.startswith("html_") or flexible_literals:
                 # Отдельный атрибут теряет связь с именным блоком. Только непрерывное
                 # окно того же HTML; принадлежность всё равно оценивает Sol.
                 start, end = max(0, start - 700), min(len(body), end + 500)
@@ -619,7 +638,13 @@ def collect_fallback(
 
 
 def verify_contact_input(
-    root: Path, input_path: Path, *, remaining_percent: float, allow_profile_evidence: bool = False
+    root: Path,
+    input_path: Path,
+    *,
+    remaining_percent: float,
+    allow_profile_evidence: bool = False,
+    deadline_epoch: float | None = None,
+    prompt_byte_cap: int | None = None,
 ) -> Path:
     """Один полный native Sol/high, текущая квота передаётся из официальной сверки."""
     from enrichment_experiment import sha
@@ -635,7 +660,14 @@ def verify_contact_input(
     has_profile_evidence = any(task_input["profile_evidence"].values())
     if not task_input["items"] and not (allow_profile_evidence and has_profile_evidence):
         raise ValueError("Нет контактных кандидатов: сохранить partial без GPT")
-    if len(list((root / "runs").glob("*/native_verifier/started.json"))) >= 30:
+    cap = read(root / "manifest.json").get("model_job_cap", 30)
+    if type(cap) is not int or not 1 <= cap <= 30:
+        raise ValueError("Недопустимый frozen model cap")
+    run_dir = root / "runs" / aid / "native_verifier"
+    if (
+        not (run_dir / "started.json").exists()
+        and len(list((root / "runs").glob("*/native_verifier/started.json"))) >= cap
+    ):
         raise ValueError("Профильный model budget исчерпан")
     task = {
         "author_id": aid,
@@ -657,6 +689,12 @@ def verify_contact_input(
         ensure_ascii=False,
         separators=(",", ":"),
     )
+    if prompt_byte_cap is not None and (
+        type(prompt_byte_cap) is not int
+        or prompt_byte_cap <= 0
+        or len(prompt.encode()) + len(instruction.encode()) > prompt_byte_cap
+    ):
+        raise ValueError("Полный prompt вместе с инструкциями превышает cap; model skipped")
     workspace = private_root(root / "native-workspace")
     result_path, receipt = execute(
         root / "runs" / aid / "native_verifier",
@@ -670,6 +708,7 @@ def verify_contact_input(
         disable_mcp=True,
         required_config=HIGH_CONFIGS["native_verifier"],
         system_prompt=instruction,
+        deadline_epoch=deadline_epoch,
     )
     result = read(result_path)
     check_schema(result, output_schema)

@@ -159,18 +159,27 @@ def profile_axis_summary(name: str, assessment: dict[str, Any]) -> str:
     )
 
 
-def proof(rows: list[dict[str, Any]]) -> str:
+def proof(rows: list[dict[str, Any]], *, show_url: bool = False) -> str:
     parts = []
     for row in rows:
         url = str(row.get("url", ""))
         link = (
-            f'<a href="{esc(url)}" target="_blank" rel="noopener noreferrer">Первоисточник</a>'
+            f'<a href="{esc(url)}" target="_blank" rel="noopener noreferrer">'
+            f"{esc(url) if show_url else 'Первоисточник'}</a>"
             if urlparse(url).scheme in ("http", "https")
             else "Ссылка недоступна"
         )
         parts.append(
-            f'<div class="proof">{link}<blockquote>'
-            f"{esc(row.get('excerpt'))}</blockquote><p>Дата в исходных метаданных: "
+            f'<div class="proof">{link}'
+            + (
+                f"<details><summary>Полный сохранённый контекст "
+                f"({len(str(row.get('excerpt', '')))} символов)</summary>"
+                if show_url and len(str(row.get("excerpt", ""))) > 1600
+                else ""
+            )
+            + f"<blockquote>{esc(row.get('excerpt'))}</blockquote>"
+            + ("</details>" if show_url and len(str(row.get("excerpt", ""))) > 1600 else "")
+            + f"<p>Дата в исходных метаданных: "
             f"{esc(row.get('information_date'))}. Дата проверки источника: "
             f"{esc(row.get('checked_at'))}. Эти даты сами по себе не подтверждают "
             "дату факта или текущую применимость.</p></div>"
@@ -232,12 +241,14 @@ def normalize(
     return normalized_source, normalized_result
 
 
-def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Path:
+def make_packet(
+    root: Path, packet_id: str, entries: list[dict[str, Any]], *, contact_review: bool = False
+) -> Path:
     """Каждая entry: input_path, assessment_path, stratum, selection_reason."""
     root = private_root(root)
     identifier(packet_id)
-    if not 1 <= len(entries) <= 5:
-        raise ValueError("Пакет должен содержать от одного до пяти профилей")
+    if not 1 <= len(entries) <= (10 if contact_review else 5):
+        raise ValueError("Пакет превышает лимит профилей: 10 для контактов, 5 для общего обзора")
     profiles = []
     seen = set()
     for entry in entries:
@@ -263,6 +274,23 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
             originals
         ):
             raise ValueError("Нужна оценка каждого исходного утверждения")
+        selected = entry.get("review_claim_ids")
+        if contact_review:
+            if (
+                not isinstance(selected, list)
+                or any(not isinstance(key, str) for key in selected)
+                or len(selected) != len(set(selected))
+                or not set(selected) <= originals.keys()
+            ):
+                raise ValueError("Нужен явный список выбранных контактных утверждений")
+            by_id = {a["claim_id"]: a for a in assessed_all}
+            if any(
+                originals[key]["field"] != "personal_contact"
+                or not by_id[key].get("eligibility", {}).get("usable_coverage")
+                or by_id[key]["eligibility"]["coverage_field"] != "personal_contact"
+                for key in selected
+            ):
+                raise ValueError("Выбран не принятый личный контакт")
         profiles.append(
             {
                 "author_id": author_id,
@@ -273,6 +301,7 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
                 "assessment_sha256": sha(assessed_path),
                 "stratum": entry["stratum"],
                 "selection_reason": entry["selection_reason"],
+                **({"review_claim_ids": selected} if contact_review else {}),
             }
         )
     manifest = {
@@ -280,6 +309,7 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
         "packet_id": packet_id,
         "profiles": profiles,
         "human_reviewed": False,
+        **({"review_scope": "selected_personal_contacts"} if contact_review else {}),
     }
     directory = root / "human-v3" / "packets" / packet_id
     manifest_path = directory / "manifest.json"
@@ -296,9 +326,9 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
         identity = assessment.get("identity", {})
         identity_status = identity.get("verdict") if isinstance(identity, dict) else identity
         cards.append(
-            f"<article><h2>"
+            f'<article id="profile-{esc(profile["author_id"])}"><h2>'
             f"{esc(profile['profile'].get('name', profile['author_id']))}</h2>"
-            f"<p>Организация в исходном каталоге: "
+            f"<p>ID: {esc(profile['author_id'])}. Организация в исходном каталоге: "
             f"{esc(profile['profile'].get('institution'))}.</p><p>"
             f"<strong>Связь материалов с человеком:</strong> "
             f"{label(identity_status)}. Актуальность возможности "
@@ -322,7 +352,25 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
         cards.append(profile_axis_summary("activity", assessment))
         cards.append(profile_axis_summary("current_affiliation", assessment))
         original = {c["claim_id"]: c for c in profile["collector"]["claims"]}
+        if contact_review and not profile["review_claim_ids"]:
+            cards.append(
+                "<p><strong>Личный контакт по этим сохранённым материалам не установлен.</strong> "
+                "Это отсутствие принятого контакта, а не доказательство, что контакта нет. "
+                "Ответ о принадлежности не требуется: принятый контакт не предъявлен.</p>"
+                "<details><summary>Почему кандидаты не приняты</summary>"
+            )
+            for assessed in assessment_rows(assessment):
+                claim = original[assessed["claim_id"]]
+                cards.append(
+                    "<p>"
+                    + esc(assessed.get("explanation"))
+                    + "</p>"
+                    + proof(claim.get("evidence", []), show_url=True)
+                )
+            cards.append("</details>")
         for assessed in assessment_rows(assessment):
+            if contact_review and assessed["claim_id"] not in profile["review_claim_ids"]:
+                continue
             claim = original[assessed["claim_id"]]
             identifier(claim["claim_id"])
             key = f"{profile['author_id']}:{claim['claim_id']}"
@@ -345,9 +393,14 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
             cards.append(
                 f"<section><h3>{esc(field_label(claim['field']))}</h3><p>"
                 f"<strong>Что проверяем:</strong> {esc(value_ru)}</p>"
-                f"<details><summary>Исходная запись сборщика</summary>"
+                + (
+                    f"<p><strong>Контакт:</strong> <code>{esc(claim.get('value'))}</code></p>"
+                    if contact_review
+                    else ""
+                )
+                + f"<details><summary>Исходная запись сборщика</summary>"
                 f"<p>{esc(claim.get('value'))}</p></details>"
-                f"{proof(claim.get('evidence', []))}<p><strong>Решение "
+                f"{proof(claim.get('evidence', []), show_url=contact_review)}<p><strong>Решение "
                 f"проверяющего:</strong> Текст: "
                 f"{label(assessed.get('text_verdict'))}. Личность: "
                 f"{label(assessed.get('identity_verdict'))}. Смысл поля: "
@@ -381,8 +434,24 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
             )
             dimensions = []
             for axis, axis_label in DIMENSIONS.items():
+                if contact_review and axis not in ("text", "identity", "current"):
+                    continue
+                axis_question = {
+                    "text": "Цитата действительно содержит этот контакт и совпадает с источником?",
+                    "identity": "Контакт принадлежит именно указанному учёному?",
+                    "current": (
+                        "Согласны с оценкой датированности «"
+                        + label(assessed.get("current_applicability"))
+                        + "»? Нынешняя доставляемость адреса отдельно не проверена."
+                    ),
+                }.get(axis, axis_label + ": согласны с решением проверяющего?")
+                question_text = (
+                    axis_question
+                    if contact_review
+                    else axis_label + ": согласны с решением проверяющего?"
+                )
                 dimensions.append(
-                    f"<label>{axis_label}: согласны с решением проверяющего? "
+                    f"<label>{esc(question_text)} "
                     f'<select data-axis="{axis}" data-item="{esc(key)}">'
                     '<option value="not_reviewed">Не проверял это отдельно</option>'
                     + options
@@ -398,8 +467,12 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
                 }.items()
             )
             cards.append(
-                "<details><summary>Уточнить решение по отдельным вопросам "
-                "или исправить поле</summary>"
+                (
+                    "<details open><summary>Три отдельные проверки контакта</summary>"
+                    if contact_review
+                    else "<details><summary>Уточнить решение по отдельным вопросам "
+                    "или исправить поле</summary>"
+                )
                 + "".join(dimensions)
                 + f'<label>Правильное поле <select data-correction="{esc(key)}">'
                 '<option value="">Исправление не записано</option>'
@@ -451,6 +524,7 @@ def make_packet(root: Path, packet_id: str, entries: list[dict[str, Any]]) -> Pa
                 "packet_id": packet_id,
                 "packet_sha256": digest,
                 "questions": questions,
+                "contact_review": contact_review,
             },
             ensure_ascii=False,
         )
@@ -478,6 +552,10 @@ corrected_field:document.querySelector('select[data-correction="'+s.dataset.key+
 }});
 if(!answers.length){alert('Запишите хотя бы одно фактическое решение.');
 return;
+}if(cfg.contact_review&&answers.some(a=>['text','identity','current'].some(k=>
+!a.dimensions[k]||a.dimensions[k]==='not_reviewed'))){
+alert('Для каждого записанного контакта ответьте отдельно: цитата, принадлежность, '
++'актуальность. Можно выбрать «Недостаточно оснований».');return;
 }const out={schema:cfg.schema,packet_id:cfg.packet_id,packet_sha256:cfg.packet_sha256,
 human_name:name,reviewed_at:new Date().toISOString(),
 minutes,actual_human_attestation:true,answers};
@@ -511,6 +589,26 @@ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
             "считается просмотром. Источники приведены дословно. Запишите "
             "только реально разобранные утверждения; остальные останутся "
             "непроверенными.</p>"
+        )
+        + (
+            "<p>Узкая проверка выбранных личных контактов: отдельно подтвердите цитату, "
+            "принадлежность человеку и согласие с датированностью. Если не знаете — "
+            "«Недостаточно оснований». Это не проверка доставляемости адреса или набора "
+            "студентов и не приёмка остальных утверждений профиля. Перед закрытием "
+            "страницы скачайте JSON: автоматического сохранения или отправки нет.</p>"
+            if contact_review
+            else ""
+        )
+        + (
+            "<nav><strong>Профили:</strong> "
+            + " · ".join(
+                f'<a href="#profile-{esc(p["author_id"])}">'
+                f"{esc(p['profile'].get('name', p['author_id']))}</a>"
+                for p in profiles
+            )
+            + "</nav>"
+            if contact_review
+            else ""
         )
         + "".join(cards)
         + (
@@ -560,6 +658,8 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
         (p["author_id"], c["claim_id"]): (p, c)
         for p in packet["profiles"]
         for c in p["collector"]["claims"]
+        if packet.get("review_scope") != "selected_personal_contacts"
+        or c["claim_id"] in p["review_claim_ids"]
     }
     seen = set()
     comparisons = []
@@ -580,6 +680,10 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
             for axis, verdict in dimensions.items()
         ):
             raise ValueError("Неизвестное решение по отдельному вопросу")
+        if packet.get("review_scope") == "selected_personal_contacts" and any(
+            dimensions.get(axis) not in DECISIONS for axis in ("text", "identity", "current")
+        ):
+            raise ValueError("Для контакта нужны отдельные text/identity/current решения")
         correction = answer.get("corrected_field")
         if correction is not None and correction not in (
             *LABELS,
@@ -607,6 +711,7 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
         )
     value = {
         "schema": "human_record_v3",
+        "review_scope": packet.get("review_scope", "all_original_claims"),
         "record_id": record_id,
         "packet_sha256": sha(manifest_path),
         "answers_sha256": sha(answers_path),
@@ -621,7 +726,10 @@ def import_human(root: Path, manifest_path: Path, answers_path: Path, record_id:
                 "author_id": p["author_id"],
                 "stratum": p["stratum"],
                 "reviewed_claims": sum(a == p["author_id"] for a, _ in seen),
-                "total_claims": len(p["collector"]["claims"]),
+                "total_claims": len(p.get("review_claim_ids", p["collector"]["claims"])),
+                "total_original_claims": len(p["collector"]["claims"]),
+                "all_selected_claims_reviewed": bool(p.get("review_claim_ids"))
+                and all((p["author_id"], key) in seen for key in p.get("review_claim_ids", [])),
                 "all_original_claims_reviewed": bool(p["collector"]["claims"])
                 and all((p["author_id"], c["claim_id"]) in seen for c in p["collector"]["claims"]),
                 "human_reviewed": False,
