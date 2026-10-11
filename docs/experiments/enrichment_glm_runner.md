@@ -241,3 +241,24 @@ Sol — существующий изолированный native runner. По�
 jobs запрещены; offline исправление не разрешает дополнительный model job.
 Расходы разработки/ревью отделены от шести профильных попыток; деньги/debit,
 не раскрытые runtime, остаются unknown. Экономия полного коллектора не измеряется.
+
+### Фактический OFFLINE этап и исправление сериализации
+
+Freeze6a0f5e8 от11.10.2026 остановлен после одной незавершённой GLM попытки:
+Sol0, completed0, pairs0, stage1/6, cumulative29; прежний cycle28/30 неизменен.
+`encoded(sort_keys=True)` пересортировал вложенные task/corpus/schema keys;
+actual Pi prompt SHA отличается от общего frozen SHA при равных JSON-данных.
+Автор прервал проход; terminal STOP запрещает остальные пять jobs и повтор.
+Семантического результата нет: качество GLM и буквальное восстановление новых
+выбранных атомов не оценены. Pending SDK usage0 не является фактическим расходом;
+tokens/cache/debit/cost неизвестны. Один interrupted attempt занял207.085s.
+
+Offline исправление сохраняет вложенный порядок request только для этого метода.
+Ожидаемый общий prompt SHA передаётся из manifest; Python проверяет его перед
+запуском, JS сверяет свою фактическую проекцию до model request, importer/driver
+также сверяют receipts. Остальные методы сохраняют прежнюю сериализацию.
+Тест воспроизводит сортировку вложенных fragments/schema keys и её отказ;
+offline proof через mocked `Popen` и реальный JS helper подтвердил все три
+frozen prompt SHA без model/source calls. Нового freeze/inference после STOP нет.
+Подробности, ограничения и generated JSON — в следующем разделе
+[отчёта](../reports/enrichment_night_20261009.md#offline-fragment-id-paired3-11102026-partialstop).

@@ -1704,3 +1704,115 @@ JSON [metrics](enrichment_glm_remaining6_20261011.metrics.json) и
 quotes вне git. Итоговый transfer SHA-index и прекращение процессов/записи
 будут зафиксированы в комментарии PR. Новых экспериментов после этого STOP
 не назначено; #189 не исправлялась попутно.
+
+## OFFLINE fragment-ID paired3, 11.10.2026: partial/STOP
+
+**Итог: данных недостаточно.** Новый этап остановлен из-за технического
+расхождения порядка модельного входа. Есть одна незавершённая GLM попытка,
+Sol0, completed0, пригодных пар0. Identity/contact/date/affiliation/readiness,
+пропуски и false additions не оценены; качество GLM по этому проходу неизвестно.
+Это не доказательство регрессии GLM и не повтор прежнего отрицательного live
+эксперимента. Источник чисел — generated
+[public metrics](../experiments/enrichment_fragment_offline3_20261011_public_metrics.json),
+побайтовая копия нового private `public-metrics.json`.
+
+### Scope, заранее выбранные случаи и общий корпус
+
+[Постановка](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6105694857)
+разрешила отдельный конечный OFFLINE этап после завершённого cycle28/30:
+максимум3GLM5.3Flash/high через существующий Pi/Zai +3Sol6.1/high,
+deadline2026-10-11T08:06:54Z, ≤600s на весь job, без повторов/Astra.
+Search/source/live/new10 запрещены. Новый счётчик не обнуляет старый;
+разработка и независимое ревью отделены от профильных jobs.
+
+До inference зафиксирован порядок: ИсангуловаA5089458364 — прежняя недословная
+цитата; MaslovA5054586424 — пропущенный historical контакт2007;
+KovalevA5054791318 — сложная атрибуция чужих/общих адресов.
+Выбор по прежним ошибкам, без результатов нового метода; прежние ответы,
+вердикты и готовые атрибуции не входят в prompt. Полная semantic-v3 неизменна.
+Все saved source/rendered records flexible10+remaining6 проверены по исходным
+bytes/деривации и объединены с дедупликацией URL/bodySHA/textSHA.
+
+| Случай | Records → sources | Fragments | Literal email candidates | Prompt bytes |
+|---|---:|---:|---:|---:|
+| Исангулова | 6 → 4 | 54 | 3 | 141908 |
+| Maslov | 5 → 4 | 37 | 5 | 103157 |
+| Kovalev | 11 → 10 | 188 | 26 | 478797 |
+
+Math-Net rendered representation Исангуловой с двумя дополнительными email
+включена из уже сохранённых parent/decoder bytes, без загрузок. У Maslov нужный
+historical контакт отсутствует в новых acquired remaining6 телах: полный
+baseline source с этим фактом явно добавлен обеим моделям. Это проверка анализа
+общего корпуса, а не эффективности retrieval. Corpus целиком разбит обычным
+кодом на1800chars/step1500, с CRLF и буквальными email spans; модель должна
+выбрать ID и дать полную семантическую атрибуцию. Свою атрибуцию одного job
+не выдаём за независимую вторую проверку себя. Human/gold0, согласие Sol неgold.
+
+### Freeze, обнаруженный runtime дефект и terminal STOP
+
+Новый root:
+`/Users/boris/Experiments/search-for-research/enrichment-fragment-offline3-20261011`.
+Frozen head `6a0f5e8f2cee23a80fc9a34c2f7d6081494036b0`, manifestSHA
+`adf1a5d7c6af2968ec47cf1476308339b640c16d17bf1bf164807186eacd2ba1`.
+Freeze и нулевой job counter сохранены
+[до вызова](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6105882188).
+[Pre-inference review](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6105878639)
+закрыл две Medium находки: общий600s deadline, включающий isolation probe,
+и пропущенные rendered sources. Этот PASS не подтверждает фактический runtime.
+
+В первой GLM попытке `encoded(sort_keys=True)` пересортировал вложенные ключи
+task/corpus/fragments/schema перед `JSON.stringify`. JSON-данные равны,
+инструкция SHA совпадает, но порядок и prompt bytes отличаются. Frozen SHA:
+`771ab46b877d8423a9db96af4ca10dcd4e20a614c79098013369dd6dde3c9d83`;
+actual Pi SHA:
+`995824fe85c8517c13e7539836bdf18f3ff25031d9e9a234bc94e48147a24356`.
+Это нарушает требование одинакового порядка двух моделей. Автор остановил
+только собственный parent process; его finally завершил child и сохранил
+`execution-result.json`/`stopped.json`: operator_interrupt, donefalse, exit-9.
+[Независимое runtime ревью](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6105925989)
+подтвердило дефект и счётчики, frozen FAIL/blocking1.
+
+Фактически: GLMreservation1, model-request artifact1, physical HTTP2001;
+Sol0, normalized0, result0, receipt0, terminal assistant events0. Stage1/6,
+cumulative28→29/34; прежний cycle28/30 неизменен. Оставшиеся пять jobs и повтор
+запрещены terminal STOP. Source/search0, tool inventory пуст, Astra0. Частичный
+поток не считается готовым ответом или пригодным source-bound извлечением.
+
+### Расходы и границы выводов
+
+Прерванная попытка заняла207.08461570739746s, 05:35:38.868138–05:39:05.952701UTC.
+Это wall до прерывания, не wall успешного job. Нет terminal usage: промежуточные
+SDK нули при stopReason=pending — placeholders. Полные input/output/cacheRead/
+cacheWrite/total/reasoning tokens неизвестны; не считаем их нулём. Денежный
+расход и subscription debit неизвестны. Requested/effective SDK config —
+zai/glm-5.3-flash/high; фактический backend model/effort не раскрыт.
+Account-wide процент квоты не является debit этого эксперимента. Reset-credit,
+покупки и paid API не использованы. Токены/деньги разработки, reviewer и двух
+read-only helpers не измерены и не смешиваются с одной профильной попыткой.
+Экономия полного коллектора не установлена; поиск был выключен.
+
+### Offline исправление, проверки и DoD
+
+После STOP исправлен только код: вложенный порядок request сохраняется для
+fragment метода, ожидаемый общий SHA передаётся из manifest; Python проверяет
+его до запуска, JS — до model request, driver — по actual receipt. Прежние
+методы и исходные frozen bytes сохранены. Regression test использует несортированные
+вложенные fragments/schema keys; offline proof actual `run_pi` serializer с
+mocked process и реальным JS helper воспроизвёл все три frozen SHA/bytes.
+Новых model/source calls, нового root/freeze или переоценки raw нет.
+
+Lint/typecheck PASS,263 unittest/388 pytest PASS; JS20PASS, docs-check проверен
+отдельно. Strict audit обязателен и остаётся FAIL по deps-node/fs-trivy #189;
+четыре прежних advisory, исключения/критерии не ослаблялись. Его history mount
+просканировал0commits; отдельный read-only history scan frozen6a0 проверил
+501commit/0leaks. CI frozen6a0 checks/webPASS,auditFAIL, actual merge checkout
+и родители совпадают с текущими base/head. Финальное ревью исправленного кода,
+документов и CI нового head закрепляются отдельным последним маркером PR.
+
+DoD фиксации scope/корпуса/лимитов/STOP/сохранности выполнен; DoD paired3 и
+сравнения качества не выполнен. Ни надёжность метода, ни преимущества GLM/Sol
+не заявляются. Следующий конкретный шаг: рассмотреть новый отдельно разрешённый
+bounded запуск только после offline проверки фактической сериализации до calls;
+этот отчёт его не назначает. Полный issue193 не закрывается, merge/deploy и
+продуктовая приёмка не заявлены. Изменения паспорта не требуются: принятые
+продуктовые цифры не меняются. Старые STOP/raw/метрики/human сохраняются.

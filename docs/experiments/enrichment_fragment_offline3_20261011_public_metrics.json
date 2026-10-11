@@ -1,0 +1,142 @@
+{
+  "method": "fragment-offline3-v1",
+  "frozen_head": "6a0f5e8f2cee23a80fc9a34c2f7d6081494036b0",
+  "manifest_sha256": "adf1a5d7c6af2968ec47cf1476308339b640c16d17bf1bf164807186eacd2ba1",
+  "deadline": "2026-10-11T08:06:54+00:00",
+  "scope_url": "https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6105694857",
+  "case_inputs": {
+    "A5089458364": {
+      "corpus_sha256": "913f2d689c7c08737001152b6793e2df8476044c8591b2d8596172d9212cffee",
+      "task_sha256": "9298c162c974f4f14000cda1a3017836a0eb513ccd212e6fac338b8c4bf6ed83",
+      "prompt_sha256": "771ab46b877d8423a9db96af4ca10dcd4e20a614c79098013369dd6dde3c9d83",
+      "prompt_utf8_bytes": 141908,
+      "sources": 4,
+      "fragments": 54,
+      "literal_email_values": 3
+    },
+    "A5054586424": {
+      "corpus_sha256": "8a0fa060ecbe8b01ac97d29558c4d72f7e46868e0b99000ce7a6db26599a9b6f",
+      "task_sha256": "4debd954f9cc109e4441e69a2041e58e4b7a8075a9b2c5b5ef51357a0905d499",
+      "prompt_sha256": "6e135865cefd62433a671e8aea9aaea42780320ec2e6c1ed401be455b748fb1e",
+      "prompt_utf8_bytes": 103157,
+      "sources": 4,
+      "fragments": 37,
+      "literal_email_values": 5
+    },
+    "A5054791318": {
+      "corpus_sha256": "9f8686f0addca865cae4115da31adc929f9d0dcbb034cd0ed70fc60baa471fc0",
+      "task_sha256": "d297b73f7c8a4fd63926e3c379af98084aafcbb43d7a11642d3d48454c43e96c",
+      "prompt_sha256": "22e79ac20aaf02a982732ebd5b2da642c324142e87852e4dc1e4897ca542b51c",
+      "prompt_utf8_bytes": 478797,
+      "sources": 10,
+      "fragments": 188,
+      "literal_email_values": 26
+    }
+  },
+  "selection_fixed_before_inference": true,
+  "same_saved_material_policy": true,
+  "old_model_answers_in_prompt": false,
+  "human_gold": 0,
+  "self_assessment_is_independent_verifier": false,
+  "Sol_agreement_is_gold": false,
+  "status": "partial_STOP",
+  "terminal_reason": "operator_interrupt",
+  "operator_stop_reason": "actual_Pi_prompt_order_differs_from_frozen_common_prompt",
+  "stage_cap": 6,
+  "stage_reserved": 1,
+  "stage_started": 1,
+  "stage_completed": 0,
+  "GLM_jobs_reserved": 1,
+  "Sol_jobs_reserved": 0,
+  "GLM_physical_model_requests": 1,
+  "GLM_http_200": 1,
+  "GLM_runtime_completed": 0,
+  "Sol_runtime_completed": 0,
+  "normalized_results": 0,
+  "paired_profiles": 0,
+  "source_calls": 0,
+  "search_calls": 0,
+  "profile_repeats": 0,
+  "Astra_calls": 0,
+  "prior_cycle_jobs_unchanged": 28,
+  "prior_cycle_cap": 30,
+  "cumulative_reserved": 29,
+  "cumulative_cap": 34,
+  "remaining_scheduled_jobs_run": false,
+  "new_model_jobs_forbidden": true,
+  "prompt_projection": {
+    "frozen_sha256": "771ab46b877d8423a9db96af4ca10dcd4e20a614c79098013369dd6dde3c9d83",
+    "actual_Pi_sha256": "995824fe85c8517c13e7539836bdf18f3ff25031d9e9a234bc94e48147a24356",
+    "instruction_sha256": "0c1a9f0e2e81df96864d912ea788fc806e8a3b0c15a07bd2b1e327bc11455d27",
+    "instruction_matches_freeze": true,
+    "task_semantically_equal": true,
+    "nested_key_order_equal": false,
+    "request_record_sha256": "5bfb1272ea4317df68e804a138f8e0325f7709bab2067a2568ce3a1204409183",
+    "model_request_config_sha256": "ea9db2be9015e6df0396bec67b903d2081541fe00698cdda6b6ff7a7f2556b5c"
+  },
+  "GLM_requested_config": {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "effort": "high"
+  },
+  "GLM_effective_sdk_config": {
+    "provider": "zai",
+    "model": "glm-5.3-flash",
+    "effort": "high"
+  },
+  "backend_model_and_effort": null,
+  "backend_exposed": false,
+  "attempt_started_at": "2026-10-11T05:35:38.868138+00:00",
+  "attempt_finished_at": "2026-10-11T05:39:05.952701+00:00",
+  "interrupted_attempt_wall_seconds": 207.08461570739746,
+  "completed_job_wall_seconds": null,
+  "finished_exit_code": -9,
+  "finished_done": false,
+  "GLM_usage_exact": {
+    "input": null,
+    "output": null,
+    "cacheRead": null,
+    "cacheWrite": null,
+    "totalTokens": null,
+    "reasoning_subset_of_output": null
+  },
+  "Sol_usage_exact": null,
+  "usage_complete": false,
+  "pending_SDK_zero_usage_is_actual_usage": false,
+  "usage_observation": "interrupted_before_terminal_assistant_usage; full_usage_unknown",
+  "subscription_debit": null,
+  "cost_usd": null,
+  "catalog_cost_is_subscription_charge": false,
+  "development_and_review_tokens": null,
+  "development_and_review_cost_usd": null,
+  "development_and_review_in_profile_job_counts": false,
+  "full_collector_economy_established": false,
+  "semantic_comparison": {
+    "identity": null,
+    "contact": null,
+    "date": null,
+    "affiliation": null,
+    "readiness": null,
+    "misses": null,
+    "false_additions": null
+  },
+  "literal_restoration_of_model_selections": null,
+  "conclusion": "insufficient_data_due_to_runtime_input_projection_defect",
+  "GLM_quality_regression_established": false,
+  "offline_fix_repeated_inference": false,
+  "old_seals": [
+    {
+      "root": "/Users/boris/Experiments/search-for-research/enrichment-flexible10-20261010",
+      "index": "transfer-SHA-index-d7883ed.json",
+      "sha256": "051331260c38f35cadbf3580cbddec217710a00550dde97791b73b36bdc251fc",
+      "mapped_files": 865
+    },
+    {
+      "root": "/Users/boris/Experiments/search-for-research/enrichment-glm-remaining6-20261011",
+      "index": "transfer-SHA-index-92482b6.json",
+      "sha256": "a8413a08783b48e56fb46e5b9e4710c16a5d3b8bd63aa19683f9f2e75154dd85",
+      "mapped_files": 1316
+    }
+  ],
+  "source_seals_and_snapshots_changed": false
+}
