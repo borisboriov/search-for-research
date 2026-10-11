@@ -1,0 +1,1448 @@
+{
+  "method": "fragment-offline3-v1",
+  "frozen_head": "826d25d168971e824fda4a60635b3960424f7fd2",
+  "manifest_sha256": "e2c4354188c1f2d8d28c4a22e783eeb8d295ba16db5d1a514df87264fda5a46d",
+  "projection_sources": {
+    "analysis_sha256": "ba02f8da76522a66561774a698b2f90ecb5e48b90b33ea7ab50e596d4931ed23",
+    "raw_audit_sha256": "ce46ba0a749afbc24a1d9439602873537fe8cdc3e92add100215d87d51adc685"
+  },
+  "terminal": {
+    "at": "2026-10-11T06:51:53.110152+00:00",
+    "stage_jobs_reserved": 6,
+    "runtime_jobs_completed": 6,
+    "normalized_jobs_accepted": 4,
+    "normalized_by_model": {
+      "GLM": 1,
+      "Sol": 3
+    },
+    "fully_normalized_pairs": 1,
+    "prior_cycle_jobs": 28,
+    "prior_partial_jobs": 1,
+    "cumulative_reserved": 35,
+    "partial_reason": "individual_outputs_rejected",
+    "new_model_jobs": "forbidden",
+    "source_calls": 0,
+    "search_calls": 0,
+    "astra_profile_jobs": 0,
+    "human_gold": 0,
+    "automatic_cli_retries": 0,
+    "physical_requests_observed": {
+      "GLM": 3,
+      "Sol": null
+    },
+    "full_collector_economy_established": false
+  },
+  "inputs": [
+    {
+      "author_id": "A5089458364",
+      "corpus_sha256": "913f2d689c7c08737001152b6793e2df8476044c8591b2d8596172d9212cffee",
+      "task_sha256": "9298c162c974f4f14000cda1a3017836a0eb513ccd212e6fac338b8c4bf6ed83",
+      "prompt_sha256": "771ab46b877d8423a9db96af4ca10dcd4e20a614c79098013369dd6dde3c9d83",
+      "prompt_utf8_bytes": 141908,
+      "sources": 4,
+      "fragments": 54,
+      "literal_email_values": 3
+    },
+    {
+      "author_id": "A5054586424",
+      "corpus_sha256": "8a0fa060ecbe8b01ac97d29558c4d72f7e46868e0b99000ce7a6db26599a9b6f",
+      "task_sha256": "4debd954f9cc109e4441e69a2041e58e4b7a8075a9b2c5b5ef51357a0905d499",
+      "prompt_sha256": "6e135865cefd62433a671e8aea9aaea42780320ec2e6c1ed401be455b748fb1e",
+      "prompt_utf8_bytes": 103157,
+      "sources": 4,
+      "fragments": 37,
+      "literal_email_values": 5
+    },
+    {
+      "author_id": "A5054791318",
+      "corpus_sha256": "9f8686f0addca865cae4115da31adc929f9d0dcbb034cd0ed70fc60baa471fc0",
+      "task_sha256": "d297b73f7c8a4fd63926e3c379af98084aafcbb43d7a11642d3d48454c43e96c",
+      "prompt_sha256": "22e79ac20aaf02a982732ebd5b2da642c324142e87852e4dc1e4897ca542b51c",
+      "prompt_utf8_bytes": 478797,
+      "sources": 10,
+      "fragments": 188,
+      "literal_email_values": 26
+    }
+  ],
+  "costs": [
+    {
+      "author_id": "A5089458364",
+      "model": "GLM",
+      "reserved": true,
+      "normalized": false,
+      "receipt_sha256": "55931481056fb9713120e509d560159d810721f71ba5160875704c4773a7f2c5",
+      "actual_subscription_debit": null,
+      "actual_cost_usd": null,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "glm-5.3-flash",
+      "requested_effort": "high",
+      "usage_source": "terminal_assistant_usage",
+      "input": 43764,
+      "output": 21676,
+      "cache_read": 0,
+      "cache_write": 0,
+      "total": 65440,
+      "reasoning_subset_output": 18317,
+      "physical_requests_observed": 1,
+      "model_request_config_count": 1,
+      "usage_contract": "input/output/cache_read/cache_write disjoint; reasoning subset of output",
+      "wall_seconds": 386.5241639614105
+    },
+    {
+      "author_id": "A5089458364",
+      "model": "Sol",
+      "reserved": true,
+      "normalized": true,
+      "receipt_sha256": "cb58178978b1079d9d0926a3b44ac87fb40341d808382c3cedc038a68248617d",
+      "actual_subscription_debit": null,
+      "actual_cost_usd": null,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "usage_source": "native_receipt",
+      "input": 55426,
+      "output": 3822,
+      "cache_read": 0,
+      "cache_write": 0,
+      "reasoning_subset_output": 1034,
+      "total": 59248,
+      "uncached_input": 55426,
+      "physical_requests_observed": null,
+      "usage_contract": "cached input subset of input; reasoning subset of output",
+      "wall_seconds": 77.86654996871948
+    },
+    {
+      "author_id": "A5054586424",
+      "model": "GLM",
+      "reserved": true,
+      "normalized": false,
+      "receipt_sha256": "8ad9d4c8bb36f3cc2f36b3143cd5ebdeaefc9181cf7ad11e22de7c7458c9ba37",
+      "actual_subscription_debit": null,
+      "actual_cost_usd": null,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "glm-5.3-flash",
+      "requested_effort": "high",
+      "usage_source": "terminal_assistant_usage",
+      "input": 29818,
+      "output": 21064,
+      "cache_read": 0,
+      "cache_write": 0,
+      "total": 50882,
+      "reasoning_subset_output": 17680,
+      "physical_requests_observed": 1,
+      "model_request_config_count": 1,
+      "usage_contract": "input/output/cache_read/cache_write disjoint; reasoning subset of output",
+      "wall_seconds": 371.1964259147644
+    },
+    {
+      "author_id": "A5054586424",
+      "model": "Sol",
+      "reserved": true,
+      "normalized": true,
+      "receipt_sha256": "bbe7d3d06ba1f659327292e51f0bfa3bd75a72b634d7207bd50b7e36ab4acfae",
+      "actual_subscription_debit": null,
+      "actual_cost_usd": null,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "usage_source": "native_receipt",
+      "input": 42354,
+      "output": 2776,
+      "cache_read": 0,
+      "cache_write": 0,
+      "reasoning_subset_output": 773,
+      "total": 45130,
+      "uncached_input": 42354,
+      "physical_requests_observed": null,
+      "usage_contract": "cached input subset of input; reasoning subset of output",
+      "wall_seconds": 64.85752701759338
+    },
+    {
+      "author_id": "A5054791318",
+      "model": "GLM",
+      "reserved": true,
+      "normalized": true,
+      "receipt_sha256": "ff3c656d1472b7184ac46e9108eda464d65b868806268bf90d4f3375c9c8a314",
+      "actual_subscription_debit": null,
+      "actual_cost_usd": null,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "glm-5.3-flash",
+      "requested_effort": "high",
+      "usage_source": "terminal_assistant_usage",
+      "input": 138343,
+      "output": 26108,
+      "cache_read": 0,
+      "cache_write": 0,
+      "total": 164451,
+      "reasoning_subset_output": 21485,
+      "physical_requests_observed": 1,
+      "model_request_config_count": 1,
+      "usage_contract": "input/output/cache_read/cache_write disjoint; reasoning subset of output",
+      "wall_seconds": 448.19308972358704
+    },
+    {
+      "author_id": "A5054791318",
+      "model": "Sol",
+      "reserved": true,
+      "normalized": true,
+      "receipt_sha256": "d7f4461534db0da241b98cb99c326ba7aaf139431bbd6dfa366c696aec06fe1a",
+      "actual_subscription_debit": null,
+      "actual_cost_usd": null,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "usage_source": "native_receipt",
+      "input": 153402,
+      "output": 5919,
+      "cache_read": 0,
+      "cache_write": 0,
+      "reasoning_subset_output": 1552,
+      "total": 159321,
+      "uncached_input": 153402,
+      "physical_requests_observed": null,
+      "usage_contract": "cached input subset of input; reasoning subset of output",
+      "wall_seconds": 140.49795198440552
+    }
+  ],
+  "aggregate_by_model": {
+    "GLM": {
+      "input": 211925,
+      "output": 68848,
+      "cache_read": 0,
+      "cache_write": 0,
+      "total": 280773,
+      "reasoning_subset_output": 57482,
+      "wall_seconds": 1205.913679599762
+    },
+    "Sol": {
+      "input": 251182,
+      "output": 12517,
+      "cache_read": 0,
+      "cache_write": 0,
+      "total": 263699,
+      "reasoning_subset_output": 3359,
+      "wall_seconds": 283.2220289707184
+    }
+  },
+  "quality": [
+    {
+      "author_id": "A5089458364",
+      "baseline": {
+        "kind": "previous_agent_result_not_human_gold",
+        "different_preselected_input": true,
+        "result_sha256": "ef515d448083d732170a3ff98c5559337572e2cb0a11ee57994fbdf0c733cb35",
+        "input_sha256": "7b1ff5d9049a6fb8c48dae8ce541af1e3b992af0852c1ada6ae4167e7cfcaf8a",
+        "profile_assessments": {
+          "activity": {
+            "verdict": "insufficient",
+            "status": "unknown",
+            "information_date": "2024-05",
+            "date_basis": "content"
+          },
+          "current_affiliation": {
+            "verdict": "insufficient",
+            "information_date": null,
+            "date_basis": "unknown"
+          },
+          "identity": {
+            "verdict": "supported",
+            "information_date": null,
+            "date_basis": "unknown"
+          }
+        },
+        "accepted_personal_contacts": 1,
+        "personal_student_readiness_established": false
+      },
+      "models": {
+        "GLM": {
+          "normalization_status": "failure",
+          "raw_sha256": "5cdada2c45801f5e13e0473f068e0f05ad4b6a920dd9c9d3b015e07779a6bcdf",
+          "normalized_sha256": null,
+          "selected_atoms": 4,
+          "all_selected_literal_bindings": true,
+          "schema_missing_extra_fields": [],
+          "failure_reason": "Date year absent from referenced saved evidence",
+          "raw_profile_assessments": {
+            "activity": {
+              "verdict": "supported",
+              "status": "active",
+              "information_date": "2024-05",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F10500-12300",
+                "A5089458364-Sb86fd6644a761cd763de-F7500-9300",
+                "A5089458364-Sb86fd6644a761cd763de-F6000-7800",
+                "A5089458364-S60cdbfe23c2a44093719-F6000-7779"
+              ]
+            },
+            "current_affiliation": {
+              "verdict": "supported",
+              "information_date": "2019-12-11",
+              "date_basis": "source_metadata",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F1500-3300",
+                "A5089458364-Sb86fd6644a761cd763de-F3000-4800",
+                "A5089458364-S60cdbfe23c2a44093719-F6000-7779"
+              ]
+            },
+            "identity": {
+              "verdict": "supported",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5089458364-S60cdbfe23c2a44093719-F0-1800",
+                "A5089458364-S0f64f84fd1e096322f28-F0-1800",
+                "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+                "A5089458364-Sb86fd6644a761cd763de-F3000-4800"
+              ]
+            }
+          },
+          "atoms": [
+            {
+              "item_id": "A5089458364-S0f64f84fd1e096322f28-M570-587",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5089458364-S0f64f84fd1e096322f28-F0-1800"
+              ],
+              "selected_field": "personal_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "3c54f1602e134e429cd70b61c349bd27c20b3a757bc42fa9c8ed00c6a59015ab",
+              "classification": null
+            },
+            {
+              "item_id": "A5089458364-S8943b8c36415f42d8c44-M1238-1249",
+              "text_verdict": "supported",
+              "identity_verdict": "refuted",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "insufficient",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5089458364-S8943b8c36415f42d8c44-F0-1289"
+              ],
+              "selected_field": "coordinator_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "48792f21ed86cd1d018d3c9fc2f8c1c8bd3b41b328aa695be7a09ef22b851683",
+              "classification": null
+            },
+            {
+              "item_id": "A5089458364-S0f64f84fd1e096322f28-M7673-7698",
+              "text_verdict": "supported",
+              "identity_verdict": "refuted",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "insufficient",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5089458364-S0f64f84fd1e096322f28-F6000-7800"
+              ],
+              "selected_field": "coordinator_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "7c556881136e9a85f1fe18dcf3614f17c46a8e30079dc577d023fa7a1802cd9a",
+              "classification": null
+            },
+            {
+              "item_id": "A5089458364-Sb86fd6644a761cd763de-F7500-9300-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2024-05",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F7500-9300",
+                "A5089458364-Sb86fd6644a761cd763de-F6000-7800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "b4dbd9d3e5b3545d382973b1249303c550050f79a1c3e77f35d4685f110ed296",
+              "classification": null
+            }
+          ],
+          "accepted_personal_contacts": null,
+          "baseline_contact_selection_miss_count": 0,
+          "baseline_contact_pipeline_miss_count": 1,
+          "personal_student_readiness_established": false
+        },
+        "Sol": {
+          "normalization_status": "normalized",
+          "raw_sha256": "a5a7477906691472145e49f3e8b11ca9be0339fcedb27bed473e32ef7c1b8c60",
+          "normalized_sha256": "003664d724acc537484f4812f1b070f00e9f708428f06d20a86734a652bb2c30",
+          "selected_atoms": 4,
+          "all_selected_literal_bindings": true,
+          "schema_missing_extra_fields": [],
+          "failure_reason": null,
+          "raw_profile_assessments": {
+            "activity": {
+              "verdict": "insufficient",
+              "status": "unknown",
+              "information_date": "2024-05",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F6000-7800",
+                "A5089458364-Sb86fd6644a761cd763de-F7500-9300",
+                "A5089458364-S60cdbfe23c2a44093719-F0-1800"
+              ]
+            },
+            "current_affiliation": {
+              "verdict": "insufficient",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F1500-3300",
+                "A5089458364-Sb86fd6644a761cd763de-F3000-4800",
+                "A5089458364-S60cdbfe23c2a44093719-F6000-7779"
+              ]
+            },
+            "identity": {
+              "verdict": "supported",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+                "A5089458364-Sb86fd6644a761cd763de-F3000-4800",
+                "A5089458364-Sb86fd6644a761cd763de-F6000-7800",
+                "A5089458364-S60cdbfe23c2a44093719-F0-1800",
+                "A5089458364-S60cdbfe23c2a44093719-F4500-6300"
+              ]
+            }
+          },
+          "atoms": [
+            {
+              "item_id": "A5089458364-S0f64f84fd1e096322f28-M570-587",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5089458364-S0f64f84fd1e096322f28-F0-1800",
+                "A5089458364-S0f64f84fd1e096322f28-F4500-6300"
+              ],
+              "selected_field": "personal_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "3c54f1602e134e429cd70b61c349bd27c20b3a757bc42fa9c8ed00c6a59015ab",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "personal_contact",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5089458364-Sb86fd6644a761cd763de-F6000-7800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2024-05",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F6000-7800",
+                "A5089458364-Sb86fd6644a761cd763de-F7500-9300",
+                "A5089458364-Sb86fd6644a761cd763de-F0-1800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "1a6c5fd09ad2c074ad0dc1936a3c58688f4352dacfdbaa72c6fd78f8f80396ed",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5089458364-S60cdbfe23c2a44093719-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2024",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5089458364-S60cdbfe23c2a44093719-F0-1800",
+                "A5089458364-S60cdbfe23c2a44093719-F4500-6300"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "91fd707f6ffe2b0adc93e27609f295c00003bb27952c4157add7c390f148aee6",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5089458364-S60cdbfe23c2a44093719-F6000-7779-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5089458364-S60cdbfe23c2a44093719-F6000-7779",
+                "A5089458364-S60cdbfe23c2a44093719-F0-1800",
+                "A5089458364-S60cdbfe23c2a44093719-F4500-6300"
+              ],
+              "selected_field": "city",
+              "valid_literal_binding": true,
+              "literal_sha256": "41989a5482bfe650fc39e71e980573aea824061367cfa9c93380f6528d2f63c0",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "city",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            }
+          ],
+          "accepted_personal_contacts": 1,
+          "baseline_contact_selection_miss_count": 0,
+          "baseline_contact_pipeline_miss_count": 0,
+          "personal_student_readiness_established": false
+        }
+      }
+    },
+    {
+      "author_id": "A5054586424",
+      "baseline": {
+        "kind": "previous_agent_result_not_human_gold",
+        "different_preselected_input": true,
+        "result_sha256": "0f75001b3ad7b2bd38c8e89c73c14df58a695da46165a69f3f2d2e963aaa524d",
+        "input_sha256": "848b1c61ab463f25c59a73f87e6a7417900750c66f0a0a4a3b2571a4c79227b4",
+        "profile_assessments": {
+          "activity": {
+            "verdict": "insufficient",
+            "status": "unknown",
+            "information_date": "2009-05-18",
+            "date_basis": "content"
+          },
+          "current_affiliation": {
+            "verdict": "insufficient",
+            "information_date": "2007",
+            "date_basis": "content"
+          },
+          "identity": {
+            "verdict": "supported",
+            "information_date": "2007",
+            "date_basis": "content"
+          }
+        },
+        "accepted_personal_contacts": 1,
+        "personal_student_readiness_established": false
+      },
+      "models": {
+        "GLM": {
+          "normalization_status": "failure",
+          "raw_sha256": "811cafbb392a7f92c7281257534864cf7c82a9a0cfcc03664ba391f0fc4b6caa",
+          "normalized_sha256": null,
+          "selected_atoms": 4,
+          "all_selected_literal_bindings": true,
+          "schema_missing_extra_fields": [
+            {
+              "path": "$.profile_assessments.activity",
+              "missing": [
+                "status"
+              ],
+              "extra": []
+            }
+          ],
+          "failure_reason": "Лишние или отсутствующие поля JSON schema",
+          "raw_profile_assessments": {
+            "activity": {
+              "verdict": "insufficient",
+              "information_date": "2019-06",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F0-1800",
+                "A5054586424-Sdde198632266a734378a-F3000-4800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800"
+              ]
+            },
+            "current_affiliation": {
+              "verdict": "insufficient",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F1500-3300",
+                "A5054586424-Sfce2fd02fafa0f6e55dc-F0-629",
+                "A5054586424-Sbc8f8fd0f034f982a431-F0-1800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800"
+              ]
+            },
+            "identity": {
+              "verdict": "supported",
+              "information_date": "2013-10-30",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F0-1800",
+                "A5054586424-Sdde198632266a734378a-F3000-4800",
+                "A5054586424-Sdde198632266a734378a-F6000-7800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F30000-31071"
+              ]
+            }
+          },
+          "atoms": [
+            {
+              "item_id": "A5054586424-S15073c828aa4b0e9c3bb-M504-527",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2007-11",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800"
+              ],
+              "selected_field": "personal_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "50f372d274bafdc6f3c8bc01f580ccc8da3e238fe657ae22b9da356bf1e1607f",
+              "classification": null
+            },
+            {
+              "item_id": "A5054586424-Sdde198632266a734378a-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "person_status",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2013-10-30",
+              "date_basis": "content",
+              "current_applicability": "current",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F0-1800"
+              ],
+              "selected_field": "person_status",
+              "valid_literal_binding": true,
+              "literal_sha256": "2d298ac118e7667a485abf34b0b45631dd9ff89c21c41d0b4c01843b27509ff7",
+              "classification": null
+            },
+            {
+              "item_id": "A5054586424-Sdde198632266a734378a-F3000-4800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2009-05",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F3000-4800",
+                "A5054586424-Sdde198632266a734378a-F4500-6300"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "4871e683f9375e461675c53591166d6bdb0768b4a0ddee99de9e184c61696f1d",
+              "classification": null
+            },
+            {
+              "item_id": "A5054586424-Sdde198632266a734378a-F6000-7800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2007",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F6000-7800",
+                "A5054586424-Sdde198632266a734378a-F7500-9040"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "9425c95de2db2cfde013e42f58f243f2f01dd9305f453a268f17b2ac10601a74",
+              "classification": null
+            }
+          ],
+          "accepted_personal_contacts": null,
+          "baseline_contact_selection_miss_count": 0,
+          "baseline_contact_pipeline_miss_count": 1,
+          "personal_student_readiness_established": false
+        },
+        "Sol": {
+          "normalization_status": "normalized",
+          "raw_sha256": "a15648ad8a5b97b2358bf38595128d7bb4942187ac741bee502a81d24257a34b",
+          "normalized_sha256": "c07e0fc761bc2a0694f0fecd9de1be72f7f2ecbd262a82a637ac58693e2f4059",
+          "selected_atoms": 2,
+          "all_selected_literal_bindings": true,
+          "schema_missing_extra_fields": [],
+          "failure_reason": null,
+          "raw_profile_assessments": {
+            "activity": {
+              "verdict": "insufficient",
+              "status": "unknown",
+              "information_date": "2009-05-18",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F3000-4800",
+                "A5054586424-Sdde198632266a734378a-F4500-6300"
+              ]
+            },
+            "current_affiliation": {
+              "verdict": "insufficient",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800",
+                "A5054586424-Sdde198632266a734378a-F1500-3300",
+                "A5054586424-Sfce2fd02fafa0f6e55dc-F0-629"
+              ]
+            },
+            "identity": {
+              "verdict": "supported",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5054586424-Sdde198632266a734378a-F0-1800",
+                "A5054586424-Sdde198632266a734378a-F6000-7800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F30000-31071"
+              ]
+            }
+          },
+          "atoms": [
+            {
+              "item_id": "A5054586424-S15073c828aa4b0e9c3bb-M504-527",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2007",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F30000-31071",
+                "A5054586424-Sdde198632266a734378a-F0-1800",
+                "A5054586424-Sdde198632266a734378a-F6000-7800"
+              ],
+              "selected_field": "personal_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "50f372d274bafdc6f3c8bc01f580ccc8da3e238fe657ae22b9da356bf1e1607f",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "personal_contact",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054586424-S15073c828aa4b0e9c3bb-F1500-3300-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2007",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054586424-S15073c828aa4b0e9c3bb-F1500-3300",
+                "A5054586424-S15073c828aa4b0e9c3bb-F0-1800",
+                "A5054586424-S15073c828aa4b0e9c3bb-F30000-31071",
+                "A5054586424-Sdde198632266a734378a-F0-1800",
+                "A5054586424-Sdde198632266a734378a-F6000-7800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "dcc09c062e92b580abb692707bf0c29c8128220927e7d7c6763902062c1a53b2",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            }
+          ],
+          "accepted_personal_contacts": 1,
+          "baseline_contact_selection_miss_count": 0,
+          "baseline_contact_pipeline_miss_count": 0,
+          "personal_student_readiness_established": false
+        }
+      }
+    },
+    {
+      "author_id": "A5054791318",
+      "baseline": {
+        "kind": "previous_agent_result_not_human_gold",
+        "different_preselected_input": true,
+        "result_sha256": "9beea0def20a51a0f1220ad7ec51aecba65d1d8bf9e208bc844551e6320f2014",
+        "input_sha256": "e4ad53cbdb91db016f25044bf4b54e2cb71182fc5613b1a18706d9287ad2fb69",
+        "profile_assessments": {
+          "activity": {
+            "verdict": "supported",
+            "status": "active",
+            "information_date": "2026-03-04",
+            "date_basis": "content"
+          },
+          "current_affiliation": {
+            "verdict": "insufficient",
+            "information_date": "2026-03-04",
+            "date_basis": "content"
+          },
+          "identity": {
+            "verdict": "supported",
+            "information_date": null,
+            "date_basis": "unknown"
+          }
+        },
+        "accepted_personal_contacts": 0,
+        "personal_student_readiness_established": false
+      },
+      "models": {
+        "GLM": {
+          "normalization_status": "normalized",
+          "raw_sha256": "c64a730311496a352881edfe818bda430749ccf99d0cabbd80fdf4920df2e514",
+          "normalized_sha256": "31b61dcf394244af235c1b85415756dbe32c5f92c8e88ae7e233918cbc3fc2d5",
+          "selected_atoms": 7,
+          "all_selected_literal_bindings": true,
+          "schema_missing_extra_fields": [],
+          "failure_reason": null,
+          "raw_profile_assessments": {
+            "activity": {
+              "verdict": "supported",
+              "status": "active",
+              "information_date": "2026",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054791318-Sf8e49b1ac4dfc6c23a2f-F0-1800",
+                "A5054791318-S063c40754fbe4cc3c125-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F21000-22800",
+                "A5054791318-Scd4806a109e095aad11a-F0-1800"
+              ]
+            },
+            "current_affiliation": {
+              "verdict": "conflicting",
+              "information_date": "2025",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F6000-7800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F7500-9300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F10500-12300",
+                "A5054791318-S063c40754fbe4cc3c125-F0-1800",
+                "A5054791318-Sc862ffc709370d0ff265-F4500-6300"
+              ]
+            },
+            "identity": {
+              "verdict": "supported",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+                "A5054791318-Sf416ce05a426acbba486-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F106500-108300",
+                "A5054791318-Sf8e49b1ac4dfc6c23a2f-F0-1800"
+              ]
+            }
+          },
+          "atoms": [
+            {
+              "item_id": "A5054791318-Sf416ce05a426acbba486-M626-646",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2020",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054791318-Sf416ce05a426acbba486-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F106500-108300"
+              ],
+              "selected_field": "personal_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "6eb02785b605e7ce58cac1eb17ff8dda61c01517341e4147c93a907bf3dc17ca",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "personal_contact",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sc862ffc709370d0ff265-M6700-6716",
+              "text_verdict": "supported",
+              "identity_verdict": "refuted",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "laboratory",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5054791318-Sc862ffc709370d0ff265-F6000-6730",
+                "A5054791318-Sc862ffc709370d0ff265-F3000-4800"
+              ],
+              "selected_field": "coordinator_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "d537d1c0c8a0a4dd5291c841e0f9ea400d4b6ce32c9ede9a0025f7a51e84f1bb",
+              "classification": {
+                "usable_coverage": false,
+                "coverage_field": null,
+                "reason": [
+                  "identity_verdict"
+                ],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sf8e49b1ac4dfc6c23a2f-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2024-12-09",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054791318-Sf8e49b1ac4dfc6c23a2f-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F33000-34800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "9c6ff43150fbd4e133834df0498d6a7aec766b6914713b9e1185e7903743d8fd",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sc862ffc709370d0ff265-F3000-4800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "insufficient",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "offer",
+              "object_relation": "insufficient",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5054791318-Sc862ffc709370d0ff265-F3000-4800"
+              ],
+              "selected_field": "published_recruitment",
+              "valid_literal_binding": true,
+              "literal_sha256": "1cd45a416f7ee94aa9de7af357899af85e45e11e99c2d6ebfb920984a4b75f08",
+              "classification": {
+                "usable_coverage": false,
+                "coverage_field": null,
+                "reason": [
+                  "identity_verdict",
+                  "object_relation",
+                  "field_requires_matching_fact_kind",
+                  "opportunity_not_current",
+                  "current_opportunity_date_unestablished",
+                  "student_opportunity_not_established"
+                ],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-S063c40754fbe4cc3c125-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2026-03-04",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054791318-S063c40754fbe4cc3c125-F0-1800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "d7844bb4580a7f928c7e41a5ff74b380273d9be8c779bb2848f6825b747ef157",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Scd4806a109e095aad11a-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2027",
+              "date_basis": "content",
+              "current_applicability": "current",
+              "evidence_refs": [
+                "A5054791318-Scd4806a109e095aad11a-F0-1800",
+                "A5054791318-Scd4806a109e095aad11a-F1500-3300"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "d88e7f4d4f7f75bad73ac09f1e757986a627351d4f8455e1075ce9563c08a757",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sefc96c7b1b47a7c14306-F3000-4800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "laboratory",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5054791318-Sefc96c7b1b47a7c14306-F3000-4800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "e46046e683fc3faed1a4ae6bea426d4fa206dfdf45cbef7dcffb83934708338d",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            }
+          ],
+          "accepted_personal_contacts": 1,
+          "baseline_contact_selection_miss_count": 0,
+          "baseline_contact_pipeline_miss_count": 0,
+          "personal_student_readiness_established": false
+        },
+        "Sol": {
+          "normalization_status": "normalized",
+          "raw_sha256": "8f75a3726ca1561f52b01832b6562fe78cc7e4401e7be34e8ac438c7057fc283",
+          "normalized_sha256": "6b55267970962df02336dd60597ab256a6d4309b3de15d4fc83aa65b9ff3a634",
+          "selected_atoms": 6,
+          "all_selected_literal_bindings": true,
+          "schema_missing_extra_fields": [],
+          "failure_reason": null,
+          "raw_profile_assessments": {
+            "activity": {
+              "verdict": "supported",
+              "status": "active",
+              "information_date": "2026-05-22",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F21000-22800",
+                "A5054791318-S063c40754fbe4cc3c125-F0-1800",
+                "A5054791318-Sf8e49b1ac4dfc6c23a2f-F0-1800"
+              ]
+            },
+            "current_affiliation": {
+              "verdict": "insufficient",
+              "information_date": "2026-03-04",
+              "date_basis": "content",
+              "evidence_refs": [
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F6000-7800",
+                "A5054791318-S063c40754fbe4cc3c125-F0-1800",
+                "A5054791318-S063c40754fbe4cc3c125-F3000-4800",
+                "A5054791318-Sc862ffc709370d0ff265-F4500-6300"
+              ]
+            },
+            "identity": {
+              "verdict": "supported",
+              "information_date": null,
+              "date_basis": "unknown",
+              "evidence_refs": [
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F72000-73800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F40500-42300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F43500-45300"
+              ]
+            }
+          },
+          "atoms": [
+            {
+              "item_id": "A5054791318-Sf416ce05a426acbba486-M626-646",
+              "text_verdict": "supported",
+              "identity_verdict": "conflicting",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "conflicting",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2020",
+              "date_basis": "content",
+              "current_applicability": "historical",
+              "evidence_refs": [
+                "A5054791318-Sf416ce05a426acbba486-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F106500-108300"
+              ],
+              "selected_field": "personal_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "6eb02785b605e7ce58cac1eb17ff8dda61c01517341e4147c93a907bf3dc17ca",
+              "classification": {
+                "usable_coverage": false,
+                "coverage_field": null,
+                "reason": [
+                  "identity_verdict",
+                  "object_relation"
+                ],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-S063c40754fbe4cc3c125-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "scientist",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2026-03-04",
+              "date_basis": "content",
+              "current_applicability": "current",
+              "evidence_refs": [
+                "A5054791318-S063c40754fbe4cc3c125-F0-1800",
+                "A5054791318-S063c40754fbe4cc3c125-F3000-4800",
+                "A5054791318-S063c40754fbe4cc3c125-F42000-43800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F33000-34800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+                "A5054791318-Sf8e49b1ac4dfc6c23a2f-F0-1800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "d7844bb4580a7f928c7e41a5ff74b380273d9be8c779bb2848f6825b747ef157",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sc862ffc709370d0ff265-F0-1800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5054791318-Sc862ffc709370d0ff265-F0-1800",
+                "A5054791318-Sc862ffc709370d0ff265-F3000-4800",
+                "A5054791318-Sc862ffc709370d0ff265-F4500-6300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F40500-42300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800"
+              ],
+              "selected_field": "topic",
+              "valid_literal_binding": true,
+              "literal_sha256": "8028d7f078237bd8441ba07d5e01800cbd7ba6198dcbd91dcfa6a5d20b70c452",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "topic",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sc862ffc709370d0ff265-F3000-4800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5054791318-Sc862ffc709370d0ff265-F3000-4800",
+                "A5054791318-Sc862ffc709370d0ff265-F0-1800",
+                "A5054791318-Sc862ffc709370d0ff265-F4500-6300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F40500-42300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800"
+              ],
+              "selected_field": "required_skills",
+              "valid_literal_binding": true,
+              "literal_sha256": "1cd45a416f7ee94aa9de7af357899af85e45e11e99c2d6ebfb920984a4b75f08",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "required_skills",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sc862ffc709370d0ff265-M6700-6716",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "insufficient",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": null,
+              "date_basis": "unknown",
+              "current_applicability": "undated",
+              "evidence_refs": [
+                "A5054791318-Sc862ffc709370d0ff265-F6000-6730",
+                "A5054791318-Sc862ffc709370d0ff265-F4500-6300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F40500-42300",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800"
+              ],
+              "selected_field": "coordinator_contact",
+              "valid_literal_binding": true,
+              "literal_sha256": "d537d1c0c8a0a4dd5291c841e0f9ea400d4b6ce32c9ede9a0025f7a51e84f1bb",
+              "classification": {
+                "usable_coverage": false,
+                "coverage_field": null,
+                "reason": [
+                  "field_verdict"
+                ],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            },
+            {
+              "item_id": "A5054791318-Sb31852ab07eeb1e4cc0b-F6000-7800-text",
+              "text_verdict": "supported",
+              "identity_verdict": "supported",
+              "field_verdict": "correct",
+              "corrected_field": null,
+              "object_type": "organization",
+              "object_relation": "supported",
+              "fact_kind": "literal",
+              "student_level": [
+                "unknown"
+              ],
+              "information_date": "2025",
+              "date_basis": "content",
+              "current_applicability": "current",
+              "evidence_refs": [
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F6000-7800",
+                "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800"
+              ],
+              "selected_field": "city",
+              "valid_literal_binding": true,
+              "literal_sha256": "4c4db55d57dcd8f75fdad863767ec012065790af9ed47b2346ca9af4e3164689",
+              "classification": {
+                "usable_coverage": true,
+                "coverage_field": "city",
+                "reason": [],
+                "corrected_field": null,
+                "candidate_only": false
+              }
+            }
+          ],
+          "accepted_personal_contacts": 0,
+          "baseline_contact_selection_miss_count": 0,
+          "baseline_contact_pipeline_miss_count": 0,
+          "personal_student_readiness_established": false
+        }
+      }
+    }
+  ],
+  "limits": {
+    "source_binding_not_semantic_truth": true,
+    "model_agreement_not_human_gold": true,
+    "sample_size": 3,
+    "selected_development_cases_not_random": true,
+    "actual_subscription_debit": null,
+    "actual_cost_usd": null,
+    "backend_model_and_effort_exposed": false,
+    "development_review_cost_measured": false,
+    "quota_account_wide_not_experiment_debit": true
+  },
+  "findings": {
+    "date_guard_false_rejection_issue": 197,
+    "isangulova_glm_current_affiliation_and_activity_overconfidence": true,
+    "maslov_glm_missing_activity_status": true,
+    "maslov_glm_record_status_not_person_status": true,
+    "kovalev_both_models_recognize_self_claimed_doi_bridge": true,
+    "kovalev_contact_two_orcids_unresolved": true,
+    "kovalev_glm_future_2027_topic_current_overclaim": true,
+    "kovalev_glm_affiliation_conflicting_without_exclusion": true,
+    "confirmed_foreign_personal_contact_additions_in_selected_outputs": 0,
+    "human_precision_or_recall_established": false
+  }
+}

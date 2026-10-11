@@ -1818,3 +1818,199 @@ bounded запуск только после offline проверки факти
 этот отчёт его не назначает. Полный issue193 не закрывается, merge/deploy и
 продуктовая приёмка не заявлены. Изменения паспорта не требуются: принятые
 продуктовые цифры не меняются. Старые STOP/raw/метрики/human сохраняются.
+
+## 2026-10-11: отдельно разрешённый повтор OFFLINE paired3 на актуальном main
+
+[Прямое поручение](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6106101964)
+разрешило обычным merge обновить собственную ветку и повторить те же три случая после
+исправления сериализации. Main `99bf7c6cbc220ebec1111a496ea237183cd544f9`
+содержит merged PR196/fix189; merge без конфликтов выполнен коммитом `25599ec`.
+Это новый конечный этап, отдельно от прежнего завершённого cycle28/30 и
+terminal partial1/6. Старые STOP/raw/метрики/seal не переоценивались и не менялись.
+
+Новый root:
+`/Users/boris/Experiments/search-for-research/enrichment-fragment-repeat3-20261011`.
+Frozen head `826d25d168971e824fda4a60635b3960424f7fd2`, manifestSHA
+`e2c4354188c1f2d8d28c4a22e783eeb8d295ba16db5d1a514df87264fda5a46d`.
+[Fresh pre-inference review](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6106226306)
+прочитал полный текущий диапазон 122 файлов и перепроверил исправление Medium:
+первичный SDK assistant error при HTTP200 теперь прекращает этап, а не разрешает
+следующие jobs. [Freeze/proof до calls](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6106233854)
+фиксирует нулевые jobs и source calls.
+
+Corpus/task/instruction каждого случая побайтно равны предыдущему partial.
+Actual Python run_pi serializer→JS helper повторён на новом root через mocked
+Popen до сети. Общие SHA/UTF-8 sizes: Исангулова `771ab46b…`/141908,
+Маслов `6e135865…`/103157, Ковалёв `22e79ac2…`/478797.
+В реальном Pi пути сохранён pre-send SHA guard; фактические runtime proof
+сопоставляются с manifest. Источники и semantic-v3 полные, без old verdicts,
+новых источников/людей, live/search/Astra. Source IDs и буквальные spans фиксирует
+код; семантическая классификация остаётся суждением модели.
+
+Лимиты: один run, максимум6 новых profilejobs (3 GLM5.3Flash/high и
+3 Sol6.1/high), cumulative29→35, retry0; 600s/job включая isolation probe.
+Весь этап начат06:07:02UTC, конечный deadline09:07:02UTC. При локальном output
+failure допускаются другие независимые jobs; общий input/provenance/refusal/
+deadline прекращает этап. Cron PAUSED; нового monitor или product-message нет.
+
+### Результаты и сравнение трёх пар
+
+Этап завершён terminal STOP в `2026-10-11T06:51:53.110152+00:00`, раньше deadline.
+Все шесть runtime jobs вернули raw и terminal usage. Валидатор принял четыре
+результата: GLM1/3, Sol3/3; полностью нормализована одна пара из трёх.
+`stage_jobs_completed=4` в execution означает принятые normalized outputs,
+а не число завершённых runtime jobs. Два failure — локальная валидация GLM;
+их raw/receipt сохранены без ремонта или повторов. Cumulative reservations35
+(старые28+1, новые6), source/search/Astra profilejobs0, human gold0.
+
+[Публичная проекция метрик](../metrics/enrichment_fragment_repeat3_20261011.json)
+сгенерирована из terminal receipts, normalized результатов и отдельного offline
+raw-аудита. Полные цитаты, буквальные контакты, source IDs и SHA находятся в
+private root: `analysis-detailed.json`, `raw-audit.json`, `corpora/`, `runs/`,
+`failures/`; адреса в git не публикуются. Raw-аудит всех выбранных spans прошёл
+для27атомов (GLM15, Sol12); он не исправляет schema и не превращает rejected
+output в accepted result. Буквальная привязка не доказывает смысловую атрибуцию.
+
+| Случай | GLM raw → pipeline | Sol → pipeline | Отдельный прежний agent baseline |
+|---|---|---|---|
+| Исангулова A5089458364 | Identity supported; личный контакт undated выбран. Affiliation supported2019 и activity active2024 чрезмерно уверены для октября2026. Readiness unknown. Rejected: date guard. | Accepted4atoms; личный контакт1undated. Identity supported, affiliation insufficient, activity unknown, readiness unknown. | Личный контакт1undated; identity supported, affiliation insufficient, activity unknown, readiness unknown. Контакт выбран обеими новыми моделями; GLM pipeline его не принял из-за failure. |
+| Маслов A5054586424 | Identity supported; личный контакт2007 выбран, affiliation insufficient. Activity объяснена как unknown, но обязательный status отсутствует; readiness unknown. Rejected: schema. | Accepted2atoms; личный контакт1historical2007. Identity supported, affiliation insufficient, activity unknown, readiness unknown. | Личный контакт1historical2007; те же осторожные profile verdicts. Контакт выбран обеими новыми моделями; GLM pipeline его не принял из-за failure. |
+| Ковалёв A5054791318 | Accepted7atoms; автоматически атрибутирован один historical contact candidate2020, несмотря на два ORCID. Identity supported, activity active2026; affiliation conflicting не доказано как взаимоисключение. Readiness unknown. | Accepted6atoms; тот же контакт выбран, identity/object conflicting, personal coverage0. Identity основного профиля supported, affiliation insufficient, activity active2026, readiness unknown. | Personal contact0 из-за конфликта ORCID; identity supported, affiliation insufficient, activity active2026, readiness unknown. Общий полный корпус даёт новую DOI-связь, отсутствовавшую в прежних selected evidence. |
+
+Прежний baseline — агентская оценка меньшего предварительно отобранного входа,
+а не gold и не равный новому полному корпусу input. Поэтому сравнение с ним
+показывает конкретные сохранённые/новые свидетельства, а не измеренную accuracy
+или non-regression одинаковых входов. Две baseline personal selections сохранены
+в raw обеих моделей; Sol сохраняет их и в normalized. GLM теряет оба целых
+результата на pipeline, а не пропускает контакты при выборе. Для Ковалёва
+baseline personal0: новой кандидатуре нельзя присвоить false-positive или
+true-positive без независимого разрешения идентичности. Подтверждённых чужих
+личных адресов среди выбранных и принятых personal outputs не найдено;
+полнота по всем фактам корпуса и precision/recall без human gold не установлены.
+
+**Исангулова.** Личный span
+`A5089458364-S0f64f84fd1e096322f28-M570-587` находится в
+`A5089458364-S0f64f84fd1e096322f28-F0-1800` под буквальными
+«Персоналии: Исангулова Дарья Васильевна» и «E-mail:».
+GLM отдельно отвергает как личные адреса поддержку Pure
+`A5089458364-S8943b8c36415f42d8c44-M1238-1249` («Техническая поддержка»)
+и footer `A5089458364-S0f64f84fd1e096322f28-M7673-7698` («Обратная связь»).
+Фактический failure касается affiliation date2019-12-11: cited employment
+fragment `A5089458364-Sb86fd6644a761cd763de-F1500-3300` содержит типизированный
+`last-modified-date.value=1576026926116`, что детерминированно соответствует
+UTC2019-12-11T01:15:26.116Z. Guard требует буквального календарного года2019
+в cited text и отвергает эту конверсию; это не свидетельство выдуманной даты.
+[Issue197](https://github.com/borisboriov/search-for-research/issues/197)
+фиксирует Medium false rejection, OPEN/Todo. Само обновление записи в2019
+и отсутствие end date не доказывают нынешнюю аффилиацию; публикации2024
+не устанавливают activity в октябре2026. Эти semantic ограничения остаются
+отдельно от дефекта guard.
+
+**Маслов.** Span `A5054586424-S15073c828aa4b0e9c3bb-M504-527`, fragment
+`A5054586424-S15073c828aa4b0e9c3bb-F0-1800`: «Alexey Maslov»,
+«Texas A&M University Libraries», «Senior Software  Application Developer».
+DOI `10.1045/november2007-phillips` связывает saved D-Lib статью2007
+с self-claimed ORCID work; остальные четыре author addresses не принимаются
+за личные контакты Маслова. Точная причина rejection — отсутствующее поле
+`profile_assessments.activity.status`, текст объяснения его не заменяет.
+Отдельный offline аудит видит ещё calendar dates из metadata:
+1383129272675→UTC2013-10-30 и1560359761393→UTC2019-06-12.
+Это реальные timestamp conversions, но GLM пометил их date_basis=content;
+выбранный `person_status/current` описывает состояние ORCID record, а не
+жизнь/занятость человека. Эти ошибки не выдаются за фактическую первую причину
+failure: schema остановила нормализацию раньше. TAMU2007 и пустой employment
+не подтверждают и не опровергают нынешнюю аффилиацию МИФИ.
+
+**Ковалёв.** Span `A5054791318-Sf416ce05a426acbba486-M626-646`, fragment
+`A5054791318-Sf416ce05a426acbba486-F0-1800`: «КОВАЛЁВ А.К.» и
+ORCID0000-0001-7309-7382 отличаются от profile ORCID0000-0003-2180-0990.
+Обе новые модели явно видят дополнительную DOI-связь
+`A5054791318-Sb31852ab07eeb1e4cc0b-F106500-108300`:
+`10.17759/exppsy.2020130111`, `source-orcid=0000-0003-2180-0990`,
+`source-name=Alexey Kovalev`, `source-client-id=null`. Это self-claimed work
+владельца профиля: свидетельство сильнее прежнего baseline, но ещё не разрешает
+расхождение двух ORCID. GLM принимает историческую кандидатуру, Sol учитывает
+тот же bridge и сохраняет conflicting; Sol не пропустил DOI. Нынешняя
+доступность контакта и личность его владельца человеком не подтверждены.
+
+Общий контакт центра `A5054791318-Sc862ffc709370d0ff265-M6700-6716`, fragment
+`A5054791318-Sc862ffc709370d0ff265-F6000-6730` («Contact us:»), обе модели
+не принимают как personal или student coordinator coverage. Проектные
+recruitment/skills сведения `A5054791318-Sc862ffc709370d0ff265-F3000-4800`
+не доказывают индивидуальную готовность руководить или нынешний набор.
+GLM topic `A5054791318-Scd4806a109e095aad11a-F0-1800-text` с записью HELP2027
+помечен current при saved checked_at2026-10-10: будущая запись списка
+не доказывает уже состоявшуюся публикацию или нынешнюю активность.
+GLM activity explanation тоже использует2027; достаточные отдельные основания
+activity — версия статьи2026-03-04 и ORCID publication2026-05-22.
+Affiliation conflicting у GLM чрезмерно категорично: MIRIAI/AXXX и
+неподтверждённое МФТИ могут сосуществовать; raw сам допускает совместительство.
+Sol оставляет affiliation insufficient. Эти ограничения сохраняются в raw
+и отчёте без post-hoc переоценки метрик.
+
+### Расходы
+
+Все суммы ниже относятся к новым шести profilejobs, включая два rejected
+outputs; terminal usage доступен у каждого. Разные tokenizer counts при
+одинаковых visible UTF-8 inputs не измеряют денежную экономию.
+
+| Случай | Модель | Input | Output | Cache read/write | Total | Reasoning внутри output | Wall,s |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Исангулова | GLM | 43764 | 21676 | 0/0 | 65440 | 18317 | 386.52 |
+| Исангулова | Sol | 55426 | 3822 | 0/0 | 59248 | 1034 | 77.87 |
+| Маслов | GLM | 29818 | 21064 | 0/0 | 50882 | 17680 | 371.20 |
+| Маслов | Sol | 42354 | 2776 | 0/0 | 45130 | 773 | 64.86 |
+| Ковалёв | GLM | 138343 | 26108 | 0/0 | 164451 | 21485 | 448.19 |
+| Ковалёв | Sol | 153402 | 5919 | 0/0 | 159321 | 1552 | 140.50 |
+| Все3 | GLM | 211925 | 68848 | 0/0 | 280773 | 57482 | 1205.91 |
+| Все3 | Sol | 251182 | 12517 | 0/0 | 263699 | 3359 | 283.22 |
+
+GLM terminal assistant usage: input/output/cacheRead/cacheWrite —
+непересекающиеся группы, totalTokens authoritative; reasoning — часть output,
+второй раз не добавляется. Native cached input — часть input, reasoning —
+часть output. Cache components в этих terminal receipts действительно0;
+неизвестные значения не заменялись нулём. GLM три logical jobs, три observed
+physical HTTP200, один request/job, retry0. Sol три CLI profilejobs, toolcalls0,
+automatic CLI retries0; число скрытых transport requests/retries неизвестно.
+Requested config GLM5.3Flash/high и Sol6.1/high; эффективный Pi SDK config
+совпадает, фактические backend model/effort обеих сторон не раскрыты.
+
+Денежный расход и actual subscription debit неизвестны (`null`). SDK catalog
+cost не является списанием подписки. Account-wide штатная квота:93% по
+поручению,92% ранняя проверка,90% перед freeze,89% после run06:53:14UTC.
+Изменение account-wide процента не является debit профильного эксперимента:
+разработка/reviewer/read-only helpers работали отдельно, их расход не измерен.
+Reset-credit/покупки/paid API не использовались. Поиск выключен, экономия
+полного коллектора не установлена. На этих трёх inputs GLM суммарно медленнее
+(1205.91s против283.22s) и имеет меньший normalization yield; превосходство
+качества или денежная экономия из этого эксперимента не следуют.
+
+### Проверки, DoD, сохранность
+
+Перед inference: lint/typecheck,264 unittest/388 pytest,JS20PASS;
+web-lint/typecheck/164testsPASS (1skipped), web-buildPASS с canonical URL проекта,
+docs-checkPASS с фактическим meta9002. Strict audit frozen826PASS после fix189;
+старый auditFAIL остаётся историческим. Встроенный history mount сканирует0
+commits из-за worktree path, отдельный read-only frozen826 scan охватил508
+commits/no leaks. Критерии/исключения не ослаблялись.
+
+CI checks/web/audit826SUCCESS: actual checkout1fc8a3db4a3cfb5b40a4c4d328d26a5e9b757f0e
+имеет parents=[base99bf,head826]; handoff-checkPASS. Эти доказательства относятся
+к frozen коду. Итоговый independent review, current CI с actual checkout parents,
+handoff-check, SHA-seal и process/write STOP публикуются последним подтверждением
+в [PR194](https://github.com/borisboriov/search-for-research/pull/194) после
+отчётного коммита; старый PASS не подтверждает новый head.
+
+DoD общего input/provenance/лимитов, terminal run, raw сохранности и измерения
+доступных usage выполнен. DoD трёх полностью валидных пар не выполнен: только1/3.
+Medium197 оставлен отдельным видимым хвостом; это допустимый технический
+partial с явным ограничением, а не доказательство полной готовности метода.
+Замороженные source/task/CODE/raw/STOP не исправлялись; следующие calls запрещены.
+Предыдущие девять roots и предыдущий partial проверяются по прежним SHA-index;
+итоговая read-only проверка всех десяти seals и новый seal фиксируются в PR.
+
+Это три заранее выбранных проблемных development случая, а не случайная
+выборка. Совпадение GLM/Sol и source binding не являются человеческим gold.
+Полный issue193 не закрывается; merge/deploy/production/продуктовая приёмка
+не заявлены. Изменения паспорта не требуются: принятые продуктовые цифры
+не меняются. Следующий эксперимент этим этапом не разрешается.
