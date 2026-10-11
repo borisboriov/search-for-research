@@ -2158,3 +2158,126 @@ Human gold0; деньги/debit/full collector economy неизвестны. М�
 одного следующего честного e2e контроля перечислены в методике; следующий batch
 не назначен. Проверки документов, scoped independent review и current-head CI
 фиксируются последним подтверждением PR194. Cron PAUSED; финал — write/process STOP.
+
+## Live3 public collection → GLM candidates → independent full-source Sol — 11.10.2026
+
+**Результат:** один конечный live контроль выполнен; в текущем виде конвейер
+**не годен для следующего контрольного batch**. GLM передал3valid packets;
+независимый Sol завершил3runtime jobs, после неизменённых semantic-v3/date guards
+приняты2packets, только один непустой. Guard отверг ошибочную metadata-дату
+Исангуловой; Маслов identity-only без фактов, прежний historical контакт пропущен.
+Это диагностический development контроль, не оценка качества на random/gold.
+
+### Постановка, freeze и воспроизводимость
+
+[Постановка до запуска](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6107652850):
+только A5089458364/A5054586424/A5054791318; start09:34:36UTC, final deadline
+12:34:36UTC11.10.2026. Sole writer в собственной ветке PR194. Cron PAUSED.
+До freeze offline fullpath fixture прошёл tool IDs→literal binding→prepare→
+independent Sol boundary→semantic/date guards, включая невыбранный контекст,
+identity-only, missing status, invented IDs, tampered source и full-input cap.
+Независимый reviewer обнаружил продолжение после incomplete GLM runtime;
+исправление `usage_complete` и тест отсутствия следующих jobs проверены до live.
+
+Один новый root:
+`/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011`.
+Freeze09:57:21UTC, executed head `dd6cbbcb2235dd82d153dd18e16946ea53e013c5`.
+Acquisition STOP10:12:36UTC; шесть jobs, cumulative35→41, без retries/repair/Astra/
+paidAPI/reset/purchases/accountchanges и без developer URL/search assistance.
+Метод/лимиты после freeze не менялись. Старые raw, метрики и roots не перезаписывались;
+новый root хранит лишь собственные artifacts и refs/SHA13предыдущих index,
+включая последнюю docs передачу. Их index SHA проверены; полного повторного
+обхода86тыс.старых файлов и рекурсивного копирования этого этапа не было.
+
+Seeds сверены по SHA и whitelist исходного flexible10 catalog sample: id/name/
+institution/institution_id/ORCID/h_index/cohort/suspect_merge. В collector task
+нет прежних pageURLs/email/verdicts/bodies. Все source choices принадлежат GLM
+через nativeZai/DDG actual rows и observed href; snippets не стали evidence.
+Raw/rendered тела и точные source/fragment/value IDs сохраняются; код связывает
+value по offsets. Sol получает ровно GLM items и все fragments всех checked
+live bodies. Sol input/code/source-record/body/text/prompt/receipt SHA приведены
+в [generated metrics](../metrics/enrichment_live3_independent_sol_20261011.json)
+и private transfer index; guards повторно сверили весь saved corpus.
+
+| Случай | GLM candidates | Saved sources/fragments; data prompt bytes | Sol и принятая часть |
+|---|---|---|---|
+| Исангулова A5089458364 | 6: personal_contact,3topic,supervisor_role,city | 4/54;162885 | Raw contact supported/undated; city2019-12-11/source_metadata. Весь packet rejected `Unsupported metadata date object`, accepted atoms0 |
+| Маслов A5054586424 | 0; identity evidence есть | 3/104;387998 | Identity supported, current_affiliation insufficient, activity insufficient/status unknown; accepted identity-only, atoms0 |
+| Ковалёв A5054791318 | 3: personal_contact,2topic | 4/106;275388 | Все3usable по Sol; контакт undated, topics undated; identity/current_affiliation supported, affiliation date unknown, activity supported/active2026-05-22/content |
+
+System rubric instructions дополнительно10088UTF8bytes/person: полный вход с
+ними172973/398086/285476bytes, усечения не было. Sol процитировал7/5/5refs вне
+union refs выбранных GLM items/profile evidence; items не добавлял. Это
+независимая проверка GLM candidates, не ещё одно параллельное извлечение.
+Профильный отказ Исангуловой сохранил untouched raw/receipt и разрешил остальные
+независимые случаи. #197 поддерживает source_metadata только для оси
+current_affiliation и конкретного cited ORCID employment created/modified field;
+metadata city неподдержана. Правило не ослаблено; raw/status не исправлены.
+Не было quota/common runtime/method failure; terminal reason `finite_live3_complete`.
+
+У Исангуловой raw Sol current_affiliation supported без даты и activity active2024
+не становятся принятыми фактами или доказательством нынешней занятости. У
+Ковалёва supported identity относится к этому4source корпусу и не разрешает
+исторический конфликт двух ORCID в более широком корпусе. Поддержанный формат
+и literal year guard не доказывают правильную семантическую атрибуцию даты.
+Личный набор/готовность руководить не подтверждены ни в одном случае;
+новый недатированный контакт не доказывает доставляемость или готовность.
+
+### Отдельное posthoc сравнение пропусков
+
+После acquisition STOP сверены SHA трёх прежних Sol normalized #197 и трёх
+flexible10 collector outputs. [Generated comparison v2](../metrics/enrichment_live3_posthoc_comparison_v2_20261011.json)
+хранит только hashes адресов, old verdict/date и наличие literal в новом corpus/
+GLM selection. Прежние модели не являются human truth; это не recall benchmark.
+
+Прежний undated contact Исангуловой и historical2007 contact Маслова отсутствуют
+в новых bodies и не выбраны. GLM Исангуловой нашёл другой адрес на странице
+кафедры НГУ; он остаётся candidate из-за rejected Sol packet. Для Маслова
+ни один из5old flexible literal candidates не появился в новом corpus. У
+Ковалёва прежний conflicting/historical2020 candidate отсутствует; из8old
+flexible literals один есть в новых bodies, ни один не выбран. Выбран новый
+недатированный персональный контакт на actual observed странице embodied-ai.
+Количество sources old→new:4→4,4→3,10→4; состав различается. Нельзя объявлять
+изменение precision/recall или разрешение исторической неоднозначности.
+Первый unsealed private posthoc draft ошибочно называл fragment count
+`old_sources`; он сохранён с correction note. Authoritative v2 вычисляет unique
+source_id и отдельно fragments. Модельные/source результаты не менялись.
+
+### Usage, проверки и границы решения
+
+GLM5.3Flash/high requested через штатный Pi/Zai, Sol6.1/high requested через
+native CLI/openai. Фактические backend/model/effort runtime не раскрывает;
+requested configs, receipts, untouched raw и distinct native agent IDs сохранены.
+3GLM+3Sol logical jobs;28observed GLM model requests (6/11/11),27sourcecalls
+(7/11/9),10shared search reservations (8nativeZai+2DDG),22HTTP started/reserved
+включая robots/redirects. Sol physical requests/transport retries не раскрыты;
+automatic CLI/job retries0. Caps остались≤12requests/600s/24sourcecalls/4search/
+20HTTP/person, shared search≤12/HTTP≤60,Sol≤900s/full JSONprompt≤1MB/person.
+
+GLM:181928fresh input+204864cacheRead+19090output=405882tokens,cacheWrite0;
+reasoning не раскрыт, к output не прибавлялся. Sol:232574input+8161output
+=240735tokens,cached_input0 (cache — часть input). Runtime wall sums:
+GLM672.264s,Sol222.464s; это не время полного development/review этапа.
+Official account remaining85%09:56:49UTC→84%10:13:10UTC; один accountwide процент
+не приписан run и не переведён в деньги. Денежный subscription debit, фактический
+billing, development/review tokens/cost и экономия полного сбора неизвестны.
+SDK/catalog cost не выдан за списание подписки; unknown не заменён нулём.
+
+Adapter checks:20targeted tests,274unittest,388pytest (8skip/5deselect,
+coverage94.06%),lint/typecheck PASS. Strict audit штатной целью PASS; локальная
+Docker git-history строка worktree сама не доказательство, поэтому полная
+история проверяется отдельно с readonly mount common gitdir. Docs-check,
+независимый scoped recheck результатов и actual checkout/parents CI последнего
+head фиксируются в финальном review-комментарии PR194 и transfer evidence.
+Ни production/productdocs, ни merge/mainpush/deploy не менялись; #193 остаётся
+открытым, #197 сохраняет прежний bounded DoD до отдельно разрешённого merge.
+
+DoD этого контроля — три live попытки и три независимые проверки либо явные
+skip/refusal, immutable inputs/raw/receipts, полные sources/IDs/SHA, отдельные
+candidates/verdicts и честные usage/limitations — выполнен. Устойчивый pipeline
+не доказан:1/3непустых accepted chains, date отказ и пропуск saved2007 контакта.
+Решение: **текущая конфигурация не годна для следующего контрольного batch**;
+исправлять output вручную, повторять эти jobs или начинать новый batch эта
+постановка не разрешает. Human0/Solnotgold, deliverability unknown, current
+readiness unknown. Все наблюдавшиеся собственные process PID завершились;
+cron PAUSED, acquisition/model/source STOP, окончательная передача — write STOP.

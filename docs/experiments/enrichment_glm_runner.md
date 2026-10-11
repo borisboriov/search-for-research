@@ -4,6 +4,10 @@
 контроль. GLM допустим только как экспериментальный извлекатель кандидатов с
 обязательной независимой проверкой Sol по полной semantic-v3. Готовность
 полного гибридного конвейера не доказана; production-ready результат не заявлен.
+Новый live3 контроль выполнил 3GLM→3независимых Sol jobs: приняты 2/3 Sol packets,
+из них один непустой. Один пакет отклонён по date guard, у второго нет фактов.
+Текущая конфигурация не годна для следующего контрольного batch без отдельного
+решения по этим отказам; новый запуск не назначен.
 Исправление #197 устранило ложный отказ даты, но не исправляет смысл ответов:
 после локальной обработки приняты 5/6 raw, Маслов/GLM остаётся без обязательного
 activity.status, чрезмерно уверенные оценки актуальности сохраняются. Принятый
@@ -12,8 +16,9 @@ activity.status, чрезмерно уверенные оценки актуал
 Существующий CLI: `scripts/enrichment_glm_runner.py`. Native Pi 1.1.0 использует
 существующую подписку Z.ai, GLM-5.3-Flash/high выбирает запросы, страницы,
 буквальные переходы и факты. Python сохраняет HTTP, кэш, robots, источники,
-лимиты и проверяет цитаты. Native Sol 6.1/high проверяет обе отдельные стороны
-по полной неизменённой semantic-v3. Человеческих оценок и gold нет.
+лимиты и проверяет цитаты. Native Sol 6.1/high в live3 проверяет ровно GLM candidates
+по всем сохранённым источникам и полной неизменённой semantic-v3; в историческом
+offline paired3 две модели независимо извлекали факты. Человеческих оценок и gold нет.
 
 ## Что делал baseline
 
@@ -521,7 +526,7 @@ full collector, 1000/10000 profiles и human accuracy не установлен�
 |---|---|
 | Неполный GLM output; semantic overclaims текущего состояния | Неполный ответ остаётся failure без придуманного status. Независимый Sol проверяет GLM candidates по полной rubric и сохраняет расхождения/unknown; дата metadata не повышает факт до current. |
 | Разные механизмы поиска | Зафиксировать доступные GLM native search/DDG tools и возможности Sol web.run: одинаковый текст запроса не делает retrieval одинаковым. Проверять реальные найденные bodies, пропуски и отказы, а не snippets. |
-| Нет полного успешного live→Sol пути | Одно отдельно разрешённое конечное e2e поручение с заранее выбранным малым набором, scope/лимитами/STOP, actual input/config/receipts и проверкой всех выбранных пар; нынешние 2/3 offline пары не заменяют этот контроль. |
+| Live3 выполнен, принят один непустой пакет | Три live collector packets переданы трём независимым Sol по полным sources; date guard отверг Исангулову, Маслов identity-only без фактов, Ковалёв 3atoms. Это не устойчивый полный проход и не human quality; следующий batch требует отдельного решения по этим ограничениям. |
 | Нет человеческого эталона и переносимого запуска поиска flexible10 | Явно определить human пакет/контракт для сравниваемых items, получить реальные ответы отдельно от моделей; описать и подтвердить runtime/dependencies на целевой машине. Пока качество и переносимость поиска остаются непроверенными. |
 | Неизвестная стоимость полного процесса | Разделить сбор, независимую проверку и development/review; сохранять раскрытый usage и неизвестные debit/physical costs. Без измерений не утверждать денежную экономию. |
 
@@ -579,3 +584,45 @@ reserve0 разрешён; retries/repair/Astra/paidAPI/reset/accountchanges0.
 отчёте/PR после завершения, не предвосхищается этим описанием. Human0, Sol не gold,
 email deliverability/readiness/full collector economy не устанавливаются автоматически.
 Cron PAUSED, никакого следующего batch или monitor эта постановка не разрешает.
+
+### Результат единственного live3 контроля
+
+Freeze09:57:21UTC на `dd6cbbcb2235dd82d153dd18e16946ea53e013c5`, acquisition
+STOP10:12:36UTC11.10.2026. Новый root:
+`/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011`.
+[Метрики из raw/receipts](../metrics/enrichment_live3_independent_sol_20261011.json),
+[posthoc сравнение](../metrics/enrichment_live3_posthoc_comparison_v2_20261011.json)
+и [отчёт](../reports/enrichment_night_20261009.md#live3-public-collection--glm-candidates--independent-full-source-sol--11102026)
+различают collector candidates, raw Sol и принятые пакеты.
+
+| Development случай | GLM candidates | Независимый Sol | Принято после всех guards |
+|---|---|---|---|
+| Исангулова | 6, включая новый недатированный контакт | Raw оценивает контакт supported; для city ошибочно применена source_metadata2019-12-11 | Пакет отвергнут: `Unsupported metadata date object`; raw не исправлялся |
+| Маслов | 0; есть identity refs | Identity supported, affiliation/activity insufficient/unknown | Identity-only пакет; фактов0 |
+| Ковалёв | 3: контакт и две темы | Все3usable; контакт undated, личный набор не подтверждён | Один непустой пакет, не human truth |
+
+Все3collector и3Sol runtime завершились; normalized GLM3/3, Sol2/3,
+непустой полный путь1/3. Полные saved sources/fragments:4/54,3/104,4/106.
+Data/schema prompts162885/387998/275388bytes; rubric instructions дополнительно
+10088bytes каждому, суммарно всё укладывается в frozen cap1MB/person.
+Sol процитировал7/5/5refs вне выбранных GLM refs; новые atoms он не добавлял.
+Метод не менялся после freeze; до него независимое ревью выявило и закрыло
+ошибку общего runtime STOP. Внутри live только один профильный date отказ,
+без missing statuses, retries, ручного ремонта и новых jobs.
+
+Расход:6logical jobs, cumulative35→41;28observed GLM requests,27sourcecalls,
+10search reservations (8nativeZai+2DDG),22HTTP started/reserved. Sol physical
+requests не раскрыты. GLM usage405882tokens:181928fresh input+204864cacheRead+
+19090output; cacheWrite0, reasoning не раскрыт. Sol232574input (cached0)+8161output
+=240735tokens. Wall:GLM672.264s,Sol222.464s. Quota85→84% accountwide;
+delta не приписан этому run. Денежный debit/billing и development/review usage
+неизвестны; SDK/catalog cost не подменяет стоимость подписки.
+
+Posthoc старые контакты Исангуловой и historical2007 Маслова отсутствуют в новом
+корпусе; у Исангуловой/Ковалёва выбраны новые адреса. Это различие retrieval,
+не human recall. Старый конфликт двух ORCID Ковалёва не разрешён поддержанным
+identity в более узком новом корпусе. **Для следующего контрольного batch
+текущая конфигурация не годна:** один date отказ и пропуск известного saved
+контакта остаются; качество, переносимость и экономия полного процесса не
+доказаны. Human0, deliverability unknown, личная готовность не установлена.
+Новые вызовы не назначены; cron PAUSED, source/model/process STOP.

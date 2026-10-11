@@ -1,0 +1,91 @@
+{
+  "at_after_acquisition_stop": "2026-10-11T10:12:36.987027+00:00",
+  "previous_answers_used_for_live_input": false,
+  "comparison": "posthoc literal recall only; prior models are not human gold; corpus differences prevent quality/recall generalization",
+  "rows": [
+    {
+      "author_id": "A5089458364",
+      "prior_normalized_path": "/Users/boris/Experiments/search-for-research/enrichment-orcid-date-offline6-20261011/normalized/A5089458364-Sol.json",
+      "prior_normalized_sha256": "d2c8235136ff74254dce81e30458768891e7c074239918f17d5bdb02f3bd1b56",
+      "prior_flexible_collector_path": "/Users/boris/Experiments/search-for-research/enrichment-flexible10-20261010/normalized/A5089458364/collector.json",
+      "prior_flexible_collector_sha256": "534c1500fb5975e1debdcd57e8af1b5400aff7feaf46dcbe639c54dae51ea4cd",
+      "prior_Sol_contact_comparison": [
+        {
+          "prior_item_id": "A5089458364-S0f64f84fd1e096322f28-M570-587",
+          "value_sha256": "3c54f1602e134e429cd70b61c349bd27c20b3a757bc42fa9c8ed00c6a59015ab",
+          "prior_model": "Sol, same saved development case, not human truth",
+          "prior_identity": "supported",
+          "prior_date": null,
+          "prior_date_basis": "unknown",
+          "prior_current": "undated",
+          "prior_usable": true,
+          "literal_present_in_new_corpus": false,
+          "selected_by_new_GLM": false
+        }
+      ],
+      "prior_flexible_literal_contact_candidates": 2,
+      "prior_flexible_literals_present_in_new_corpus": 0,
+      "prior_flexible_literals_selected_by_new_GLM": 0,
+      "new_GLM_contact_candidates": 1,
+      "old_sources": 4,
+      "old_evidence_fragments": 54,
+      "new_sources": 4
+    },
+    {
+      "author_id": "A5054586424",
+      "prior_normalized_path": "/Users/boris/Experiments/search-for-research/enrichment-orcid-date-offline6-20261011/normalized/A5054586424-Sol.json",
+      "prior_normalized_sha256": "d6b51da8af9dedf0e5031386a0dccae29989722eda91c62b0f5c694062379078",
+      "prior_flexible_collector_path": "/Users/boris/Experiments/search-for-research/enrichment-flexible10-20261010/normalized/A5054586424/collector.json",
+      "prior_flexible_collector_sha256": "f4b2449a652ede4f7dfaab1cb3b4facb8d2b40a97522ccb1e97c81c35b5a4871",
+      "prior_Sol_contact_comparison": [
+        {
+          "prior_item_id": "A5054586424-S15073c828aa4b0e9c3bb-M504-527",
+          "value_sha256": "50f372d274bafdc6f3c8bc01f580ccc8da3e238fe657ae22b9da356bf1e1607f",
+          "prior_model": "Sol, same saved development case, not human truth",
+          "prior_identity": "supported",
+          "prior_date": "2007",
+          "prior_date_basis": "content",
+          "prior_current": "historical",
+          "prior_usable": true,
+          "literal_present_in_new_corpus": false,
+          "selected_by_new_GLM": false
+        }
+      ],
+      "prior_flexible_literal_contact_candidates": 5,
+      "prior_flexible_literals_present_in_new_corpus": 0,
+      "prior_flexible_literals_selected_by_new_GLM": 0,
+      "new_GLM_contact_candidates": 0,
+      "old_sources": 4,
+      "old_evidence_fragments": 37,
+      "new_sources": 3
+    },
+    {
+      "author_id": "A5054791318",
+      "prior_normalized_path": "/Users/boris/Experiments/search-for-research/enrichment-orcid-date-offline6-20261011/normalized/A5054791318-Sol.json",
+      "prior_normalized_sha256": "b5f312fe6abbd1559be0e1f1beb4bfceda053d6cb7aab2dfadfd16ba09578034",
+      "prior_flexible_collector_path": "/Users/boris/Experiments/search-for-research/enrichment-flexible10-20261010/normalized/A5054791318/collector.json",
+      "prior_flexible_collector_sha256": "138446435593f80d7d78609e424246fd0845ea32e8c65938908026d94b428a51",
+      "prior_Sol_contact_comparison": [
+        {
+          "prior_item_id": "A5054791318-Sf416ce05a426acbba486-M626-646",
+          "value_sha256": "6eb02785b605e7ce58cac1eb17ff8dda61c01517341e4147c93a907bf3dc17ca",
+          "prior_model": "Sol, same saved development case, not human truth",
+          "prior_identity": "conflicting",
+          "prior_date": "2020",
+          "prior_date_basis": "content",
+          "prior_current": "historical",
+          "prior_usable": false,
+          "literal_present_in_new_corpus": false,
+          "selected_by_new_GLM": false
+        }
+      ],
+      "prior_flexible_literal_contact_candidates": 8,
+      "prior_flexible_literals_present_in_new_corpus": 1,
+      "prior_flexible_literals_selected_by_new_GLM": 0,
+      "new_GLM_contact_candidates": 1,
+      "old_sources": 10,
+      "old_evidence_fragments": 188,
+      "new_sources": 4
+    }
+  ]
+}
