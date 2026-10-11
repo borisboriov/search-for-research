@@ -1803,7 +1803,9 @@ mocked process и реальным JS helper воспроизвёл все тр�
 
 Lint/typecheck PASS,263 unittest/388 pytest PASS; JS20PASS, docs-check проверен
 отдельно. Strict audit обязателен и остаётся FAIL по deps-node/fs-trivy #189;
-четыре прежних advisory, исключения/критерии не ослаблялись. Его history mount
+две HIGH уязвимости sharp/source-map-js, повторно найденные двумя сканерами.
+В логе четыре CVE/GHSA идентификатора тех же находок из #189, а не четыре
+разных уязвимости; исключения/критерии не ослаблялись. Его history mount
 просканировал0commits; отдельный read-only history scan frozen6a0 проверил
 501commit/0leaks. CI frozen6a0 checks/webPASS,auditFAIL, actual merge checkout
 и родители совпадают с текущими base/head. Финальное ревью исправленного кода,
