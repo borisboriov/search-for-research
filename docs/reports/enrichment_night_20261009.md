@@ -2407,3 +2407,115 @@ CI с actual checkout/parents текущего head — в финальном к
 приватном transfer index. Процесс offline replay terminal STOP; cron PAUSED.
 Новый batch/merge/mainpush/deploy/productdocs не выполнены. После финальной
 передачи — own process/write STOP; продолжение отдельно не назначено.
+
+## Заключительный publication/DOI control 11.10.2026 и решение по GLM
+
+По [прямому разрешению на один контроль](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6108525639)
+проверен targeted positive control Maslov A5054586424/ORCID0000-0001-7196-1640.
+Anchor A New Face for DSpace/10.1045/november2007-phillips заранее выбраны кодом
+и постановкой из сохранённой публичной work metadata; это не автономный выбор
+работы GLM и не случайная выборка. Старые article URL/body/email/verdict не
+передавались collector и не импортированы как новые источники.
+
+Freeze выполнен на `b75750c3ae3a66417341dee720e31072fec9ece6` в новом root
+`/Users/boris/Experiments/search-for-research/enrichment-publication-control1-20261011`.
+Start11:23:56UTC/deadline13:23:56UTC включает подготовку и передачу. Прежние
+caps4search/20HTTP/24sourcecalls/12modelrequests/600sGLM/900sSol, Sol prompt≤1MB;
+один GLM5.3Flash/high Pi collector и один полный native Sol6.1/high verifier,
+cumulative41→43. Astra0, автоматических retry/repair/newbatch0, reserve0.
+
+### A/B/C и действительный путь источников
+
+[Generated trace/metrics](../metrics/enrichment_publication_control1_20261011.json)
+получены из frozen manifest, actual tool requests/responses, checked bytes,
+GLM/Sol raw, receipts и terminal STOP, без ручного редактирования модельных выводов.
+
+| Критерий | Исход | Доказательство и граница |
+|---|---|---|
+| A discovery/acquisition | **fail** | Fresh ORCID200 подтверждает exact title+typed DOI, put-code10435134; первый actual native query точен. Ни target article body, ни target URL/observed article redirect не получены. |
+| B literal extraction | **pass** | Один topic candidate, code binding actual source/fragment/value ID+offsets прошёл. Он из другой ORCID работы2009, не из непрочитанной статьи2007; contact0. |
+| C full independent Sol | **pass** | Ровно1GLM candidate и весь новый корпус2sources/36fragments; strict schema,4task IDs, input/raw/receipt SHA, semantic-v3 и неизменённые date guards прошли. Не параллельное самостоятельное извлечение. |
+
+Fresh ORCID read11:42:37UTC: bodySHA
+`82b4b7906f8b62b0b5b7f4a4bfc7aaa3891f5d67309175c89d0232b82b098ea7`.
+SHA совпадает с прежним публичным record, но новое HTTP200/checked_at подтверждены
+новой receipt; сохранённое тело не подставлено. Первый reserved/native query
+11:42:49UTC: `"A New Face for DSpace" "10.1045/november2007-phillips"`.
+Actual search link rows содержали частичные пути D-Lib и других сайтов, не точный
+URL целевой статьи. GLM не прочитал D-Lib source.
+
+GLM попытался отдельный HTTPS DOI resolver. Единственный его HTTP — robots.txt:
+status301; код отказал `No full allowing robots` до HTTP чтения статьи. Redirect
+robots не объявлен redirect к статье; отказ не обходился. Это ограничение
+конкретного acquisition route/guard, не доказательство недоступности статьи вообще.
+Остальные3nativequeries GLM выбрал сам: имя+МИФИ, имя, имя+DSpace repository.
+Прочитан mephi.ru200, bodySHA
+`f72f2c15cd730b8bedb750ca697546b780dbc2bc2591b7319f3710641a4b60bc`;
+главная страница не устанавливает персональную аффилиацию. Дополнительная попытка
+DDG до обязательного query отклонена кодом; HTTP/search для неё не начат.
+Эти2tool refusals сохранены отдельно от валидного binding и Sol результата.
+
+Candidate `A5054586424-Sdde198632266a734378a-F3000-4800-text` — буквальное окно
+ORCID3000–4800 с названием Adding OAI-ORE Support to Repository Platforms.
+Sol использовал полный корпус, включая продолжение даты, и классифицировал
+topic historical2009-05-18, usable1. Raw SHA
+`f9031650815a9bcbac63fc1f3fc1f6b6bace0f12379c7a793ab771d7d09563ac`.
+Identity supported по exact ORCID; current affiliation/activity insufficient,
+activity status unknown. Human gold0. Это техническая модельная оценка, не ручная
+истина; MEPhI/TexasA&M ambiguity не разрешена, принадлежность отсутствующего
+контакта не установлена. Unknown/conflicting identity тоже была допустима для C:
+требование supported не использовалось как критерий успеха контроля. Консервативная
+общая identity dependency processing policy не ослаблена.
+
+### Расход и остановка
+
+| Профильный job | Фактический usage | Wall, s |
+|---|---|---:|
+| GLM Pi |8requests; input43298 + cacheRead21120 + output8855 = total73273; cacheWrite0 |261.628 |
+| Full independent Sol |input42513/output1408 = total43921; cache0; reasoning291 уже внутри output |47.159 |
+
+Итого profiletokens117194/wall308.787s;4native search/8source toolcalls/4HTTP
+reserved и started (ORCID, DOIrobots, MEPhIrobots, MEPhIbody). Логические jobs2,
+cumulative43; preflight probes0inference не profilejobs. Sol toolcalls0;
+внутренние physicalrequests/backend/effective model Sol не exposed, requested
+OpenAI/gpt-6.1-sol/high подтверждены. Денежная стоимость/реальное профильное
+списание unknown, не0. Official accountwide weekly остаток82%11:29:32UTC→81%
+11:48:35UTC; изменение включает разработку/ревью/другую активность и не измеряет
+расход именно этой пары. Developer/reviewtokens отдельно не exposed.
+
+Execution terminal STOP11:47:34UTC, без runtime failure. Старые655mapped live3
+и77mapped partial files заново сверены; SHA/raw/метрики/STOP не переписаны.
+Новый root содержит новые evidence и refs старых индексов, без рекурсивного архива.
+
+### Проверки и окончательное решение
+
+26targeted adapter tests/280unittest/388pytest,8skip5deselect,coverage94.06%;
+lint/typecheck/docs-check и strict audit PASS. Local Docker history summary
+0commits/fatalnotrepository отдельно не засчитана: actual read-only common Git
+history scan519commits/no leaks, плюс currentCI audit. Initial actual Pi probe
+использовал старый manifest fixture; исправленная current-shaped fixture проверила
+20currentcodeSHA/caps41→43/oneprofile и actualPi0model/source/search4.175s.
+Actual frozen root probe2.946s тоже0inference. Первоначальная подготовка fixture
+завершилась FileNotFound до Pi, сохранена как инженерная ошибка, не скрыта.
+Независимый pre-live reviewer PASS0findings сверил freeze/request/CI mergeparents;
+финальные review/currentCI/handoff и transferSHA — в финальном комментарии PR194.
+
+Первый live запуск остановила автоматическая approval проверка до process/jobs:
+сочла отсутствующим явное согласие на payload/recipients. Повторно прочитано
+доверенное разрешение Бориса «Давай» и соответствующее поручение одного публичного
+GLM→Sol контроля. То же прямое действие после этой проверки разрешено; обхода,
+смены транспорта или дополнительных live попыток не было.
+
+**GLM автономный поиск для каталога не принимаем:** A не прошёл даже для одного
+известного targeted anchor. B/C показывают работоспособность буквального binding
+и полной независимой проверки уже прочитанного ORCID, но acquisition gap не
+устраняют. Это не универсальный вывод о модели или поиске вообще: границы —
+конкретные tools, search responses, robots policy и единственный кейс.
+
+Рекомендуемый fallback — ранее успешный **Sol-assisted поиск + обычный код +
+независимая проверка**, с ручным контролем; универсальный автономный CLI,
+массовое покрытие, экономия и production readiness не доказаны. Fallback не
+внедрён и не запущен. GLM оставить экспериментально там, где есть доказательство
+пользы. Экспериментальное сопровождение этой гипотезы закончено: никакой следующей
+десятки/минираунда/monitor/followup. Cron PAUSED; merge/mainpush/deploy/productdocs
+не выполнялись. Итоговая передача — собственные процессы/запись STOP.

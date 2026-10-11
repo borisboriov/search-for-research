@@ -4,7 +4,19 @@
 контроль. GLM допустим только как экспериментальный извлекатель кандидатов с
 обязательной независимой проверкой Sol по полной semantic-v3. Готовность
 полного гибридного конвейера не доказана; production-ready результат не заявлен.
-Новый live3 контроль выполнил 3GLM→3независимых Sol jobs: приняты 2/3 Sol packets,
+Заключительный targeted publication/DOI control завершён: **A acquisition fail,
+B literal extraction pass, C full independent Sol pass**. Свежий ORCID подтвердил
+заранее выбранные title/DOI, первый native query выполнен, но тело целевой статьи
+не прочитано. DOI resolver остановлен на robots301 без полного разрешающего файла;
+поисковые ссылки не дали точного URL статьи. Единственный новый кандидат —
+историческая тема другой ORCID работы2009; контактов0. Решение окончательное для
+этой гипотезы: автономный GLM search для каталога не принимаем. Рекомендуемый путь —
+ранее успешный Sol-assisted поиск + обычный код + независимая проверка; это рекомендация,
+не внедрённый универсальный автономный CLI. GLM остаётся экспериментальным
+извлекателем только там, где польза подтверждена. Новых минираундов и batch не назначено.
+[Generated final control](../metrics/enrichment_publication_control1_20261011.json).
+
+Предыдущий live3 контроль выполнил 3GLM→3независимых Sol jobs: приняты 2/3 Sol packets,
 из них один непустой. Один пакет отклонён по date guard, у второго нет фактов.
 Текущая конфигурация не годна для следующего контрольного batch без отдельного
 решения по этим отказам; новый запуск не назначен.
@@ -17,8 +29,8 @@ Partial остаётся отдельным результатом и не сч�
 и [Maslov trace](../metrics/enrichment_maslov_trace_offline_20261011.json)
 относятся к новой processing policy: model/source/search calls0, cumulative41.
 У Маслова DOI/title были видны GLM, но D-Lib URL/body не обнаружены и не читались;
-доказанного локального bug нет. Контроль discovery с отдельным publication query
-предложен в отчёте, не запускался. Следующий batch по-прежнему не назначен.
+доказанного локального bug нет. Заключительный publication control описан ниже;
+исторические результаты не переписаны.
 Исправление #197 устранило ложный отказ даты, но не исправляет смысл ответов:
 после локальной обработки приняты 5/6 raw, Маслов/GLM остаётся без обязательного
 activity.status, чрезмерно уверенные оценки актуальности сохраняются. Принятый
@@ -92,6 +104,25 @@ email не readiness, Human0. Новых jobs≤2 (1GLM+1Sol), cumulative41→�
 caps4search/20HTTP/24sourcecalls/12modelrequests/600sGLM/900sSol сохранены.
 Deadline2h включает подготовку и передачу; retries/repair/nextbatch0, reserve0.
 После единственного контроля — решение о ролиGLM, без нового минираунда.
+
+Фактический итог: A fail — свежих article body/targetURL/redirect нет; сохранены
+только ORCID200 и mephi.ru200,36fragments. После exact publication query GLM
+попробовал DOI resolver; robots301 вызвал `No full allowing robots` до чтения
+статьи. Остальные3query выбрал GLM, все4native запросы исчерпаны. B pass — один
+topic candidate из ORCID про Adding OAI-ORE Support to Repository Platforms,
+literal fragment/value ID и offsets проверены. Это другая работа2009, не контакт
+и не достижение acquisition target. C pass — полный Sol6.1/high проверил ровно
+этот кандидат и весь новый корпус; schema/task IDs/provenance/semantic-v3/date
+guards прошли. Topic historical2009-05-18; identity supported по совпадению
+ORCID, affiliation/activity insufficient, activity status unknown. MEPhI/TexasA&M
+ambiguity и принадлежность отсутствующего контакта не разрешены; Human0.
+
+Новых jobs2/cumulative43: GLM8requests/73273tokens (21120cacheRead внутри total),
+Sol43921tokens (cache0; reasoning291 внутри output),4search/8sourcecalls/4HTTP.
+Wall profile jobs308.787s; USD/списание unknown. Accountwide weekly остаток82→81%
+включает разработку/ревью/другую активность и не даёт стоимости этого профиля.
+Это один known targeted control, не coverage/economy/готовность1000профилей.
+Execution terminal STOP, cron PAUSED; fallback или новый batch не запускались.
 
 ## Что делал baseline
 
