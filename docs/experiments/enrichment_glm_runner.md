@@ -190,10 +190,13 @@ A5054586424 (Maslov, пропущенный historical контакт), A5054791
 использованы только для объяснения выбора и не входят в модельный вход.
 
 Обычный код объединяет все сохранённые source records baseline flexible10 и
-remaining6 для каждого человека, устраняя дубли по URL/bodySHA/textSHA и сортируя
+remaining6 для каждого человека, включая все уже сохранённые `rendered-sources`,
+устраняя дубли по URL/bodySHA/textSHA и сортируя
 по той же тройке. `checked_source` проверяет bytes/деривацию; исторические PDF
 воспроизводятся прежним checksum-allowlisted parser. Каждый static text целиком
-разбит на фрагменты1800 символов с шагом1500; CRLF сохраняется. Всем фрагментам
+разбит на фрагменты1800 символов с шагом1500; CRLF сохраняется. Старое проверенное
+Math-Net rendering воспроизводится только из сохранённых parent/decoder bytes;
+raw и rendered representations различаются во входе, dependency receipts копируются. Всем фрагментам
 и всем буквальным email matches присвоены ID с author/source/offset. Контекст
 не выбирается по адресам или будущим ответам. Полный source Maslov с контактом2007
 добавлен явно из baseline обеим моделям: в новых acquired remaining6 телах

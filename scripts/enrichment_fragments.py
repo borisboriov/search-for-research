@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from enrichment_contact_first import EMAIL, checked_source
+from enrichment_contact_first import digest as source_digest
 from enrichment_experiment import FIELDS, now, private_root, read, sha
 from enrichment_glm_compare import legacy_pdf_text
 from enrichment_native import array, execute, normalized_provenance, obj, schema, string
@@ -89,7 +90,11 @@ def catalog(author_id: str, records: list[dict[str, Any]]) -> dict[str, Any]:
                 k: record[k]
                 for k in ("url", "body_sha256", "text_sha256", "source_kind", "checked_at")
             }
-            | {"source_id": source_id, "characters": len(text)}
+            | {
+                "source_id": source_id,
+                "characters": len(text),
+                "representation": record.get("representation", "checked_static"),
+            }
         )
         intervals = []
         for start in range(0, len(text), 1500):
@@ -229,6 +234,44 @@ def seal_check(root: Path, index_name: str) -> dict[str, Any]:
     }
 
 
+def saved_source_paths(parent: Path, author_id: str) -> list[Path]:
+    """Include existing reproducible rendered representations, never prepared answers."""
+    return sorted(
+        path
+        for folder in ("sources", "rendered-sources")
+        for path in (parent / folder / author_id).rglob("source-*.json")
+    )
+
+
+def snapshot_source(root: Path, path: Path) -> dict[str, str]:
+    """Preserve validated raw/derivation receipts and all decoder dependencies."""
+    saved: dict[str, str] = {}
+
+    def save(file: Path) -> None:
+        target = root / "source-snapshots" / (sha(file) + file.suffix)
+        if not target.exists():
+            immutable_bytes(target, file.read_bytes())
+        saved[str(file)] = str(target.relative_to(root))
+
+    record = read(path)
+    save(path)
+    for field in ("body_path", "decoded_path", "text_path"):
+        save(path.parent / record[field])
+    request_key = source_digest(
+        (record.get("request_kind", record["source_kind"]) + chr(0) + record["url"]).encode()
+    )
+    save(path.parent / f"request-result-{request_key}.json")
+    if record.get("api_policy_record_path"):
+        save(Path(record["api_policy_record_path"]))
+    if record.get("parent_source_path"):
+        saved.update(snapshot_source(root, Path(record["parent_source_path"])))
+    if record.get("decoder_receipt_path"):
+        decoder = Path(record["decoder_receipt_path"])
+        save(decoder)
+        save(decoder.parent / read(decoder)["body_path"])
+    return saved
+
+
 def freeze(args: Any) -> dict[str, Any]:
     if args.root.exists():
         raise ValueError("Offline root must be new")
@@ -275,7 +318,7 @@ def freeze(args: Any) -> dict[str, Any]:
         records = {}
         maps = []
         for parent, _ in roots:
-            for path in sorted((parent / "sources" / aid).glob("source-*.json")):
+            for path in saved_source_paths(parent, aid):
                 record = read(path)
                 _, text = checked_source(
                     path.parent, record, pdf_extractor=lambda raw: legacy_pdf_text(previous, raw)
@@ -284,21 +327,18 @@ def freeze(args: Any) -> dict[str, Any]:
                 records[key] = {
                     k: record[k]
                     for k in ("url", "body_sha256", "text_sha256", "source_kind", "checked_at")
-                } | {"text": text}
-                for field in ("body_path", "decoded_path", "text_path"):
-                    src = path.parent / record[field]
-                    dst = root / "source-snapshots" / (sha(src) + src.suffix)
-                    if not dst.exists():
-                        immutable_bytes(dst, src.read_bytes())
-                dst = root / "source-snapshots" / (sha(path) + ".json")
-                if not dst.exists():
-                    immutable_bytes(dst, path.read_bytes())
+                } | {
+                    "text": text,
+                    "representation": record.get("rendering_method", "checked_static"),
+                }
+                dependencies = snapshot_source(root, path)
                 maps.append(
                     {
                         "source_record_path": str(path),
                         "source_record_sha256": sha(path),
                         "text_sha256": record["text_sha256"],
                         "source_root": str(parent),
+                        "copied_dependencies": dependencies,
                     }
                 )
         corpus = {

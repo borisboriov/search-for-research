@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from enrichment_fragments import CASES, catalog, hydrate, run
+from enrichment_fragments import CASES, catalog, hydrate, run, saved_source_paths, snapshot_source
 
 
 def fixture() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
@@ -84,6 +84,58 @@ def fixture() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
 
 
 class FragmentTests(unittest.TestCase):
+    def test_saved_source_inventory_includes_rendered_records_but_not_old_answers(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for folder in ("sources", "rendered-sources", "prepared"):
+                path = root / folder / "A1" / "source-same.json"
+                path.parent.mkdir(parents=True)
+                path.write_text("{}")
+            paths = saved_source_paths(root, "A1")
+            self.assertEqual(len(paths), 2)
+            self.assertEqual({p.parent.parent.name for p in paths}, {"sources", "rendered-sources"})
+
+    def test_rendered_snapshot_preserves_parent_decoder_and_receipts(self) -> None:
+        from enrichment_contact_first import digest
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            original = root / "original"
+            rendered = root / "rendered"
+            original.mkdir()
+            rendered.mkdir()
+            record = {
+                "url": "https://example.org/source",
+                "source_kind": "direct_http",
+                "body_path": "body.bin",
+                "decoded_path": "decoded.txt",
+                "text_path": "text.txt",
+            }
+            key = digest(("direct_http" + chr(0) + record["url"]).encode())
+            for directory in (original, rendered):
+                for filename in ("body.bin", "decoded.txt", "text.txt"):
+                    (directory / filename).write_bytes(b"saved literal bytes")
+                (directory / f"request-result-{key}.json").write_text("{}")
+            parent = original / "source.json"
+            parent.write_text(json.dumps(record))
+            decoder = original / "decoder.json"
+            decoder.write_text(json.dumps({"body_path": "decoder.js"}))
+            (original / "decoder.js").write_bytes(b"saved decoder bytes")
+            path = rendered / "source.json"
+            path.write_text(
+                json.dumps(
+                    record
+                    | {"parent_source_path": str(parent), "decoder_receipt_path": str(decoder)}
+                )
+            )
+            target = root / "new-root"
+            copied = snapshot_source(target, path)
+            self.assertIn(str(parent), copied)
+            self.assertIn(str(decoder), copied)
+            self.assertIn(str(original / "decoder.js"), copied)
+            for old, new in copied.items():
+                self.assertEqual(Path(old).read_bytes(), (target / new).read_bytes())
+
     def test_literal_crlf_email_and_historical_date_are_restored_without_identity_inference(
         self,
     ) -> None:
