@@ -1,0 +1,227 @@
+{
+  "kind": "offline_reprocessing_existing_raw",
+  "processing_version": "fragment-date-v2-orcid-employment-ms",
+  "processing_head": "b184377842884b3b7f943785de8ca452a4a6069a",
+  "manifest_sha256": "c2f1f5396813d3a3fa9c547bdb2507e4ca0e2f1e7cd5ff09e0202c9644395856",
+  "model_calls": 0,
+  "source_calls": 0,
+  "search_calls": 0,
+  "new_profile_jobs": 0,
+  "cumulative_reserved_unchanged": 35,
+  "human_gold": 0,
+  "raw_modified": false,
+  "historical_metrics_modified": false,
+  "rows": [
+    {
+      "author_id": "A5089458364",
+      "model": "GLM",
+      "raw_sha256": "5cdada2c45801f5e13e0473f068e0f05ad4b6a920dd9c9d3b015e07779a6bcdf",
+      "task_sha256": "9298c162c974f4f14000cda1a3017836a0eb513ccd212e6fac338b8c4bf6ed83",
+      "corpus_sha256": "913f2d689c7c08737001152b6793e2df8476044c8591b2d8596172d9212cffee",
+      "receipt_sha256": "55931481056fb9713120e509d560159d810721f71ba5160875704c4773a7f2c5",
+      "before": {
+        "status": "rejected",
+        "reason": "Date year absent from referenced saved evidence"
+      },
+      "after": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 4,
+        "accepted_personal_contacts": 1,
+        "normalized_sha256": "d3e9a647cac94ddfc714c95c55fa2cc87f0be77dc2df79609ba9ea80c3ddc2a8",
+        "date_guard": {
+          "policy": "fragment-date-v2-orcid-employment-ms",
+          "metadata_bindings": [
+            {
+              "source_id": "A5089458364-Sb86fd6644a761cd763de",
+              "json_path": [
+                "activities-summary",
+                "employments",
+                "affiliation-group",
+                0,
+                "summaries",
+                0,
+                "employment-summary",
+                "last-modified-date",
+                "value"
+              ],
+              "epoch_milliseconds": 1576026926116,
+              "utc": "2019-12-11T01:15:26.116000+00:00",
+              "information_date": "2019-12-11",
+              "evidence_refs": [
+                "A5089458364-Sb86fd6644a761cd763de-F1500-3300",
+                "A5089458364-Sb86fd6644a761cd763de-F3000-4800",
+                "A5089458364-S60cdbfe23c2a44093719-F6000-7779"
+              ],
+              "object_path": "/0000-0003-0365-8695/employment/8089983"
+            }
+          ]
+        },
+        "core_unchanged_from_historical": null
+      },
+      "processing_changed": true
+    },
+    {
+      "author_id": "A5089458364",
+      "model": "Sol",
+      "raw_sha256": "a5a7477906691472145e49f3e8b11ca9be0339fcedb27bed473e32ef7c1b8c60",
+      "task_sha256": "9298c162c974f4f14000cda1a3017836a0eb513ccd212e6fac338b8c4bf6ed83",
+      "corpus_sha256": "913f2d689c7c08737001152b6793e2df8476044c8591b2d8596172d9212cffee",
+      "receipt_sha256": "cb58178978b1079d9d0926a3b44ac87fb40341d808382c3cedc038a68248617d",
+      "before": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 4,
+        "accepted_personal_contacts": 1,
+        "historical_sha256": "003664d724acc537484f4812f1b070f00e9f708428f06d20a86734a652bb2c30"
+      },
+      "after": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 4,
+        "accepted_personal_contacts": 1,
+        "normalized_sha256": "d2c8235136ff74254dce81e30458768891e7c074239918f17d5bdb02f3bd1b56",
+        "date_guard": {
+          "policy": "fragment-date-v2-orcid-employment-ms",
+          "metadata_bindings": []
+        },
+        "core_unchanged_from_historical": true
+      },
+      "processing_changed": false
+    },
+    {
+      "author_id": "A5054586424",
+      "model": "GLM",
+      "raw_sha256": "811cafbb392a7f92c7281257534864cf7c82a9a0cfcc03664ba391f0fc4b6caa",
+      "task_sha256": "4debd954f9cc109e4441e69a2041e58e4b7a8075a9b2c5b5ef51357a0905d499",
+      "corpus_sha256": "8a0fa060ecbe8b01ac97d29558c4d72f7e46868e0b99000ce7a6db26599a9b6f",
+      "receipt_sha256": "8ad9d4c8bb36f3cc2f36b3143cd5ebdeaefc9181cf7ad11e22de7c7458c9ba37",
+      "before": {
+        "status": "rejected",
+        "reason": "Лишние или отсутствующие поля JSON schema"
+      },
+      "after": {
+        "status": "rejected",
+        "reason": "Лишние или отсутствующие поля JSON schema"
+      },
+      "processing_changed": false
+    },
+    {
+      "author_id": "A5054586424",
+      "model": "Sol",
+      "raw_sha256": "a15648ad8a5b97b2358bf38595128d7bb4942187ac741bee502a81d24257a34b",
+      "task_sha256": "4debd954f9cc109e4441e69a2041e58e4b7a8075a9b2c5b5ef51357a0905d499",
+      "corpus_sha256": "8a0fa060ecbe8b01ac97d29558c4d72f7e46868e0b99000ce7a6db26599a9b6f",
+      "receipt_sha256": "bbe7d3d06ba1f659327292e51f0bfa3bd75a72b634d7207bd50b7e36ab4acfae",
+      "before": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 2,
+        "accepted_personal_contacts": 1,
+        "historical_sha256": "c07e0fc761bc2a0694f0fecd9de1be72f7f2ecbd262a82a637ac58693e2f4059"
+      },
+      "after": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 2,
+        "accepted_personal_contacts": 1,
+        "normalized_sha256": "d6b51da8af9dedf0e5031386a0dccae29989722eda91c62b0f5c694062379078",
+        "date_guard": {
+          "policy": "fragment-date-v2-orcid-employment-ms",
+          "metadata_bindings": []
+        },
+        "core_unchanged_from_historical": true
+      },
+      "processing_changed": false
+    },
+    {
+      "author_id": "A5054791318",
+      "model": "GLM",
+      "raw_sha256": "c64a730311496a352881edfe818bda430749ccf99d0cabbd80fdf4920df2e514",
+      "task_sha256": "d297b73f7c8a4fd63926e3c379af98084aafcbb43d7a11642d3d48454c43e96c",
+      "corpus_sha256": "9f8686f0addca865cae4115da31adc929f9d0dcbb034cd0ed70fc60baa471fc0",
+      "receipt_sha256": "ff3c656d1472b7184ac46e9108eda464d65b868806268bf90d4f3375c9c8a314",
+      "before": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 7,
+        "accepted_personal_contacts": 1,
+        "historical_sha256": "31b61dcf394244af235c1b85415756dbe32c5f92c8e88ae7e233918cbc3fc2d5"
+      },
+      "after": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 7,
+        "accepted_personal_contacts": 1,
+        "normalized_sha256": "ad4f210463cacebe8df852ff08ce521d5c0d3a703eabbb62644aca5ccfea8bd2",
+        "date_guard": {
+          "policy": "fragment-date-v2-orcid-employment-ms",
+          "metadata_bindings": []
+        },
+        "core_unchanged_from_historical": true
+      },
+      "processing_changed": false
+    },
+    {
+      "author_id": "A5054791318",
+      "model": "Sol",
+      "raw_sha256": "8f75a3726ca1561f52b01832b6562fe78cc7e4401e7be34e8ac438c7057fc283",
+      "task_sha256": "d297b73f7c8a4fd63926e3c379af98084aafcbb43d7a11642d3d48454c43e96c",
+      "corpus_sha256": "9f8686f0addca865cae4115da31adc929f9d0dcbb034cd0ed70fc60baa471fc0",
+      "receipt_sha256": "d7f4461534db0da241b98cb99c326ba7aaf139431bbd6dfa366c696aec06fe1a",
+      "before": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 6,
+        "accepted_personal_contacts": 0,
+        "historical_sha256": "6b55267970962df02336dd60597ab256a6d4309b3de15d4fc83aa65b9ff3a634"
+      },
+      "after": {
+        "status": "accepted",
+        "reason": null,
+        "selected_atoms": 6,
+        "accepted_personal_contacts": 0,
+        "normalized_sha256": "b5f312fe6abbd1559be0e1f1beb4bfceda053d6cb7aab2dfadfd16ba09578034",
+        "date_guard": {
+          "policy": "fragment-date-v2-orcid-employment-ms",
+          "metadata_bindings": []
+        },
+        "core_unchanged_from_historical": true
+      },
+      "processing_changed": false
+    }
+  ],
+  "counts": {
+    "before": {
+      "accepted": 4,
+      "by_model": {
+        "GLM": 1,
+        "Sol": 3
+      },
+      "fully_accepted_pairs": 1
+    },
+    "after": {
+      "accepted": 5,
+      "by_model": {
+        "GLM": 2,
+        "Sol": 3
+      },
+      "fully_accepted_pairs": 2
+    }
+  },
+  "semantic_quality_confirmed": false,
+  "glm_replacement_accepted": false,
+  "nonregression_established": false,
+  "new_model_usage_tokens": 0,
+  "development_review_usage_measured": false,
+  "known_semantic_limitations_unchanged": [
+    "Isangulova GLM current affiliation/activity overconfidence",
+    "Maslov GLM missing activity.status; record status not person status",
+    "Kovalev GLM HELP2027 current and categorical conflicting affiliation; two ORCIDs unresolved"
+  ],
+  "parent_files_sha_rechecked_before": true,
+  "actual_subscription_debit": null,
+  "actual_cost_usd": null,
+  "private_analysis_sha256": "7e70e60d8319f222a24469ed5c5ea10b309009bb8097b71127c1c9f0893266ee",
+  "projection_version": "offline-date-public-v1"
+}

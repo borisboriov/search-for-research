@@ -2014,3 +2014,116 @@ partial с явным ограничением, а не доказательст
 Полный issue193 не закрывается; merge/deploy/production/продуктовая приёмка
 не заявлены. Изменения паспорта не требуются: принятые продуктовые цифры
 не меняются. Следующий эксперимент этим этапом не разрешается.
+
+## 2026-10-11: offline фикс #197 и повторная обработка шести saved raw
+
+[Отдельное поручение](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6107053375)
+разрешило исправить typed date guard и локально обработать уже сохранённые шесть
+raw paired3. Это новая версия **обработки**, без новых ответов моделей или сбора
+источников. Предел этапа08:15:33–10:15:33UTC. Sole writer работает в прежней
+собственной ветке; cron PAUSED, новых monitor/product messages нет.
+[Продуктовая проверка предыдущего partial](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6106563115)
+сохранена: замена Sol на GLM и качество nonregression не приняты.
+
+Фикс `b184377842884b3b7f943785de8ca452a4a6069a` вводит processing policy
+`fragment-date-v2-orcid-employment-ms`. Guard восстанавливает полный saved
+ORCID JSON из согласованных fragments, проверяет длину/textSHA, duplicate keys,
+source kind/endpoint и ORCID фиксированного профиля. Для source_metadata
+current_affiliation он сначала привязывает ровно один employment-summary к
+cited spans put-code/path/organization.name, затем проверяет ровно одно
+created-date/last-modified-date.value. Целые13-digit epoch milliseconds
+конвертируются детерминированно в UTC; календарная дата сравнивается с указанной
+точностью. JSON path определяется пропуском целых sibling values, без поиска
+подходящих чисел по всему тексту.
+
+Timestamp произвольного поля, коллекции employments, соседнего employment или
+works, строки/boolean/seconds, uncited metadata, иной ORCID и metadata update
+после saved checked_at отвергаются. Checked_at — только верхняя граница, не
+основание даты и не повышение до current. Поддержан узкий ORCID employment
+случай; прочие source_metadata пока unsupported, включая буквальные годы без
+типизированного основания. Обычный content literal-year guard, строгие IDs,
+spans, source binding и semantic-v3 сохранены. Model schema/prompt не изменены;
+raw status/verdict/date/explanation не дополняются.
+
+### Реальные сохранённые inputs и diff всех шести результатов
+
+Новый отдельный root:
+`/Users/boris/Experiments/search-for-research/enrichment-orcid-date-offline6-20261011`.
+Manifest фиксирует policy/head, parent indexSHA, snapshots точных task/corpus/
+raw/receipt и historical normalized/failure каждого случая. Baseline hydrate
+загружен из точного Git blob ccde0f9, новые вызовы model/native и network entrypoint
+заблокированы. Сам hydrate обеих версий выполнялся реально, без mock результата.
+Четыре baseline accepted outputs воспроизведены равными старым normalized,
+две baseline причины failure совпали со saved failure. Все raw после обработки
+проверены на неизменность. Parent sealed root перед обработкой проверен целиком:
+69217 mapped files и indexSHA `a246a34dfae999d0b150df8506586eb590379654653c720a72a433cbc0b0bd94`.
+
+[Generated offline metrics](../metrics/enrichment_orcid_date_offline6_20261011.json)
+содержат шесть before→after rows, inputs SHA, причины, metadata binding и counts;
+публичная проекция не включает сырые адреса. Private metrics/inputs/normalized/
+failures/code-snapshots и producing scripts сохраняются в новом root.
+
+| Случай | Модель | До: ccde0f9 | После: новая policy | Причина / граница |
+|---|---|---|---|---|
+| Исангулова A5089458364 | GLM | Rejected | Accepted4atoms | Typed employment last-modified-date даёт UTC2019-12-11; ложный literal-year отказ устранён. Raw affiliation supported/activity active и их переоценка нынешней актуальности сохраняются. |
+| Исангулова A5089458364 | Sol | Accepted4atoms | Accepted4atoms | Input/result/derived и flags равны историческим; контакт undated, affiliation insufficient/activity unknown. |
+| Маслов A5054586424 | GLM | Rejected | Rejected | По-прежнему отсутствует profile_assessments.activity.status; schema останавливает раньше date guard. Status из объяснения не додуман. |
+| Маслов A5054586424 | Sol | Accepted2atoms | Accepted2atoms | Core равен историческому; контакт historical2007, affiliation/activity unknown. |
+| Ковалёв A5054791318 | GLM | Accepted7atoms | Accepted7atoms | Core равен историческому; historical candidate2020, два ORCID не разрешены, HELP2027/current и affiliation/conflicting остаются ошибочными/чрезмерно уверенными оценками. |
+| Ковалёв A5054791318 | Sol | Accepted6atoms | Accepted6atoms | Core равен историческому; тот же DOI bridge учтён, personal contact conflicting/coverage0. |
+
+Итог обработки: **4→5accepted из6**, GLM1→2 из3, Sol3→3 из3,
+полностью нормализованные пары1→2 из3. Новых профильных jobs0, cumulative35
+неизменен; это не новый inference yield и не перезапись исторических метрик
+повторного paired3. Четыре ранее принятых результата сохраняют input/result/
+derived и flags; новые wrapper поля содержат лишь processing policy/provenance.
+Для вновь принятой Исангуловой source/result/derived созданы из неизменного raw,
+без новых модельных оценок. Все пять новых normalized содержат исходную
+model provenance и отдельную processing provenance с SHA raw/receipt/head.
+
+Конкретный позитивный saved случай: source
+`A5089458364-Sb86fd6644a761cd763de`, cited date span fragmentF1500-3300,
+object anchorsF3000-4800. JSON path:
+`activities-summary/employments/affiliation-group/0/summaries/0/employment-summary/last-modified-date/value`,
+object `/0000-0003-0365-8695/employment/8089983`, integer1576026926116 →
+UTC2019-12-11T01:15:26.116000+00:00. Calendar information_date2019-12-11
+совпала; даты создания/чтения/соседних объектов не подменяют это поле.
+Это подтверждает дату обновления employment record, а не нынешнюю занятость.
+
+### Проверки, ограничения и DoD
+
+Регрессии воспроизводят реальные field/put-code/path/epoch #197 в минимальном
+синтетическом record без частных контактов. Positive проверяет точный UTC и
+неизменность raw/profile assessments;16 negative variants проверяют units,
+типы, произвольное число, collection/work/neighbor metadata, foreign profile,
+wrong path, uncited field, reading date, future update, unknown date basis и
+попытку повысить contact до current. Реальный saved позитив дополнительно
+прошёл в offline reprocessing. Прежние ID/span/CRLF/исторические date tests
+сохранены.
+
+На fix head lint/typecheck PASS (133files),267 unittest/388pytest PASS,
+8skipped/5deselected, coverage94.06%. Начальный запуск make был заблокирован
+доступом к существующему uv cache; разрешённый повтор с UV_NO_SYNC использовал
+установленный lock, без новых зависимостей. Первый typecheck выявил только
+типизацию новых list/dict annotations; исправление прошло полный повтор.
+Доказательства strict audit, current CI actual checkout parents, независимого
+review и handoff отчётного head публикуются последним подтверждением
+[PR194](https://github.com/borisboriov/search-for-research/pull/194).
+
+DoD #197 реализован для документированного bounded employment policy:
+реальный saved case и отрицательные object/field/unit/citation/date случаи
+проверены, старые strict contracts сохранены. Issue остаётся открытой до
+отдельно разрешённого merge; Closes применим только к #197 при подтверждённом
+DoD. Полный #193 не закрывается. Финальные SHA-check всех прежних roots,
+новый самоисключаемый seal, process0 и write STOP фиксируются в PR.
+
+Новых model/source/search calls0; новые model usage tokens0 как следствие
+отсутствия jobs. Денежный расход/actual subscription debit разработки и ревью
+не измерены, остаются null; расход прежних шести jobs не переизмерялся и не
+прибавлялся второй раз. Human gold0. Guard acceptance не подтверждает истинность
+оценок: Исангулова GLM current affiliation/activity чрезмерно уверены; Маслов
+не имеет status и его record status не равен person status; Ковалёв GLM
+использует future2027/current и категоричное conflicting affiliation,
+принадлежность двух ORCID остаётся неизвестной. Nonregression/замена Sol на GLM,
+экономия полного collector, merge/deploy/продуктовая приёмка не заявлены.
+Следующий эксперимент не запускается; паспорт/productdocs не меняются.
