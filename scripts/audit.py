@@ -182,10 +182,12 @@ def step_bandit() -> Result:
     # шум, который утопил бы настоящие находки.
     if shutil.which("bandit") is None:
         return Result("code-bandit", SKIP, PY_TOOL_HINT.format(tool="bandit"))
-    cmd = ["bandit", "-r", "packages", "apps/api", "-ll", "-q"]
+    cmd = ["bandit", "-r", "packages", "apps/api", "enrichment/src", "-ll", "-q"]
     echo(cmd)
     proc = run(cmd)
-    return Result("code-bandit", OK if proc.returncode == 0 else FAIL, "packages + apps/api")
+    return Result(
+        "code-bandit", OK if proc.returncode == 0 else FAIL, "packages + apps/api + enrichment/src"
+    )
 
 
 def step_semgrep(tmp: Path) -> Result:

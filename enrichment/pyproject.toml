@@ -1,0 +1,16 @@
+[project]
+name = "sfr-enrichment"
+version = "0.1.0"
+description = "Sol-assisted public source enrichment and independent human review"
+requires-python = ">=3.12"
+dependencies = ["httpx>=0.27", "pypdf==6.19.0"]
+
+[project.scripts]
+sfr-enrichment = "sfr_enrichment.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sfr_enrichment", "research/legacy/sfr_enrichment_legacy"]

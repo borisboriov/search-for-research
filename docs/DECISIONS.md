@@ -2565,8 +2565,8 @@ root будущих ответов. Новая автоматическая ча
 **Альтернативы:** универсальный автономный crawler и новый слой orchestration
 увеличили бы scope; перезапись baseline или отдельная несовместимая human schema
 потеряли бы воспроизводимость. Используются существующие компоненты и явный
-ручной search handoff. [Методика](experiments/enrichment_glm_runner.md#sol-assisted-контакты-переносимый-offline-tested-workflow-11102026),
-[offline результат](reports/enrichment_night_20261009.md#sol-assisted-workflow-и-baseline-contact-cards--11102026).
+ручной search handoff. [Методика](../enrichment/research/methods/enrichment_glm_runner.md#sol-assisted-контакты-переносимый-offline-tested-workflow-11102026),
+[offline результат](../enrichment/research/reports/enrichment_night_20261009.md#sol-assisted-workflow-и-baseline-contact-cards--11102026).
 
 ## 2026-10-11 — контактные карточки v4: дата источника отдельно от current
 
@@ -2586,4 +2586,24 @@ current спрашивает о приведённых доказательст�
 отклонено: это меняет смысл человеческого решения. Потребовать проверку адреса
 письмом — вне поставленной задачи. Новый фреймворк/полная переработка рубрики
 не нужны: расширены существующие cards/export/import, отдельные source даты и
-current неизвестность сохраняются. [Live3 и границы](reports/enrichment_night_20261009.md#sol-assisted-live3-и-четыре-человеческих-вопроса--11102026).
+current неизвестность сохраняются. [Live3 и границы](../enrichment/research/reports/enrichment_night_20261009.md#sol-assisted-live3-и-четыре-человеческих-вопроса--11102026).
+
+## 2026-10-11: модуль enrichment и логическое архивирование без сжатия
+
+**Решение.** Поддерживаемый Sol-assisted runtime выделен в workspace пакет
+`enrichment/`, один `sfr-enrichment` CLI. Исторические GLM/night/Pi протоколы
+сохранены отдельно, старые entrypoints — адаптеры. Новый freeze хеширует
+фактический runtime, packaging/lock и неизменную рубрику. Архивы каталогизированы
+ссылками на оригиналы; старые bytes, paths, STOP, human records и seals сохранены.
+
+**Причина.** Смешанные eager imports тянули экспериментальную orchestration,
+а 92,9% logical bytes enrichment архивов приходятся на отдельные Pi snapshots
+с повтором накопленного текста. Рабочий native путь сохраняет один JSONL, raw,
+request/usage/receipt и ошибки. [Карта и измерения](../enrichment/research/INDEX.md)
+разделяют объём enrichment и контекст общего SFR checkout.
+
+**Альтернативы.** Новый orchestration framework и изменение алгоритмов не нужны.
+Delta-only replay не воспроизводит соседний старый snapshot; сжатие не выбрано
+по поручению Бориса. Физический перенос, dedup и удаление старых данных отложены
+до отдельного проверенного плана; место этим раундом не освобождено. Результаты
+baseline/human/live3 и их продуктовая приёмка не меняются.

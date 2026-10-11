@@ -40,6 +40,8 @@ LIVE_DOCS = [
     "AGENTS.md",
     "CLAUDE.md",
     "README.md",
+    "enrichment/README.md",
+    "enrichment/research/INDEX.md",
     "docs/README.md",
     "docs/product/README.md",
     "docs/product/brief.md",
@@ -90,6 +92,7 @@ ITERATION = re.compile(r"SFR(\d+[a-z]?)")
 PATH_TOKEN = re.compile(r"`([^`\n]+)`")
 REPO_DIRS = (
     "docs/",
+    "enrichment/",
     "scripts/",
     "packages/",
     "apps/",

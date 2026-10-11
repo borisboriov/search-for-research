@@ -17,6 +17,7 @@ members = [
     "search-for-research",
     "sfr-api",
     "sfr-core",
+    "sfr-enrichment",
     "sfr-etl",
     "sfr-match",
 ]
@@ -2756,6 +2757,21 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.8" },
     { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "sqlalchemy", specifier = ">=2.0" },
+]
+
+[[package]]
+name = "sfr-enrichment"
+version = "0.1.0"
+source = { editable = "enrichment" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pypdf" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
+    { name = "pypdf", specifier = "==6.19.0" },
 ]
 
 [[package]]

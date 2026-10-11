@@ -1,0 +1,364 @@
+{
+  "schema": "enrichment-storage-audit-v1",
+  "catalogue_at": "2026-10-11T14:57:33.996544+00:00",
+  "method": "lstat regular files; symlinks not followed; unique dev/inode across roots; allocated=st_blocks*512; APFS shared clone extents unknown",
+  "scope": "44 enrichment experiment directories; other SFR checkouts shown separately, not attributed to enrichment",
+  "experiments": {
+    "unique_files": 216235,
+    "logical_bytes": 12521097118,
+    "allocated_bytes": 12977324032,
+    "symlinks_not_followed": 0,
+    "hardlink_aliases": 0
+  },
+  "experiment_directories": 44,
+  "categories": {
+    "other_code_results_seals_and_evidence": {
+      "files": 9523,
+      "logical_bytes": 605356533,
+      "allocated_bytes": 632889344
+    },
+    "source_bodies_and_derivations": {
+      "files": 462,
+      "logical_bytes": 50683188,
+      "allocated_bytes": 51724288
+    },
+    "stream_logs": {
+      "files": 770,
+      "logical_bytes": 24405043,
+      "allocated_bytes": 26353664
+    },
+    "model_outputs_and_run_controls": {
+      "files": 5448,
+      "logical_bytes": 16325569,
+      "allocated_bytes": 35696640
+    },
+    "pi_full_event_snapshots": {
+      "files": 199863,
+      "logical_bytes": 11633708957,
+      "allocated_bytes": 12039651328
+    },
+    "human_records_and_packets": {
+      "files": 60,
+      "logical_bytes": 19922867,
+      "allocated_bytes": 20058112
+    },
+    "regenerable_cache": {
+      "files": 109,
+      "logical_bytes": 170694961,
+      "allocated_bytes": 170950656
+    }
+  },
+  "bounded_survey_context": {
+    "unique_files": 387467,
+    "logical_bytes": 38083866465,
+    "allocated_bytes": 39016140800,
+    "symlinks_not_followed": 98,
+    "hardlink_aliases": 0
+  },
+  "bounded_survey_roots": 77,
+  "unreadable_top_level": [
+    "Downloads: PermissionError"
+  ],
+  "archives": [
+    {
+      "name": "enrichment-contact-first-20261010",
+      "unique_files": 193,
+      "logical_bytes": 1486882,
+      "allocated_bytes": 2019328
+    },
+    {
+      "name": "enrichment-contact-first-authorized-20261010",
+      "unique_files": 110,
+      "logical_bytes": 263394,
+      "allocated_bytes": 638976
+    },
+    {
+      "name": "enrichment-contact-first-authorized-retry-20261010",
+      "unique_files": 139,
+      "logical_bytes": 694873,
+      "allocated_bytes": 1159168
+    },
+    {
+      "name": "enrichment-contact-first-exact-links-20261010",
+      "unique_files": 185,
+      "logical_bytes": 543922,
+      "allocated_bytes": 1163264
+    },
+    {
+      "name": "enrichment-contact-first-fresh-20261010",
+      "unique_files": 10,
+      "logical_bytes": 64034,
+      "allocated_bytes": 90112
+    },
+    {
+      "name": "enrichment-flexible10-20261010",
+      "unique_files": 866,
+      "logical_bytes": 41788385,
+      "allocated_bytes": 44367872
+    },
+    {
+      "name": "enrichment-fragment-offline3-20261011",
+      "unique_files": 12685,
+      "logical_bytes": 678888146,
+      "allocated_bytes": 704659456
+    },
+    {
+      "name": "enrichment-fragment-repeat3-20261011",
+      "unique_files": 69218,
+      "logical_bytes": 7169179242,
+      "allocated_bytes": 7311093760
+    },
+    {
+      "name": "enrichment-glm-remaining6-20261011",
+      "unique_files": 1317,
+      "logical_bytes": 15589579,
+      "allocated_bytes": 19976192
+    },
+    {
+      "name": "enrichment-glm-remaining8-20261011",
+      "unique_files": 533,
+      "logical_bytes": 8991300,
+      "allocated_bytes": 10612736
+    },
+    {
+      "name": "enrichment-glm-runner-live10-20261010",
+      "unique_files": 606,
+      "logical_bytes": 18655885,
+      "allocated_bytes": 20439040
+    },
+    {
+      "name": "enrichment-glm-runner-preflight-20261010",
+      "unique_files": 107,
+      "logical_bytes": 1582333,
+      "allocated_bytes": 1867776
+    },
+    {
+      "name": "enrichment-gpt-compact-v1-20261009",
+      "unique_files": 10,
+      "logical_bytes": 60987,
+      "allocated_bytes": 81920
+    },
+    {
+      "name": "enrichment-gpt-compact-v1-fixed-20261009",
+      "unique_files": 146,
+      "logical_bytes": 1264376,
+      "allocated_bytes": 1634304
+    },
+    {
+      "name": "enrichment-human-baseline-contacts-20261011",
+      "unique_files": 1,
+      "logical_bytes": 333083,
+      "allocated_bytes": 335872
+    },
+    {
+      "name": "enrichment-live3-independent-sol-20261011",
+      "unique_files": 656,
+      "logical_bytes": 13976233,
+      "allocated_bytes": 16080896
+    },
+    {
+      "name": "enrichment-live3-partial-offline-20261011",
+      "unique_files": 78,
+      "logical_bytes": 4268771,
+      "allocated_bytes": 4456448
+    },
+    {
+      "name": "enrichment-night-cli-v1-20261009",
+      "unique_files": 102,
+      "logical_bytes": 231601,
+      "allocated_bytes": 532480
+    },
+    {
+      "name": "enrichment-night-cli-v2-20261009",
+      "unique_files": 243,
+      "logical_bytes": 23483409,
+      "allocated_bytes": 24309760
+    },
+    {
+      "name": "enrichment-night-cli-v3-20261009",
+      "unique_files": 241,
+      "logical_bytes": 537864,
+      "allocated_bytes": 1355776
+    },
+    {
+      "name": "enrichment-night-cli-v3-fixed-20261009",
+      "unique_files": 873,
+      "logical_bytes": 2298842,
+      "allocated_bytes": 5353472
+    },
+    {
+      "name": "enrichment-night-cli-v4-20261009",
+      "unique_files": 1904,
+      "logical_bytes": 21013698,
+      "allocated_bytes": 27504640
+    },
+    {
+      "name": "enrichment-night-direct-http-canonical-20261010",
+      "unique_files": 37,
+      "logical_bytes": 266011,
+      "allocated_bytes": 364544
+    },
+    {
+      "name": "enrichment-night-direct-http-control-20261010",
+      "unique_files": 35,
+      "logical_bytes": 132890,
+      "allocated_bytes": 233472
+    },
+    {
+      "name": "enrichment-night-early-read-v6-control-20261010",
+      "unique_files": 6,
+      "logical_bytes": 17064,
+      "allocated_bytes": 32768
+    },
+    {
+      "name": "enrichment-night-early-read-v6-paired-20261010",
+      "unique_files": 528,
+      "logical_bytes": 1336116,
+      "allocated_bytes": 3137536
+    },
+    {
+      "name": "enrichment-night-literal-format-v5-fresh-20261010",
+      "unique_files": 493,
+      "logical_bytes": 650862,
+      "allocated_bytes": 2392064
+    },
+    {
+      "name": "enrichment-night-literal-format-v5-replay-20261010",
+      "unique_files": 17,
+      "logical_bytes": 126468,
+      "allocated_bytes": 163840
+    },
+    {
+      "name": "enrichment-night-literal-format-v5-replay-fixed-20261010",
+      "unique_files": 208,
+      "logical_bytes": 1410492,
+      "allocated_bytes": 1994752
+    },
+    {
+      "name": "enrichment-night-url-control-20261010",
+      "unique_files": 79,
+      "logical_bytes": 186065,
+      "allocated_bytes": 438272
+    },
+    {
+      "name": "enrichment-observed-links-hse-20261010",
+      "unique_files": 38,
+      "logical_bytes": 168370,
+      "allocated_bytes": 278528
+    },
+    {
+      "name": "enrichment-orcid-date-offline6-20261011",
+      "unique_files": 120,
+      "logical_bytes": 7925946,
+      "allocated_bytes": 8237056
+    },
+    {
+      "name": "enrichment-pi12-20261009",
+      "unique_files": 57084,
+      "logical_bytes": 546558254,
+      "allocated_bytes": 663650304
+    },
+    {
+      "name": "enrichment-pi12-high-20261009",
+      "unique_files": 21459,
+      "logical_bytes": 494853912,
+      "allocated_bytes": 538619904
+    },
+    {
+      "name": "enrichment-pipeline-handoff-20261011",
+      "unique_files": 46,
+      "logical_bytes": 379899,
+      "allocated_bytes": 516096
+    },
+    {
+      "name": "enrichment-publication-control1-20261011",
+      "unique_files": 348,
+      "logical_bytes": 4389237,
+      "allocated_bytes": 5492736
+    },
+    {
+      "name": "enrichment-search-contract-offline-20261010",
+      "unique_files": 24,
+      "logical_bytes": 137723,
+      "allocated_bytes": 200704
+    },
+    {
+      "name": "enrichment-sol-assisted-live3-20261011",
+      "unique_files": 220,
+      "logical_bytes": 11824746,
+      "allocated_bytes": 12443648
+    },
+    {
+      "name": "enrichment-sol-assisted-offline-20261011",
+      "unique_files": 69,
+      "logical_bytes": 4073631,
+      "allocated_bytes": 4255744
+    },
+    {
+      "name": "enrichment-validated-redirect-hse-20261010",
+      "unique_files": 45,
+      "logical_bytes": 1905862,
+      "allocated_bytes": 2052096
+    },
+    {
+      "name": "enrichment-verifier-benchmark-20261009",
+      "unique_files": 51,
+      "logical_bytes": 10726950,
+      "allocated_bytes": 10846208
+    },
+    {
+      "name": "enrichment-verifier-pair-20261009",
+      "unique_files": 15151,
+      "logical_bytes": 1031448293,
+      "allocated_bytes": 1062633472
+    },
+    {
+      "name": "enrichment-verifier-three-20261009",
+      "unique_files": 27553,
+      "logical_bytes": 1815390088,
+      "allocated_bytes": 1872089088
+    },
+    {
+      "name": "enrichment100-20261008",
+      "unique_files": 2401,
+      "logical_bytes": 581991400,
+      "allocated_bytes": 587517952
+    }
+  ],
+  "pi_snapshot_fixture": {
+    "archive": "enrichment-fragment-repeat3-20261011",
+    "event_basename": "013065-session-event.json",
+    "file_bytes": 131055,
+    "partial_equals_message": true,
+    "partial_json_bytes": 64852,
+    "message_json_bytes": 64852,
+    "delta_characters": 9,
+    "directory_event_files": 26118
+  },
+  "offline_equivalence": {
+    "prior_index_refs": 17,
+    "fully_checked_files": 2468,
+    "results": [
+      {
+        "root": "enrichment-flexible10-20261010",
+        "profiles": 10,
+        "usable_contacts": 8,
+        "classification_equality": true
+      },
+      {
+        "root": "live-v1",
+        "profiles": 3,
+        "usable_contacts": 2,
+        "classification_equality": true
+      }
+    ],
+    "real_human_record_preserved": true,
+    "rubric_bytes_equal": true,
+    "new_source_calls": 0,
+    "new_profile_jobs": 0,
+    "new_human_answers": 0,
+    "cumulative_profile_jobs": 46
+  },
+  "existing_data_moved_deleted_compressed": false,
+  "disk_reclaimed_bytes": 0
+}
