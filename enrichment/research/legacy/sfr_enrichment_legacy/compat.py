@@ -6,7 +6,13 @@ from typing import Any
 
 def alias_runtime(legacy: ModuleType, runtime: ModuleType) -> ModuleType:
     """Old mutations reach the actual globals; the supported CLI never imports this."""
-    names = frozenset(name for name in vars(runtime) if not name.startswith("__"))
+    # Same-name historical implementations (notably the Pi fallback) remain
+    # historical. Only shared objects can safely restore through both modules.
+    names = frozenset(
+        name
+        for name, value in vars(runtime).items()
+        if not name.startswith("__") and (name not in vars(legacy) or vars(legacy)[name] is value)
+    )
     for name in names:
         if name not in vars(legacy):
             vars(legacy)[name] = getattr(runtime, name)

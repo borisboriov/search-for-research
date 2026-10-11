@@ -2758,7 +2758,8 @@ probe пытался выполнить локальный `codex debug prompt-i
 
 Независимое ревью переноса выявило разрыв старых mock targets после извлечения
 helpers: patch прежнего native имени мог не перехватить фактический runtime.
-Compatibility adapters теперь передают подмены/восстановление runtime globals;
+Compatibility adapters теперь передают подмены/восстановление globals общих
+helpers; разные исторические функции изолированы и не заменяют runtime guards;
 проверено разрешение всех 87 прежних patch targets и отдельные native/source/PDF/
 atomic-write transport fixtures под offline guard. Повторная проверка относится
 к этому исправлению и актуальному committed head; исторические алгоритмы не

@@ -69,6 +69,19 @@ class ModuleBoundaryTests(unittest.TestCase):
         with patch("enrichment_glm_compare.subprocess.run") as mocked:
             self.assertIs(replay.legacy_pdf_text.__globals__["subprocess"].run, mocked)
 
+    def test_distinct_historical_helpers_never_replace_runtime_on_mock_restore(self) -> None:
+        compat = self.old_module("enrichment_contact_first")
+        for name in ("check_contact_input", "verify_contact_input"):
+            with self.subTest(name=name):
+                historical, current = getattr(compat, name), getattr(contacts, name)
+                self.assertIsNot(historical, current)
+                with patch("enrichment_contact_first." + name) as mocked:
+                    self.assertIs(getattr(compat, name), mocked)
+                    self.assertIs(getattr(contacts, name), current)
+                self.assertIs(getattr(compat, name), historical)
+                self.assertIs(getattr(contacts, name), current)
+                self.assertEqual(current.__module__, "sfr_enrichment.contacts")
+
     def test_supported_cli_has_no_historical_imports_or_pi_entry(self) -> None:
         script = (
             "import sys; import sfr_enrichment.cli; "
