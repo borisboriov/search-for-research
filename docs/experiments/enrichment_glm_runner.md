@@ -741,7 +741,8 @@ identity в более узком новом корпусе. **Для следу
 → буквальные кандидаты/проверка source SHA и непрерывных spans → отдельный native
 `gpt-6.1-sol/high` без веба и MCP → semantic-v3/date guards → локальные карточки
 и прогресс. GLM/fallback/repair не вызываются. Это контактный процесс, не полный
-сборщик всех 18 полей. Новых live jobs в этом раунде не было.
+сборщик всех 18 полей. В первоначальном offline scope live jobs не было;
+последующий ограниченный live3 описан ниже.
 
 ### Вход, assisted шаг и команды
 
@@ -814,15 +815,16 @@ bytes/text/registry SHA. Sol получает все static fragments реаль
 показаны раздельно. Usage completed native jobs — из receipts; search/development/
 review usage, реальный подписочный debit и доллары неизвестны, пока не измерены.
 
-### Пересоздать baseline карточки без вызовов
+### Пересоздать baseline карточки без вызовов (контактный протокол v4)
 
 Команда `saved` читает sealed flexible10 и allowlisted исторический PDF parser,
 проверяет оба transfer index и их mapped files, prepared input/source binding и
 полные старые semantic-v3 classifications. Исторические verdicts/45atoms не
 пересуждаются и не выдаются за результаты новых date guards. Новый packet показывает
 все10профилей: выбранные8личныхконтактов (3historical/5undated), два случая без
-принятого контакта с причинами отказа кандидатов. Новая человеческая проверка ещё
-не состоялась. Старые исходники, metrics, STOP, Pi12/live3/ранние humanrecords
+принятого контакта с причинами отказа кандидатов. Изначальные карточки v3 уже получили реальные ответы по восьми контактам: text/identity
+agree, прежний current uncertain. Это не приёмка остальных полей или доказательство
+актуальности. Новые вопросы v4 ещё не получили ответов. Старые исходники, metrics, STOP, Pi12/live3/ранние humanrecords
 остаются отдельными.
 
 ```sh
@@ -836,13 +838,23 @@ review usage, реальный подписочный debit и доллары н
   --legacy-index-sha256 a8413a08783b48e56fb46e5b9e4710c16a5d3b8bd63aa19683f9f2e75154dd85
 ```
 
-Открыть выведенный `human-v3/packets/baseline-contacts/review.html` локально.
-Для реально просмотренного контакта записать общее решение и отдельно text
-(цитата), identity (принадлежность), current (согласие с historical/undated оценкой).
-«Недостаточно оснований» разрешено по каждой оси: это не подтверждение текущей
-доставляемости. Комментарий позволяет пояснить сомнение или дату. Не просмотренные
-контакты не включать. Для двух профилей без принятого контакта answers не требуются;
-отсутствие принятого контакта не доказывает его отсутствия у человека.
+Открыть выведенный `human-v4/packets/baseline-contacts/review.html` локально.
+Для реально просмотренного контакта записать общее решение и четыре отдельные оси:
+
+- `text`: контакт буквально есть в цитате и совпадает с источником;
+- `identity`: контакт принадлежит указанному человеку;
+- `source_date`: согласие с приведённой датой/без даты/историческим характером
+  источника и основанием даты;
+- `current`: есть ли в приведённых источниках доказательство актуальности сейчас.
+
+«Недостаточно оснований» допустимо по каждой оси и не подтверждает current.
+Публикация email не доказывает доставляемость; письма и SMTP-проверки не нужны.
+Текущий список сотрудников может подтверждать аффилиацию на дату наблюдения
+(`observed_at`); просто доступная персональная страница может содержать старые
+сведения. От человека не требуется найти доказательство текущей актуальности.
+Исправление категории явно необязательно. Не просмотренные контакты не включать.
+Для профилей без принятого контакта answers не требуются; отсутствие принятого
+контакта не доказывает его отсутствия у человека.
 
 Ввести фактическое имя/минуты, подтвердить личный просмотр и нажать «Скачать мои
 решения». Автосохранения/отправки нет; скачать до закрытия страницы. Полученный
@@ -852,13 +864,18 @@ review usage, реальный подписочный debit и доллары н
 ```sh
 .venv/bin/python scripts/enrichment_human.py import \
   --root /absolute/separate-human-answers-root \
-  --manifest /absolute/new-human-packet-root/human-v3/packets/baseline-contacts/manifest.json \
+  --manifest /absolute/new-human-packet-root/human-v4/packets/baseline-contacts/manifest.json \
   --answers /absolute/baseline-contacts-human.json --record-id boris-baseline-contacts
 ```
 
-Контракт прежний `human_answers_v3`: packet SHA, claim IDs, реальные attestation/
-время, частичные answers; selected contact mode требует все3оси и отвергает скрытые
-claim IDs. Record помечен `review_scope: selected_personal_contacts`;
+Новые контактные пакеты/ответы/записи имеют схемы `human_packet_v4`,
+`human_answers_v4`, `human_record_v4` и каталог `human-v4`; packet SHA, claim IDs,
+реальные attestation/время и частичные answers сохраняются. Для выбранного контакта
+обязательны все четыре оси; скрытые claim IDs и смешение версий отвергаются. Общие
+карточки остаются v3. Importer принимает неизменённые старые v3 contact answers
+с тремя осями, но не добавляет `source_date` и не переинтерпретирует прежний вопрос
+`current`. В агрегатах он учитывается отдельно как `legacy_contact_current_v3`;
+реальные ранее сохранённые ответы и sealed packets не переписываются. Record помечен `review_scope: selected_personal_contacts`;
 `total_claims` — выбранные contacts, `total_original_claims` — исходные atoms.
 `all_selected_claims_reviewed` не означает `all_original_claims_reviewed` или
 приёмку профиля, а отсутствие человеческих ответов не превращается в gold.
@@ -866,6 +883,9 @@ Email не означает набор студентов. Ответы с им�
 
 [Результат offline проверки](../reports/enrichment_night_20261009.md#sol-assisted-workflow-и-baseline-contact-cards--11102026)
 и [сгенерированные агрегаты](../metrics/enrichment_sol_assisted_offline_20261011.json)
-фиксируют границу: mocked automatic pipeline и реальный saved export проверены,
-новый live assisted end-to-end запуск, массовая экономия и качество после human
-приёмки ещё не доказаны.
+фиксируют первоначальную offline границу. Последующий
+[live3](../reports/enrichment_night_20261009.md#sol-assisted-live3-и-четыре-человеческих-вопроса--11102026)
+прошёл на трёх известных профилях (3 validated outputs, 2 контакта), без retries.
+Это регрессия работоспособности; массовая экономия и слепое качество каталога не
+доказаны. Native raw/results первого прохода и старые ответы v3 сохранены;
+финальные карточки v4 после уточнения вопроса отдельно пересозданы без calls.

@@ -209,6 +209,7 @@ class AssistedTests(unittest.TestCase):
         self.assertIn("Четыре отдельные проверки контакта", html)
         self.assertIn("Исправить категорию (необязательно)", html)
         self.assertIn("просто живая персональная страница", html)
+        self.assertIn("Самостоятельно проверять работу адреса не требуется", html)
         self.assertEqual(manifest["schema"], "human_packet_v4")
         self.assertIn(URL + "A1", html)
         before = {

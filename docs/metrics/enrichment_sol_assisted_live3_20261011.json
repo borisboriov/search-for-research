@@ -1,0 +1,387 @@
+{
+  "schema": "sol-assisted-live3-metrics-v1",
+  "at": "2026-10-11T13:50:33.921427+00:00",
+  "code_head": "7b9a104ffa8831fdc219357a7f7a6abe94ac1a59",
+  "stage_deadline": "2026-10-11T16:30:19+00:00",
+  "purpose": "known regression sample; not blind catalog quality",
+  "profiles": [
+    {
+      "author_id": "A5054586424",
+      "name": "Alexey Maslov",
+      "selection_stratum": "historical",
+      "baseline_selected_contacts": 1,
+      "fresh_candidates": 5,
+      "fresh_usable_contacts": 1,
+      "exact_contact_overlap": 1,
+      "lost_accepted_contacts": 0,
+      "new_accepted_contacts": 0,
+      "overlap_human_text_identity_confirmed": 1,
+      "baseline_human_current_uncertain": 1,
+      "new_contacts_human_reviewed": 0,
+      "whole_profiles_accepted": 0,
+      "fresh_contact_dates": [
+        {
+          "date": "2007",
+          "date_basis": "content",
+          "classification": "historical",
+          "current_confirmed": false
+        }
+      ],
+      "fresh_profile_axes": {
+        "activity": {
+          "verdict": "insufficient",
+          "status": "unknown",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": "2007",
+          "date_basis": "content"
+        }
+      },
+      "readiness_known": false,
+      "source_hosts": [
+        "dlib.org",
+        "pub.orcid.org"
+      ],
+      "input_sha256": "a587624281edf5cd5d46eff3cd2ff4606a910ad15b9922c745bc8fe56be9fa93",
+      "result_sha256": "7af3d1c61c61ad8da797e83cdcae1b49c98303c2a399741813c61f338a1eef6b",
+      "model_usage": {
+        "input_tokens": 50259,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2771,
+        "reasoning_output_tokens": 713
+      },
+      "model_wall_seconds": 81.94071412086487,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "identity_limitation": "Maslov catalog MEPhI vs ORCID/TexasA&M current affiliation unresolved; contact identity supported on ORCID/source, not proof of catalog current employer",
+      "fresh_candidate_axes": [
+        {
+          "item_id": "contact_001",
+          "text_verdict": "supported",
+          "identity_verdict": "refuted",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "object_relation": "supported",
+          "information_date": "2007",
+          "date_basis": "content",
+          "current_applicability": "historical"
+        },
+        {
+          "item_id": "contact_002",
+          "text_verdict": "supported",
+          "identity_verdict": "refuted",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "object_relation": "supported",
+          "information_date": "2007",
+          "date_basis": "content",
+          "current_applicability": "historical"
+        },
+        {
+          "item_id": "contact_003",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "object_relation": "supported",
+          "information_date": "2007",
+          "date_basis": "content",
+          "current_applicability": "historical"
+        },
+        {
+          "item_id": "contact_004",
+          "text_verdict": "supported",
+          "identity_verdict": "refuted",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "object_relation": "supported",
+          "information_date": "2007",
+          "date_basis": "content",
+          "current_applicability": "historical"
+        },
+        {
+          "item_id": "contact_005",
+          "text_verdict": "supported",
+          "identity_verdict": "refuted",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "object_relation": "supported",
+          "information_date": "2007",
+          "date_basis": "content",
+          "current_applicability": "historical"
+        }
+      ],
+      "affiliation_observed_at": [
+        "2026-10-11T13:41:58.498000+00:00",
+        "2026-10-11T13:42:00.221895+00:00"
+      ]
+    },
+    {
+      "author_id": "A5042154547",
+      "name": "Maria S. Ledovskaya",
+      "selection_stratum": "undated",
+      "baseline_selected_contacts": 1,
+      "fresh_candidates": 1,
+      "fresh_usable_contacts": 1,
+      "exact_contact_overlap": 1,
+      "lost_accepted_contacts": 0,
+      "new_accepted_contacts": 0,
+      "overlap_human_text_identity_confirmed": 1,
+      "baseline_human_current_uncertain": 1,
+      "new_contacts_human_reviewed": 0,
+      "whole_profiles_accepted": 0,
+      "fresh_contact_dates": [
+        {
+          "date": null,
+          "date_basis": "unknown",
+          "classification": "undated",
+          "current_confirmed": false
+        }
+      ],
+      "fresh_profile_axes": {
+        "activity": {
+          "verdict": "supported",
+          "status": "active",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "current_affiliation": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "readiness_known": false,
+      "source_hosts": [
+        "chem.spbu.ru"
+      ],
+      "input_sha256": "f3b769cb4b0bd3d725c229c7c81afe843541120260a8b9ead3616b418561b0cb",
+      "result_sha256": "d5394083cf95844ac0d689e61311c3294ea38eb30053ece38a7cd774494297ce",
+      "model_usage": {
+        "input_tokens": 19384,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1343,
+        "reasoning_output_tokens": 407
+      },
+      "model_wall_seconds": 46.53210687637329,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "identity_limitation": null,
+      "fresh_candidate_axes": [
+        {
+          "item_id": "contact_001",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "object_relation": "supported",
+          "information_date": null,
+          "date_basis": "unknown",
+          "current_applicability": "undated"
+        }
+      ],
+      "affiliation_observed_at": [
+        "2026-10-11T13:43:28.603822+00:00"
+      ]
+    },
+    {
+      "author_id": "A5047877230",
+      "name": "Evgeny Styrin",
+      "selection_stratum": "no_accepted_contact",
+      "baseline_selected_contacts": 0,
+      "fresh_candidates": 1,
+      "fresh_usable_contacts": 0,
+      "exact_contact_overlap": 0,
+      "lost_accepted_contacts": 0,
+      "new_accepted_contacts": 0,
+      "overlap_human_text_identity_confirmed": 0,
+      "baseline_human_current_uncertain": 0,
+      "new_contacts_human_reviewed": 0,
+      "whole_profiles_accepted": 0,
+      "fresh_contact_dates": [],
+      "fresh_profile_axes": {
+        "activity": {
+          "verdict": "insufficient",
+          "status": "unknown",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "current_affiliation": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "readiness_known": false,
+      "source_hosts": [
+        "digitlab.hse.ru"
+      ],
+      "input_sha256": "340f355c10aafbb6d888432b3ad0d9700080b68f3b8fb714957594ec0f695700",
+      "result_sha256": "3b39a28104371884ddec0854c2e4106517b9da36cf494c8efc715e72eb3c8f7d",
+      "model_usage": {
+        "input_tokens": 20611,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1774,
+        "reasoning_output_tokens": 904
+      },
+      "model_wall_seconds": 63.456591844558716,
+      "backend_model": null,
+      "backend_effort": null,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "identity_limitation": null,
+      "fresh_candidate_axes": [
+        {
+          "item_id": "contact_001",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "insufficient",
+          "object_type": "laboratory",
+          "object_relation": "supported",
+          "information_date": null,
+          "date_basis": "unknown",
+          "current_applicability": "undated"
+        }
+      ],
+      "affiliation_observed_at": [
+        "2026-10-11T13:44:22.498213+00:00"
+      ]
+    }
+  ],
+  "progress": {
+    "method": "sol-assisted-contacts-v1",
+    "profiles": 3,
+    "validated_results": 3,
+    "native_outputs_saved": 3,
+    "source_reservations": 7,
+    "native_jobs_started": 3,
+    "unknown_started_jobs_no_retry": [],
+    "tokens_completed_native_jobs": {
+      "input_tokens": 90254,
+      "output_tokens": 5888,
+      "cached_input_tokens": 0
+    },
+    "subscription_debit": null,
+    "api_cost_usd": null,
+    "assisted_search_usage": null,
+    "development_review_usage": null,
+    "human_reviewed": 0,
+    "terminal_stop": true,
+    "search_implementation": "explicit_agent_step_not_available_in_this_CLI"
+  },
+  "search": {
+    "tool_calls": 11,
+    "logical_search_queries": 26,
+    "open_operations": 13,
+    "click_operations": 5,
+    "find_operations": 5,
+    "web_physical_HTTP": null,
+    "tokens": null,
+    "cache": null,
+    "subscription_debit": null,
+    "usd": null,
+    "started_at": "2026-10-11T13:33:42Z",
+    "finished_at": "2026-10-11T13:37:16Z"
+  },
+  "source_HTTP": {
+    "reservations": 7,
+    "finished": 7,
+    "physical_started": 7,
+    "statuses": {
+      "200": 7
+    },
+    "wall_seconds": 6.8835567939822795,
+    "cache": "per-source durable cache; initial fresh root, reused requests0",
+    "unknown_reserved": 0
+  },
+  "new_profile_model_jobs": 3,
+  "corrected_profile_jobs": 0,
+  "prior_cumulative": 43,
+  "cumulative": 46,
+  "GLM": 0,
+  "Astra": 0,
+  "human_baseline_contacts_text_identity_confirmed": 8,
+  "human_current_confirmed": 0,
+  "human_selected_baseline_contacts_in_this_sample": 2,
+  "new_contacts_human_reviewed": 0,
+  "new_v4_human_answers": 0,
+  "whole_profiles_human_accepted": 0,
+  "subscription_debit": null,
+  "development_review_tokens": null,
+  "api_cost_usd": null,
+  "old_offline_seal_unchanged": {
+    "index": "transfer-SHA-index-edada82.json",
+    "sha256": "0628589fd317a3b464e76b7d2f670bae30ffedfbedbc96b30133adc2736d6fdc",
+    "checked_files": 68
+  },
+  "limitations": [
+    "Known sample and same frozen10, not blind/new-catalog quality.",
+    "Agent-supplied search ledger; physical web HTTP and tokens/cache/debit unexposed.",
+    "New contacts are not human reviewed; prior8 are not re-reviewed.",
+    "Contact publication is not deliverability, current intake or readiness.",
+    "Maslov current MEPhI affiliation not established; ORCID/Manakin TexasA&M context ambiguous.",
+    "Browser visual UI not verified; actual v3 answers replay and synthetic in-memory v4 export/import tested."
+  ],
+  "live_result": "passed_all3",
+  "UI_rerender_after_live": {
+    "calls": 0,
+    "reason": "Actual native human questions asked address owner about present applicability; final cards instead ask reviewer to judge evidence without mail/SMTP",
+    "new_packets": [
+      "baseline-contacts-v4-final",
+      "live3-contacts-final"
+    ],
+    "frozen_live_code_head": "7b9a104ffa8831fdc219357a7f7a6abe94ac1a59"
+  },
+  "old_baseline_legacy_checks": [
+    {
+      "index": "transfer-SHA-index-d7883ed.json",
+      "sha256": "051331260c38f35cadbf3580cbddec217710a00550dde97791b73b36bdc251fc",
+      "checked_files": 865
+    },
+    {
+      "index": "transfer-SHA-index-92482b6.json",
+      "sha256": "a8413a08783b48e56fb46e5b9e4710c16a5d3b8bd63aa19683f9f2e75154dd85",
+      "checked_files": 1316
+    }
+  ],
+  "quota_observations": {
+    "before_remaining_percent": 77,
+    "after_remaining_percent": 76,
+    "account_wide": true,
+    "profile_stage_debit": null,
+    "includes_other_activity": true,
+    "purchases": 0,
+    "resets": 0
+  }
+}

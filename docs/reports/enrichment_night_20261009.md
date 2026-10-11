@@ -2597,3 +2597,134 @@ CI merge/base/head и окончательный transfer index/process-write ST
 в итоговом комментарии PR194. Вне результата остаются свежая live проверка нового
 CLI, человеческая приёмка и измерение полной assisted экономии; старые метрики
 не превращены в новый quality score. Merge/mainpush/deploy/productdocs не выполнялись.
+
+## Sol-assisted live3 и четыре человеческих вопроса — 11.10.2026
+
+По [постановке этапа](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6109566149)
+проверен реальный переносимый workflow на трёх заранее выбранных профилях
+frozen10: Maslov A5054586424 (historical), Ledovskaya A5042154547 (undated),
+Styrin A5047877230 (без принятого контакта). Выбор/sample/сравнение и конечный
+бюджет зафиксированы до поиска в новом частном root
+`enrichment-sol-assisted-live3-20261011`. Знакомая выборка проверяет регрессию
+работоспособности; это не слепой тест качества нового каталога.
+
+**Решение: live цепочка прошла на всех трёх профилях.** Новый Sol-assisted поиск
+→ observed URL plan → prepare/dry-run/run → реальные публичные источники →
+буквальные кандидаты/полный корпус → отдельный native gpt-6.1-sol/high с полной
+рубрикой → source/raw/schema/date guards → карточки. В первоначальном проходе
+3/3 validated outputs, 2 выбранных контакта и один содержательно отрицательный
+результат. Пустое покрытие Styrin не является техническим отказом. GLM/Astra
+профильных jobs0, исправительных profile jobs0, unknown started jobs0,
+автоматических повторов0; provider transport retries не раскрыты.
+Поисковый шаг остаётся явным агентским; универсальный автономный CLI не доказан.
+
+### Человеческие ответы и UX
+
+До этого этапа Борис реально экспортировал и импортировал восемь baseline
+contacts: text agree8/identity agree8/прежний current uncertain8. Его пояснение:
+не знает, как проверить актуальность. Это подтверждение двух осей восьми
+контактов, не приёмка восьми профилей или всех45atoms. Ответы с именем/заметками
+остались частными. Повторный импорт настоящего файла текущим importer дал
+запись, идентичную уже сохранённой; SHA исходного answers/record/старого packet
+сохранены. Прежний current не переинтерпретируется как согласие с исторической
+датой и не становится подтверждением актуальности.
+
+Новые контактные packets/answers/records v4 разделяют text, identity,
+**source_date** и **current**. Дата/без даты/исторический источник — отдельный
+вопрос от наличия доказательства актуальности сейчас. Не требуется писать
+учёному, проверять SMTP или самостоятельно доказывать актуальность.
+«Недостаточно оснований» допустимо и не подтверждает current. Исправление
+категории явно необязательно. Текущий официальный список сотрудников даёт
+основание для affiliation на observed_at; доступная персональная страница
+может быть старой, публикация email не доказывает доставляемость или набор.
+
+Схемы и каталоги v4 явные, importer сохраняет совместимость со старым v3;
+смешанные версии/скрытые claims/пропущенные обязательные оси отвергаются.
+В human_metrics старый смешанный вопрос учитывается как
+`legacy_contact_current_v3`, отдельно от новой current оси. Общие packets v3
+не менялись. Новых фактических v4 human answers0, предзаполненных решений0.
+
+Actual native question оказался обращён владельцу адреса и спрашивал текущую
+применимость. После live он заменён в UI вопросом к проверяющему о приведённых
+доказательствах. Frozen native raw/results/cards не переписаны; final baseline
+и live3 packets отдельно пересозданы без новых вызовов. Live run выполнен на
+code head7b9a104ffa8831fdc219357a7f7a6abe94ac1a59; финальное изменение касается
+этого UI вопроса, не acquisition/model/rubric/guards. Код freeze сохранён.
+
+### Сравнение по профилям
+
+[Агрегаты](../metrics/enrichment_sol_assisted_live3_20261011.json) получены из
+actual receipts, literal inputs/results и private сравнения, без адресов/имени
+человека. В локальных final cards сохранены URL, цитаты, полные контексты,
+source/raw/input SHA, оси личности/поля/даты и provenance.
+
+| Профиль | Новый материал и результат | Сравнение с baseline и human | Affiliation / current / readiness |
+|---|---|---|---|
+| Maslov | D-Lib + новый public ORCID; 5 кандидатов, 1 usable личный контакт; дата2007/content, historical | Точное совпадение прежнего контакта, human text/identity agree; утраченных/новых принятых0 | Identity supported по источникам/ORCID; нынешняя affiliation insufficient, active unknown. Каталог МИФИ конфликтует с Texas A&M/Manakin контекстом; нынешний работодатель не установлен. Current/readiness не подтверждены. |
+| Ledovskaya | Официальный chemstaff СПбГУ; 1 кандидат/1 usable; undated/unknown basis | Точное совпадение прежнего контакта, human text/identity agree; утраченных/новых принятых0 | Identity/affiliation supported, active supported; observed_at13:43:28UTC. Страница говорит «с2024 по настоящее время», но дата обновления и нынешняя актуальность email неизвестны. Readiness не установлена. |
+| Styrin | Официальный digitlab staff ВШЭ; 1 кандидат/0 usable; адрес в блоке контактов лаборатории, personal field insufficient | Baseline тоже0принятых; overlap с human-confirmed8 отсутствует. Новый кандидат не human-reviewed | Identity/affiliation supported, observed_at13:44:22UTC; active unknown. Лабораторный адрес не автоматически личный контакт, current/readiness не установлены. |
+
+Overlap с человеческими ответами касается **только двух** выбранных baseline
+контактов; повторная человеческая проверка8/8 не проводилась. Новые результаты
+не human gold. Maslov source identity supported не доказывает правильность
+текущей каталожной affiliation; конфликт оставлен видимым, профиль не исправлялся.
+Сборщик здесь контактный: отсутствие claims про набор не является доказательством
+отсутствия готовности руководить или полноты остальных18полей.
+
+### Расход, бюджет и сохранность
+
+Конечный бюджет13:30:19–16:30:19UTC: search≤30, sourceHTTP≤90/30perprofile,
+profileSol≤6 (3initial + максимум1после конкретного исправления/профиль),600с/job,
+remaining_stop0 прямо разрешён. Все три initial jobs завершились существенно
+раньше deadline; дальнейшие calls остановлены. Новых профильных jobs3,
+**cumulative43→46**, без новых платных API, покупок, reset или смены аккаунта.
+
+- Явный отдельный Sol/high search:26logicalqueries/11webtoolcalls,
+  13open/5click/5find,13:33:42–13:37:16UTC. Агент не читал baseline URL/email/ответы
+  и не писал файлы. Observed plan не скопирован из baseline. Это агентский
+  discovery ledger, не независимый physical transport receipt. Webbackend
+  HTTP/tokens/cache/debit unknown; общий физический HTTP с этим backend не измерен.
+- PublicLoader:7reservations/7finished/7physicalHTTP, все200;3robots +3HTML +1ORCID.
+  Request wall sum6.884с, unknown reservations0; initial fresh root, reuse requests0.
+  SourceHTTP cap соблюдён. Роботный отказ DBLP/pid при поиске не обходился;
+  web Internal Error не назывался доказанным403/robots отказом.
+- Native Sol:90254input +5888output =96142tokens; cached0/cachewrite0.
+  Reasoning2024 уже включён в output, не прибавлен второй раз. Wall sum191.929с:
+  Maslov81.941, Ledovskaya46.532, Styrin63.457. Requested model/effort6.1-sol/high
+  сохранены, backend metadata не раскрыты; tools0, отдельные ephemeral contexts.
+- Official account-wide remaining77%→76%; включает разработку/поиск/другую
+  активность. Это не точный debit трёх профилей. Development/review/search usage,
+  фактические деньги и stage debit unknown/null.
+
+Заново сверены68mappedfiles предыдущего offline seal, baseline865 и historical
+legacy1316mappedfiles:0расхождений; реальные answers/record прежние. Прочие старые
+архивы не копировались рекурсивно и не выдавались за заново целиком проверенные.
+Новые материалы, receipts, raw, packet, private сравнение и инженерные logs
+хранятся в новом root. Собственные initial fixture/инженерные ошибки не стали
+profile jobs: первый сбор агрегатов ошибочно искал seconds в ledger, затем взял
+actual request receipts; старое сравнение и результаты не переписаны.
+
+### Проверки и границы приёмки
+
+15targeted assisted tests и8human tests PASS; synthetic in-memory JavaScript
+export actual final HTML для8baseline/2livecontacts проверил пустые/пропущенные
+ответы и четырёхосевой export с правильным packet SHA. Это не реальные human
+answers. Real v3 export/import совместимость подтверждена настоящим answers
+файлом. Визуальный browser UI по-прежнему не проверен; прежний file URL policy
+отказ не обходился.
+
+AGENTS lint/typecheck/docs-check PASS;295unittest/388pytest PASS
+(8skip/5deselect,coverage94.06%). Strict audit без images PASS; актуальные
+независимое review/base/head, CI, readonly handoff и окончательный SHA seal
+фиксируются в финальном комментарии PR194. Docker gitleaks из worktree не прочитал
+общую Git-историю (0commits/fatal) и не засчитан доказательством; actual common
+Git readonly отдельно проверен тем же pinned инструментом:522commits/no leaks
+до заключительного коммита; CI и staged scan проверяют финальное изменение.
+
+Live доказал работоспособность этой цепочки на трёх известных профилях;
+массовое покрытие, слепое качество нового каталога, нынешняя deliverability и
+полная экономика остаются непроверенными. Нужны реальные ответы на новый current
+вопрос, если пользователь хочет его оценить; отсутствие таких ответов техническое
+завершение не блокирует. Следующая партия/monitor не создаются. Cron PAUSED;
+merge/mainpush/deploy/productdocs/production не выполнялись. Собственные source/
+model процессы и запись явно останавливаются при окончательной передаче.
