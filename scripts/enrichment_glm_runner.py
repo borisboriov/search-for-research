@@ -716,7 +716,18 @@ def experiment(args: argparse.Namespace) -> dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "command", choices=("run", "freeze", "preflight", "collect", "verify", "summarize", "stop")
+        "command",
+        choices=(
+            "run",
+            "freeze",
+            "preflight",
+            "collect",
+            "verify",
+            "summarize",
+            "stop",
+            "offline-freeze",
+            "offline-run",
+        ),
     )
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--baseline", type=Path)
@@ -728,8 +739,23 @@ def main() -> None:
     parser.add_argument("--summary-suffix", choices=("", "-reconciled"), default="")
     parser.add_argument("--index", type=int, default=0)
     parser.add_argument("--remaining-percent", type=float)
+    parser.add_argument("--deadline")
     args = parser.parse_args()
-    if args.command in ("freeze", "run"):
+    if args.command in ("offline-freeze", "offline-run"):
+        from enrichment_fragments import freeze as offline_freeze
+        from enrichment_fragments import run as offline_run
+
+        if args.remaining_percent is None:
+            parser.error("offline stage requires actual --remaining-percent")
+        if args.command == "offline-freeze":
+            if not all(
+                (args.baseline, args.continuation_from, args.scope, args.scope_url, args.deadline)
+            ):
+                parser.error("offline-freeze requires sealed roots, scope/url and final --deadline")
+            value: Any = offline_freeze(args)
+        else:
+            value = offline_run(args.root, args.remaining_percent)
+    elif args.command in ("freeze", "run"):
         if (
             args.baseline is None
             or args.scope is None
@@ -742,7 +768,7 @@ def main() -> None:
         if args.command == "run":
             if args.remaining_percent is None:
                 parser.error("run requires actual --remaining-percent")
-            value: Any = experiment(args)
+            value = experiment(args)
         else:
             freeze(
                 args.root,

@@ -179,3 +179,62 @@ Sol1/30842tokens, cycle28/30. Эта версия метода ненадёжн�
 не выполнен; остальные5 без семантической оценки, human/gold0, экономия
 полного цикла неизвестна. Данные и ограничения — в отдельном разделе
 [отчёта](../reports/enrichment_night_20261009.md) и generated remaining6 JSON.
+
+## OFFLINE fragment-ID paired3: отдельный этап после 28/30
+
+Постановка [PR194](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6105694857)
+разрешает новый конечный этап, не обнуление старого счётчика. До inference
+зафиксирован порядок: A5089458364 (Исангулова, прежняя недословная цитата),
+A5054586424 (Maslov, пропущенный historical контакт), A5054791318 (Kovalev,
+сложная атрибуция чужих/общих контактов). Human0, прежние агентские результаты
+использованы только для объяснения выбора и не входят в модельный вход.
+
+Обычный код объединяет все сохранённые source records baseline flexible10 и
+remaining6 для каждого человека, устраняя дубли по URL/bodySHA/textSHA и сортируя
+по той же тройке. `checked_source` проверяет bytes/деривацию; исторические PDF
+воспроизводятся прежним checksum-allowlisted parser. Каждый static text целиком
+разбит на фрагменты1800 символов с шагом1500; CRLF сохраняется. Всем фрагментам
+и всем буквальным email matches присвоены ID с author/source/offset. Контекст
+не выбирается по адресам или будущим ответам. Полный source Maslov с контактом2007
+добавлен явно из baseline обеим моделям: в новых acquired remaining6 телах
+этого факта нет. Это проверка анализа общего корпуса, а не нового retrieval.
+
+Модели получают одинаковые task/corpus/order/schema и общую инструкцию плюс
+полную неизменённую semantic-v3. Выбирают value_id и evidence_refs; код буквально
+восстанавливает цитату/значение по offsets. Каждый выбранный атом получает все
+семантические оценки, identity/date/affiliation/activity/summary обязательны.
+Несуществующие/чужие ID, неверные spans/SHA, отсутствие собственного anchor,
+перенос чужих evidence и неопределённая дата с придуманным годом отвергаются.
+Год установленной даты должен буквально присутствовать в выбранном evidence
+(либо указанном metadata для source_metadata). Это проверка происхождения числа,
+не доказательство отношения даты к человеку или актуальности факта.
+Email — буквальный кандидат, его принадлежность код не определяет. Личные контакты
+не принимаются только по совпадению текста, без supported identity/object relation.
+
+Это интегрированный выбор и семантическая атрибуция в одном job на модель и
+человека, с полной рубрикой; самооценка не выдана за независимую вторую проверку
+своего извлечения. Независимость сравнения — разные контексты GLM и Sol.
+Совпадение моделей не human gold; расхождения и пропуски сохраняются.
+
+```sh
+UV_NO_SYNC=1 .venv/bin/python scripts/enrichment_glm_runner.py offline-freeze \
+  --root /absolute/new-offline-root \
+  --baseline /absolute/sealed-flexible10-root \
+  --continuation-from /absolute/sealed-remaining6-root \
+  --scope /absolute/scope.md --scope-url https://github.com/borisboriov/search-for-research/pull/194 \
+  --deadline FIXED_ISO_DEADLINE --remaining-percent ACTUAL_OFFICIAL_PERCENT
+UV_NO_SYNC=1 .venv/bin/python scripts/enrichment_glm_runner.py offline-run \
+  --root /absolute/frozen-offline-root --remaining-percent ACTUAL_OFFICIAL_PERCENT
+```
+
+Freeze требует чистый коммит, две прежние SHA-печати и ту же frozen10;
+сохраняет весь corpus, provenance/source snapshots, code/prompt/schema SHA.
+Максимум6 новых profile jobs (3GLM+3Sol), cumulative28→≤34, старый цикл28/30
+сохраняется. Конечный deadline≤3часа, ≤600секунд на job, без повторов и Astra.
+Общий prompt≤1000000 UTF-8 bytes; целый корпус сверх cap вызывает отказ без
+скрытого усечения. Pi требует ровно один tool-less model request и physical cap1;
+Sol — существующий изолированный native runner. Поиск и source вызовы0.
+Ошибка, фактический отказ квоты или deadline сохраняют partial/STOP, последующие
+jobs запрещены; offline исправление не разрешает дополнительный model job.
+Расходы разработки/ревью отделены от шести профильных попыток; деньги/debit,
+не раскрытые runtime, остаются unknown. Экономия полного коллектора не измеряется.

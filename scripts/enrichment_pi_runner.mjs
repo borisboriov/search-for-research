@@ -42,13 +42,18 @@ export function readerView(message) {
   });
   return {...message, result: {...message.result, content}};
 }
-export function createGuardedFetch(realFetch, record, isAllowed = () => true) {
+export function createGuardedFetch(realFetch, record, isAllowed = () => true, maxModelRequests = Infinity) {
   let stopped = false;
+  let modelRequests = 0;
   return async (...args) => {
     if (stopped) throw new Error('Access stopped after HTTP quota/access refusal');
     const rawUrl = args[0] instanceof Request ? args[0].url : String(args[0]);
     const url = new URL(rawUrl);
     if (!isAllowed(url)) throw new Error('Unapproved network endpoint');
+    if (url.pathname.startsWith('/api/coding/paas/v4/') && ++modelRequests > maxModelRequests) {
+      stopped = true;
+      throw new Error('Physical model request cap');
+    }
     const started = new Date().toISOString();
     const response = await realFetch(args[0], {...args[1], redirect: 'error'});
     const info = {started, finished: new Date().toISOString(), origin: url.origin,
@@ -88,8 +93,10 @@ export function verifierContext(context, instruction, userPrompt) {
   return {messages: [{role: 'system', content: instruction, timestamp: 0}, users[0]], tools: []};
 }
 export function createGuardedModelStream(stream, requested, record, assertHealthy = () => {}, input = null) {
+  let requests = 0;
   return (model, context, options) => {
     assertHealthy(); // SDK can swallow tool errors; never allow another physical model request.
+    if (++requests > (input?.maxRequests ?? Infinity)) throw new Error('Offline model request cap');
     const effective = {provider: model?.provider ?? null, model: model?.id ?? null,
       effort: options?.reasoning ?? null};
     if (Object.keys(requested).some(key => effective[key] !== requested[key]))
@@ -262,7 +269,8 @@ export async function main(requestPath) {
     emit({type: 'http', file, status: info.status, origin: info.origin, pathname: info.pathname});
   }, url => url.origin === 'https://api.z.ai' &&
     (url.pathname.startsWith('/api/coding/paas/v4/') ||
-     ['/api/mcp/web_search_prime/mcp', '/api/mcp/web_reader/mcp'].includes(url.pathname)));
+     (request.mode !== 'verify' && ['/api/mcp/web_search_prime/mcp', '/api/mcp/web_reader/mcp'].includes(url.pathname))),
+    request.method === 'fragment-offline3-v1' ? 1 : Infinity);
   const release = request.pi_release_dir || path.join(os.homedir(), '.pi/agent/install/releases/1.1.0');
   const pkg = path.join(release, 'node_modules/@earendil-works/pi-coding-agent/dist');
   const sdk = await import(pathToFileURL(path.join(pkg, 'index.js')).href);
@@ -284,8 +292,9 @@ export async function main(requestPath) {
   const queue = createSourceQueue();
   modelRuntime.streamSimple = createGuardedModelStream(modelRuntime.streamSimple.bind(modelRuntime),
     requested, data => persist('model-request-config', data), queue.assertHealthy,
-    request.method === 'cache-verifier-v1' ? {instruction: request.system_prompt,
-      userPrompt: JSON.stringify({task: request.task, output_json_schema: request.output_schema})} : null);
+    ['cache-verifier-v1', 'fragment-offline3-v1'].includes(request.method) ? {instruction: request.system_prompt,
+      userPrompt: JSON.stringify({task: request.task, output_json_schema: request.output_schema}),
+      ...(request.method === 'fragment-offline3-v1' ? {maxRequests: 1} : {})} : null);
   const mcp = request.mode === 'verify' ? null : sdk.createMcpExtension({
     logPath: path.join(runDir, 'mcp.log'),
     loadConfig: () => {

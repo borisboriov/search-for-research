@@ -20,7 +20,15 @@ from urllib.robotparser import RobotFileParser
 import httpx
 from enrichment_batch import Batch, encoded, immutable
 from enrichment_experiment import FIELDS, STATUSES, now, private_root, read, sha
-from enrichment_native import array, execute, normalized_provenance, obj, schema, string
+from enrichment_native import (
+    array,
+    deadline_timeout,
+    execute,
+    normalized_provenance,
+    obj,
+    schema,
+    string,
+)
 from enrichment_semantics import EXTRA_FIELDS, import_result, prepare_control, validate
 
 SEED = 19319420261009
@@ -582,13 +590,14 @@ def run_pi(
     *,
     config_override: dict[str, str] | None = None,
     method_override: str | None = None,
+    deadline_epoch: float | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     config: dict[str, str] | None
     if config_override is not None:
         if (
             stage != "pi_verifier"
             or config_override != HIGH_CONFIGS[stage]
-            or method_override != "cache-verifier-v1"
+            or method_override not in ("cache-verifier-v1", "fragment-offline3-v1")
         ):
             raise ValueError("Неверная явная cache verifier конфигурация")
         config = config_override
@@ -648,6 +657,7 @@ def run_pi(
         (directory / "stdout.jsonl").open("xb") as stdout,
         (directory / "stderr.log").open("xb") as stderr,
     ):
+        timeout_seconds = deadline_timeout(600, deadline_epoch)
         process = subprocess.Popen(
             ["node", str(RUNNER), "--request", str(directory / "request.json")],
             stdin=subprocess.PIPE,
@@ -656,7 +666,7 @@ def run_pi(
             text=True,
             bufsize=1,
         )
-        watchdog = threading.Timer(600, process.kill)
+        watchdog = threading.Timer(timeout_seconds, process.kill)
         watchdog.start()
         messages: queue.Queue[str | None] = queue.Queue()
 
@@ -671,135 +681,141 @@ def run_pi(
         started = time.monotonic()
         done = False
         stopped = False
-        while time.monotonic() - started < 600:
-            try:
-                line = messages.get(timeout=0.25)
-            except queue.Empty:
-                if process.poll() is not None:
-                    break
-                continue
-            if line is None:
-                break
-            stdout.write(line.encode())
-            stdout.flush()
-            row = json.loads(line)
-            if row["type"] == "reserve":
-                response: dict[str, Any] = {"id": row["id"], "allowed": False}
+        try:
+            while time.monotonic() - started < timeout_seconds:
                 try:
-                    if stage != "collector" or stopped:
-                        raise ValueError("Доступ источников остановлен или стадия проверки")
+                    line = messages.get(timeout=0.25)
+                except queue.Empty:
+                    if process.poll() is not None:
+                        break
+                    continue
+                if line is None:
+                    break
+                stdout.write(line.encode())
+                stdout.flush()
+                row = json.loads(line)
+                if row["type"] == "reserve":
+                    response: dict[str, Any] = {"id": row["id"], "allowed": False}
+                    try:
+                        if stage != "collector" or stopped:
+                            raise ValueError("Доступ источников остановлен или стадия проверки")
+                        if batch is None:
+                            raise ValueError("Отсутствует очередь сборщика")
+                        args = row["arguments"]
+                        if row["server"] == "zai_search" and row["tool"] == "web_search_prime":
+                            kind, target = "search", args["search_query"]
+                        elif row["server"] == "zai_reader" and row["tool"] == "webReader":
+                            kind, target = "page", args["url"]
+                            policy(root, batch, aid, target)
+                        else:
+                            raise ValueError("Неизвестный инструмент")
+                        operation = reserve(root, batch, aid, kind, target)
+                        pending[(row["server"], row["rpc_id"])] = (operation, time.time(), row)
+                        event(
+                            root,
+                            {
+                                "action": "mcp_reserved",
+                                "author_id": aid,
+                                "stage": stage,
+                                "operation": operation,
+                                "kind": kind,
+                                "target": target,
+                                "rpc_id": row["rpc_id"],
+                                "server": row["server"],
+                            },
+                        )
+                        response["allowed"] = True
+                    except (ValueError, KeyError) as exc:
+                        response["reason"] = str(exc)
+                        event(
+                            root,
+                            {
+                                "action": "source_denied",
+                                "author_id": aid,
+                                "stage": stage,
+                                "reason": str(exc),
+                                "server": row.get("server"),
+                                "arguments": row.get("arguments"),
+                            },
+                        )
+                    assert process.stdin is not None
+                    process.stdin.write(json.dumps(response) + "\n")
+                    process.stdin.flush()
+                elif row["type"] == "mcp_result" and (row["server"], row["rpc_id"]) in pending:
+                    operation, at, reservation = pending.pop((row["server"], row["rpc_id"]))
+                    raw = read(directory / "pi" / row["file"])
+                    result = raw["message"].get("result", {})
+                    outcome = (
+                        "error" if result.get("isError") or raw["message"].get("error") else "ok"
+                    )
+                    text = source_text(result)
+                    # Explicit refusal codes, not arbitrary page prose containing a year.
+                    if result.get("isError") or raw["message"].get("error"):
+                        if "429" in text:
+                            outcome, stopped = "429", True
+                        elif "403" in text:
+                            outcome, stopped = "403", True
                     if batch is None:
-                        raise ValueError("Отсутствует очередь сборщика")
-                    args = row["arguments"]
-                    if row["server"] == "zai_search" and row["tool"] == "web_search_prime":
-                        kind, target = "search", args["search_query"]
-                    elif row["server"] == "zai_reader" and row["tool"] == "webReader":
-                        kind, target = "page", args["url"]
-                        policy(root, batch, aid, target)
-                    else:
-                        raise ValueError("Неизвестный инструмент")
-                    operation = reserve(root, batch, aid, kind, target)
-                    pending[(row["server"], row["rpc_id"])] = (operation, time.time(), row)
+                        raise ValueError("Запрещённая source операция без очереди")
+                    batch.finish_operation(operation, outcome, time.time() - at)
+                    if outcome == "429" or (
+                        outcome == "403" and reservation["server"] == "zai_search"
+                    ):
+                        event(
+                            root,
+                            {
+                                "action": "service_stopped",
+                                "author_id": aid,
+                                "stage": stage,
+                                "status": outcome,
+                                "source": "mcp_result",
+                            },
+                        )
                     event(
                         root,
                         {
-                            "action": "mcp_reserved",
+                            "action": "source_finished",
                             "author_id": aid,
-                            "stage": stage,
                             "operation": operation,
-                            "kind": kind,
-                            "target": target,
-                            "rpc_id": row["rpc_id"],
-                            "server": row["server"],
+                            "kind": reservation["server"],
+                            "outcome": outcome,
+                            "raw_file": str((directory / "pi" / row["file"]).relative_to(root)),
+                            "arguments": reservation["arguments"],
+                            "checked_at": now(),
                         },
                     )
-                    response["allowed"] = True
-                except (ValueError, KeyError) as exc:
-                    response["reason"] = str(exc)
-                    event(
-                        root,
-                        {
-                            "action": "source_denied",
-                            "author_id": aid,
-                            "stage": stage,
-                            "reason": str(exc),
-                            "server": row.get("server"),
-                            "arguments": row.get("arguments"),
-                        },
-                    )
-                assert process.stdin is not None
-                process.stdin.write(json.dumps(response) + "\n")
-                process.stdin.flush()
-            elif row["type"] == "mcp_result" and (row["server"], row["rpc_id"]) in pending:
-                operation, at, reservation = pending.pop((row["server"], row["rpc_id"]))
-                raw = read(directory / "pi" / row["file"])
-                result = raw["message"].get("result", {})
-                outcome = "error" if result.get("isError") or raw["message"].get("error") else "ok"
-                text = source_text(result)
-                # Explicit refusal codes, not arbitrary page prose containing a year.
-                if result.get("isError") or raw["message"].get("error"):
-                    if "429" in text:
-                        outcome, stopped = "429", True
-                    elif "403" in text:
-                        outcome, stopped = "403", True
-                if batch is None:
-                    raise ValueError("Запрещённая source операция без очереди")
-                batch.finish_operation(operation, outcome, time.time() - at)
-                if outcome == "429" or (outcome == "403" and reservation["server"] == "zai_search"):
+                elif row["type"] == "http" and row["status"] in (403, 429):
+                    stopped = True
                     event(
                         root,
                         {
                             "action": "service_stopped",
                             "author_id": aid,
                             "stage": stage,
-                            "status": outcome,
-                            "source": "mcp_result",
+                            "status": row["status"],
+                            "origin": row["origin"],
+                            "pathname": row["pathname"],
                         },
                     )
-                event(
-                    root,
+                elif row["type"] == "done":
+                    done = True
+        finally:
+            if process.poll() is None:
+                process.kill()
+            returncode = process.wait()
+            watchdog.cancel()
+            immutable(
+                directory / "finished.json",
+                encoded(
                     {
-                        "action": "source_finished",
-                        "author_id": aid,
-                        "operation": operation,
-                        "kind": reservation["server"],
-                        "outcome": outcome,
-                        "raw_file": str((directory / "pi" / row["file"]).relative_to(root)),
-                        "arguments": reservation["arguments"],
-                        "checked_at": now(),
-                    },
-                )
-            elif row["type"] == "http" and row["status"] in (403, 429):
-                stopped = True
-                event(
-                    root,
-                    {
-                        "action": "service_stopped",
-                        "author_id": aid,
-                        "stage": stage,
-                        "status": row["status"],
-                        "origin": row["origin"],
-                        "pathname": row["pathname"],
-                    },
-                )
-            elif row["type"] == "done":
-                done = True
-        if process.poll() is None:
-            process.kill()
-        returncode = process.wait()
-        watchdog.cancel()
-        immutable(
-            directory / "finished.json",
-            encoded(
-                {
-                    "at": now(),
-                    "epoch": time.time(),
-                    "exit_code": returncode,
-                    "done": done,
-                    "pending_operations": [p[0] for p in pending.values()],
-                }
-            ),
-        )
+                        "at": now(),
+                        "epoch": time.time(),
+                        "exit_code": returncode,
+                        "done": done,
+                        "pending_operations": [p[0] for p in pending.values()],
+                    }
+                ),
+            )
     return import_pi(directory, aid, stage)
 
 
@@ -879,7 +895,7 @@ def import_pi(directory: Path, aid: str, stage: str) -> tuple[Path, dict[str, An
         "automatic_retries": 0,
         "stage": stage,
     }
-    if request.get("method") == "cache-verifier-v1":
+    if request.get("method") in ("cache-verifier-v1", "fragment-offline3-v1"):
         configs = [read(p) for p in (directory / "pi").glob("*-model-request-config.json")]
         expected_prompt = json.dumps(
             {"task": request["task"], "output_json_schema": request["output_schema"]},

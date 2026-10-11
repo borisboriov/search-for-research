@@ -458,3 +458,23 @@ test('main rejects swallowed capture failure despite normal empty collector JSON
     rmSync(dir, {recursive: true});
   }
 });
+
+test('offline fragment verifier denies a second physical model HTTP before network', async () => {
+  let physical = 0;
+  const bounded = createGuardedFetch(async () => {physical++; return new Response('ok');},
+    () => {}, () => true, 1);
+  await bounded('https://api.z.ai/api/coding/paas/v4/chat/completions');
+  await assert.rejects(bounded('https://api.z.ai/api/coding/paas/v4/chat/completions'), /Physical model request cap/);
+  await assert.rejects(bounded('https://api.z.ai/api/coding/paas/v4/chat/completions'), /stopped/);
+  assert.equal(physical, 1);
+});
+test('offline fragment verifier projects common tool-less input and stops another model turn', () => {
+  let calls = 0;
+  const prompt = '{"task":{}}';
+  const stream = createGuardedModelStream(() => {calls++;}, approved, () => {}, () => {},
+    {instruction: 'shared', userPrompt: prompt, maxRequests: 1});
+  const context = {messages: [{role: 'user', content: [{type: 'text', text: prompt}]}], tools: []};
+  stream({provider: 'zai', id: 'glm-5.3-flash'}, context, {reasoning: 'high'});
+  assert.throws(() => stream({provider: 'zai', id: 'glm-5.3-flash'}, context, {reasoning: 'high'}), /Offline model request cap/);
+  assert.equal(calls, 1);
+});
