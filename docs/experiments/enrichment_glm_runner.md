@@ -1,6 +1,15 @@
-# Ограниченный автономный сбор GLM: frozen10
+# Передача конвейера обогащения и решение по GLM
 
-Рабочий CLI: `scripts/enrichment_glm_runner.py`. Native Pi 1.1.0 использует
+**Состояние на 11.10.2026:** автономная замена Sol-сессии на GLM не прошла
+контроль. GLM допустим только как экспериментальный извлекатель кандидатов с
+обязательной независимой проверкой Sol по полной semantic-v3. Готовность
+полного гибридного конвейера не доказана; production-ready результат не заявлен.
+Исправление #197 устранило ложный отказ даты, но не исправляет смысл ответов:
+после локальной обработки приняты 5/6 raw, Маслов/GLM остаётся без обязательного
+activity.status, чрезмерно уверенные оценки актуальности сохраняются. Принятый
+формат и буквальная привязка не означают истинность. Human gold0.
+
+Существующий CLI: `scripts/enrichment_glm_runner.py`. Native Pi 1.1.0 использует
 существующую подписку Z.ai, GLM-5.3-Flash/high выбирает запросы, страницы,
 буквальные переходы и факты. Python сохраняет HTTP, кэш, robots, источники,
 лимиты и проверяет цитаты. Native Sol 6.1/high проверяет обе отдельные стороны
@@ -16,7 +25,11 @@
 Токены/время главной сессии и внутренняя физическая стоимость web.run неизвестны.
 Это не измеренная стоимость автономного сбора baseline.
 
-## Запуск и доказательства
+## Историческая live-команда и доказательства
+
+Следующая команда существует в CLI, но успешный полный автономный проход
+GLM→независимый Sol для frozen10 **не подтверждён**. Это описание исторического
+пути, не разрешение нового запуска; прежние roots имеют terminal STOP.
 
 После `uv sync --locked --all-packages --all-groups`:
 
@@ -47,6 +60,7 @@ rows; сниппеты не доказательства. Дополнитель
 CAPTCHA/challenge блокируют источник; обходов, логина и платных API нет.
 `replay` использует только тела источников frozen baseline и не имеет live
 fallback: он проверяет интерпретацию материалов, а не обнаружение источников.
+`run --mode replay` также вызывает GLM и Sol; это не повторная обработка raw.
 
 Новые PDF извлекаются locked pypdf 6.19.0. Чтобы не переписывать старые PDF
 цитаты/offsets, воспроизведение baseline использует снимок исходного pypdf
@@ -316,3 +330,189 @@ semantic classifications и даты не дополняются/не испра
 обработки шести saved raw используются новый root/версия, точные input SHA и
 старый cumulative35; raw/STOP/seals/исторические normalized и metrics неизменны.
 Новых model/source/search calls0; пропущенный activity.status не восстанавливается.
+
+## Практическая передача существующих путей
+
+| Путь | Что подтверждено | Роли и ограничение |
+|---|---|---|
+| Flexible10 | Сохранённые загрузки, 10 входов и native Sol checks | Обычный код связывает тела/деривации/цитаты; техническая Sol-сессия выбирала 23 web.run queries, страницы и планы. Этот успех не доказывает автономность GLM либо универсальную CLI-команду поиска. |
+| GLM live | Реальные bounded attempts и partial/STOP | GLM выбирает источники/кандидаты; Python ограничивает доступ и проверяет literal binding; Sol независимо проверяет отдельные стороны. Полный контроль не пройден; remaining6 дал только 1/6 пригодных пар. |
+| Offline3 | Шесть model jobs на трёх одинаковых сохранённых корпусах | GLM и Sol независимо анализировали корпус, поиска0. Это проверка анализа, не discovery; каждый ответ сам оценивает свой выбор, независимый второй verifier для GLM здесь не запускался. |
+| Raw replay после #197 | Локальная обработка прежних шести ответов: 5 accepted, 1 rejected | Только `hydrate`/semantic-v3/date guard; новых моделей, поиска и HTTP нет. Две пригодные пары не доказывают semantic correctness или качество полного поиска. |
+| Человек | Существуют локальные карточки и importer фактических ответов | Human records не заполнялись; human0 нельзя заменить совпадением моделей или проверкой технического агента. |
+
+### Команды и границы воспроизводимости
+
+Из корня checkout нужны Python≥3.12 и зависимости `uv.lock`/`pyproject.toml`;
+установка — `uv sync --locked --all-packages --all-groups` (при передаче только
+проверена по конфигурации, повторно не выполнялась). Ниже реально выполнены
+`--help`, затем read-only raw replay. Help завершается до dispatch:
+
+```sh
+.venv/bin/python scripts/enrichment_glm_runner.py --help
+.venv/bin/python scripts/enrichment_human.py packet --help
+.venv/bin/python scripts/enrichment_pair_human.py --root ./human-work generate --help
+```
+
+`freeze` и `offline-freeze` — подготовка новых roots, snapshot/проверка seals,
+corpus/schema/prompt и ограничений; `preflight` — проверка Pi без inference.
+Здесь они проверены по entrypoints, не исполнялись. `run`, `collect`, `verify`,
+`offline-run` и `run --mode replay` вызывают модели. `summarize` пересчитывает
+агрегаты из сохранённых результатов/receipts без моделей, **пишет** immutable
+metrics/public-metrics (суффикс `-reconciled` для разрешённого нового снимка);
+это не универсальный read-only replay и не команда fragment postprocessing.
+Terminal STOP старого root не снимается; подготовка нового запуска требует
+отдельного конечного поручения, нового root и scope/deadline/quota, не смены
+старых исторических лимитов. Ни одна из этих live-команд в этой передаче не
+запускалась. Исторический `sfr197-reprocess.py` содержит фиксированные root/head
+и является доказательством этапа, а не переносимым общим CLI.
+
+Для **повторного чтения и проверки шести уже полученных raw** используется
+существующий Python entrypoint `enrichment_fragments.hydrate`, без нового runner.
+Указать расположение копии sealed `enrichment-orcid-date-offline6-20261011` в
+`SFR_SAVED_ROOT`; имя домашней папки и исходный абсолютный путь не являются
+контрактом. Из корня checkout выполнить пример ниже через
+`.venv/bin/python - <<'PY' … PY`. Пример проверяет SHA четырёх inputs каждого
+ответа, внутреннюю связь task/corpus и неизменность raw; выводит только статусы.
+Он не проверяет весь старый архив или его внешние источники. Результат на коде
+#197: Isangulova/GLM и все Sol accepted, Kovalev/GLM accepted, Maslov/GLM rejected
+с `Лишние или отсутствующие поля JSON schema`; отсутствие activity.status
+установлено сравнением сохранённого raw/schema, не дополнено при обработке.
+
+```python
+import copy, hashlib, json, os, socket, sys
+from pathlib import Path
+from unittest.mock import patch
+sys.dont_write_bytecode = True
+sys.path.insert(0, "scripts")
+import enrichment_fragments as fragments
+from enrichment_native import normalized_provenance
+root = Path(os.environ["SFR_SAVED_ROOT"]).resolve()
+read = lambda p: json.loads(p.read_bytes())
+manifest = read(root / "manifest.json")
+rows = []
+with patch.object(fragments, "run_pi", side_effect=AssertionError("model forbidden")), \
+     patch.object(fragments, "execute", side_effect=AssertionError("model forbidden")), \
+     patch.object(socket, "create_connection", side_effect=AssertionError("network forbidden")):
+    for entry in manifest["inputs"]:
+        saved = {}
+        for kind in ("task", "corpus", "raw", "receipt"):
+            info = entry["files"][kind]
+            path = (root / info["snapshot"]).resolve()
+            assert path.is_relative_to(root)
+            assert hashlib.sha256(path.read_bytes()).hexdigest() == info["sha256"]
+            saved[kind] = read(path)
+        assert saved["task"]["corpus"] == saved["corpus"]
+        assert saved["task"]["input_sha256"] == entry["files"]["corpus"]["sha256"]
+        original = copy.deepcopy(saved["raw"])
+        try:
+            fragments.hydrate(saved["task"], saved["raw"],
+                normalized_provenance(saved["receipt"], "fragment_analysis"))
+            status, reason = "accepted", None
+        except ValueError as error:
+            status, reason = "rejected", str(error)
+        assert saved["raw"] == original
+        rows.append({"author_id": entry["author_id"], "model": entry["model"],
+                     "status": status, "reason": reason})
+print(json.dumps(rows, ensure_ascii=False, indent=2))
+```
+
+### Файлы для передачи и человеческая проверка
+
+Для указанного raw replay достаточно нового root #197: `manifest.json`,
+`inputs/<author_id>-<model>/{task,corpus,raw,receipt}.json` (24 файла), кода
+на зафиксированном head и lock. В `manifest.inputs[].files` находятся относительные
+snapshot paths и SHA. `normalized/` (5 файлов), `failures/` (1), `public-metrics.json`
+и `transfer-SHA-index-5a436c6.json` сохраняют результат/проверяемый снимок #197.
+SHA этого индекса: `a5543ca1336dfa7adcd8ca43b3b4844cc13c460c46a288d61fefa5cac4ee5f62`.
+Для воспроизведения именно исходного inference нужны также repeat3
+`tasks/`, `corpora/`, `instruction.txt`, `runs/…/request.json`, raw/receipts и
+manifest common-prompt SHA; это отдельный разрешаемый запуск, не текущий replay.
+SHA его `transfer-SHA-index-ccde0f9.json`:
+`a246a34dfae999d0b150df8506586eb590379654653c720a72a433cbc0b0bd94`.
+Старые roots доступны по ссылкам и SHA в `prior-seals-final-recheck.json` нового
+root #197; для этой docs-передачи их содержимое рекурсивно не копируется.
+Сами старые архивы, raw, metrics и STOP сохраняются.
+
+Модельные инструкции: collector `INSTRUCTION`/schema в
+`scripts/enrichment_glm_runner.py`; offline3 `instruction.txt` и `output_schema`
+в `scripts/enrichment_fragments.py`; полная rubric
+[semantic-v3](enrichment_verifier_v3.md). Requested configs —
+`HIGH_CONFIGS` в `scripts/enrichment_pi_pilot.py`: GLM-5.3-Flash/high и
+native gpt-6.1-sol/high; фактические backend model/effort runtime не раскрыл.
+Для Pi нужны Node, установленный Pi1.1.0 и его SDK/MCP configuration;
+`scripts/enrichment_pi_runner.mjs` использует release текущего пользователя,
+CLI extension пока привязан к layout Pi1.1.0. Native runner требует совместимый
+`codex exec` и собственный разрешённый доступ оператора. Python lock не ставит
+и не закрепляет эти внешние runtimes. Credentials/config аккаунта не копируются
+в пакет; перенос live runtime на другую машину не подтверждён. Live использует
+pypdf6.19.0; только старые allowlisted PDF требуют sealed snapshot pypdf6.10.0.
+Read-only raw replay не нуждается в Pi/Codex login, HTTP либо PDF parser snapshot.
+
+Имеющиеся незаполненные парные карточки — в root `enrichment-pi12-20261009`,
+`paired-human/packets/pi12-01`…`pi12-04/{cards.html,manifest.json}`; mapping хранится
+отдельно в `paired-human/unblinding/`. Это прежний Pi12, не новые offline3 пары.
+Можно открыть сохранённый `cards.html` локально; экспорт ответов сохраняет
+`actual_human_attestation`, имя, время и длительность. Импорт в **новую рабочую
+папку** оставляет sealed пакет и модельные ответы неизменными:
+
+```sh
+.venv/bin/python scripts/enrichment_pair_human.py --root ./human-work import-answers \
+  --manifest ./saved-packet/manifest.json --answers ./actual-human-answers.json
+.venv/bin/python scripts/enrichment_human.py packet --root ./human-work \
+  --entries ./human-entries.json --packet-id control-01
+.venv/bin/python scripts/enrichment_human.py import --root ./human-work \
+  --manifest ./human-work/human-v3/packets/control-01/manifest.json \
+  --answers ./actual-human-answers.json --record-id control-01
+```
+
+CLI формы подтверждены help/code, новые карточки/ответы в этой передаче не
+создавались и не импортировались. Single entries: `input_path`, `assessment_path`,
+`stratum` (`random/targeted/corrected/pilot`), `selection_reason`; v3 wrapper
+требует `result`, `input_sha256`, `classifications`. Paired generate принимает
+`input_path`, `result_paths={pi,native}`, `selection_reason` и `--blind-seed`;
+обе стороны должны оценивать **одинаковые items одного input**. Fragment wrapper
+`{input,result,derived}` непосредственно этим CLI не подходит, выбор items двух
+моделей различается: нельзя выдать готовые offline3 human cards за существующий
+артефакт. Нужна явно описанная проекция без изменения raw и смешивания items либо
+ручная проверка сохранённых evidence. Локальные entries/mapping с путями требуют
+переуказания мест хранения при переносе; сохранённый manifest не редактируется.
+Человек оценивает принадлежность, даты/применимость и нынешнюю аффилиацию отдельно;
+публикации и общие контакты не подтверждают готовность руководить.
+
+### Размеры, расход и оставшиеся условия
+
+Сохранённые файлы #197 и полные общие prompts repeat3 (UTF-8 bytes,
+не число токенов); task/corpus идентичны для двух моделей:
+
+| Corpus | Sources / fragments / literal email values | Corpus / task bytes | Raw GLM / Sol bytes | Prompt bytes |
+|---|---|---:|---:|---:|
+| A5089458364 | 4 / 54 / 3 | 136348 / 138104 | 13573 / 11529 | 141908 |
+| A5054586424 | 4 / 37 / 5 | 97910 / 99286 | 12757 / 7452 | 103157 |
+| A5054791318 | 10 / 188 / 26 | 471497 / 476911 | 17659 / 17095 | 478797 |
+
+Размеры файлов проверены чтением metadata сохранённых inputs #197; corpus/prompt
+показатели и usage взяты из [generated repeat3 metrics](../metrics/enrichment_fragment_repeat3_20261011.json).
+У группового live JSON cap600000bytes, у общего offline prompt cap1000000bytes;
+они не являются token/context limits провайдеров. Полный человек/корпус сверх
+cap отвергается с причиной, не скрыто усечён. За три прошлых jobs каждой модели:
+GLM280773tokens/1205.914s, Sol263699tokens/283.222s. Pi input/output/cache buckets
+раздельны, Sol cached input — подмножество input, reasoning — подмножество output;
+его нельзя прибавлять вторично. Оба cache0; GLM3 physical requests наблюдались,
+Sol3 logical CLI jobs, hidden physical requests неизвестны. Новая обработка
+не добавляет этот расход снова. Деньги/actual subscription debit неизвестны;
+SDK catalog cost не billing, расход разработки/review не измерен. Экономия
+full collector, 1000/10000 profiles и human accuracy не установлены.
+
+| Реальный пробел | Минимальное условие следующего честного e2e контроля |
+|---|---|
+| Неполный GLM output; semantic overclaims текущего состояния | Неполный ответ остаётся failure без придуманного status. Независимый Sol проверяет GLM candidates по полной rubric и сохраняет расхождения/unknown; дата metadata не повышает факт до current. |
+| Разные механизмы поиска | Зафиксировать доступные GLM native search/DDG tools и возможности Sol web.run: одинаковый текст запроса не делает retrieval одинаковым. Проверять реальные найденные bodies, пропуски и отказы, а не snippets. |
+| Нет полного успешного live→Sol пути | Одно отдельно разрешённое конечное e2e поручение с заранее выбранным малым набором, scope/лимитами/STOP, actual input/config/receipts и проверкой всех выбранных пар; нынешние 2/3 offline пары не заменяют этот контроль. |
+| Нет человеческого эталона и переносимого запуска поиска flexible10 | Явно определить human пакет/контракт для сравниваемых items, получить реальные ответы отдельно от моделей; описать и подтвердить runtime/dependencies на целевой машине. Пока качество и переносимость поиска остаются непроверенными. |
+| Неизвестная стоимость полного процесса | Разделить сбор, независимую проверку и development/review; сохранять раскрытый usage и неизвестные debit/physical costs. Без измерений не утверждать денежную экономию. |
+
+Эти условия не назначают новый эксперимент и не требуют серии дополнительных
+мини-раундов. Итог передачи — воспроизводимый read-only postprocessing и
+честные границы существующих инструментов. Cron PAUSED, профильные model/source/
+search calls этого этапа0; после передачи запись и собственные процессы STOP.

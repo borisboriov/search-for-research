@@ -2127,3 +2127,34 @@ DoD. Полный #193 не закрывается. Финальные SHA-check
 принадлежность двух ORCID остаётся неизвестной. Nonregression/замена Sol на GLM,
 экономия полного collector, merge/deploy/продуктовая приёмка не заявлены.
 Следующий эксперимент не запускается; паспорт/productdocs не меняются.
+
+
+## Практическая передача конвейера и решение по GLM — 11.10.2026
+
+Конечный docs-only этап после принятого offline фикса #197: модельные raw,
+исторические результаты, seals и STOP не изменены, новых profile/source/search
+jobs0. Существующий `hydrate` реально повторно обработал шесть inputs #197 с
+проверкой их SHA/task-corpus binding/raw equality:5 accepted,1 rejected;
+Маслов/GLM остаётся без activity.status. Это повторение обработки, не новое
+измерение качества или повторный inference. CLIhelp и entrypoints подготовки,
+суммаризации и human packets проверены; live/preflight/freeze не запускались.
+
+[Практические команды и файлы](../experiments/enrichment_glm_runner.md#практическая-передача-существующих-путей)
+разделяют flexible10 с поиском технической Sol-сессии, неуспешный автономный
+GLM live, offline3 с новым inference и read-only replay уже полученных raw.
+`--mode replay`/`offline-run` вызывают модели и не являются безопасным синонимом
+postprocessing. Переданы dependencies/instructions, относительные input paths,
+SHA старых evidence roots, существующие Pi12 human cards/CLI и явный пробел
+адаптации новых fragment outputs к human packet contract. Рекурсивная копия
+старых архивов не создаётся; текущие доказательства содержат лишь changed docs,
+CLIhelp/local replay/scoped review/CI и ссылки/SHA прежних корней.
+
+Решение: автономная замена Sol-сессии на GLM не прошла; GLM остаётся только
+экспериментальным извлекателем кандидатов с обязательной независимой проверкой
+Sol. Готовность полного гибридного pipeline и production readiness не доказаны.
+#197 исправляет происхождение даты, не semantic truth; missing status,
+переоценка актуальности и неразрешённая атрибуция двух ORCID сохраняются.
+Human gold0; деньги/debit/full collector economy неизвестны. Минимальные условия
+одного следующего честного e2e контроля перечислены в методике; следующий batch
+не назначен. Проверки документов, scoped independent review и current-head CI
+фиксируются последним подтверждением PR194. Cron PAUSED; финал — write/process STOP.
