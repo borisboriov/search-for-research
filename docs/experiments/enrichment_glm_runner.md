@@ -383,17 +383,21 @@ Terminal STOP старого root не снимается; подготовка 
 import copy, hashlib, json, os, socket, sys
 from pathlib import Path
 from unittest.mock import patch
+
 sys.dont_write_bytecode = True
 sys.path.insert(0, "scripts")
 import enrichment_fragments as fragments
 from enrichment_native import normalized_provenance
+
 root = Path(os.environ["SFR_SAVED_ROOT"]).resolve()
 read = lambda p: json.loads(p.read_bytes())
 manifest = read(root / "manifest.json")
 rows = []
-with patch.object(fragments, "run_pi", side_effect=AssertionError("model forbidden")), \
-     patch.object(fragments, "execute", side_effect=AssertionError("model forbidden")), \
-     patch.object(socket, "create_connection", side_effect=AssertionError("network forbidden")):
+with (
+    patch.object(fragments, "run_pi", side_effect=AssertionError("model forbidden")),
+    patch.object(fragments, "execute", side_effect=AssertionError("model forbidden")),
+    patch.object(socket, "create_connection", side_effect=AssertionError("network forbidden")),
+):
     for entry in manifest["inputs"]:
         saved = {}
         for kind in ("task", "corpus", "raw", "receipt"):
@@ -406,14 +410,23 @@ with patch.object(fragments, "run_pi", side_effect=AssertionError("model forbidd
         assert saved["task"]["input_sha256"] == entry["files"]["corpus"]["sha256"]
         original = copy.deepcopy(saved["raw"])
         try:
-            fragments.hydrate(saved["task"], saved["raw"],
-                normalized_provenance(saved["receipt"], "fragment_analysis"))
+            fragments.hydrate(
+                saved["task"],
+                saved["raw"],
+                normalized_provenance(saved["receipt"], "fragment_analysis"),
+            )
             status, reason = "accepted", None
         except ValueError as error:
             status, reason = "rejected", str(error)
         assert saved["raw"] == original
-        rows.append({"author_id": entry["author_id"], "model": entry["model"],
-                     "status": status, "reason": reason})
+        rows.append(
+            {
+                "author_id": entry["author_id"],
+                "model": entry["model"],
+                "status": status,
+                "reason": reason,
+            }
+        )
 print(json.dumps(rows, ensure_ascii=False, indent=2))
 ```
 
