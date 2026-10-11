@@ -529,3 +529,53 @@ full collector, 1000/10000 profiles и human accuracy не установлен�
 мини-раундов. Итог передачи — воспроизводимый read-only postprocessing и
 честные границы существующих инструментов. Cron PAUSED, профильные model/source/
 search calls этого этапа0; после передачи запись и собственные процессы STOP.
+
+
+## Разрешённый live3 → независимый Sol контроль
+
+Постановка [PR194](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6107652850)
+фиксирует только A5089458364/A5054586424/A5054791318: известные development случаи,
+не случайный контроль. До freeze offline проверяется минимальный adapter:
+`SourceHost` выдаёт стабильные source/fragment/value IDs, GLM выбирает кандидаты,
+код восстанавливает literal value/quote; raw/rendered representations сохраняются
+отдельно. Discovery/search snippets в корпус не входят. У GLM bounded text views,
+их усечение явно обозначено; Sol получает все fragments всех реально сохранённых
+live bodies с URL/body/text/source-record SHA, включая невыбранный GLM контекст.
+GLM identity/current_affiliation refs — evidence candidates, не verdicts.
+
+Новый `live3-freeze` принимает только каталоговые seeds исходного sample с
+точными provenance/SHA и фиксированными3ID, policy/scope/deadline; никаких старых
+email/pageURL/вердиктов/тел в GLM task. `live3-run` делает до3collector jobs и
+до3индивидуальных Sol6.1/high: оцениваются ровно GLM items, не ещё одно
+самостоятельное извлечение. Identity-only пакет проверяется; если нет ни items,
+ни identity refs — Sol skipped. Schema failure/raw остаются неизменными,
+обязательный status не дополняется. Код повторно проверяет полный saved corpus,
+неизменённую semantic-v3 и общий date provenance guard #197; metadata не currentfact.
+Ошибка одного profile output не повторяется и не отменяет остальные случаи;
+общая method/runtime/quota/deadline ошибка заканчивает этап с partial/STOP.
+
+До live выбран конечный budget: stage≤6jobs/cumulative35→≤41,
+GLM≤12physical requests/600s и24sourcecalls/person, shared search≤4/person/12total,
+HTTP≤20/person/60total (robots/redirects включены), host≤1rps, redirects≤5,
+hrefdepth≤6, HTML/JSON≤2MiB, PDF≤8MiB; Sol≤900s/person и полный prompt≤1000000UTF8bytes.
+Сверх prompt cap весь профиль skipped, без скрытого удаления источников/рубрики.
+Это прежние individual caps successful runtime remaining6 (6jobs/62requests),
+умноженные на3для общих HTTP/search; они не доказывают качество. Внутри run caps
+не повышаются. Deadline всего этапа12:34:36UTC11.10.2026 (3h от first-tool clock),
+reserve0 разрешён; retries/repair/Astra/paidAPI/reset/accountchanges0.
+
+```sh
+.venv/bin/python scripts/enrichment_glm_runner.py live3-freeze \
+  --root /absolute/new-live3-root --seed-sample ./catalog-seeds.json \
+  --orcid-policy ./official-ORCID-policy.json --scope ./scope.md \
+  --scope-url https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6107652850 \
+  --deadline 2026-10-11T12:34:36+00:00 --remaining-percent ACTUAL_OFFICIAL_PERCENT
+.venv/bin/python scripts/enrichment_glm_runner.py live3-run \
+  --root /absolute/frozen-live3-root --remaining-percent ACTUAL_OFFICIAL_PERCENT
+```
+
+Новый root один и immutable; прежние roots используются только как ссылки/SHA,
+а baseline сравнивается отдельно после live. Результат публикуется в существующем
+отчёте/PR после завершения, не предвосхищается этим описанием. Human0, Sol не gold,
+email deliverability/readiness/full collector economy не устанавливаются автоматически.
+Cron PAUSED, никакого следующего batch или monitor эта постановка не разрешает.

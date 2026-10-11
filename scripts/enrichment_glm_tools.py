@@ -66,6 +66,9 @@ class SourceHost:
         self.records: dict[str, Path] = {}
         self.failures: dict[str, str] = {}
         self.calls, self.searches = 0, 0
+        manifest = read(root / "manifest.json") if (root / "manifest.json").exists() else {}
+        self.fragment_ids = manifest.get("collector_interface") == "fragment-ids"
+        self.search_total = manifest.get("search_total", 40)
         orcid = str(profile.get("orcid", "")).rsplit("/", 1)[-1]
         if orcid:
             self.allowed[f"{ORCID_API}/{orcid}/record"] = 0
@@ -89,7 +92,7 @@ class SourceHost:
         if self.mode != "live" or not query.strip():
             raise ValueError("Live public search only")
         reservations = [read(p) for p in (self.root / "search").glob("*-reserved.json")]
-        if self.searches >= 4 or len(reservations) >= 40:
+        if self.searches >= 4 or len(reservations) >= self.search_total:
             raise ValueError("Frozen shared search cap")
         if any(
             r["author_id"] == self.aid
@@ -298,6 +301,7 @@ class SourceHost:
                 "next_start": start + 80,
                 "renderer_available": "document.write(decode_email(" in decoded,
             }
+        windows: list[dict[str, Any]]
         if query:
             hits = list(re.finditer(re.escape(query), static, re.I))[:12]
             windows = [
@@ -309,6 +313,33 @@ class SourceHost:
             ]
         else:
             windows = [{"start": start, "text": static[start : start + 8000]}]
+        if self.fragment_ids:
+            from enrichment_fragments import catalog
+
+            corpus = catalog(self.aid, [source | {"text": static}])
+            intervals = [(w["start"], w["start"] + len(w["text"])) for w in windows]
+            visible = {
+                ref: row
+                for ref, row in corpus["fragments"].items()
+                if any(row["start"] < end and row["end"] > begin for begin, end in intervals)
+            }
+            matching_count = len(visible)
+            visible = dict(list(visible.items())[:16])
+            values = {
+                key: row for key, row in corpus["values"].items() if row["fragment_id"] in visible
+            }
+            return {
+                "url": source["url"],
+                "sources": corpus["sources"],
+                "fragments": visible,
+                "matching_fragments": matching_count,
+                "view_truncated": matching_count > len(visible),
+                "values": values,
+                "text_chars": len(static),
+                "next_start": max((r["end"] for r in visible.values()), default=start),
+                "renderer_available": "document.write(decode_email(" in decoded,
+                "candidate_ids_NOT_personal_verdicts": True,
+            }
         candidates = [
             {"value": m[0], "quote": static[max(0, m.start() - 500) : m.end() + 500]}
             for m in list(EMAIL.finditer(static))[:32]
@@ -324,7 +355,91 @@ class SourceHost:
             "replay": self.mode == "replay",
         }
 
+    def full_corpus(self) -> dict[str, Any]:
+        """All actual live bodies, including raw and rendered; no discovery snippets."""
+        from enrichment_fragments import catalog
+
+        records = {}
+        paths = list(self.directory.glob("source-*.json"))
+        paths += list((self.root / "rendered-sources" / self.aid).rglob("source-*.json"))
+        for path in sorted(paths):
+            source = read(path)
+            _, text = checked_source(path.parent, source)
+            key = (source["url"], source["body_sha256"], source["text_sha256"])
+            records[key] = source | {
+                "text": text,
+                "source_record_path": str(path),
+                "source_record_sha256": sha(path),
+            }
+        corpus = {"author_id": self.aid, "profile": self.profile} | catalog(
+            self.aid, list(records.values())
+        )
+        by_key = {key: row for key, row in records.items()}
+        for source in corpus["sources"]:
+            original = by_key[(source["url"], source["body_sha256"], source["text_sha256"])]
+            source.update({k: original[k] for k in ("source_record_path", "source_record_sha256")})
+        by_id = {row["source_id"]: row for row in corpus["sources"]}
+        for fragment in corpus["fragments"].values():
+            source = by_id[fragment["source_id"]]
+            fragment.update(
+                {
+                    k: source[k]
+                    for k in ("url", "body_sha256", "text_sha256", "source_kind", "checked_at")
+                }
+            )
+        return corpus
+
+    def bind_ids(self, result: dict[str, Any]) -> dict[str, Any]:
+        corpus = self.full_corpus()
+        if result["author_id"] != self.aid or len(result["selections"]) > 16:
+            raise ValueError("Wrong author/item cap")
+        items, seen = [], set()
+        for row in result["selections"]:
+            key, refs = row["value_id"], row["evidence_refs"]
+            if key in seen or key not in corpus["values"]:
+                raise ValueError("Unknown/repeated value ID")
+            seen.add(key)
+            value = corpus["values"][key]
+            if not refs or len(refs) != len(set(refs)) or value["fragment_id"] not in refs:
+                raise ValueError("Selection lacks unique literal anchor")
+            if not set(refs) <= corpus["fragments"].keys():
+                raise ValueError("Unknown/foreign evidence ID")
+            fragment = corpus["fragments"][value["fragment_id"]]
+            literal = fragment["excerpt"][
+                value["start"] - fragment["start"] : value["end"] - fragment["start"]
+            ]
+            if row["field"] == "personal_contact" and value["kind"] != "email":
+                raise ValueError("Personal contact requires literal email ID")
+            if value["kind"] == "email" and literal != value["literal"]:
+                raise ValueError("Literal email changed")
+            items.append(
+                {"item_id": key, "field": row["field"], "value": literal, "evidence_refs": refs}
+            )
+        for refs in result["profile_evidence"].values():
+            if (
+                len(refs) > 8
+                or len(set(refs)) != len(refs)
+                or not set(refs) <= corpus["fragments"].keys()
+            ):
+                raise ValueError("Unknown/duplicate profile evidence ID")
+        immutable_json(self.root / "corpora" / f"{self.aid}.json", corpus)
+        return {
+            "author_id": self.aid,
+            "items": items,
+            "evidence_pool": corpus["fragments"],
+            "source_catalog": corpus["sources"],
+            "profile_evidence": result["profile_evidence"],
+            "field_statuses": {},
+            "provenance": {
+                "agent_id": "pi-cli:live3:" + self.aid,
+                "collector_kind": "glm_live_fragment_ids",
+                "model_called": True,
+            },
+        }
+
     async def bind(self, result: dict[str, Any]) -> dict[str, Any]:
+        if self.fragment_ids:
+            return self.bind_ids(result)
         pool: dict[str, Any] = {}
 
         async def evidence(row: dict[str, Any]) -> str:

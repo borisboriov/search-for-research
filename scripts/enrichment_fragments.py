@@ -352,6 +352,19 @@ def hydrate(
     }
     result = {k: v for k, v in raw.items() if k != "selections"} | {"provenance": provenance}
     derived = validate(source, result, task["input_sha256"])
+    return {
+        "input": source,
+        "result": result,
+        "derived": derived,
+        "literal_binding_valid": True,
+        "self_assessment_not_independent_verifier": True,
+        "date_guard": check_dates(corpus, result),
+    }
+
+
+def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
+    """Same date provenance guard for independently assessed live candidates."""
+    pool = corpus["fragments"]
     # Literal year presence is a provenance check, not proof of date attribution.
     date_bindings = []
     assessments = [("item", a) for a in result["items"]] + list(
@@ -371,14 +384,7 @@ def hydrate(
                 continue
             if not years or not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
                 raise ValueError("Date year absent from referenced saved evidence")
-    return {
-        "input": source,
-        "result": result,
-        "derived": derived,
-        "literal_binding_valid": True,
-        "self_assessment_not_independent_verifier": True,
-        "date_guard": {"policy": DATE_GUARD_POLICY, "metadata_bindings": date_bindings},
-    }
+    return {"policy": DATE_GUARD_POLICY, "metadata_bindings": date_bindings}
 
 
 def seal_check(root: Path, index_name: str) -> dict[str, Any]:

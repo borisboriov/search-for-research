@@ -5,10 +5,12 @@ import asyncio
 import json
 import tempfile
 import unittest
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, patch
 
+import test_enrichment_contact_first as contact_fixture
 from enrichment_contact_first import digest
 from enrichment_experiment import sha
 from enrichment_glm_compare import compact, legacy_pdf_text, summarize
@@ -17,12 +19,270 @@ from enrichment_glm_runner import (
     continuation_plan,
     drain_provider_refusals,
     experiment,
+    experiment_live3,
     frozen,
+    live3_schema,
     run_pi,
     source_bound_candidate,
+    verify_live3,
 )
 from enrichment_glm_tools import SourceHost, search_links
+from enrichment_semantics import prepare_control
 from enrichment_verification import immutable_json
+from enrichment_verifier_benchmark import check_schema
+
+
+class Live3Tests(unittest.TestCase):
+    def fixture(
+        self, root: Path, *, identity_only: bool = False
+    ) -> tuple[SourceHost, dict[str, Any]]:
+        profile = {"id": "A1", "name": "Jane Researcher"}
+        immutable_json(root / "sample.json", [profile])
+        immutable_json(
+            root / "manifest.json",
+            {
+                "method": "glm-public-runner-v1",
+                "experiment_kind": "live3-independent-sol-v1",
+                "collector_interface": "fragment-ids",
+                "mode": "live",
+                "code_sha256": {},
+                "sample_sha256": sha(root / "sample.json"),
+                "max_GLM_jobs": 3,
+                "max_Sol_jobs": 3,
+                "day_jobs_before": 35,
+                "day_cap": 41,
+                "full_prompt_utf8_cap": 1000000,
+                "Sol_timeout_seconds": 900,
+                "deadline_acquisition": (datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+            },
+        )
+        host = SourceHost(root, profile, "live")
+        source = contact_fixture.ContactFirstTests().run_source(
+            host.directory,
+            "<h1>Jane Researcher</h1><p>jane@example.edu</p>"
+            + "x" * 6000
+            + "<p>OTHER AUTHOR: address belongs to somebody else. Dated2026</p>",
+        )
+        path = host.directory / ("source-" + digest(contact_fixture.URL.encode()) + ".json")
+        host.allowed[contact_fixture.URL], host.records[contact_fixture.URL] = 0, path
+        view = asyncio.run(
+            host.tool({"action": "read", "url": contact_fixture.URL, "query": "", "start": 0})
+        )
+        self.assertTrue(view["candidate_ids_NOT_personal_verdicts"])
+        key = next(k for k, v in view["values"].items() if v["kind"] == "email")
+        ref = view["values"][key]["fragment_id"]
+        raw = {
+            "author_id": "A1",
+            "selections": []
+            if identity_only
+            else [{"value_id": key, "field": "personal_contact", "evidence_refs": [ref]}],
+            "profile_evidence": {"identity": [ref], "current_affiliation": []},
+            "limitations": "",
+        }
+        check_schema(raw, live3_schema())
+        packet = asyncio.run(host.bind(raw))
+        immutable_json(root / "collector.json", packet)
+        prepared = prepare_control(
+            root,
+            profile,
+            root / "collector.json",
+            packet["evidence_pool"],
+            Path(__file__).resolve().parent.parent / "docs/experiments/enrichment_verifier_v3.md",
+            sha(root / "sample.json"),
+            namespace="live3",
+            source_kind="GLM_selected_live_public_bodies",
+        )
+        immutable_json(
+            root / "prepared/A1.json", {"input_path": str(prepared), "sha256": sha(prepared)}
+        )
+        self.assertEqual(source["text_sha256"], host.full_corpus()["sources"][0]["text_sha256"])
+        return host, raw
+
+    def reply(
+        self,
+        directory: Path,
+        prompt: str,
+        _schema: dict[str, Any],
+        _cwd: Path,
+        *,
+        missing_status: bool = False,
+        wrong_year: bool = False,
+        **kwargs: Any,
+    ) -> tuple[Path, dict[str, Any]]:
+        task = json.loads(prompt)["task"]
+        source = task["semantic_input"]
+        self.assertEqual(kwargs["model"], "gpt-6.1-sol")
+        self.assertEqual(kwargs["effort"], "high")
+        self.assertTrue(kwargs["disable_mcp"])
+        self.assertEqual(kwargs["required_config"]["provider"], "openai")
+        refs = list(source["evidence_pool"])
+        self.assertIn("OTHER AUTHOR", source["evidence_pool"][refs[-1]]["excerpt"])
+        row = {
+            "verdict": "insufficient",
+            "evidence_refs": [refs[0]],
+            "information_date": None,
+            "date_basis": "unknown",
+            "explanation": "Недостаточно",
+            "status": "unknown",
+        }
+        axis = {k: v for k, v in row.items() if k != "status"}
+        activity = dict(row)
+        if missing_status:
+            activity.pop("status")
+        result = {
+            k: task[k]
+            for k in ("author_id", "input_sha256", "batch_input_sha256", "batch_ticket_id")
+        }
+        result.update(
+            rules_version="semantic-v3",
+            items=[
+                {
+                    "item_id": item["item_id"],
+                    "text_verdict": "supported",
+                    "identity_verdict": "conflicting",
+                    "field_verdict": "correct",
+                    "corrected_field": None,
+                    "fact_kind": "literal",
+                    "object_type": "scientist",
+                    "object_relation": "conflicting",
+                    "student_level": ["unknown"],
+                    "information_date": "2027" if wrong_year else "2026",
+                    "date_basis": "content",
+                    "current_applicability": "historical",
+                    "evidence_refs": [refs[-1]],
+                    "explanation": "Не целевой автор",
+                    "question": "Чей адрес?",
+                }
+                for item in source["items"]
+            ],
+            profile_assessments={
+                "identity": axis,
+                "current_affiliation": axis,
+                "activity": activity,
+            },
+            summary={
+                k: "Неизвестно" for k in ("known", "unknown", "identity", "current_opportunity")
+            },
+        )
+        directory.mkdir(parents=True)
+        immutable_json(directory / "raw-result.json", result)
+        receipt = {
+            "agent_id": "native:independent-test",
+            "tool_calls": 0,
+            "runtime_status": "runtime_not_exposed",
+            "model": None,
+            "effort": None,
+            "tokens": None,
+            "cost_usd": None,
+        }
+        immutable_json(directory / "receipt.json", receipt)
+        return directory / "raw-result.json", receipt
+
+    def test_full_pipeline_bind_and_independent_verifier_can_use_unselected_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            host, raw = self.fixture(root)
+            with patch("enrichment_native.execute", side_effect=self.reply) as execute:
+                outcome = verify_live3(root, host.profile, 85)
+            self.assertEqual(outcome["status"], "verified")
+            self.assertEqual(execute.call_count, 1)
+            verdict = json.loads((root / "verification/A1/verdict.json").read_text())
+            self.assertEqual(list(verdict["classifications"]), [raw["selections"][0]["value_id"]])
+            self.assertFalse(
+                verdict["classifications"][raw["selections"][0]["value_id"]]["usable_coverage"]
+            )
+            self.assertEqual(verdict["result"]["items"][0]["identity_verdict"], "conflicting")
+
+    def test_identity_only_packet_is_checked_but_fully_empty_packet_is_not(self) -> None:
+        for empty in (False, True):
+            with self.subTest(empty=empty), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                host, _ = self.fixture(root, identity_only=True)
+                if empty:
+                    info = json.loads((root / "prepared/A1.json").read_text())
+                    path = Path(info["input_path"])
+                    source = json.loads(path.read_text())
+                    source["profile_evidence"]["identity"] = []
+                    path.write_text(json.dumps(source))
+                    (root / "prepared/A1.json").write_text(
+                        json.dumps({"input_path": str(path), "sha256": sha(path)})
+                    )
+                with patch("enrichment_native.execute", side_effect=self.reply) as execute:
+                    outcome = verify_live3(root, host.profile, 85)
+                self.assertEqual(outcome["status"], "skipped" if empty else "verified")
+                self.assertEqual(execute.call_count, 0 if empty else 1)
+
+    def test_missing_status_and_absent_content_year_are_kept_as_raw_failure(self) -> None:
+        for missing, year in ((True, False), (False, True)):
+            with self.subTest(missing=missing), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                host, _ = self.fixture(root)
+
+                def execute(
+                    *args: Any, missing: bool = missing, year: bool = year, **kwargs: Any
+                ) -> tuple[Path, dict[str, Any]]:
+                    return self.reply(*args, missing_status=missing, wrong_year=year, **kwargs)
+
+                with patch("enrichment_native.execute", side_effect=execute):
+                    outcome = verify_live3(root, host.profile, 85)
+                self.assertEqual(outcome["status"], "rejected")
+                saved = json.loads((root / "verification/A1/native/raw-result.json").read_text())
+                self.assertEqual("status" in saved["profile_assessments"]["activity"], not missing)
+                self.assertFalse((root / "verification/A1/verdict.json").exists())
+
+    def test_full_context_cap_and_tampered_source_prevent_model_job(self) -> None:
+        for tamper in (False, True):
+            with self.subTest(tamper=tamper), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                host, _ = self.fixture(root)
+                if tamper:
+                    record = json.loads(next(host.directory.glob("source-*.json")).read_text())
+                    (host.directory / record["text_path"]).write_text("changed")
+                else:
+                    manifest = json.loads((root / "manifest.json").read_text())
+                    manifest["full_prompt_utf8_cap"] = 1
+                    (root / "manifest.json").write_text(json.dumps(manifest))
+                with patch("enrichment_native.execute") as execute:
+                    if tamper:
+                        with self.assertRaises(ValueError):
+                            verify_live3(root, host.profile, 85)
+                    else:
+                        self.assertEqual(verify_live3(root, host.profile, 85)["status"], "skipped")
+                    execute.assert_not_called()
+                self.assertFalse(list((root / "model-jobs").glob("*Sol*")))
+
+    def test_invented_or_foreign_id_is_rejected_without_fetch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            host, raw = self.fixture(root)
+            raw["selections"][0]["value_id"] = "A2-foreign"
+            with patch("enrichment_glm_tools.PublicLoader") as loader:
+                with self.assertRaisesRegex(ValueError, "value ID"):
+                    asyncio.run(host.bind(raw))
+                loader.assert_not_called()
+
+    def test_independent_profile_failure_does_not_repeat_or_stop_other_profiles(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            sample = [{"id": "A1"}, {"id": "A2"}, {"id": "A3"}]
+            immutable_json(root / "sample.json", sample)
+            with (
+                patch(
+                    "enrichment_glm_runner.frozen",
+                    return_value={"experiment_kind": "live3-independent-sol-v1"},
+                ),
+                patch("enrichment_glm_runner.run_pi", return_value={"host_error": None}) as collect,
+                patch(
+                    "enrichment_glm_runner.verify_live3",
+                    side_effect=lambda _r, p, _q: {
+                        "status": "skipped" if p["id"] == "A1" else "verified"
+                    },
+                ),
+            ):
+                result = experiment_live3(root, 85)
+            self.assertEqual(collect.call_count, 4)
+            self.assertEqual(len(result["rows"]), 3)
+            self.assertTrue((root / "stopped.json").exists())
 
 
 class GLMRunnerTests(unittest.TestCase):
