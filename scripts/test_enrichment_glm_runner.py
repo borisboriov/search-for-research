@@ -34,6 +34,79 @@ from enrichment_verification import immutable_json
 from enrichment_verifier_benchmark import check_schema
 
 
+class PublicationTests(unittest.TestCase):
+    def test_fresh_typed_work_binding_and_reserved_query_precede_resolver(self) -> None:
+        anchor = {
+            "title": "A New Face for DSpace",
+            "doi": "10.1045/november2007-phillips",
+            "query": '"A New Face for DSpace" "10.1045/november2007-phillips"',
+        }
+        for incorrect in (False, True):
+            with self.subTest(incorrect=incorrect), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                immutable_json(
+                    root / "manifest.json",
+                    {"publication_anchor": anchor, "collector_interface": "fragment-ids"},
+                )
+                host = SourceHost(root, {"id": "A1", "orcid": "0000-0001-7196-1640"}, "live")
+                with self.assertRaisesRegex(ValueError, "fresh observed"):
+                    host.check_publication_query(anchor["query"])
+                url = next(iter(host.allowed))
+                source = {
+                    "source_kind": "structured_orcid",
+                    "url": url,
+                    "body_sha256": "body",
+                    "text_sha256": "text",
+                    "checked_at": "2026-10-11",
+                }
+                metadata = {
+                    "activities-summary": {
+                        "works": {
+                            "group": [
+                                {
+                                    "work-summary": [
+                                        {
+                                            "put-code": 123,
+                                            "title": {"title": {"value": anchor["title"]}},
+                                            "external-ids": {
+                                                "external-id": [
+                                                    {
+                                                        "external-id-type": "doi"
+                                                        if not incorrect
+                                                        else "isbn",
+                                                        "external-id-value": anchor["doi"],
+                                                    }
+                                                ]
+                                            },
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+                if incorrect:
+                    with self.assertRaisesRegex(ValueError, "absent or ambiguous"):
+                        host.bind_publication(source, json.dumps(metadata))
+                    self.assertFalse((root / "publication-anchor-observed.json").exists())
+                else:
+                    host.bind_publication(source, json.dumps(metadata))
+                    host.check_publication_query(anchor["query"])
+                    with self.assertRaises(ValueError):
+                        host.check_publication_query("Alexey Maslov MEPhI")
+                    with patch("enrichment_glm_tools.PublicLoader") as loader:
+                        with self.assertRaisesRegex(ValueError, "query must be reserved"):
+                            asyncio.run(host.source("https://doi.org/" + anchor["doi"]))
+                        with self.assertRaisesRegex(ValueError, "must precede"):
+                            asyncio.run(host.public_search("name query"))
+                        loader.assert_not_called()
+                    host.publication_search_reserved = True
+                    host.check_publication_query("Alexey Maslov MEPhI")
+                    record = json.loads((root / "publication-anchor-observed.json").read_text())
+                    self.assertTrue(record["resolver_NOT_search_exact_URL"])
+                    self.assertEqual(record["work_put_code"], 123)
+
+
 class PartialPolicyTests(unittest.TestCase):
     def test_saved_replay_is_finite_without_model_or_source_calls(self) -> None:
         from enrichment_live_partial import INDEX, replay
@@ -485,7 +558,10 @@ class Live3Tests(unittest.TestCase):
             with (
                 patch(
                     "enrichment_glm_runner.frozen",
-                    return_value={"experiment_kind": "live3-independent-sol-v1"},
+                    return_value={
+                        "experiment_kind": "live3-independent-sol-v1",
+                        "day_jobs_before": 35,
+                    },
                 ),
                 patch(
                     "enrichment_glm_runner.run_pi",
@@ -510,7 +586,10 @@ class Live3Tests(unittest.TestCase):
             with (
                 patch(
                     "enrichment_glm_runner.frozen",
-                    return_value={"experiment_kind": "live3-independent-sol-v1"},
+                    return_value={
+                        "experiment_kind": "live3-independent-sol-v1",
+                        "day_jobs_before": 35,
+                    },
                 ),
                 patch(
                     "enrichment_glm_runner.run_pi",

@@ -379,6 +379,20 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
     ids_interface = manifest.get("collector_interface") == "fragment-ids"
     schema = live3_schema() if ids_interface else collector_schema()
     instruction = LIVE3_INSTRUCTION if ids_interface else INSTRUCTION
+    anchor = manifest.get("publication_anchor")
+    if anchor:
+        instruction += (
+            "\nЗаключительный targeted positive control. Anchor заранее выбрал код по постановке, "
+            "не ты. Сначала read известный ORCID с query DOI, затем первый native search ровно "
+            + anchor["query"]
+            + ". Код сверит anchor с новым ORCID work metadata. "
+            "Остальные три search queries/observedhref на твоё усмотрение. После первого search "
+            "можешь read https://doi.org/" + anchor["doi"] + ": это явно отдельный DOIresolver "
+            "по observedDOI, не exactURL из search. Никаких старых article bodies/pageURLs/email "
+            "не дано. Ищи body с title/DOI/person anchors. Literal contact рядом с Alexey Maslov "
+            "сохрани как candidate для независимой проверки даже при неясной связи с MEPhI; "
+            "не объявляй его current или подтверждённым. Unknown/conflicting identity допустима."
+        )
     task = {
         "author_id": aid,
         "profile": profile,
@@ -386,6 +400,8 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
         "known_ORCID_record": next(iter(source.allowed), None),
         "output_json_schema": schema,
     }
+    if anchor:
+        task["publication_anchor"] = {k: anchor[k] for k in ("title", "doi", "query", "selection")}
     req = {
         "method": METHOD,
         "mode": mode,
@@ -507,6 +523,7 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                                 query_text = event["arguments"].get("search_query")
                                 if not isinstance(query_text, str) or len(query_text) > 1000:
                                     raise ValueError("Invalid search query")
+                                source.check_publication_query(query_text)
                                 if any(
                                     read(p)["author_id"] == aid
                                     and read(p)["source"] == "native_Zai_search"
@@ -525,6 +542,8 @@ def run_pi(root: Path, profile: dict[str, Any], *, probe: bool = False) -> dict[
                                     },
                                 )
                                 source.searches += 1
+                                if source.publication_anchor:
+                                    source.publication_search_reserved = True
                             elif event.get("tool") == "sfr_source":
 
                                 async def bounded_tool(arguments: dict[str, Any]) -> dict[str, Any]:
@@ -765,7 +784,8 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
     if args.root.exists():
         raise ValueError("Root exists; no overwrite")
     deadline = datetime.fromisoformat(args.deadline)
-    if not 0 < deadline.timestamp() - time.time() <= 3 * 3600:
+    publication = args.command == "publication-freeze"
+    if not 0 < deadline.timestamp() - time.time() <= (2 if publication else 3) * 3600:
         raise ValueError("Finite three-hour deadline required")
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=REPO, text=True):
         raise ValueError("Clean committed code required before freeze")
@@ -781,7 +801,8 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
         "suspect_merge",
     }
     sample = seed["profiles"]
-    if [p["id"] for p in sample] != LIVE3_IDS or any(set(p) - allowed for p in sample):
+    ids = ["A5054586424"] if publication else LIVE3_IDS
+    if [p["id"] for p in sample] != ids or any(set(p) - allowed for p in sample):
         raise ValueError("Only fixed3 catalog seeds allowed")
     parent = Path(seed["provenance"]["sample_path"])
     if sha(parent) != seed["provenance"]["sample_sha256"]:
@@ -792,9 +813,57 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
     reference = Path(seed["provenance"]["previous_handoff_index"])
     if sha(reference) != seed["provenance"]["previous_handoff_index_sha256"]:
         raise ValueError("Previous handoff index changed")
+    if publication:
+        from enrichment_contact_first import checked_source
+
+        if (
+            seed["provenance"]["previous_cumulative_jobs"] != 41
+            or sha(reference) != "0b36e3025057c067bb448e4e0d49cee79fe69ab4061fd3b5e213560b65bb2196"
+        ):
+            raise ValueError("Wrong terminal partial parent/cumulative41")
+
+        anchor = seed["publication_anchor"]
+        if anchor != {
+            "title": "A New Face for DSpace",
+            "doi": "10.1045/november2007-phillips",
+            "query": '"A New Face for DSpace" "10.1045/november2007-phillips"',
+            "selection": "predeclared_targeted_code_seed_NOT_model_discovery",
+        }:
+            raise ValueError("Wrong predeclared publication control")
+        metadata = seed["publication_anchor_source"]
+        record_path = Path(metadata["record_path"])
+        old_root = record_path.parent.parent.parent
+        old_index = old_root / "transfer-SHA-index-453a94e.json"
+        if sha(
+            old_index
+        ) != "83629e8ed2eb537fead733abbce434e953beb9f2e82eedd5f3fc0635e6e0b814" or read(old_index)[
+            "private_file_sha256"
+        ].get(str(record_path.relative_to(old_root))) != sha(record_path):
+            raise ValueError("Publication metadata seed absent from authorized old seal")
+        if sha(record_path) != metadata["record_sha256"]:
+            raise ValueError("Targeted seed metadata SHA changed")
+        record = read(record_path)
+        _, text = checked_source(record_path.parent, record)
+        if record["url"] != "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record":
+            raise ValueError("Wrong publication seed source")
+        groups = json.loads(text)["activities-summary"]["works"]["group"]
+        if not any(
+            row["title"]["title"]["value"] == anchor["title"]
+            and any(
+                ext["external-id-type"] == "doi" and ext["external-id-value"] == anchor["doi"]
+                for ext in row["external-ids"]["external-id"]
+            )
+            for g in groups
+            for row in g["work-summary"]
+        ):
+            raise ValueError("Targeted anchor not in saved public ORCID metadata")
     root = private_root(args.root)
     immutable_json(root / "sample.json", sample)
     immutable_json(root / "seed-provenance.json", seed["provenance"])
+    if publication:
+        immutable_json(
+            root / "publication-anchor-seed.json", {"anchor": anchor, "source": metadata}
+        )
     immutable_bytes(root / "scope.md", args.scope.read_bytes())
     immutable_bytes(root / "official-ORCID-policy.json", args.orcid_policy.read_bytes())
     from enrichment_fragments import CODE
@@ -814,7 +883,7 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
         snapshots[name] = sha(REPO / name)
     manifest = {
         "method": METHOD,
-        "experiment_kind": "live3-independent-sol-v1",
+        "experiment_kind": "publication-control1-v1" if publication else "live3-independent-sol-v1",
         "collector_interface": "fragment-ids",
         "mode": "live",
         "created_at": now(),
@@ -826,18 +895,18 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
         "scope_sha256": sha(root / "scope.md"),
         "scope_url": args.scope_url,
         "code_sha256": snapshots,
-        "scheduled_profile_ids": LIVE3_IDS,
-        "day_jobs_before": 35,
-        "day_cap": 41,
-        "stage_cap": 6,
-        "max_GLM_jobs": 3,
-        "max_Sol_jobs": 3,
+        "scheduled_profile_ids": ids,
+        "day_jobs_before": 41 if publication else 35,
+        "day_cap": 43 if publication else 41,
+        "stage_cap": 2 if publication else 6,
+        "max_GLM_jobs": 1 if publication else 3,
+        "max_Sol_jobs": 1 if publication else 3,
         "max_model_requests_per_GLM": 12,
         "source_tool_calls_per_profile": 24,
         "search_per_profile": 4,
-        "search_total": 12,
+        "search_total": 4 if publication else 12,
         "HTTP_per_profile_cap": 20,
-        "HTTP_total_cap": 60,
+        "HTTP_total_cap": 20 if publication else 60,
         "GLM_timeout_seconds": 600,
         "Sol_timeout_seconds": 900,
         "full_prompt_utf8_cap": 1000000,
@@ -847,6 +916,9 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
         "developer_search_assistance": False,
         "remaining_percent_at_freeze": args.remaining_percent,
     }
+    if publication:
+        manifest["publication_anchor"] = anchor
+        manifest["processing_policy"] = "live-sol-partial-dates-v1"
     immutable_json(root / "manifest.json", manifest)
     immutable_bytes(root / "collector-instruction.txt", LIVE3_INSTRUCTION.encode())
     return manifest
@@ -908,7 +980,7 @@ def verify_live3(root: Path, profile: dict[str, Any], remaining: float) -> dict[
             "stage": "verify",
             "model": "gpt-6.1-sol",
             "effort": "high",
-            "cumulative_before": 35 + len(jobs),
+            "cumulative_before": manifest["day_jobs_before"] + len(jobs),
             "remaining_percent": remaining,
             "retries": 0,
         },
@@ -1007,7 +1079,11 @@ def verify_live3(root: Path, profile: dict[str, Any], remaining: float) -> dict[
 
 def experiment_live3(root: Path, remaining: float) -> dict[str, Any]:
     manifest = frozen(root)
-    if manifest.get("experiment_kind") != "live3-independent-sol-v1" or not 0 <= remaining <= 100:
+    if (
+        manifest.get("experiment_kind")
+        not in ("live3-independent-sol-v1", "publication-control1-v1")
+        or not 0 <= remaining <= 100
+    ):
         raise ValueError("Wrong live3 experiment/quota reading")
     rows, reason = [], None
     try:
@@ -1036,8 +1112,8 @@ def experiment_live3(root: Path, remaining: float) -> dict[str, Any]:
             "rows": rows,
             "partial_reason": reason,
             "stage_jobs_reserved": len(jobs),
-            "cumulative_reserved": 35 + len(jobs),
-            "max_stage_jobs": 6,
+            "cumulative_reserved": manifest["day_jobs_before"] + len(jobs),
+            "max_stage_jobs": manifest.get("stage_cap", 6),
             "human_gold": 0,
         }
         immutable_json(root / "execution-result.json", result)
@@ -1068,6 +1144,8 @@ def main() -> None:
             "offline-run",
             "live3-freeze",
             "live3-run",
+            "publication-freeze",
+            "publication-run",
         ),
     )
     parser.add_argument("--root", type=Path, required=True)
@@ -1085,10 +1163,10 @@ def main() -> None:
     parser.add_argument("--seed-sample", type=Path)
     parser.add_argument("--orcid-policy", type=Path)
     args = parser.parse_args()
-    if args.command in ("live3-freeze", "live3-run"):
+    if args.command in ("live3-freeze", "live3-run", "publication-freeze", "publication-run"):
         if args.remaining_percent is None:
             parser.error("live3 requires actual --remaining-percent")
-        if args.command == "live3-freeze":
+        if args.command in ("live3-freeze", "publication-freeze"):
             if not all(
                 (args.seed_sample, args.orcid_policy, args.scope, args.scope_url, args.deadline)
             ):

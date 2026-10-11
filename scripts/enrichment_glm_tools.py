@@ -6,7 +6,7 @@ import shutil
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode, urljoin
+from urllib.parse import quote, urlencode, urljoin
 
 from enrichment_compare_loading import extract
 from enrichment_contact_first import EMAIL, checked_source, digest, safe_url
@@ -69,6 +69,9 @@ class SourceHost:
         manifest = read(root / "manifest.json") if (root / "manifest.json").exists() else {}
         self.fragment_ids = manifest.get("collector_interface") == "fragment-ids"
         self.search_total = manifest.get("search_total", 40)
+        self.publication_anchor = manifest.get("publication_anchor")
+        self.publication_ready = False
+        self.publication_search_reserved = False
         orcid = str(profile.get("orcid", "")).rsplit("/", 1)[-1]
         if orcid:
             self.allowed[f"{ORCID_API}/{orcid}/record"] = 0
@@ -88,7 +91,60 @@ class SourceHost:
         for url in search_links(raw):
             self.allowed.setdefault(url, 0)
 
+    def check_publication_query(self, query: str) -> None:
+        if (
+            self.publication_anchor
+            and not self.publication_search_reserved
+            and (not self.publication_ready or query != self.publication_anchor["query"])
+        ):
+            raise ValueError(
+                "First search requires fresh observed publication anchor and exact query"
+            )
+
+    def bind_publication(self, source: dict[str, Any], static: str) -> None:
+        anchor = self.publication_anchor
+        if not anchor or self.publication_ready or source["source_kind"] != "structured_orcid":
+            return
+        expected = f"{ORCID_API}/{str(self.profile['orcid']).rsplit('/', 1)[-1]}/record"
+        if source["url"] != expected:
+            raise ValueError("Publication anchor belongs to another ORCID")
+        data = json.loads(static)
+        works = data["activities-summary"]["works"]["group"]
+        matches = [
+            row
+            for group in works
+            for row in group["work-summary"]
+            if row["title"]["title"]["value"] == anchor["title"]
+            and any(
+                ext["external-id-type"] == "doi" and ext["external-id-value"] == anchor["doi"]
+                for ext in row["external-ids"]["external-id"]
+            )
+        ]
+        if len(matches) != 1:
+            raise ValueError("Targeted title/DOI absent or ambiguous in fresh ORCID works")
+        resolver = "https://doi.org/" + quote(anchor["doi"], safe="/")
+        immutable_json(
+            self.root / "publication-anchor-observed.json",
+            {
+                "author_id": self.aid,
+                "title": anchor["title"],
+                "doi": anchor["doi"],
+                "work_put_code": matches[0]["put-code"],
+                "source_url": source["url"],
+                "body_sha256": source["body_sha256"],
+                "text_sha256": source["text_sha256"],
+                "checked_at": source["checked_at"],
+                "resolver_url": resolver,
+                "selection": "predeclared_targeted_code_seed_NOT_model_discovery",
+                "resolver_NOT_search_exact_URL": True,
+            },
+        )
+        self.allowed[resolver] = 1
+        self.publication_ready = True
+
     async def public_search(self, query: str) -> dict[str, Any]:
+        if self.publication_anchor and not self.publication_search_reserved:
+            raise ValueError("Reserved publication native search must precede other search")
         if self.mode != "live" or not query.strip():
             raise ValueError("Live public search only")
         reservations = [read(p) for p in (self.root / "search").glob("*-reserved.json")]
@@ -171,6 +227,12 @@ class SourceHost:
         return links
 
     async def source(self, url: str) -> tuple[Path, dict[str, Any], str, str]:
+        if (
+            self.publication_anchor
+            and url.startswith("https://doi.org/")
+            and not self.publication_search_reserved
+        ):
+            raise ValueError("Publication query must be reserved before DOI resolver acquisition")
         if url not in self.allowed:
             raise ValueError("Unregistered URL: use an actual search row or observed href")
         if url in self.failures:
@@ -202,6 +264,7 @@ class SourceHost:
             )
         else:
             decoded, static = checked_source(path.parent, source)
+        self.bind_publication(source, static)
         depth = self.allowed[url]
         for link in self.links(source, decoded, static):
             if depth < 6:

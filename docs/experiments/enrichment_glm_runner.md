@@ -67,6 +67,32 @@ partial только в `partial-verdict.json`, общий/all-invalid отка�
 ключа `result`. Усиление общей identity dependency версионировано; это не
 доказательство полноты/истинности и не снятие внешнего ORCID конфликта.
 
+## Заключительный targeted publication control
+
+Один отдельно разрешённый Maslov A5054586424 control: anchor заранее выбран
+кодом/постановкой из старой публичной ORCID work metadata — A New Face for DSpace,
+DOI10.1045/november2007-phillips. Это известный positive control, не случайная
+выборка и не автономный выбор лучшей работы моделью. Старые email/articleURL/body
+не входят в live task. Scope до calls —
+[PR194](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6108525639).
+
+CLI publication-freeze/publication-run использует тот же Pi/SourceHost/Sol.
+Свежий ORCID read должен содержать exact title и typed external-id doi внутри
+work-summary. Первый native query точно "A New Face for DSpace"
+"10.1045/november2007-phillips"; code gate резервирует его до name/public DDG
+queries. Остальные≤3queries/hrefs выбирает GLM. После reserved query разрешён
+https DOIresolver, построенный из свежего observed DOI: отдельный acquisition
+route с обычными robots/redirect/HTTP guards, не exactURL из search.
+
+A — observed metadata→actualquery/resolver→actualURL/redirect→new checked body
+с title/DOI/person anchors; B — GLM literal candidates bound by source/fragment
+IDs/spans; C — independent Sol проверяет ровно candidates и весь новый corpus.
+Unknown/conflicting MEPhI/TexasA&M identity допустима; historical2007 не current,
+email не readiness, Human0. Новых jobs≤2 (1GLM+1Sol), cumulative41→≤43;
+caps4search/20HTTP/24sourcecalls/12modelrequests/600sGLM/900sSol сохранены.
+Deadline2h включает подготовку и передачу; retries/repair/nextbatch0, reserve0.
+После единственного контроля — решение о ролиGLM, без нового минираунда.
+
 ## Что делал baseline
 
 В flexible10 обычный код загружал ORCID/HTML/PDF, соблюдал ограничения,
