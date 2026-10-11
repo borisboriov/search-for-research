@@ -508,6 +508,7 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
                         config_override=HIGH_CONFIGS["pi_verifier"],
                         method_override=METHOD,
                         deadline_epoch=deadline,
+                        expected_user_prompt_sha256=manifest["corpora"][aid]["prompt_sha256"],
                     )
                 else:
                     result_path, receipt = execute(
@@ -524,6 +525,11 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
                         system_prompt=instruction,
                         deadline_epoch=deadline,
                     )
+                actual_prompt = receipt.get(
+                    "user_prompt_sha256" if model == "GLM" else "prompt_sha256"
+                )
+                if actual_prompt != manifest["corpora"][aid]["prompt_sha256"]:
+                    raise ValueError("Actual model prompt differs from the frozen common input")
                 normalized = hydrate(
                     task, read(result_path), normalized_provenance(receipt, "fragment_analysis")
                 )

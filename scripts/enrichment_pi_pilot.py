@@ -591,6 +591,7 @@ def run_pi(
     config_override: dict[str, str] | None = None,
     method_override: str | None = None,
     deadline_epoch: float | None = None,
+    expected_user_prompt_sha256: str | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     config: dict[str, str] | None
     if config_override is not None:
@@ -627,20 +628,29 @@ def run_pi(
         >= 12
     ):
         raise ValueError("Лимит содержательных запусков")
-    immutable(
-        directory / "request.json",
-        encoded(
-            {
-                "mode": "collect" if stage == "collector" else "verify",
-                **({"config": config, "method": method_override or HIGH_METHOD} if config else {}),
-                "task": task,
-                "system_prompt": system_prompt,
-                "output_schema": output_schema,
-                "workspace_dir": str(directory / "workspace"),
-                "run_dir": str(directory / "pi"),
-            }
-        ),
-    )
+    request_value = {
+        "mode": "collect" if stage == "collector" else "verify",
+        **({"config": config, "method": method_override or HIGH_METHOD} if config else {}),
+        "task": task,
+        "system_prompt": system_prompt,
+        "output_schema": output_schema,
+        "workspace_dir": str(directory / "workspace"),
+        "run_dir": str(directory / "pi"),
+    }
+    if method_override == "fragment-offline3-v1":
+        prompt = json.dumps(
+            {"task": task, "output_json_schema": output_schema},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+        if hashlib.sha256(prompt.encode()).hexdigest() != expected_user_prompt_sha256:
+            raise ValueError("Offline Pi input differs from the frozen common prompt")
+        request_value["expected_user_prompt_sha256"] = expected_user_prompt_sha256
+        # Preserve nested insertion order; encoded() sorts keys, changing the model input.
+        payload = (json.dumps(request_value, ensure_ascii=False, indent=2) + "\n").encode()
+    else:
+        payload = encoded(request_value)
+    immutable(directory / "request.json", payload)
     immutable(
         directory / "started.json",
         encoded(

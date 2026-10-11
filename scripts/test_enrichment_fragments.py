@@ -271,6 +271,13 @@ class FragmentTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
+            task = {"z": "цитата\r\n", "a": {"F1500": "second", "F0": "first"}}
+            output = {"properties": {"z": {"type": "string"}, "a": {"type": "string"}}}
+            common = json.dumps(
+                {"task": task, "output_json_schema": output},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
             process = MagicMock()
             process.stdout = iter(["invalid-json\n"])
             process.poll.return_value = None
@@ -286,12 +293,23 @@ class FragmentTests(unittest.TestCase):
                     None,
                     "A1",
                     "pi_verifier",
-                    {},
+                    task,
                     "shared",
-                    {},
+                    output,
                     config_override=HIGH_CONFIGS["pi_verifier"],
                     method_override="fragment-offline3-v1",
+                    expected_user_prompt_sha256=hashlib.sha256(common.encode()).hexdigest(),
                 )
+            request = json.loads((root / "runs/A1/pi_verifier/request.json").read_bytes())
+            restored = json.dumps(
+                {"task": request["task"], "output_json_schema": request["output_schema"]},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            self.assertEqual(restored, common)
+            self.assertEqual(
+                request["expected_user_prompt_sha256"], hashlib.sha256(common.encode()).hexdigest()
+            )
             process.kill.assert_called_once()
             failed = json.loads((root / "runs/A1/pi_verifier/finished.json").read_text())
             self.assertEqual(failed["exit_code"], -9)

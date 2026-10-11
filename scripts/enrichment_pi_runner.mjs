@@ -92,6 +92,14 @@ export function verifierContext(context, instruction, userPrompt) {
   // Pi normally appends its cwd section. Project exactly the shared instruction at this public API boundary.
   return {messages: [{role: 'system', content: instruction, timestamp: 0}, users[0]], tools: []};
 }
+export function modelVisibleVerifierInput(request) {
+  const userPrompt = JSON.stringify({task: request.task, output_json_schema: request.output_schema});
+  if (request.method === 'fragment-offline3-v1' &&
+      createHash('sha256').update(userPrompt).digest('hex') !== request.expected_user_prompt_sha256)
+    throw new Error('Offline serialized input differs from the frozen common prompt');
+  return {instruction: request.system_prompt, userPrompt,
+    ...(request.method === 'fragment-offline3-v1' ? {maxRequests: 1} : {})};
+}
 export function createGuardedModelStream(stream, requested, record, assertHealthy = () => {}, input = null) {
   let requests = 0;
   return (model, context, options) => {
@@ -292,9 +300,7 @@ export async function main(requestPath) {
   const queue = createSourceQueue();
   modelRuntime.streamSimple = createGuardedModelStream(modelRuntime.streamSimple.bind(modelRuntime),
     requested, data => persist('model-request-config', data), queue.assertHealthy,
-    ['cache-verifier-v1', 'fragment-offline3-v1'].includes(request.method) ? {instruction: request.system_prompt,
-      userPrompt: JSON.stringify({task: request.task, output_json_schema: request.output_schema}),
-      ...(request.method === 'fragment-offline3-v1' ? {maxRequests: 1} : {})} : null);
+    ['cache-verifier-v1', 'fragment-offline3-v1'].includes(request.method) ? modelVisibleVerifierInput(request) : null);
   const mcp = request.mode === 'verify' ? null : sdk.createMcpExtension({
     logPath: path.join(runDir, 'mcp.log'),
     loadConfig: () => {

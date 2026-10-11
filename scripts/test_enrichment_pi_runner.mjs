@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import readline from 'node:readline';
 import {mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync} from 'node:fs';
@@ -7,7 +8,18 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {allowedCall, createGuardedFetch, writeOnce, main, validateConfig, assertEffectiveConfig,
   createGuardedModelStream, createSourceQueue, createSerializedTransport, assertSessionSettings,
-  verifierContext} from './enrichment_pi_runner.mjs';
+  verifierContext, modelVisibleVerifierInput} from './enrichment_pi_runner.mjs';
+
+test('offline input preserves actual serialized order and rejects sorting before model request', () => {
+  const request = {method: 'fragment-offline3-v1', system_prompt: 'shared',
+    task: {z: 'цитата\r\n', a: {F1500: 'second', F0: 'first'}},
+    output_schema: {properties: {z: {type: 'string'}, a: {type: 'string'}}}};
+  const common = JSON.stringify({task: request.task, output_json_schema: request.output_schema});
+  request.expected_user_prompt_sha256 = createHash('sha256').update(common).digest('hex');
+  assert.equal(modelVisibleVerifierInput(JSON.parse(JSON.stringify(request))).userPrompt, common);
+  assert.throws(() => modelVisibleVerifierInput({...request, task: {a: request.task.a, z: request.task.z}}), /serialized input/);
+  assert.throws(() => modelVisibleVerifierInput({...request, expected_user_prompt_sha256: undefined}), /serialized input/);
+});
 
 test('cache verifier projects shared instruction and exactly one frozen user, without tools', () => {
   const user = {role: 'user', content: [{type: 'text', text: 'frozen task'}], timestamp: 0};
