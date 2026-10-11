@@ -477,7 +477,19 @@ def frozen(root: Path) -> dict[str, Any]:
 
 def pi_common_input_proved(root: Path, aid: str, manifest: dict[str, Any]) -> bool:
     """A partial model reply can be local only after the actual common request is proved."""
-    paths = list((root / "runs" / aid / "pi_verifier" / "pi").glob("*-model-request-config.json"))
+    directory = root / "runs" / aid / "pi_verifier" / "pi"
+    # Providers may return an assistant error inside HTTP 200. Its cause is not
+    # demonstrably local, so it cannot authorize another independent model job.
+    for path in directory.glob("*-session-event.json"):
+        event = read(path)
+        message = event.get("message", {})
+        if (
+            event.get("type") == "message_end"
+            and message.get("role") == "assistant"
+            and message.get("stopReason") == "error"
+        ):
+            return False
+    paths = list(directory.glob("*-model-request-config.json"))
     if len(paths) != 1:
         return False
     config = read(paths[0])
@@ -652,6 +664,7 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
         }
         immutable_json(root / "execution-result.json", result)
         immutable_json(
-            root / "stopped.json", {"at": now(), "new_model_jobs": "forbidden", "reason": reason}
+            root / "stopped.json",
+            {"at": now(), "new_model_jobs": "forbidden", "reason": result["partial_reason"]},
         )
     return result

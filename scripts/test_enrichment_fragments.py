@@ -321,7 +321,7 @@ class FragmentTests(unittest.TestCase):
         from enrichment_fragments import output_schema
         from enrichment_pi_pilot import HIGH_CONFIGS
 
-        for mode in ("output", "runtime", "common"):
+        for mode in ("output", "runtime", "common", "provider_error"):
             with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary)
                 (root / "instruction.txt").write_text("instruction")
@@ -373,7 +373,7 @@ class FragmentTests(unittest.TestCase):
                     glm_calls += 1
                     aid = args[2]
                     digest = _manifest["corpora"][aid]["prompt_sha256"]
-                    if glm_calls == 1 and _mode == "runtime":
+                    if glm_calls == 1 and _mode in ("runtime", "provider_error"):
                         p = _root / "runs" / aid / "pi_verifier" / "pi"
                         p.mkdir(parents=True)
                         (p / "001-model-request-config.json").write_text(
@@ -386,6 +386,19 @@ class FragmentTests(unittest.TestCase):
                                 }
                             )
                         )
+                        if _mode == "provider_error":
+                            (p / "002-session-event.json").write_text(
+                                json.dumps(
+                                    {
+                                        "type": "message_end",
+                                        "message": {
+                                            "role": "assistant",
+                                            "stopReason": "error",
+                                            "errorMessage": "quota exhausted despite HTTP 200",
+                                        },
+                                    }
+                                )
+                            )
                         raise ValueError("unfinished local reply")
                     return _raw, {"user_prompt_sha256": "wrong" if _mode == "common" else digest}
 
@@ -404,11 +417,13 @@ class FragmentTests(unittest.TestCase):
                     patch("enrichment_fragments.hydrate", side_effect=normalized),
                 ):
                     result = run(root, 0)
-                if mode == "common":
+                if mode in ("common", "provider_error"):
                     self.assertEqual(g.call_count, 1)
                     s.assert_not_called()
                     self.assertEqual(result["cumulative_reserved"], 30)
-                    self.assertIn("differs", result["partial_reason"])
+                    self.assertIn(
+                        "differs" if mode == "common" else "unfinished", result["partial_reason"]
+                    )
                 else:
                     self.assertEqual((g.call_count, s.call_count), (3, 3))
                     self.assertEqual(result["cumulative_reserved"], 35)
