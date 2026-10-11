@@ -11,6 +11,14 @@
 Offline policy `live-sol-partial-dates-v1` отделяет atom-local отказ даты от
 валидных атомов после полных общих guards. Она не меняет исторический live yield.
 Partial остаётся отдельным результатом и не считается полностью принятым пакетом.
+На трёх сохранённых live raw Исангулова стала partial:5 validated/1 rejected,
+4 usable atoms; Маслов остался identity-only, Ковалёв — accepted3/3.
+[Generated offline diff](../metrics/enrichment_live3_partial_offline_20261011.json)
+и [Maslov trace](../metrics/enrichment_maslov_trace_offline_20261011.json)
+относятся к новой processing policy: model/source/search calls0, cumulative41.
+У Маслова DOI/title были видны GLM, но D-Lib URL/body не обнаружены и не читались;
+доказанного локального bug нет. Контроль discovery с отдельным publication query
+предложен в отчёте, не запускался. Следующий batch по-прежнему не назначен.
 Исправление #197 устранило ложный отказ даты, но не исправляет смысл ответов:
 после локальной обработки приняты 5/6 raw, Маслов/GLM остаётся без обязательного
 activity.status, чрезмерно уверенные оценки актуальности сохраняются. Принятый

@@ -2281,3 +2281,129 @@ candidates/verdicts и честные usage/limitations — выполнен. У
 постановка не разрешает. Human0/Solnotgold, deliverability unknown, current
 readiness unknown. Все наблюдавшиеся собственные process PID завершились;
 cron PAUSED, acquisition/model/source STOP, окончательная передача — write STOP.
+
+## Конечный offline partial этап 11.10 после продуктовой проверки live3
+
+Постановка: [PR194 scope](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6108233916),
+основание — [продуктовый разбор live3](https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6108183785).
+Окно 10:45:39–12:45:39 UTC, только offline. Model/source/search calls0,
+cumulative41→41, human gold0. Разработка и необходимое независимое ревью через
+текущую Codex подписку отдельно; их usage/debit неизвестны, не объявлены нулём.
+Ни исправлений raw от модели, ни новой профильной inference не было.
+
+### Один freeze и неизменённые входы
+
+Новая policy `live-sol-partial-dates-v1` зафиксирована на
+`c037503be71105e79b92bbee6b06d7abc427f467` после offline tests; новый приватный root
+`/Users/boris/Experiments/search-for-research/enrichment-live3-partial-offline-20261011`.
+Manifest SHA `b1573cfe61fd1186b4b3e5f2fa28f8825a6c3540466e9cd8af5ec87cbd98afdb`.
+Freeze один, replay трёх прежних Sol ответов один, retries0. Runner требует clean
+committed code, новый root, deadline≤2h и exact old seal. Старый live3 index SHA
+`83629e8ed2eb537fead733abbce434e953beb9f2e82eedd5f3fc0635e6e0b814` проверен по
+всем655 файлам; все checked source bodies заново восстановили точно тот же corpus.
+Прежние raw/task/schema/corpus/input/receipt скопированы byte-for-byte с SHA,
+прежние accepted cores/rejection reason воспроизведены до сравнения.
+
+Новый архив содержит только новые inputs/processing/metrics/code/scope/proofs и
+14 ссылок SHA старых indices; старые архивы не копируются рекурсивно. Все прежние
+sealed roots, raw/normalized/metrics/STOP неизменны. Исторический live yield2/3
+не заменён offline результатом. Полные raw model summary/verdict/status сохранены.
+
+### Результат и контракт принятой части
+
+[Generated diff](../metrics/enrichment_live3_partial_offline_20261011.json)
+получен кодом из saved inputs, не ручной переписью показателей.
+
+| Случай | Прежняя обработка | Новая обработка | Validated/rejected/usable atoms |
+|---|---|---|---|
+| Исангулова A5089458364 | rejected whole packet,0 usable | partial,не full success | 5/1/4 |
+| Маслов A5054586424 | valid identity-only,0 atoms | identity-only без изменений | 0/0/0 |
+| Ковалёв A5054791318 | accepted3atoms,3usable | accepted,классификации сохранены | 3/0/3 |
+
+У Исангуловой локально отклонён только city atom
+`A5089458364-Sb86fd6644a761cd763de-F3000-4800-text` с raw date2019-12-11/
+source_metadata: прежняя причина `Unsupported metadata date object`. Дата не
+переписана на unknown и guard #197 не расширен. Literal contact и3topic проходят
+исходные независимые assessments и guards; supervisor_role валиден по формату,
+но остаётся unusable по field_verdict. Это4 usable atoms, не5 и не6.
+
+Полные strict schema/task IDs/source binding/literal spans/semantic-v3/provenance
+остаются общим gate. Profile identity должна быть supported; иначе все atoms
+blocked. Любая ошибка profile date guard также блокирует всё. Only atom-local
+date failures изолируются. Отказы имеют явные validation_status/reason и
+effective usable_coverage=false. Missing activity.status не достраивается.
+Shared/schema ошибки не salvage; raw summary не становится summary принятой части.
+
+Новый wrapper отдельно хранит original/effective classifications, profile gates,
+counts, fully_validated/fully_accepted_nonempty и untouched raw_result; legacy
+ключа result нет. Partial записывается в partial-verdict.json, а не verdict.json,
+поэтому downstream не получает его как полный успех. Empty valid→identity_only,
+all-invalid→rejected; 2full-valid packets (один пустой) и1partial не названы3/3.
+
+Undated personal_contact не доказывает current applicability/доставляемость.
+Сохранившиеся model оценки profile affiliation/activity не доказывают нынешнюю
+занятость или готовность руководить. ORCID конфликт Ковалёва из старого широкого
+корпуса не разрешён. Human0; precision/recall, nonregression, economy и production
+готовность не измерены и не заявлены.
+
+### Маслов: где закончился путь к историческому контакту
+
+[Generated saved trace diagnosis](../metrics/enrichment_maslov_trace_offline_20261011.json)
+сверяет seeds, requests/responses, actual native title/link rows, observed hrefs,
+saved sources, последний actual GLM model payload и untouched collector output.
+По каждому использованному файлу хранится SHA из старого index. Baseline #197
+normalized/corpus проверены по своему sealed index; это posthoc материал, не
+подсказка live сборщику. Старый contact был historical2007/content на сохранённой
+[статье D-Lib](https://dlib.org/dlib/november07/phillips/11phillips.html), а не
+current контакт доказанно этого MEPhI профиля. Его literal в новых bodies отсутствует.
+
+Seed: Alexey Maslov, MEPhI, ORCID0000-0001-7196-1640. Первый read ORCID с query
+Alexey Maslov вернул fragments содержащие A New Face for DSpace и DOI
+10.1045/november2007-phillips. Эти title/DOI есть в последнем фактическом model
+payload; metadata не потерялись при передаче. Далее четыре actual queries:
+
+1. Native Zai: Alexey Maslov ORCID 0000-0001-7196-1640.
+2. Native Zai: Алексей Маслов МИФИ доцент кафедра.
+3. Public DDG: "Alexey Maslov" "MEPhI" — robots refusal.
+4. Native Zai: "Маслов" НИЯУ МИФИ сотрудник аспирантам.
+
+Ни одного publication title/DOI query. Native raw rows содержали корни сайтов;
+код зарегистрировал именно их, а не обрезал точные URL локально. D-Lib не было
+среди этих links или returned observed hrefs. Прочитаны3bodies: ORCID, mephi.ru,
+voip.mephi.ru (104fragments всего); D-Lib не запрашивалась и не читалась. На
+voip queries Маслов Алексей/Маслов//api вернули0matching fragments, а ссылки
+с mephi.ru на home.mephi.ru/ru/people встретили robots refusal. Две попытки
+Semantic Scholar URL отклонены как unregistered. Отказ не обходился.
+
+Collector selections пусты, сохранена только identity evidence. Доказанный
+разрыв — **discovery/source acquisition исторической статьи**: её metadata
+GLM видел, её URL/body/contact не видел. Нельзя приписать модели неправильную
+оценку контакта в непрочитанной статье. Изменить ли queries/priority под
+историческую работу — вопрос стратегии; доказанного локального parser/binding
+bug нет, поэтому дополнительный фикс источников не внесён.
+
+Следующий контроль, **не запущен**: отдельный finite freeze резервирует один
+из4search queries для observed ORCID title/DOI. Только actual result URL/observed
+href может привести к checked article body; baseline page URL не инжектировать.
+Доказательства: search row/href→body/SHA→literal candidate→independent Sol
+semantic/date assessment. Отдельно учитывать search absence/refusal, source
+acquisition и interpretation; historical2007 и ambiguity MEPhI/Texas A&M
+сохранять. Unknown: выдаст ли такой запрос ссылку, подтвердится ли личность,
+выберет ли collector контакт. Это требует отдельного разрешения/постановки.
+
+### Проверки, DoD и завершение
+
+25targeted adapter tests;279unittest;388pytest,8skip/5deselect,coverage94.06%.
+Lint/typecheck/docs-check PASS; make audit --no-images --strict PASS. Actual
+common git history отдельно проверена readonly Docker mount:516commits,no leaks.
+Meaningful cases: valid contact+rejected metadata city; common identity/author/
+source/provenance/schema/span/ID/profile-date failures; receipt SHA mismatch;
+all-invalid/empty/previous valid; partial file не legacy verdict; saved replay
+без model/HTTP, no overwrite; прежние malformed schema/dates/IDs/spans checks.
+Реальный Isangulova raw preflight подтвердил5validated/1rejected/4usable и
+untouched raw SHA до freeze. Scope, freeze/code SHA, новая обработка3raw, старый
+vs новый diff, trace diagnosis и ограничения сохранены. Независимое ревью и
+CI с actual checkout/parents текущего head — в финальном комментарии PR194 и
+приватном transfer index. Процесс offline replay terminal STOP; cron PAUSED.
+Новый batch/merge/mainpush/deploy/productdocs не выполнены. После финальной
+передачи — own process/write STOP; продолжение отдельно не назначено.
