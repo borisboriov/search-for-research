@@ -271,7 +271,10 @@ class Live3Tests(unittest.TestCase):
                     "enrichment_glm_runner.frozen",
                     return_value={"experiment_kind": "live3-independent-sol-v1"},
                 ),
-                patch("enrichment_glm_runner.run_pi", return_value={"host_error": None}) as collect,
+                patch(
+                    "enrichment_glm_runner.run_pi",
+                    return_value={"host_error": None, "usage_complete": True},
+                ) as collect,
                 patch(
                     "enrichment_glm_runner.verify_live3",
                     side_effect=lambda _r, p, _q: {
@@ -282,6 +285,28 @@ class Live3Tests(unittest.TestCase):
                 result = experiment_live3(root, 85)
             self.assertEqual(collect.call_count, 4)
             self.assertEqual(len(result["rows"]), 3)
+            self.assertTrue((root / "stopped.json").exists())
+
+    def test_incomplete_runtime_stops_before_verifier_or_next_collector(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            immutable_json(root / "sample.json", [{"id": f"A{i}"} for i in range(3)])
+            with (
+                patch(
+                    "enrichment_glm_runner.frozen",
+                    return_value={"experiment_kind": "live3-independent-sol-v1"},
+                ),
+                patch(
+                    "enrichment_glm_runner.run_pi",
+                    return_value={"host_error": None, "usage_complete": False},
+                ) as collect,
+                patch("enrichment_glm_runner.verify_live3") as verify,
+            ):
+                result = experiment_live3(root, 85)
+            self.assertEqual(collect.call_count, 2)  # zero-inference preflight, first profile
+            verify.assert_not_called()
+            self.assertEqual(result["rows"], [])
+            self.assertEqual(result["partial_reason"], "Collector runtime incomplete")
             self.assertTrue((root / "stopped.json").exists())
 
 

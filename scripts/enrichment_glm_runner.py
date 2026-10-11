@@ -997,6 +997,8 @@ def experiment_live3(root: Path, remaining: float) -> dict[str, Any]:
             receipt = run_pi(root, profile)
             if receipt.get("host_error") is not None:
                 raise ValueError("Collector host failure: " + str(receipt["host_error"]))
+            if not receipt.get("usage_complete", False):
+                raise ValueError("Collector runtime incomplete")
             if (root / "quota-stopped.json").exists():
                 raise ValueError("Actual provider refusal")
             outcome = verify_live3(root, profile, remaining)
