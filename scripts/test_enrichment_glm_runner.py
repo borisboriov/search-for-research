@@ -2,6 +2,7 @@
 
 import argparse
 import asyncio
+import copy
 import json
 import tempfile
 import unittest
@@ -13,6 +14,7 @@ from unittest.mock import AsyncMock, patch
 import test_enrichment_contact_first as contact_fixture
 from enrichment_contact_first import digest
 from enrichment_experiment import sha
+from enrichment_fragments import process_partial
 from enrichment_glm_compare import compact, legacy_pdf_text, summarize
 from enrichment_glm_runner import (
     check_job_budget,
@@ -32,9 +34,213 @@ from enrichment_verification import immutable_json
 from enrichment_verifier_benchmark import check_schema
 
 
+class PartialPolicyTests(unittest.TestCase):
+    def test_saved_replay_is_finite_without_model_or_source_calls(self) -> None:
+        from enrichment_live_partial import INDEX, replay
+
+        with tempfile.TemporaryDirectory() as temp:
+            parent = Path(temp).resolve()
+            previous, root = parent / "previous", parent / "new"
+            self.saved(previous)
+            immutable_json(previous / "stopped.json", {})
+            immutable_json(
+                previous / INDEX,
+                {
+                    "private_file_sha256": {
+                        str(p.relative_to(previous)): sha(p)
+                        for p in previous.rglob("*")
+                        if p.is_file()
+                    }
+                },
+            )
+            scope = parent / "scope.md"
+            scope.write_text("Synthetic offline scope")
+            args = argparse.Namespace(
+                root=root,
+                previous=previous,
+                scope=scope,
+                scope_url="test",
+                deadline=(datetime.now(UTC) + timedelta(hours=1)).isoformat(),
+            )
+            with (
+                patch("enrichment_live_partial.SEAL", sha(previous / INDEX)),
+                patch("enrichment_live_partial.CASES", [{"author_id": "A1"}]),
+                patch(
+                    "enrichment_live_partial.subprocess.check_output",
+                    side_effect=lambda cmd, **_: "" if "status" in cmd else "a" * 40,
+                ),
+                patch("enrichment_native.execute") as execute,
+                patch("enrichment_glm_tools.PublicLoader") as loader,
+            ):
+                metrics = replay(args)
+                self.assertEqual(metrics["new_model_jobs"], 0)
+                self.assertEqual(metrics["cases"][0]["new_status"], "accepted")
+                execute.assert_not_called()
+                loader.assert_not_called()
+                with self.assertRaisesRegex(ValueError, "New offline root"):
+                    replay(args)
+            self.assertTrue((root / "stopped.json").exists())
+            self.assertEqual(
+                (root / "inputs/A1/raw-result.json").read_bytes(),
+                (previous / "verification/A1/native/raw-result.json").read_bytes(),
+            )
+
+    def test_partial_is_saved_separately_from_full_verdict(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            builder = Live3Tests()
+            host, _ = builder.fixture(root, city=True)
+
+            def reply(*args: Any, **kwargs: Any) -> tuple[Path, dict[str, Any]]:
+                path, receipt = builder.reply(*args, **kwargs)
+                raw = json.loads(path.read_text())
+                raw["items"][0].update(identity_verdict="supported", object_relation="supported")
+                raw["items"][1].update(information_date="2019-12-11", date_basis="source_metadata")
+                path.write_text(json.dumps(raw))
+                receipt["raw_result_sha256"] = sha(path)
+                (path.parent / "receipt.json").write_text(json.dumps(receipt))
+                return path, receipt
+
+            with patch("enrichment_native.execute", side_effect=reply):
+                result = verify_live3(root, host.profile, 85)
+            self.assertEqual(result["status"], "partial")
+            self.assertEqual(result["counts"]["validated_atoms"], 1)
+            self.assertTrue((root / "verification/A1/partial-verdict.json").exists())
+            self.assertFalse((root / "verification/A1/verdict.json").exists())
+
+    def saved(self, root: Path, *, empty: bool = False) -> tuple[Any, ...]:
+        builder = Live3Tests()
+        host, _ = builder.fixture(root, identity_only=empty)
+        with patch("enrichment_native.execute", side_effect=builder.reply):
+            verify_live3(root, host.profile, 85)
+        directory = root / "verification/A1"
+        task = json.loads((directory / "task.json").read_text())
+        raw = json.loads((directory / "native/raw-result.json").read_text())
+        receipt = json.loads((directory / "native/receipt.json").read_text())
+        return task["semantic_input"], host.full_corpus(), task, raw, receipt
+
+    def process(self, args: tuple[Any, ...]) -> dict[str, Any]:
+        source, corpus, task, raw, receipt = args
+        # Synthetic mutation tests have their own consistent raw receipt.
+        raw_sha = digest(json.dumps(raw, sort_keys=True).encode())
+        receipt = receipt | {"raw_result_sha256": raw_sha}
+        return process_partial(source, corpus, task, raw, receipt, task["input_sha256"], raw_sha)
+
+    def test_valid_contact_survives_same_unsupported_metadata_date_as_city(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            args = self.saved(Path(temp))
+            source, corpus, _, raw, _ = args
+            contact = raw["items"][0]
+            contact.update(identity_verdict="supported", object_relation="supported")
+            key = next(k for k, v in corpus["values"].items() if v["kind"] != "email")
+            value = corpus["values"][key]
+            ref = value["fragment_id"]
+            source["items"].append(
+                {
+                    "item_id": key,
+                    "origin": "collector",
+                    "original_field": "city",
+                    "value": corpus["fragments"][ref]["excerpt"],
+                    "evidence_refs": [ref],
+                }
+            )
+            city = copy.deepcopy(contact)
+            city.update(
+                item_id=key,
+                evidence_refs=[ref],
+                information_date="2019-12-11",
+                date_basis="source_metadata",
+                current_applicability="unknown",
+            )
+            raw["items"].append(city)
+            original = copy.deepcopy(raw)
+            result = self.process(args)
+            self.assertEqual(result["packet_status"], "partial")
+            self.assertEqual(
+                result["counts"],
+                {
+                    "requested_atoms": 2,
+                    "validated_atoms": 1,
+                    "rejected_atoms": 1,
+                    "blocked_atoms": 0,
+                    "usable_atoms": 1,
+                },
+            )
+            self.assertIn("metadata", result["items"][1]["reason"])
+            self.assertFalse(result["fully_accepted_nonempty"])
+            self.assertNotIn("result", result)
+            self.assertEqual(raw, original)
+            self.assertEqual(result["raw_result"], original)
+
+    def test_common_gates_block_every_atom(self) -> None:
+        mutations = (
+            "identity",
+            "author",
+            "source",
+            "provenance",
+            "schema",
+            "span",
+            "id",
+            "profile_date",
+        )
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temp:
+                args = self.saved(Path(temp))
+                source, corpus, task, raw, receipt = args
+                if mutation == "identity":
+                    raw["profile_assessments"]["identity"]["verdict"] = "conflicting"
+                elif mutation == "author":
+                    raw["author_id"] = "OTHER"
+                elif mutation == "source":
+                    task["source_catalog"] = []
+                elif mutation == "provenance":
+                    receipt["agent_id"] = source["collector_agent_id"]
+                elif mutation == "schema":
+                    del raw["profile_assessments"]["activity"]["status"]
+                elif mutation == "span":
+                    corpus["values"][source["items"][0]["item_id"]]["end"] += 1
+                elif mutation == "id":
+                    raw["items"][0]["item_id"] = "foreign"
+                else:
+                    raw["profile_assessments"]["activity"].update(
+                        information_date="2099", date_basis="content"
+                    )
+                result = self.process(args)
+                self.assertEqual(result["packet_status"], "rejected")
+                self.assertEqual(result["counts"]["blocked_atoms"], 1)
+                self.assertEqual(result["counts"]["usable_atoms"], 0)
+                self.assertTrue(result["common_error"])
+
+    def test_all_invalid_empty_and_previous_valid_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            args = self.saved(Path(temp))
+            result = self.process(args)
+            self.assertTrue(result["fully_validated"])
+            self.assertEqual(
+                result["items"][0]["effective_classification"],
+                result["items"][0]["original_classification"],
+            )
+            args[3]["items"][0]["information_date"] = "2099"
+            result = self.process(args)
+            self.assertEqual(result["packet_status"], "rejected")
+            self.assertEqual(result["counts"]["rejected_atoms"], 1)
+            self.assertEqual(result["counts"]["usable_atoms"], 0)
+            args[4]["raw_result_sha256"] = "wrong"
+            result = process_partial(
+                args[0], args[1], args[2], args[3], args[4], args[2]["input_sha256"], "actual"
+            )
+            self.assertIn("receipt SHA", result["common_error"])
+        with tempfile.TemporaryDirectory() as temp:
+            result = self.process(self.saved(Path(temp), empty=True))
+            self.assertEqual(result["packet_status"], "identity_only")
+            self.assertTrue(result["fully_validated"])
+            self.assertFalse(result["fully_accepted_nonempty"])
+            self.assertEqual(result["counts"]["usable_atoms"], 0)
+
+
 class Live3Tests(unittest.TestCase):
     def fixture(
-        self, root: Path, *, identity_only: bool = False
+        self, root: Path, *, identity_only: bool = False, city: bool = False
     ) -> tuple[SourceHost, dict[str, Any]]:
         profile = {"id": "A1", "name": "Jane Researcher"}
         immutable_json(root / "sample.json", [profile])
@@ -71,7 +277,7 @@ class Live3Tests(unittest.TestCase):
         self.assertTrue(view["candidate_ids_NOT_personal_verdicts"])
         key = next(k for k, v in view["values"].items() if v["kind"] == "email")
         ref = view["values"][key]["fragment_id"]
-        raw = {
+        raw: dict[str, Any] = {
             "author_id": "A1",
             "selections": []
             if identity_only
@@ -80,6 +286,15 @@ class Live3Tests(unittest.TestCase):
             "limitations": "",
         }
         check_schema(raw, live3_schema())
+        if city:
+            text_key = next(k for k, v in view["values"].items() if v["kind"] != "email")
+            raw["selections"].append(
+                {
+                    "value_id": text_key,
+                    "field": "city",
+                    "evidence_refs": [view["values"][text_key]["fragment_id"]],
+                }
+            )
         packet = asyncio.run(host.bind(raw))
         immutable_json(root / "collector.json", packet)
         prepared = prepare_control(
@@ -156,7 +371,7 @@ class Live3Tests(unittest.TestCase):
                 for item in source["items"]
             ],
             profile_assessments={
-                "identity": axis,
+                "identity": axis | {"verdict": "supported"},
                 "current_affiliation": axis,
                 "activity": activity,
             },
@@ -174,6 +389,7 @@ class Live3Tests(unittest.TestCase):
             "effort": None,
             "tokens": None,
             "cost_usd": None,
+            "raw_result_sha256": sha(directory / "raw-result.json"),
         }
         immutable_json(directory / "receipt.json", receipt)
         return directory / "raw-result.json", receipt

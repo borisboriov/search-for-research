@@ -22,6 +22,7 @@ from enrichment_verifier_benchmark import check_schema
 
 METHOD = "fragment-offline3-v1"
 DATE_GUARD_POLICY = "fragment-date-v2-orcid-employment-ms"
+PARTIAL_POLICY = "live-sol-partial-dates-v1"
 REPEAT_INDEX = "transfer-SHA-index-977a58b.json"
 REPEAT_SEAL = "5939d28edbaadf94e2ab0439f772365254a55674bb06607306b001732370f742"
 CASES = [
@@ -385,6 +386,163 @@ def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any
             if not years or not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
                 raise ValueError("Date year absent from referenced saved evidence")
     return {"policy": DATE_GUARD_POLICY, "metadata_bindings": date_bindings}
+
+
+def process_partial(
+    source: dict[str, Any],
+    corpus: dict[str, Any],
+    task: dict[str, Any],
+    raw: dict[str, Any],
+    receipt: dict[str, Any],
+    input_sha256: str,
+    raw_sha256: str,
+) -> dict[str, Any]:
+    """Isolate only atom date failures after unchanged complete common validation.
+
+    This versioned wrapper is not the legacy fully accepted result contract.
+    Raw assessments/summary remain untouched; local or shared rejections are explicit.
+    The caller must regenerate the corpus from checked saved source records first.
+    """
+    result: dict[str, Any] = {}
+    common_error: str | None = None
+    derived: dict[str, Any] = {}
+    profile_gates: dict[str, Any] = {}
+    try:
+        check_schema(raw, schema("verify", strict_levels=True))
+        result = raw | {"provenance": normalized_provenance(receipt, "saved_live_partial")}
+        if (
+            any(
+                raw[key] != task[key]
+                for key in ("author_id", "input_sha256", "batch_input_sha256", "batch_ticket_id")
+            )
+            or task["input_sha256"] != input_sha256
+            or task["batch_input_sha256"] != input_sha256
+        ):
+            raise ValueError("Output belongs to another input")
+        if receipt.get("raw_result_sha256") != raw_sha256:
+            raise ValueError("Raw receipt SHA mismatch")
+        if (
+            task["semantic_input"] != source
+            or task["source_catalog"] != corpus["sources"]
+            or source["evidence_pool"] != corpus["fragments"]
+            or source["author_id"] != corpus["profile"]["id"]
+            or source["profile"] != corpus["profile"]
+        ):
+            raise ValueError("Shared source/corpus binding mismatch")
+        ids = [i["item_id"] for i in source["items"]]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Duplicate source item ID")
+        for item in source["items"]:
+            value = corpus["values"][item["item_id"]]
+            fragment = corpus["fragments"][value["fragment_id"]]
+            refs = item["evidence_refs"]
+            if value["fragment_id"] not in refs or len(refs) != len(set(refs)):
+                raise ValueError("Source item lacks its literal anchor")
+            if any(ref not in corpus["fragments"] for ref in refs):
+                raise ValueError("Foreign source reference")
+            start, end = value["start"] - fragment["start"], value["end"] - fragment["start"]
+            if not 0 <= start < end <= len(fragment["excerpt"]):
+                raise ValueError("Value leaves its literal fragment")
+            literal = fragment["excerpt"][start:end]
+            if literal != item["value"] or (
+                value["kind"] == "email" and literal != value["literal"]
+            ):
+                raise ValueError("Source value/span mismatch")
+            if item["original_field"] == "personal_contact" and value["kind"] != "email":
+                raise ValueError("Contact requires email value")
+        derived = validate(source, result, input_sha256)
+        for axis, row in result["profile_assessments"].items():
+            try:
+                profile_guard = check_dates(
+                    corpus, {"items": [], "profile_assessments": {axis: row}}
+                )
+                profile_gates[axis] = {
+                    "status": "valid",
+                    "date_guard": profile_guard,
+                    "reason": None,
+                }
+            except ValueError as error:
+                profile_gates[axis] = {"status": "rejected", "reason": str(error)}
+        if any(g["status"] != "valid" for g in profile_gates.values()):
+            raise ValueError("Shared profile date gate failed")
+        if result["profile_assessments"]["identity"]["verdict"] != "supported":
+            profile_gates["identity"].update(
+                status="rejected", reason="Shared profile identity not supported"
+            )
+            raise ValueError("Shared profile identity not supported")
+    except (ValueError, KeyError, TypeError, IndexError) as error:
+        common_error = str(error)
+    rows = []
+    raw_items = raw.get("items") if isinstance(raw, dict) else None
+    assessments = {
+        a.get("item_id"): a
+        for a in (raw_items if common_error is None and isinstance(raw_items, list) else [])
+        if isinstance(a, dict)
+    }
+    for item in source["items"]:
+        aid = item["item_id"]
+        reason, guard = common_error, None
+        status = "blocked" if common_error else "valid"
+        if common_error is None:
+            try:
+                guard = check_dates(
+                    corpus, {"items": [assessments[aid]], "profile_assessments": {}}
+                )
+            except ValueError as error:
+                status, reason = "rejected", str(error)
+        effective = copy.deepcopy(derived.get(aid))
+        if effective is not None and status != "valid":
+            effective.update(usable_coverage=False, coverage_field=None)
+            effective["reason"].append("shared_gate" if common_error else "atom_date_guard")
+        rows.append(
+            {
+                "item_id": aid,
+                "field": item["original_field"],
+                "validation_status": status,
+                "reason": reason,
+                "date_guard": guard,
+                "original_classification": derived.get(aid),
+                "effective_classification": effective,
+            }
+        )
+    valid = sum(r["validation_status"] == "valid" for r in rows)
+    fully_validated = common_error is None and valid == len(rows)
+    status = (
+        "identity_only"
+        if fully_validated and not rows
+        else "accepted"
+        if fully_validated
+        else "partial"
+        if valid
+        else "rejected"
+    )
+    return {
+        "processing_policy": PARTIAL_POLICY,
+        "packet_status": status,
+        "fully_validated": fully_validated,
+        "fully_accepted_nonempty": fully_validated and bool(rows),
+        "common_error": common_error,
+        "profile_gates": profile_gates,
+        "items": rows,
+        "counts": {
+            "requested_atoms": len(rows),
+            "validated_atoms": valid,
+            "rejected_atoms": sum(r["validation_status"] == "rejected" for r in rows),
+            "blocked_atoms": sum(r["validation_status"] == "blocked" for r in rows),
+            "usable_atoms": sum(
+                r["validation_status"] == "valid"
+                and bool(r["effective_classification"]["usable_coverage"])
+                for r in rows
+            ),
+        },
+        "raw_result": raw,
+        "normalized_provenance": result.get("provenance"),
+        "raw_summary_is_not_accepted_summary": True,
+        "raw_modified": False,
+        "raw_sha256": raw_sha256,
+        "input_sha256": input_sha256,
+        "human_gold": 0,
+    }
 
 
 def seal_check(root: Path, index_name: str) -> dict[str, Any]:

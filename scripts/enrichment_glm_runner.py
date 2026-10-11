@@ -853,7 +853,7 @@ def freeze_live3(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def verify_live3(root: Path, profile: dict[str, Any], remaining: float) -> dict[str, Any]:
-    from enrichment_fragments import check_dates
+    from enrichment_fragments import check_dates, process_partial
     from enrichment_native import execute, normalized_provenance
     from enrichment_native import schema as semantic_schema
     from enrichment_semantics import validate
@@ -944,6 +944,26 @@ def verify_live3(root: Path, profile: dict[str, Any], remaining: float) -> dict[
     )
     raw = read(result_path)
     try:
+        processing = process_partial(
+            source, corpus, task, raw, receipt, sha(path), sha(result_path)
+        )
+        if not processing["fully_validated"]:
+            name = (
+                "partial-verdict.json"
+                if processing["packet_status"] == "partial"
+                else "failure.json"
+            )
+            immutable_json(directory / name, processing)
+            reason = processing["common_error"] or next(
+                row["reason"] for row in processing["items"] if row["reason"]
+            )
+            return {
+                "author_id": aid,
+                "status": processing["packet_status"],
+                "reason": reason,
+                "processing_policy": processing["processing_policy"],
+                "counts": processing["counts"],
+            }
         check_schema(raw, schema)
         if any(
             raw[key] != task[key]

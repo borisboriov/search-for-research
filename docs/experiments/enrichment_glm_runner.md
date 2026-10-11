@@ -8,6 +8,9 @@
 из них один непустой. Один пакет отклонён по date guard, у второго нет фактов.
 Текущая конфигурация не годна для следующего контрольного batch без отдельного
 решения по этим отказам; новый запуск не назначен.
+Offline policy `live-sol-partial-dates-v1` отделяет atom-local отказ даты от
+валидных атомов после полных общих guards. Она не меняет исторический live yield.
+Partial остаётся отдельным результатом и не считается полностью принятым пакетом.
 Исправление #197 устранило ложный отказ даты, но не исправляет смысл ответов:
 после локальной обработки приняты 5/6 raw, Маслов/GLM остаётся без обязательного
 activity.status, чрезмерно уверенные оценки актуальности сохраняются. Принятый
@@ -19,6 +22,42 @@ activity.status, чрезмерно уверенные оценки актуал
 лимиты и проверяет цитаты. Native Sol 6.1/high в live3 проверяет ровно GLM candidates
 по всем сохранённым источникам и полной неизменённой semantic-v3; в историческом
 offline paired3 две модели независимо извлекали факты. Человеческих оценок и gold нет.
+
+## Частичная обработка сохранённых live ответов
+
+`scripts/enrichment_live_partial.py` выполняет один конечный offline replay трёх
+Sol raw из sealed live3. Новый root обязателен; повтор/overwrite запрещён, deadline
+≤2 часа. Код сначала сверяет весь старый SHA index и заново строит corpus из
+checked saved bodies, затем замораживает scope/code/task/input/raw/receipt SHA.
+Новых model/source/search calls нет. Старые источники и архивы остаются по
+проверяемым ссылкам; копируются только три набора входов и результатов.
+
+Пример интерфейса (повтор завершённого этапа не разрешён):
+
+```bash
+uv run python scripts/enrichment_live_partial.py --root <NEW_PRIVATE_ROOT> \
+  --previous <SEALED_LIVE3_ROOT> --scope <SCOPE_MD> --scope-url <PR_COMMENT_URL> \
+  --deadline <UTC_ISO_DEADLINE>
+```
+
+`process_partial` сохраняет исходный strict schema, четыре task IDs, literal
+value/span/ref bindings, semantic-v3 и независимый provenance. Schema, identity
+профиля (должна быть supported), source/corpus binding, provenance или любой
+profile date guard блокируют все atoms. Это консервативная общая зависимость.
+Никакие отсутствующие status/verdict/summary не дополняются. Только отказ
+неизменённого atom date guard локален: atom получает rejected/reason и
+`usable_coverage=false`; валидные соседние атомы сохраняют классификацию.
+
+Новый wrapper имеет `processing_policy`, `packet_status`, explicit atom states,
+profile gates, counts, `fully_validated`, `fully_accepted_nonempty`, untouched
+`raw_result` и отдельно normalized provenance. Raw summary помечена как исходная,
+не как summary принятой части. Пустой валидный результат — identity_only,
+all-invalid — rejected; partial никогда не full success. Live adapter сохраняет
+partial только в `partial-verdict.json`, общий/all-invalid отказ в `failure.json`.
+Только полностью валидный пакет получает прежний `verdict.json`; старый downstream,
+читающий этот файл, не получает partial как успех. Формат partial не имеет legacy
+ключа `result`. Усиление общей identity dependency версионировано; это не
+доказательство полноты/истинности и не снятие внешнего ORCID конфликта.
 
 ## Что делал baseline
 
