@@ -286,3 +286,33 @@ empty tools и отсутствии provider access/quota STOP. Общая ош�
 останавливают этап. Каждый outcome сохраняется; normalized result требуется
 для пригодной пары. Unknown usage не0, sourcebound неsemanticcorrect, human0.
 Крон остаётся PAUSED; новое сопровождение/следующий эксперимент не назначены.
+
+### Offline date policy для #197
+
+`fragment-date-v2-orcid-employment-ms` применяется только к обработке результата,
+не меняет prompt/schema/semantic-v3 и не разрешает inference. Для
+`current_affiliation.date_basis=source_metadata` поддержан узкий типизированный
+случай ORCID `employment-summary.created-date/last-modified-date.value`:
+целое 13-значное epoch milliseconds преобразуется в UTC детерминированно.
+Source kind/endpoint и ORCID identifier должны совпадать с фиксированным
+профилем; весь saved JSON восстанавливается из согласованных fragments с
+проверкой textSHA, длины и duplicate keys.
+
+Конкретный employment определяется до сравнения дат: cited spans должны
+покрывать его put-code, path и organization.name. Требуется ровно один такой
+объект. Два cited employment, чужой object/path, uncited date field, timestamp
+коллекции/works и произвольные числа не принимаются. Ровно одно из двух
+типизированных полей должно дать указанную календарную дату с её точностью.
+Epoch seconds, строки/boolean и metadata update после saved checked_at
+отвергаются; checked_at служит только верхней границей, никогда date evidence.
+Другие виды source_metadata пока unsupported, без fallback к буквальному году.
+Обычный literal-year guard для content дат сохранён.
+
+Normalized wrapper получает policy и metadata binding (sourceID, JSON path,
+object path, integer milliseconds, UTC, cited refs); исходный model result,
+semantic classifications и даты не дополняются/не исправляются. Это проверка
+формата происхождения, а не подтверждение нынешней affiliation/activity,
+принадлежности контакта или готовности руководить. Для разрешённой повторной
+обработки шести saved raw используются новый root/версия, точные input SHA и
+старый cumulative35; raw/STOP/seals/исторические normalized и metrics неизменны.
+Новых model/source/search calls0; пропущенный activity.status не восстанавливается.

@@ -9,7 +9,15 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from enrichment_fragments import CASES, catalog, hydrate, run, saved_source_paths, snapshot_source
+from enrichment_fragments import (
+    CASES,
+    DATE_GUARD_POLICY,
+    catalog,
+    hydrate,
+    run,
+    saved_source_paths,
+    snapshot_source,
+)
 
 
 def fixture() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
@@ -83,7 +91,149 @@ def fixture() -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     return task, raw, provenance
 
 
+def metadata_fixture(
+    mutation: str = "",
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    """Saved issue197 field/object/epoch reproduced without private contact/source bytes."""
+    task, raw, provenance = fixture()
+    orcid = "0000-0003-0365-8695"
+    employment: dict[str, Any] = {
+        "created-date": {"value": 1560767764206},
+        "last-modified-date": {"value": 1576026926116},
+        "put-code": 8089983,
+        "department-name": "Mechanics and Mathematics department",
+        "organization": {"name": "Novosibirsk State University"},
+        "path": f"/{orcid}/employment/8089983",
+    }
+    record: dict[str, Any] = {
+        "orcid-identifier": {"path": orcid},
+        "description": "contact@example.org; literal content date 2007",
+        "activities-summary": {
+            "employments": {
+                "affiliation-group": [{"summaries": [{"employment-summary": employment}]}]
+            }
+        },
+    }
+    if mutation == "seconds":
+        employment["last-modified-date"]["value"] = 1576026926
+    elif mutation == "boolean":
+        employment["last-modified-date"]["value"] = True
+    elif mutation == "string":
+        employment["last-modified-date"]["value"] = "1576026926116"
+    elif mutation == "arbitrary_number":
+        employment["last-modified-date"] = None
+        employment["untyped_number"] = 1576026926116
+    elif mutation == "collection_metadata":
+        employment["last-modified-date"]["value"] = 1560767764206
+        record["activities-summary"]["employments"]["last-modified-date"] = {"value": 1576026926116}
+    elif mutation == "work_metadata":
+        employment["last-modified-date"]["value"] = 1560767764206
+        record["activities-summary"]["works"] = {"last-modified-date": {"value": 1576026926116}}
+    elif mutation == "neighbor_employment":
+        other = copy.deepcopy(employment)
+        other["put-code"] = 99
+        other["path"] = f"/{orcid}/employment/99"
+        other["organization"]["name"] = "Another University"
+        record["activities-summary"]["employments"]["affiliation-group"].append(
+            {"summaries": [{"employment-summary": other}]}
+        )
+    elif mutation == "foreign_profile":
+        record["orcid-identifier"]["path"] = "0000-0000-0000-0000"
+    elif mutation == "wrong_object_path":
+        employment["path"] = f"/{orcid}/employment/99"
+    elif mutation == "uncited_field":
+        employment["department-name"] = "x" * 3000
+    text = json.dumps(record, ensure_ascii=False, indent=2)
+    source = {
+        "url": f"https://pub.orcid.org/v3.0/{orcid}/record",
+        "source_kind": "structured_orcid",
+        "checked_at": "2026-10-11T00:00:00+00:00",
+        "body_sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "text_sha256": hashlib.sha256(text.encode()).hexdigest(),
+        "text": text,
+    }
+    if mutation == "untyped_source":
+        source["source_kind"] = "direct_http"
+    elif mutation == "future_update":
+        source["checked_at"] = "2018-01-01T00:00:00+00:00"
+    corpus = catalog("A1", [source]) | {
+        "profile": {"id": "A1", "orcid": f"https://orcid.org/{orcid}"}
+    }
+    task["corpus"] = corpus
+    key = next(k for k, v in corpus["values"].items() if v["kind"] == "email")
+    ref = corpus["values"][key]["fragment_id"]
+    raw["selections"][0].update(value_id=key, evidence_refs=[ref])
+    raw["items"][0].update(item_id=key, evidence_refs=[ref])
+    raw["profile_assessments"]["current_affiliation"].update(
+        information_date="2019-12-11",
+        date_basis="source_metadata",
+        evidence_refs=list(corpus["fragments"]),
+    )
+    if mutation == "uncited_field":
+        raw["profile_assessments"]["current_affiliation"]["evidence_refs"] = [
+            key for key, f in corpus["fragments"].items() if f["start"] >= 3000
+        ]
+    return task, raw, provenance
+
+
 class FragmentTests(unittest.TestCase):
+    def test_saved_orcid_employment_timestamp_uses_exact_field_object_and_utc(self) -> None:
+        task, raw, provenance = metadata_fixture()
+        original = copy.deepcopy(raw)
+        normalized = hydrate(task, raw, provenance)
+        binding = normalized["date_guard"]["metadata_bindings"][0]
+        self.assertEqual(normalized["date_guard"]["policy"], DATE_GUARD_POLICY)
+        self.assertEqual(binding["utc"], "2019-12-11T01:15:26.116000+00:00")
+        self.assertEqual(binding["epoch_milliseconds"], 1576026926116)
+        self.assertEqual(
+            binding["json_path"][-3:], ["employment-summary", "last-modified-date", "value"]
+        )
+        self.assertEqual(binding["object_path"], "/0000-0003-0365-8695/employment/8089983")
+        self.assertEqual(raw, original)
+        self.assertEqual(normalized["result"]["profile_assessments"], raw["profile_assessments"])
+        item = normalized["result"]["items"][0]
+        self.assertEqual(item["information_date"], "2007")
+        self.assertEqual(item["current_applicability"], "historical")
+        self.assertFalse(normalized["derived"][item["item_id"]]["usable_coverage"])
+
+    def test_metadata_dates_reject_wrong_units_objects_fields_and_uncited_spans(self) -> None:
+        for mutation in (
+            "seconds",
+            "boolean",
+            "string",
+            "arbitrary_number",
+            "collection_metadata",
+            "work_metadata",
+            "neighbor_employment",
+            "foreign_profile",
+            "wrong_object_path",
+            "uncited_field",
+            "untyped_source",
+            "future_update",
+        ):
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                hydrate(*metadata_fixture(mutation))
+
+    def test_metadata_does_not_accept_reading_date_or_promote_contact_to_current(self) -> None:
+        for mutation in ("reading_date", "invented_day", "unknown", "contact_date"):
+            with self.subTest(mutation=mutation):
+                task, raw, provenance = metadata_fixture()
+                axis = raw["profile_assessments"]["current_affiliation"]
+                if mutation == "reading_date":
+                    axis["information_date"] = "2026-10-11"
+                elif mutation == "invented_day":
+                    axis["information_date"] = "2019-12-12"
+                elif mutation == "unknown":
+                    axis["date_basis"] = "unknown"
+                else:
+                    raw["items"][0].update(
+                        date_basis="source_metadata",
+                        information_date="2019-12-11",
+                        current_applicability="current",
+                    )
+                with self.assertRaises(ValueError):
+                    hydrate(task, raw, provenance)
+
     def test_saved_source_inventory_includes_rendered_records_but_not_old_answers(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
