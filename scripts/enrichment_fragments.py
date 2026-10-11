@@ -203,7 +203,7 @@ def hydrate(
                     sources[pool[ref]["source_id"]]["checked_at"]
                     for ref in assessment["evidence_refs"]
                 )
-            if not years or any(year not in body for year in years):
+            if not years or not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
                 raise ValueError("Date year absent from referenced saved evidence")
     return {
         "input": source,
@@ -440,6 +440,9 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
                     != manifest["corpora"][aid]["prompt_sha256"]
                 ):
                     raise ValueError("Common prompt changed")
+                deadline = min(
+                    datetime.fromisoformat(manifest["deadline"]).timestamp(), time.time() + 600
+                )
                 immutable_json(
                     job,
                     {
@@ -450,9 +453,9 @@ def run(root: Path, remaining_percent: float) -> dict[str, Any]:
                         "cumulative_before": 28 + len(reserved),
                         "remaining_percent": remaining_percent,
                         "retry": 0,
+                        "job_deadline_epoch": deadline,
                     },
                 )
-                deadline = datetime.fromisoformat(manifest["deadline"]).timestamp()
                 if model == "GLM":
                     result_path, receipt = run_pi(
                         root,

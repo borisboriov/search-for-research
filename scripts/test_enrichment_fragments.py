@@ -197,6 +197,7 @@ class FragmentTests(unittest.TestCase):
                 },
             }
             with (
+                patch("enrichment_fragments.time.time", return_value=1000.0),
                 patch("enrichment_fragments.frozen", return_value=manifest),
                 patch("enrichment_fragments.access_stopped", return_value=False),
                 patch(
@@ -206,6 +207,7 @@ class FragmentTests(unittest.TestCase):
             ):
                 result = run(root, 0)
             self.assertEqual(glm.call_count, 1)
+            self.assertEqual(glm.call_args.kwargs["deadline_epoch"], 1600.0)
             sol.assert_not_called()
             self.assertEqual(result["stage_jobs_reserved"], 1)
             self.assertEqual(result["cumulative_reserved"], 29)
