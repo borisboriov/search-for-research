@@ -1,0 +1,35 @@
+{
+  "profiles": 10,
+  "selected_contacts": 8,
+  "contact_dates": {
+    "historical": 3,
+    "undated": 5
+  },
+  "human_reviewed": 0,
+  "new_profile_model_jobs": 0,
+  "new_source_calls": 0,
+  "new_search_calls": 0,
+  "GLM_jobs": 0,
+  "baseline_native_tokens": 459511,
+  "baseline_native_wall_seconds": 645.6297519207001,
+  "baseline_search_usage": null,
+  "subscription_debit": null,
+  "api_cost_usd": null,
+  "development_review_usage": null,
+  "baseline_reference": {
+    "index": "transfer-SHA-index-d7883ed.json",
+    "sha256": "051331260c38f35cadbf3580cbddec217710a00550dde97791b73b36bdc251fc",
+    "checked_files": 865
+  },
+  "baseline_sample_sha256": "07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387",
+  "historical_pdf_parser_reference": {
+    "index": "transfer-SHA-index-92482b6.json",
+    "sha256": "a8413a08783b48e56fb46e5b9e4710c16a5d3b8bd63aa19683f9f2e75154dd85",
+    "checked_files": 1316
+  },
+  "schema": "sol_assisted_offline_metrics_v1",
+  "cumulative_profile_jobs_before": 43,
+  "cumulative_profile_jobs_after": 43,
+  "human_answer_records": 0,
+  "actual_native_live_validation_of_new_workflow": false
+}

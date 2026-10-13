@@ -1,0 +1,80 @@
+{
+  "processing_policy": "live-sol-partial-dates-v1",
+  "manifest_sha256": "b1573cfe61fd1186b4b3e5f2fa28f8825a6c3540466e9cd8af5ec87cbd98afdb",
+  "new_model_jobs": 0,
+  "new_source_calls": 0,
+  "new_search_calls": 0,
+  "cumulative_jobs": 41,
+  "human_gold": 0,
+  "cases": [
+    {
+      "author_id": "A5089458364",
+      "old_status": "rejected",
+      "old_reason": "Unsupported metadata date object",
+      "old_validated_atoms": 0,
+      "old_usable_atoms": 0,
+      "new_status": "partial",
+      "new_counts": {
+        "requested_atoms": 6,
+        "validated_atoms": 5,
+        "rejected_atoms": 1,
+        "blocked_atoms": 0,
+        "usable_atoms": 4
+      },
+      "new_fully_accepted_nonempty": false,
+      "raw_sha256": "39567d549b49b2b73778634d46f7950f18b9efbdb94f17e0328e6c2f45125703",
+      "raw_modified": false,
+      "old_accepted_classifications_preserved": false,
+      "rejected_atoms": [
+        {
+          "item_id": "A5089458364-Sb86fd6644a761cd763de-F3000-4800-text",
+          "field": "city",
+          "reason": "Unsupported metadata date object"
+        }
+      ]
+    },
+    {
+      "author_id": "A5054586424",
+      "old_status": "identity_only",
+      "old_reason": null,
+      "old_validated_atoms": 0,
+      "old_usable_atoms": 0,
+      "new_status": "identity_only",
+      "new_counts": {
+        "requested_atoms": 0,
+        "validated_atoms": 0,
+        "rejected_atoms": 0,
+        "blocked_atoms": 0,
+        "usable_atoms": 0
+      },
+      "new_fully_accepted_nonempty": false,
+      "raw_sha256": "1f6262ed772b8726c977ccc2161327cda9483cb70d95a6a60880c77f60c7b7f3",
+      "raw_modified": false,
+      "old_accepted_classifications_preserved": true,
+      "rejected_atoms": []
+    },
+    {
+      "author_id": "A5054791318",
+      "old_status": "accepted",
+      "old_reason": null,
+      "old_validated_atoms": 3,
+      "old_usable_atoms": 3,
+      "new_status": "accepted",
+      "new_counts": {
+        "requested_atoms": 3,
+        "validated_atoms": 3,
+        "rejected_atoms": 0,
+        "blocked_atoms": 0,
+        "usable_atoms": 3
+      },
+      "new_fully_accepted_nonempty": true,
+      "raw_sha256": "93f9e7909edd6b7b3920a0d600505ef5ca1ca5bd119e9f15e353298efc9e574a",
+      "raw_modified": false,
+      "old_accepted_classifications_preserved": true,
+      "rejected_atoms": []
+    }
+  ],
+  "original_live_yield_unchanged": "2/3 schema+semantic+date-valid Sol packets",
+  "partial_is_not_full_success": true,
+  "economy_or_nonregression_claim": false
+}

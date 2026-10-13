@@ -1,0 +1,153 @@
+{
+  "method": "cache-verifier-v1",
+  "profiles_frozen": 12,
+  "pairs": 0,
+  "atoms_frozen_per_model": 37,
+  "atoms_compared_per_model": 0,
+  "profile_axes_frozen_per_model": 36,
+  "profile_axes_compared_per_model": 0,
+  "judge_jobs_completed": 0,
+  "judge_grades": null,
+  "judge_atom_evaluations": 0,
+  "judge_profile_evaluations": 0,
+  "judge_evaluated_per_model": {
+    "pi": {
+      "atoms": 0,
+      "profile_axes": 0
+    },
+    "native": {
+      "atoms": 0,
+      "profile_axes": 0
+    }
+  },
+  "error_types": null,
+  "severities": null,
+  "judge_result_paths": [],
+  "usage": {
+    "pi": {
+      "attempts": 0,
+      "completed_receipts": 0,
+      "completed_usage": null,
+      "unfinished_observed_segments": 0,
+      "incomplete_event_records": 0,
+      "unfinished_observed_usage": null,
+      "unfinished_full_usage": null,
+      "wall_elapsed_seconds": 0,
+      "known_wall_elapsed_seconds": 0,
+      "unknown_wall_jobs": 0,
+      "cost_usd": null,
+      "subscription_quota_delta": null,
+      "automatic_cli_retries": 0,
+      "transport_retries": null,
+      "requested_sdk_retries": 0,
+      "token_contract": "Pi input/output/cacheRead/cacheWrite disjoint; totalTokens authoritative; reasoning subset output"
+    },
+    "native": {
+      "attempts": 0,
+      "completed_receipts": 0,
+      "completed_usage": null,
+      "unfinished_observed_segments": 0,
+      "incomplete_event_records": 0,
+      "unfinished_observed_usage": null,
+      "unfinished_full_usage": null,
+      "wall_elapsed_seconds": 0,
+      "known_wall_elapsed_seconds": 0,
+      "unknown_wall_jobs": 0,
+      "cost_usd": null,
+      "subscription_quota_delta": null,
+      "automatic_cli_retries": 0,
+      "transport_retries": null,
+      "requested_sdk_retries": null,
+      "token_contract": "native cached_input_tokens subset input_tokens; reasoning unknown; raw CLI fields retained"
+    },
+    "judge": {
+      "attempts": 0,
+      "completed_receipts": 0,
+      "completed_usage": null,
+      "unfinished_observed_segments": 0,
+      "incomplete_event_records": 0,
+      "unfinished_observed_usage": null,
+      "unfinished_full_usage": null,
+      "wall_elapsed_seconds": 0,
+      "known_wall_elapsed_seconds": 0,
+      "unknown_wall_jobs": 0,
+      "cost_usd": null,
+      "subscription_quota_delta": null,
+      "automatic_cli_retries": 0,
+      "transport_retries": null,
+      "requested_sdk_retries": null,
+      "token_contract": "native cached_input_tokens subset input_tokens; reasoning unknown; raw CLI fields retained"
+    },
+    "preparation": {
+      "offline_render_attempts": 1,
+      "offline_render_failures": 0,
+      "wall_elapsed_seconds": 1.9789490699768066,
+      "known_wall_elapsed_seconds": 1.9789490699768066,
+      "other_preparation_wall_elapsed_seconds": null,
+      "model_invocations": 0,
+      "token_usage": null,
+      "cost_usd": null
+    }
+  },
+  "human_reviewed": 0,
+  "human_minutes": null,
+  "source_operations": 0,
+  "interpretation": "development material; agent judges are not human ground truth; source completeness not tested",
+  "freeze": {
+    "manifest_sha256": "011f1af6667ceeab29c89124df0e8b2fb1b133858ae16413dca3cc4c58e1022c",
+    "code_head": "99178d8dbfd87bf82e5939a685682f50c62e341a",
+    "author_ids": [
+      "A5015573260",
+      "A5027597767",
+      "A5100670875",
+      "A5107963115",
+      "A5087542455",
+      "A5101454429",
+      "A5024093522",
+      "A5010177657",
+      "A5101490373",
+      "A5107894360",
+      "A5003282950",
+      "A5100720596"
+    ],
+    "contracts": {
+      "artifact_hashes": {
+        "instruction.txt": "5daab4966b5ae3842cc8f16639cbc3adb3e88390870220c85d02e5156f5f5240",
+        "judge-instruction.txt": "37d33150291f94080c42220eafaa906b5819aab4324e370a39a05f2d2a3892e5",
+        "judge-schema.json": "e7d8a0d241ca220497bf89443c1e1c3074850d1445fdc416ea9a71eab47e591d",
+        "schema.json": "19e4232b1c2d1936d4428d46e2c67c436b173f1ac2c45b891c61e998ca6b05c9"
+      },
+      "judge": {
+        "effort": "xhigh",
+        "model": "gpt-6-astra",
+        "provider": "openai"
+      },
+      "native": {
+        "effort": "high",
+        "model": "gpt-6.1-sol",
+        "provider": "openai"
+      },
+      "pi": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      }
+    },
+    "selection_seed": 19319420261011,
+    "blind_seed": "19319420261012"
+  },
+  "stop": {
+    "reason": "offline_native_isolation_failed",
+    "rendered_roles": [
+      "developer",
+      "developer",
+      "developer",
+      "user",
+      "user"
+    ],
+    "exact_shared_instruction_present": false,
+    "exact_shared_user_prompt_present": true,
+    "messages_with_agents_marker": 3,
+    "messages_with_environment_marker": 0
+  }
+}

@@ -1,0 +1,261 @@
+{
+  "rules_version": "semantic-v3",
+  "evaluation_design": "reassessment_of_previously_seen_100_not_independent_test",
+  "denominators": {
+    "profiles": 100,
+    "collector_claims": 363,
+    "verifier_candidates": 225,
+    "human_reviewed": 0,
+    "profiles_with_v2_baseline": 100
+  },
+  "counts": {
+    "text_verdict": {
+      "supported": 349,
+      "insufficient": 14
+    },
+    "identity_verdict": {
+      "supported": 319,
+      "insufficient": 44
+    },
+    "field_verdict": {
+      "correct": 337,
+      "insufficient": 12,
+      "misclassified": 14
+    },
+    "fact_kind": {
+      "literal": 288,
+      "intake": 19,
+      "nationality": 2,
+      "supervision_history": 46,
+      "appointment_duration": 1,
+      "institutional_external": 3,
+      "willingness": 3,
+      "effort": 1
+    },
+    "current_applicability": {
+      "historical": 159,
+      "undated": 176,
+      "expired": 17,
+      "explicit_negative": 2,
+      "current": 9
+    },
+    "corrections_to": {
+      "unknown": 6,
+      "nationality": 2,
+      "appointment_duration": 1,
+      "published_recruitment": 2,
+      "direct_willingness": 1,
+      "response_method": 1,
+      "coordinator_contact": 1
+    },
+    "candidate_field_verdict": {
+      "correct": 186,
+      "misclassified": 23,
+      "insufficient": 16
+    },
+    "coverage_profiles": {
+      "personal_contact": 63,
+      "city": 33,
+      "topic": 58,
+      "deadline": 4,
+      "student_level": 28,
+      "payment": 2,
+      "response_method": 6,
+      "supervision_history": 24,
+      "supervisor_role": 28,
+      "student_year": 3,
+      "required_skills": 4,
+      "thesis_possible": 5,
+      "work_format": 1,
+      "coordinator_contact": 3,
+      "published_recruitment": 1,
+      "external_students": 1,
+      "workload": 1
+    },
+    "v2_confirmed_profiles": {
+      "personal_contact": 68,
+      "topic": 69,
+      "city": 31,
+      "supervisor_role": 31,
+      "published_recruitment": 15,
+      "external_students": 4,
+      "deadline": 4,
+      "student_level": 30,
+      "payment": 2,
+      "response_method": 7,
+      "supervision_history": 27,
+      "student_year": 3,
+      "required_skills": 6,
+      "workload": 2,
+      "thesis_possible": 7,
+      "work_format": 2,
+      "coordinator_contact": 3,
+      "direct_willingness": 4
+    },
+    "candidate_corrections_to": {
+      "appointment_duration": 2,
+      "unknown": 18,
+      "nationality": 1,
+      "published_recruitment": 1,
+      "coordinator_contact": 1
+    },
+    "candidate_misclassifications_by_original_field": {
+      "workload": 2,
+      "published_recruitment": 2,
+      "direct_willingness": 1,
+      "supervisor_role": 17,
+      "personal_contact": 1
+    },
+    "candidate_fact_kind": {
+      "literal": 164,
+      "supervision_history": 40,
+      "intake": 14,
+      "appointment_duration": 2,
+      "institutional_external": 2,
+      "effort": 2,
+      "nationality": 1
+    },
+    "candidate_object_type": {
+      "scientist": 130,
+      "organization": 27,
+      "offer": 46,
+      "laboratory": 22
+    },
+    "current_coverage_profiles": {
+      "topic": 4,
+      "personal_contact": 2,
+      "student_level": 1,
+      "published_recruitment": 1
+    },
+    "closed_or_old_recruitment_profiles": {
+      "published_recruitment": 9
+    },
+    "department_negative_profiles": {
+      "published_recruitment": 1,
+      "thesis_possible": 1
+    },
+    "candidate_current_applicability": {
+      "undated": 106,
+      "historical": 95,
+      "expired": 16,
+      "explicit_negative": 2,
+      "current": 6
+    },
+    "eligibility_exclusion_reasons": {
+      "field_verdict": 26,
+      "text_verdict": 14,
+      "opportunity_not_current": 21,
+      "external_requires_institutional_membership": 2,
+      "current_opportunity_date_unestablished": 14,
+      "student_opportunity_not_established": 10,
+      "workload_requires_effort_not_duration": 1,
+      "negative_not_positive_coverage": 2,
+      "identity_verdict": 44,
+      "object_relation": 49,
+      "field_requires_matching_fact_kind": 3,
+      "personal_willingness_requires_scientist": 2
+    },
+    "activity_status": {
+      "unknown": 85,
+      "active": 15
+    },
+    "profile_identity": {
+      "supported": 81,
+      "insufficient": 19
+    },
+    "profile_current_affiliation": {
+      "insufficient": 92,
+      "supported": 8
+    }
+  },
+  "misclassifications_by_original_field": {
+    "supervisor_role": 4,
+    "external_students": 2,
+    "workload": 1,
+    "published_recruitment": 3,
+    "direct_willingness": 2,
+    "required_skills": 1,
+    "personal_contact": 1
+  },
+  "coverage_comparison": {
+    "personal_contact": {
+      "v2_source_confirmed_profiles": 68,
+      "v3_usable_profiles": 63
+    },
+    "coordinator_contact": {
+      "v2_source_confirmed_profiles": 3,
+      "v3_usable_profiles": 3
+    },
+    "supervision_history": {
+      "v2_source_confirmed_profiles": 27,
+      "v3_usable_profiles": 24
+    },
+    "published_recruitment": {
+      "v2_source_confirmed_profiles": 15,
+      "v3_usable_profiles": 1
+    },
+    "direct_willingness": {
+      "v2_source_confirmed_profiles": 4,
+      "v3_usable_profiles": 0
+    },
+    "topic": {
+      "v2_source_confirmed_profiles": 69,
+      "v3_usable_profiles": 58
+    },
+    "supervisor_role": {
+      "v2_source_confirmed_profiles": 31,
+      "v3_usable_profiles": 28
+    },
+    "student_level": {
+      "v2_source_confirmed_profiles": 30,
+      "v3_usable_profiles": 28
+    },
+    "student_year": {
+      "v2_source_confirmed_profiles": 3,
+      "v3_usable_profiles": 3
+    },
+    "required_skills": {
+      "v2_source_confirmed_profiles": 6,
+      "v3_usable_profiles": 4
+    },
+    "external_students": {
+      "v2_source_confirmed_profiles": 4,
+      "v3_usable_profiles": 1
+    },
+    "thesis_possible": {
+      "v2_source_confirmed_profiles": 7,
+      "v3_usable_profiles": 5
+    },
+    "city": {
+      "v2_source_confirmed_profiles": 31,
+      "v3_usable_profiles": 33
+    },
+    "work_format": {
+      "v2_source_confirmed_profiles": 2,
+      "v3_usable_profiles": 1
+    },
+    "workload": {
+      "v2_source_confirmed_profiles": 2,
+      "v3_usable_profiles": 1
+    },
+    "payment": {
+      "v2_source_confirmed_profiles": 2,
+      "v3_usable_profiles": 2
+    },
+    "deadline": {
+      "v2_source_confirmed_profiles": 4,
+      "v3_usable_profiles": 4
+    },
+    "response_method": {
+      "v2_source_confirmed_profiles": 7,
+      "v3_usable_profiles": 6
+    }
+  },
+  "claim_comparison": {
+    "v2_source_confirmed": 327,
+    "v3_usable": 276
+  },
+  "human_accuracy": null,
+  "human_records_consulted": false,
+  "candidates_independently_confirmed": 0
+}

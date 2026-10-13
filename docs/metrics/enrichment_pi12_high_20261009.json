@@ -1,0 +1,84 @@
+{
+  "actual_cost_usd": null,
+  "agent_usable_claims": null,
+  "analysis_timing": "post-stop static derivation; original meter/manifest unchanged",
+  "analysis_version": "observed-partial-v1",
+  "automatic_llm_job_retries": 0,
+  "blind_packets": 0,
+  "candidates_from_completed_extraction": null,
+  "checkpoint_succeeded": false,
+  "code_head": "bc51cae80836cd316a9e2f31933a0c647cf23605",
+  "collector_observations": {
+    "actual_cost_usd": null,
+    "backend_runtime_exposed": false,
+    "catalog_cost_is_payment": false,
+    "completed_assistant_messages": 7,
+    "elapsed_seconds": 600.0320689678192,
+    "finished_record": {
+      "at": "2026-10-09T12:59:00.036080+00:00",
+      "done": false,
+      "epoch": 1791550740.036273,
+      "exit_code": -9,
+      "pending_operations": []
+    },
+    "full_job_token_usage": null,
+    "http_failures_403_429": 0,
+    "http_statuses": {
+      "200": 19,
+      "202": 2,
+      "405": 2
+    },
+    "model_http_responses": 8,
+    "model_request_config_records": 8,
+    "observed_usage": {
+      "cacheRead": 92608,
+      "cacheWrite": 0,
+      "input": 31329,
+      "output": 13214,
+      "reasoning": 12137,
+      "totalTokens": 137151
+    },
+    "pi_version": "1.1.0",
+    "receipt_exists": false,
+    "requested": {
+      "effort": "high",
+      "model": "glm-5.3-flash",
+      "provider": "zai"
+    },
+    "requests_and_effective_match": true,
+    "started": true,
+    "subscription_quota_delta": null,
+    "usage_scope": "completed assistant messages only; unfinished stream not measured; reasoning is subset of output, never added"
+  },
+  "collector_receipts": 0,
+  "completed_operations": 12,
+  "host_denials": {
+    "robots.txt запрещает путь": 2,
+    "Бюджет исчерпан": 1,
+    "Повторный сетевой запрос запрещён; используйте кэш": 2
+  },
+  "human_accuracy": null,
+  "human_reviewed": 0,
+  "manifest_sha256": "31acb6062e0e8020faacd5f6dbe7a5c1c792fee39e9d73b2b2f0055bea9a17b7",
+  "mcp_tools_reserved": 7,
+  "method": "pi12-high-v1",
+  "native_verifier_jobs": 0,
+  "orcid_structured_new_requests": 0,
+  "paired": 0,
+  "pi_verifier_jobs": 0,
+  "profiles_attempted": 1,
+  "profiles_frozen": 12,
+  "reasoning_contract_limitation": "receipt aggregation omits reasoning; immutable SDK events retain it. Positive SDK reasoning counters derive from API completion_tokens_details; subset of output. No meter/method change or rerun.",
+  "reservations_by_kind": {
+    "page": 8,
+    "search": 4
+  },
+  "sample_sha256": "5d8c075a7fb98c3b7dfc4fdf0a9a9d132dfdc170e79cf4eb4c34d7c91c8430a2",
+  "seed": 19319420261010,
+  "source_http_403_429": 0,
+  "source_outcomes": {
+    "ok": 12
+  },
+  "subscription_quota_delta": null,
+  "unattempted_profiles": 11
+}

@@ -1,0 +1,115 @@
+{
+  "method": "glm-public-runner-v1",
+  "at": "2026-10-10T20:31:51.995814+00:00",
+  "frozen_sample_sha256": "07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387",
+  "profiles": [
+    {
+      "author_id": "A5070748575",
+      "name": "Salman Ahmadi‐Asl",
+      "collector_status": "completed_source_binding_rejected",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 11,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5047877230",
+      "name": "Evgeny Styrin",
+      "collector_status": "interrupted_after_review_stop",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 6,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5006480668",
+      "name": "О. В. Тушавина",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5011172734",
+      "name": "Alena Nastulyavichus",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5069670094",
+      "name": "И. В. Морозов",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5054791318",
+      "name": "Alexey K. Kovalev",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5065694561",
+      "name": "Mikhail Derkach",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5054586424",
+      "name": "Alexey Maslov",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5089458364",
+      "name": "Д. В. Исангулова",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5042154547",
+      "name": "Maria S. Ledovskaya",
+      "collector_status": "not_started",
+      "independent_new_verification": false,
+      "GLM_model_requests_observed": 0,
+      "human_reviewed": 0
+    }
+  ],
+  "collector_status_counts": {
+    "completed_source_binding_rejected": 1,
+    "interrupted_after_review_stop": 1,
+    "not_started": 8
+  },
+  "independently_compared_pairs": 0,
+  "search_engine_counts": {
+    "public_DuckDuckGo_HTML": 1,
+    "native_Zai_search": 7
+  },
+  "source_record_kinds": {
+    "direct_http": 3,
+    "structured_orcid": 2
+  },
+  "controlled_HTTP_status_counts": {
+    "200": 9
+  },
+  "native_HTTP_path_status_counts": {
+    "/api/mcp/web_search_prime/mcp 200": 13,
+    "/api/coding/paas/v4/chat/completions 200": 17,
+    "/api/mcp/web_search_prime/mcp 202": 2,
+    "/api/mcp/web_search_prime/mcp 405": 2
+  },
+  "actual_model_cap_excess_observed": false,
+  "actual_provider_refusal_observed": false,
+  "new_root_STOP": true,
+  "corrected_code_live_tested": false,
+  "baseline_unchanged": true
+}

@@ -1,0 +1,769 @@
+{
+  "experiment_kind": "live3-independent-sol-v1",
+  "executed_head_sha": "dd6cbbcb2235dd82d153dd18e16946ea53e013c5",
+  "scope_sha256": "7966ab0efbb054630d20ff304ea80ec8c152835081f0af3e1de1af3ab3d41551",
+  "scope_url": "https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6107652850",
+  "sample_sha256": "4630a5566e09f65c13445734d3ccfd9412f3dfd3cf82e40cf3814c2f21ae0df8",
+  "manifest_sha256": "bfe8920fb343ed281ad144fcfd98207553c7fab44a5d43f6db9357e637f3b0d5",
+  "development_cases": true,
+  "human_gold": 0,
+  "independent_Sol_not_gold": true,
+  "rows": [
+    {
+      "author_id": "A5089458364",
+      "name": "Д. В. Исангулова",
+      "collector_runtime_complete": true,
+      "GLM_normalized": true,
+      "GLM_raw_selections": 6,
+      "candidates": 6,
+      "profile_candidate_refs": {
+        "identity": [
+          "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+          "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+          "A5089458364-Sa5eec8c108cfdf989fbb-F1500-3300",
+          "A5089458364-Sf28a42e64f2ce2a34909-F0-1249"
+        ],
+        "current_affiliation": [
+          "A5089458364-Sb86fd6644a761cd763de-F3000-4800",
+          "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+          "A5089458364-Sf28a42e64f2ce2a34909-F0-1249"
+        ]
+      },
+      "GLM_failure": null,
+      "Sol_completed": true,
+      "Sol_accepted": false,
+      "Sol_assessments_are_unaccepted_raw": true,
+      "Sol_failure": {
+        "reason": "Unsupported metadata date object",
+        "raw_sha256": "39567d549b49b2b73778634d46f7950f18b9efbdb94f17e0328e6c2f45125703",
+        "raw_modified": false,
+        "retries": 0
+      },
+      "execution_outcome": {
+        "author_id": "A5089458364",
+        "status": "rejected",
+        "reason": "Unsupported metadata date object"
+      },
+      "items": [
+        {
+          "item_id": "A5089458364-S7fea7b49cb488d2f6042-M10071-10092",
+          "field": "personal_contact",
+          "value_sha256": "97755b8e2399083e1168ee4e426b7c53d6f374176e4e3c15105e8914f1a68eab",
+          "GLM_candidate_refs": [
+            "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+            "A5089458364-Sf28a42e64f2ce2a34909-F0-1249"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "undated",
+            "date_basis": "unknown",
+            "evidence_refs": [
+              "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+              "A5089458364-Sf28a42e64f2ce2a34909-F0-1249"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": null,
+            "item_id": "A5089458364-S7fea7b49cb488d2f6042-M10071-10092",
+            "object_relation": "supported",
+            "object_type": "scientist",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": null
+        },
+        {
+          "item_id": "A5089458364-Sb86fd6644a761cd763de-F12000-13800-text",
+          "field": "topic",
+          "value_sha256": "72d57010e60592e91da0a031ad23af382e290aa7583dddf5ab7d69e3999007d9",
+          "GLM_candidate_refs": [
+            "A5089458364-Sb86fd6644a761cd763de-F12000-13800"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "historical",
+            "date_basis": "content",
+            "evidence_refs": [
+              "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+              "A5089458364-Sb86fd6644a761cd763de-F12000-13800",
+              "A5089458364-Sb86fd6644a761cd763de-F15000-16800"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": "2017-11",
+            "item_id": "A5089458364-Sb86fd6644a761cd763de-F12000-13800-text",
+            "object_relation": "supported",
+            "object_type": "scientist",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": null
+        },
+        {
+          "item_id": "A5089458364-Sb86fd6644a761cd763de-F16500-18300-text",
+          "field": "topic",
+          "value_sha256": "9cf5bca09d6628effcaf23258e4ca29b2390cc8d0f1a796a7c87382ce391f509",
+          "GLM_candidate_refs": [
+            "A5089458364-Sb86fd6644a761cd763de-F16500-18300"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "historical",
+            "date_basis": "content",
+            "evidence_refs": [
+              "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+              "A5089458364-Sb86fd6644a761cd763de-F16500-18300",
+              "A5089458364-Sb86fd6644a761cd763de-F19500-21300"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": "2014-09",
+            "item_id": "A5089458364-Sb86fd6644a761cd763de-F16500-18300-text",
+            "object_relation": "supported",
+            "object_type": "scientist",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": null
+        },
+        {
+          "item_id": "A5089458364-Sf28a42e64f2ce2a34909-F0-1249-text",
+          "field": "topic",
+          "value_sha256": "653fd11c6427155501c9beb6ee86b3ff422d6afb2687ee75088bef1e13e9df8e",
+          "GLM_candidate_refs": [
+            "A5089458364-Sf28a42e64f2ce2a34909-F0-1249"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "historical",
+            "date_basis": "content",
+            "evidence_refs": [
+              "A5089458364-Sf28a42e64f2ce2a34909-F0-1249",
+              "A5089458364-Sb86fd6644a761cd763de-F6000-7800",
+              "A5089458364-Sb86fd6644a761cd763de-F7500-9300",
+              "A5089458364-Sb86fd6644a761cd763de-F9000-10800",
+              "A5089458364-Sb86fd6644a761cd763de-F10500-12300"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": "2024-05",
+            "item_id": "A5089458364-Sf28a42e64f2ce2a34909-F0-1249-text",
+            "object_relation": "supported",
+            "object_type": "scientist",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": null
+        },
+        {
+          "item_id": "A5089458364-Sa5eec8c108cfdf989fbb-F1500-3300-text",
+          "field": "supervisor_role",
+          "value_sha256": "417f44c1fdc0886a4d4f8aeb2d2c3f73fdb30d9371d449b80085338552386cd1",
+          "GLM_candidate_refs": [
+            "A5089458364-Sa5eec8c108cfdf989fbb-F1500-3300"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "undated",
+            "date_basis": "unknown",
+            "evidence_refs": [
+              "A5089458364-Sa5eec8c108cfdf989fbb-F1500-3300",
+              "A5089458364-S7fea7b49cb488d2f6042-F9000-10800"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "misclassified",
+            "identity_verdict": "supported",
+            "information_date": null,
+            "item_id": "A5089458364-Sa5eec8c108cfdf989fbb-F1500-3300-text",
+            "object_relation": "supported",
+            "object_type": "laboratory",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": null
+        },
+        {
+          "item_id": "A5089458364-Sb86fd6644a761cd763de-F3000-4800-text",
+          "field": "city",
+          "value_sha256": "c9964e0117053bc636711665309e51569be1e9a1b03393d68354e817b971e71d",
+          "GLM_candidate_refs": [
+            "A5089458364-Sb86fd6644a761cd763de-F3000-4800"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "unknown",
+            "date_basis": "source_metadata",
+            "evidence_refs": [
+              "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+              "A5089458364-Sb86fd6644a761cd763de-F1500-3300",
+              "A5089458364-Sb86fd6644a761cd763de-F3000-4800"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": "2019-12-11",
+            "item_id": "A5089458364-Sb86fd6644a761cd763de-F3000-4800-text",
+            "object_relation": "supported",
+            "object_type": "organization",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": null
+        }
+      ],
+      "profile_assessments": {
+        "activity": {
+          "date_basis": "content",
+          "evidence_refs": [
+            "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+            "A5089458364-Sf28a42e64f2ce2a34909-F0-1249",
+            "A5089458364-Sb86fd6644a761cd763de-F6000-7800",
+            "A5089458364-Sb86fd6644a761cd763de-F7500-9300"
+          ],
+          "information_date": "2024-05",
+          "status": "active",
+          "verdict": "supported"
+        },
+        "current_affiliation": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+            "A5089458364-Sf28a42e64f2ce2a34909-F0-1249",
+            "A5089458364-Sb86fd6644a761cd763de-F3000-4800"
+          ],
+          "information_date": null,
+          "verdict": "supported"
+        },
+        "identity": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5089458364-Sb86fd6644a761cd763de-F0-1800",
+            "A5089458364-Sb86fd6644a761cd763de-F3000-4800",
+            "A5089458364-S7fea7b49cb488d2f6042-F9000-10800",
+            "A5089458364-Sf28a42e64f2ce2a34909-F0-1249",
+            "A5089458364-Sb86fd6644a761cd763de-F6000-7800"
+          ],
+          "information_date": null,
+          "verdict": "supported"
+        }
+      },
+      "date_guard": null,
+      "sources": [
+        {
+          "url": "http://mmf-old.nsu.ru/person/isangulova",
+          "body_sha256": "8985c053c8051abed7ff2e167b6cd062aa52b078765454a5ef31021774f09ab6",
+          "text_sha256": "b6806ab0cf81bd7999d43184cfe772d8aa6d588b99d58ebf5911f8afce5e4b52",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T09:58:40.484589+00:00",
+          "source_id": "A5089458364-Sa5eec8c108cfdf989fbb",
+          "characters": 5170,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5089458364/source-5bdbb58f9cbc9fc4ac425c86c0cb1258f89144e8061eb0db3fcc887e7d98ae29.json",
+          "source_record_sha256": "cdc30789d4f012e8fc6ee13029bf0ba1046f368b2ab5752347a2fd905ff4f5a5"
+        },
+        {
+          "url": "https://pub.orcid.org/v3.0/0000-0003-0365-8695/record",
+          "body_sha256": "c325b854198fc4aa7caafaec857bbdb745fccfc7a5b967a08f9f43cce44b60ec",
+          "text_sha256": "00700e578258dcb79c6824b9fdc2008191092d66a5d35bf84cd30eae79a775f6",
+          "source_kind": "structured_orcid",
+          "checked_at": "2026-10-11T09:57:42.969315+00:00",
+          "source_id": "A5089458364-Sb86fd6644a761cd763de",
+          "characters": 60556,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5089458364/source-1ae8f72a3cb8571949b3028e9b2f9cc85e1d93b3fdfe7b4f5100325508788245.json",
+          "source_record_sha256": "64c5b2c90f840559b71a2d83277fa998482d2669e9742a87d5f5557509b42e8c"
+        },
+        {
+          "url": "https://pure.nsu.ru/portal/ru/persons/--(53e5fb16-82ab-4eb7-ac64-3d871ab107ba).html",
+          "body_sha256": "4db63701e3c20892068f117da197aebd80c349d0bad4711f4e3b5eee26b78e5c",
+          "text_sha256": "653fd11c6427155501c9beb6ee86b3ff422d6afb2687ee75088bef1e13e9df8e",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T10:00:09.524458+00:00",
+          "source_id": "A5089458364-Sf28a42e64f2ce2a34909",
+          "characters": 1249,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5089458364/source-250375e5120a54389db71711bdfdd7ee75994cd4d6c7a1255501b59bf9627614.json",
+          "source_record_sha256": "37102f1ad786802ab5d5f6ea9458d6ce89b7c98f18f7ab6da56cc2f2af5f180d"
+        },
+        {
+          "url": "https://www.nsu.ru/n/mathematics-mechanics-department/departments/kafma/",
+          "body_sha256": "27c71d500bc52fb8df7db9b3a16bc94591cc5ed319e7751457ffbc2566cb0acb",
+          "text_sha256": "2ca9fc6c103c16e831c251f697856916a6ee51ff51d84671e153ed5618ca2d84",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T09:58:28.975663+00:00",
+          "source_id": "A5089458364-S7fea7b49cb488d2f6042",
+          "characters": 11983,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5089458364/source-342defee5e70a56b331af715747f027e889e43f4d88113073355de2a62927e32.json",
+          "source_record_sha256": "4d346a343604a208e38c43c981b8e2f64ff664530c95f35bcd77d5d45b7ef26b"
+        }
+      ],
+      "fragment_count": 54,
+      "value_count": 83,
+      "collector_receipt_sha256": "f484450556645f425bdc6a200585e49b7f23ece64132bed6c4f0fd7420299e3c",
+      "collector_raw_sha256": "1206c07e7f4a736b3ae95ba95477eb085e55aa34b6d3324afdb595749a3edae9",
+      "semantic_input_sha256": "78a90cac954ce0690c00dcb216a6f74ac9386e2ad5afbbf586360225da11160a",
+      "corpus_sha256": "0a348ebee805ae881325665cc38e3dbbc0c56673e8124bcaed4325d092252a72",
+      "Sol_raw_sha256": "39567d549b49b2b73778634d46f7950f18b9efbdb94f17e0328e6c2f45125703",
+      "Sol_receipt_sha256": "8778e1c8adbcc6a6a4694795870f95daa9f8dc78ca7a1fa020d6816e53b5fc29",
+      "Sol_full_prompt_utf8_bytes": 162885,
+      "Sol_full_prompt_sha256": "c41678aef3a96d179b029b1e059147f16f7b23cd279b92a8ced936209e73c55b"
+    },
+    {
+      "author_id": "A5054586424",
+      "name": "Alexey Maslov",
+      "collector_runtime_complete": true,
+      "GLM_normalized": true,
+      "GLM_raw_selections": 0,
+      "candidates": 0,
+      "profile_candidate_refs": {
+        "identity": [
+          "A5054586424-Sdde198632266a734378a-F0-1800",
+          "A5054586424-Sdde198632266a734378a-F3000-4800"
+        ],
+        "current_affiliation": []
+      },
+      "GLM_failure": null,
+      "Sol_completed": true,
+      "Sol_accepted": true,
+      "Sol_assessments_are_unaccepted_raw": false,
+      "Sol_failure": null,
+      "execution_outcome": {
+        "author_id": "A5054586424",
+        "status": "verified",
+        "candidates": 0,
+        "prompt_utf8_bytes": 387998
+      },
+      "items": [],
+      "profile_assessments": {
+        "activity": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5054586424-Sdde198632266a734378a-F4500-6300",
+            "A5054586424-Sdde198632266a734378a-F7500-9040"
+          ],
+          "information_date": null,
+          "status": "unknown",
+          "verdict": "insufficient"
+        },
+        "current_affiliation": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5054586424-Sdde198632266a734378a-F1500-3300",
+            "A5054586424-S087286f318ed2448e9d9-F19500-21300",
+            "A5054586424-Sda82b8ba167608b0471e-F0-1800"
+          ],
+          "information_date": null,
+          "verdict": "insufficient"
+        },
+        "identity": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5054586424-Sdde198632266a734378a-F0-1800"
+          ],
+          "information_date": null,
+          "verdict": "supported"
+        }
+      },
+      "date_guard": {
+        "policy": "fragment-date-v2-orcid-employment-ms",
+        "metadata_bindings": []
+      },
+      "sources": [
+        {
+          "url": "https://mephi.ru",
+          "body_sha256": "1bfa004a7aae43ef52c2fc1ecdb1bd2cf431854cb1172a28d3a1824b52744d5b",
+          "text_sha256": "800ed20cc16b31df5c90bbe07b5e96d3ecae0b8b305391c64235a6d4a93e127c",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T10:05:42.619425+00:00",
+          "source_id": "A5054586424-S087286f318ed2448e9d9",
+          "characters": 43200,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054586424/source-4af8c3072fbcc3db2faca5fa13d6a1a2b5107e8da9776d385061a3a20affc643.json",
+          "source_record_sha256": "65c05c093032917ded1b25725038267b998d435c7fbb13898fc48e105050b806"
+        },
+        {
+          "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+          "body_sha256": "82b4b7906f8b62b0b5b7f4a4bfc7aaa3891f5d67309175c89d0232b82b098ea7",
+          "text_sha256": "a59a7d95e5bfb6694e42de460bb7dc898ec29b6df11ec6e4d5456c367c1cdc08",
+          "source_kind": "structured_orcid",
+          "checked_at": "2026-10-11T10:02:53.977597+00:00",
+          "source_id": "A5054586424-Sdde198632266a734378a",
+          "characters": 9040,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054586424/source-9b92b1af01d10b7f35d8d0daddd09240512cdb5f51cc2b0e3c3f4b1fbc561b84.json",
+          "source_record_sha256": "5e98797e31d275aebf3d90f49bc055c4c04f7e33aa1f69caa5e441a7f142adb7"
+        },
+        {
+          "url": "https://voip.mephi.ru",
+          "body_sha256": "9d2bf02ce6e376caeb5fa61e7f8490a6ce0b63b28e470384a959c3a79a8ebc0a",
+          "text_sha256": "ef2915c66404c15e1d57a2638d952359f1a8494d888bfb58977adbb6d693ae3c",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T10:04:35.685988+00:00",
+          "source_id": "A5054586424-Sda82b8ba167608b0471e",
+          "characters": 101383,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054586424/source-1cefc9da167f6f59e6bc2053ea0c324846391f2919a9fab1bf608d14223efac4.json",
+          "source_record_sha256": "643eee81fe4f5cab1c0d73e88d9b136fd6c78c5789ea2627fd634f59a15ff5c5"
+        }
+      ],
+      "fragment_count": 104,
+      "value_count": 106,
+      "collector_receipt_sha256": "603e5638a0e0c98380ccd047b9f00bed814126215ce873f83cf90daecbbdefc9",
+      "collector_raw_sha256": "e91f1e33cb520ea78b492e42a59c7b2d88350683f7a75833102f4e1e28377f93",
+      "semantic_input_sha256": "0967eeb579ab90da5c8920b2b2a5ca8b27b19437c7ae0b0d5d2dab5adb0f82f9",
+      "corpus_sha256": "cb2253dab8facd5f4103f2019381dc1c2778502856f0ebc8513f18cc64d8ec61",
+      "Sol_raw_sha256": "1f6262ed772b8726c977ccc2161327cda9483cb70d95a6a60880c77f60c7b7f3",
+      "Sol_receipt_sha256": "df0bb929fd660ce0be0d5aed6f2d74e91bf690590ea72c222782b98993f3f402",
+      "Sol_full_prompt_utf8_bytes": 387998,
+      "Sol_full_prompt_sha256": "0605b45610b730a60d923a77811b02404e4786925b2a1c8c1987629012cad8ee"
+    },
+    {
+      "author_id": "A5054791318",
+      "name": "Alexey K. Kovalev",
+      "collector_runtime_complete": true,
+      "GLM_normalized": true,
+      "GLM_raw_selections": 3,
+      "candidates": 3,
+      "profile_candidate_refs": {
+        "identity": [
+          "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+          "A5054791318-Sb31852ab07eeb1e4cc0b-F1500-3300",
+          "A5054791318-S6f2fc7c47e047af18a02-F1500-3255"
+        ],
+        "current_affiliation": [
+          "A5054791318-Sb31852ab07eeb1e4cc0b-F6000-7800",
+          "A5054791318-S6f2fc7c47e047af18a02-F1500-3255",
+          "A5054791318-S6f2fc7c47e047af18a02-F3000-3255"
+        ]
+      },
+      "GLM_failure": null,
+      "Sol_completed": true,
+      "Sol_accepted": true,
+      "Sol_assessments_are_unaccepted_raw": false,
+      "Sol_failure": null,
+      "execution_outcome": {
+        "author_id": "A5054791318",
+        "status": "verified",
+        "candidates": 3,
+        "prompt_utf8_bytes": 275388
+      },
+      "items": [
+        {
+          "item_id": "A5054791318-S6f2fc7c47e047af18a02-M3101-3117",
+          "field": "personal_contact",
+          "value_sha256": "125853b359d5d7267faebb15f6e9f161eff365bc41b1b0f14e00baadb5eddb94",
+          "GLM_candidate_refs": [
+            "A5054791318-S6f2fc7c47e047af18a02-F1500-3255",
+            "A5054791318-S6f2fc7c47e047af18a02-F3000-3255"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "undated",
+            "date_basis": "unknown",
+            "evidence_refs": [
+              "A5054791318-S6f2fc7c47e047af18a02-F1500-3255",
+              "A5054791318-S6f2fc7c47e047af18a02-F3000-3255",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F3000-4800",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F7500-9300"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": null,
+            "item_id": "A5054791318-S6f2fc7c47e047af18a02-M3101-3117",
+            "object_relation": "supported",
+            "object_type": "scientist",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": {
+            "usable_coverage": true,
+            "coverage_field": "personal_contact",
+            "reason": [],
+            "corrected_field": null,
+            "candidate_only": false
+          }
+        },
+        {
+          "item_id": "A5054791318-S6f2fc7c47e047af18a02-F1500-3255-text",
+          "field": "topic",
+          "value_sha256": "e6d6ce879d4f614c085bbdd6611cf829799761817b7650e7556880227b646912",
+          "GLM_candidate_refs": [
+            "A5054791318-S6f2fc7c47e047af18a02-F1500-3255"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "undated",
+            "date_basis": "unknown",
+            "evidence_refs": [
+              "A5054791318-S6f2fc7c47e047af18a02-F0-1800",
+              "A5054791318-S6f2fc7c47e047af18a02-F1500-3255",
+              "A5054791318-S3fd3e4f21e5887edd412-F0-1800",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F3000-4800"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": null,
+            "item_id": "A5054791318-S6f2fc7c47e047af18a02-F1500-3255-text",
+            "object_relation": "supported",
+            "object_type": "laboratory",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": {
+            "usable_coverage": true,
+            "coverage_field": "topic",
+            "reason": [],
+            "corrected_field": null,
+            "candidate_only": false
+          }
+        },
+        {
+          "item_id": "A5054791318-Sb31852ab07eeb1e4cc0b-F1500-3300-text",
+          "field": "topic",
+          "value_sha256": "dabb6833cd5c5278a98084809ae80b874f68ba49c4d0682976271001dacac283",
+          "GLM_candidate_refs": [
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F1500-3300"
+          ],
+          "Sol": {
+            "corrected_field": null,
+            "current_applicability": "undated",
+            "date_basis": "unknown",
+            "evidence_refs": [
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F1500-3300",
+              "A5054791318-Sb31852ab07eeb1e4cc0b-F3000-4800"
+            ],
+            "fact_kind": "literal",
+            "field_verdict": "correct",
+            "identity_verdict": "supported",
+            "information_date": null,
+            "item_id": "A5054791318-Sb31852ab07eeb1e4cc0b-F1500-3300-text",
+            "object_relation": "supported",
+            "object_type": "scientist",
+            "student_level": [
+              "unknown"
+            ],
+            "text_verdict": "supported"
+          },
+          "classification": {
+            "usable_coverage": true,
+            "coverage_field": "topic",
+            "reason": [],
+            "corrected_field": null,
+            "candidate_only": false
+          }
+        }
+      ],
+      "profile_assessments": {
+        "activity": {
+          "date_basis": "content",
+          "evidence_refs": [
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F21000-22800",
+            "A5054791318-S3fd3e4f21e5887edd412-F0-1800"
+          ],
+          "information_date": "2026-05-22",
+          "status": "active",
+          "verdict": "supported"
+        },
+        "current_affiliation": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5054791318-S6f2fc7c47e047af18a02-F1500-3255",
+            "A5054791318-S3fd3e4f21e5887edd412-F0-1800",
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F6000-7800",
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F7500-9300"
+          ],
+          "information_date": null,
+          "verdict": "supported"
+        },
+        "identity": {
+          "date_basis": "unknown",
+          "evidence_refs": [
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F0-1800",
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F3000-4800",
+            "A5054791318-Sb31852ab07eeb1e4cc0b-F7500-9300",
+            "A5054791318-S6f2fc7c47e047af18a02-F1500-3255"
+          ],
+          "information_date": null,
+          "verdict": "supported"
+        }
+      },
+      "date_guard": {
+        "policy": "fragment-date-v2-orcid-employment-ms",
+        "metadata_bindings": []
+      },
+      "sources": [
+        {
+          "url": "https://cogmodel.mipt.ru",
+          "body_sha256": "bf003820fe7e60b7bb40bb003e6efff88d152e8dad84feb118039950123e8c99",
+          "text_sha256": "e15dfad1f1e1834266e21bd8fe336673c42cb7b7f7627b3b52139b8bd867623c",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T10:08:21.782525+00:00",
+          "source_id": "A5054791318-S2f18bb642a8d1b014159",
+          "characters": 5213,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054791318/source-eba36f4902ac3b5dee1c9120098f65f8d67bbda3370be0defa6180ad2f4d446f.json",
+          "source_record_sha256": "92d3e1a44fa37cd3dea970548e0f4e4a1dc5865949677f05fd679c05b489d46d"
+        },
+        {
+          "url": "https://cogmodel.mipt.ru/embodied-ai",
+          "body_sha256": "dc295cc3f6db0f2a4345dce4d18be2d9d4e72b6204492cd49e45263cefc61d5c",
+          "text_sha256": "c9d268f18186ce7660d6ae0207e65f8c24eb052e7ea6becd0c5e9a71fcaf8551",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T10:09:53.236893+00:00",
+          "source_id": "A5054791318-S6f2fc7c47e047af18a02",
+          "characters": 3255,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054791318/source-0239e995ffbb29d21e2f2574f18990498f9ce712b27b6caaa803191894eb765e.json",
+          "source_record_sha256": "33960cc1a7c694b948b1634d85510a10f81e5bbf0be9abd5774e4c40bd4ab68f"
+        },
+        {
+          "url": "https://cogmodel.mipt.ru/team",
+          "body_sha256": "5f56169d0757aa83ba4ba1208c55cf31cd594480dc298db35c09140e9b2ad28d",
+          "text_sha256": "08ed6ac236f15520342ae3a1ea00d74d9b6c0a0e7184e64d1d7ea69eb34c8ec8",
+          "source_kind": "direct_http",
+          "checked_at": "2026-10-11T10:08:34.375290+00:00",
+          "source_id": "A5054791318-S3fd3e4f21e5887edd412",
+          "characters": 6853,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054791318/source-fad07e59c55ab98285ad899365f857f71381b65de6ab04e5e3c73097c5909cd5.json",
+          "source_record_sha256": "b0178dcbea14420ad468ae80c17ca272c5fa27d227690cf1cd2fa5b7f904d777"
+        },
+        {
+          "url": "https://pub.orcid.org/v3.0/0000-0003-2180-0990/record",
+          "body_sha256": "2e62b01565e3eaf69659fce95510c52028144b8c012a8b973ea66f9e42c50c3d",
+          "text_sha256": "f670fc408105c0e32c73960fd05ff914c39aca111529d5562769454e464a3f4f",
+          "source_kind": "structured_orcid",
+          "checked_at": "2026-10-11T10:07:38.532228+00:00",
+          "source_id": "A5054791318-Sb31852ab07eeb1e4cc0b",
+          "characters": 140170,
+          "representation": "checked_static",
+          "source_record_path": "/Users/boris/Experiments/search-for-research/enrichment-live3-independent-sol-20261011/sources/A5054791318/source-2813cb9849f2aafddac4e377febad5ae2ed186439b94eec4156cd8959be684fb.json",
+          "source_record_sha256": "fb34c94ea283fa2ed2a283a5c116fe1e8194edcd64cb6734bb438eb71d7d8a31"
+        }
+      ],
+      "fragment_count": 106,
+      "value_count": 113,
+      "collector_receipt_sha256": "9363ebc3efd3e8cd56ff7bb53a900e1fab666eb6b182d825778e8c318af4931a",
+      "collector_raw_sha256": "c324bb992302306557ad00106ffe70a2e18dd473e12405f85a58b548b2448352",
+      "semantic_input_sha256": "1ae211b70450e9769d247af8a62965ba99610d9b2da38e9397a673fb0fd981d2",
+      "corpus_sha256": "bc07598ee859cdb9e1e207a442b00b7e7791f235854ca8fc71b737fc35bd46fa",
+      "Sol_raw_sha256": "93f9e7909edd6b7b3920a0d600505ef5ca1ca5bd119e9f15e353298efc9e574a",
+      "Sol_receipt_sha256": "1283d3bfd2cb8ed316242fb6f44ad0f97bef54fc8f5d893f542f459b97afc4e7",
+      "Sol_full_prompt_utf8_bytes": 275388,
+      "Sol_full_prompt_sha256": "88e752c84cc4743784ec0e6673d96bf1930ea96bd1267cf6fb4a28b4e24dc168"
+    }
+  ],
+  "counts": {
+    "GLM_profile_jobs": 3,
+    "Sol_profile_jobs": 3,
+    "stage_jobs": 6,
+    "cumulative_jobs": 41,
+    "GLM_complete_runtime": 3,
+    "GLM_valid_packets": 3,
+    "Sol_complete_runtime": 3,
+    "Sol_accepted_packets": 2,
+    "nonempty_verified_chains": 1,
+    "GLM_candidates": 9,
+    "usable_atoms_after_Sol": 3,
+    "HTTP_reserved": 22,
+    "HTTP_started": 22,
+    "search_reserved": 10,
+    "search_by_source": {
+      "native_Zai_search": 8,
+      "public_DuckDuckGo_HTML": 2
+    },
+    "GLM_physical_requests_observed": 28,
+    "GLM_source_tool_calls": 27,
+    "Sol_physical_requests": null
+  },
+  "usage": {
+    "GLM": {
+      "input": 181928,
+      "output": 19090,
+      "cacheRead": 204864,
+      "cacheWrite": 0,
+      "totalTokens": 405882,
+      "reasoning_included_output": null
+    },
+    "Sol": {
+      "input_tokens": 232574,
+      "output_tokens": 8161,
+      "cached_input_tokens": 0
+    },
+    "GLM_wall_seconds": 672.264301290008,
+    "Sol_wall_seconds": 222.46434712409973,
+    "subscription_debit_money": null,
+    "actual_billing_cost": null,
+    "development_review_tokens": null,
+    "account_quota_before": {
+      "at": "2026-10-11 09:56:49 UTC",
+      "ordinaryUsageAllowed": true,
+      "windows": {
+        "codex": {
+          "primary": {
+            "usedPercent": 15,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792299587
+          },
+          "secondary": null,
+          "spendControlReached": false,
+          "rateLimitReachedType": null
+        }
+      }
+    },
+    "account_quota_after": {
+      "at": "2026-10-11 10:13:10 UTC",
+      "ordinaryUsageAllowed": true,
+      "windows": {
+        "codex": {
+          "primary": {
+            "usedPercent": 16,
+            "windowDurationMins": 10080,
+            "resetsAt": 1792299587
+          },
+          "secondary": null,
+          "spendControlReached": false,
+          "rateLimitReachedType": null
+        }
+      }
+    },
+    "account_delta_attributable_to_stage": false
+  },
+  "partial_reason": null,
+  "acquisition_stop": {
+    "at": "2026-10-11T10:12:36.987027+00:00",
+    "new_source_model_jobs": "forbidden",
+    "reason": "finite_live3_complete"
+  },
+  "deliverability": "unknown",
+  "current_readiness": "not established automatically",
+  "developer_live_search_assistance": false,
+  "retries": 0
+}

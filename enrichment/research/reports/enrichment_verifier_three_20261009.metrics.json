@@ -1,0 +1,469 @@
+{
+  "atoms_per_model": 12,
+  "axes_per_model": 9,
+  "completed_judge_tasks": 2,
+  "cost_usd": null,
+  "error_type_counts_overlap": true,
+  "grade_disagreements": [
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://itcsc.erg.cuhk.edu.hk/Openings.html",
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "A5015573260_c3"
+    },
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://itcsc.erg.cuhk.edu.hk/Openings.html",
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "A5015573260_c5"
+    },
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://itcsc.erg.cuhk.edu.hk/Openings.html",
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "A5015573260_c7"
+    },
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://itcsc.erg.cuhk.edu.hk/Openings.html",
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "A5015573260_c8"
+    },
+    {
+      "author_id": "A5027597767",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://mipt-krf.ru/index.php/science/sci-labs/krf-center/laser-bio-lab/",
+        "https://www.lebedev.ru/ru/people/alphabet.html?id=3053&view=person"
+      ],
+      "target": "A5027597767_c4"
+    },
+    {
+      "author_id": "A5027597767",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://mipt-krf.ru/index.php/science/sci-labs/krf-center/laser-bio-lab/"
+      ],
+      "target": "A5027597767_c5"
+    },
+    {
+      "author_id": "A5027597767",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://aspirantura.lebedev.ru/2021/07/09/%D0%BA%D1%83%D0%B4%D1%80%D1%8F%D1%88%D0%BE%D0%B2-%D1%81%D0%B5%D1%80%D0%B3%D0%B5%D0%B9-%D0%B8%D0%B2%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87/",
+        "https://www.lebedev.ru/ru/people/alphabet.html?id=3053&view=person"
+      ],
+      "target": "A5027597767_c6"
+    },
+    {
+      "author_id": "A5027597767",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "atom_evaluations",
+      "source_links": [
+        "https://aspirantura.lebedev.ru/2021/07/09/%D0%BA%D1%83%D0%B4%D1%80%D1%8F%D1%88%D0%BE%D0%B2-%D1%81%D0%B5%D1%80%D0%B3%D0%B5%D0%B9-%D0%B8%D0%B2%D0%B0%D0%BD%D0%BE%D0%B2%D0%B8%D1%87/",
+        "https://www.lebedev.ru/ru/people/alphabet.html?id=3053&view=person"
+      ],
+      "target": "A5027597767_c7"
+    },
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "profile_evaluations",
+      "source_links": [
+        "https://itcsc.erg.cuhk.edu.hk/Openings.html",
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "identity"
+    },
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "profile_evaluations",
+      "source_links": [
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "current_affiliation"
+    },
+    {
+      "author_id": "A5015573260",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "profile_evaluations",
+      "source_links": [
+        "https://itcsc.erg.cuhk.edu.hk/Openings.html",
+        "https://www.ie.cuhk.edu.hk/faculty/gohari-amin/"
+      ],
+      "target": "activity"
+    },
+    {
+      "author_id": "A5027597767",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "profile_evaluations",
+      "source_links": [
+        "https://mipt-krf.ru/index.php/science/sci-labs/krf-center/laser-bio-lab/",
+        "https://www.lebedev.ru/ru/people/alphabet.html?id=3053&view=person"
+      ],
+      "target": "identity"
+    },
+    {
+      "author_id": "A5100670875",
+      "grades": {
+        "glm": "incorrect",
+        "sol": "correct"
+      },
+      "section": "profile_evaluations",
+      "source_links": [
+        "https://www.southampton.ac.uk/people/5x5g9b/professor-alexander-belyaev?page=0"
+      ],
+      "target": "current_affiliation"
+    }
+  ],
+  "grades": {
+    "glm": {
+      "atom_evaluations": {
+        "correct": 2,
+        "incorrect": 10
+      },
+      "error_types_atoms": {
+        "date_basis": 2,
+        "fact_kind": 2,
+        "field": 2,
+        "identity": 8,
+        "object_relation": 8,
+        "recruitment": 1,
+        "text": 2
+      },
+      "error_types_axes": {
+        "current_applicability": 3,
+        "identity": 4,
+        "information_date": 1,
+        "object_relation": 1,
+        "text": 1,
+        "unknown": 2
+      },
+      "profile_evaluations": {
+        "correct": 3,
+        "incorrect": 6
+      },
+      "severity_atoms": {
+        "high": 8,
+        "medium": 2,
+        "none": 2
+      },
+      "severity_axes": {
+        "high": 4,
+        "medium": 2,
+        "none": 3
+      }
+    },
+    "sol": {
+      "atom_evaluations": {
+        "correct": 10,
+        "incorrect": 2
+      },
+      "error_types_atoms": {
+        "identity": 2,
+        "object_relation": 2
+      },
+      "error_types_axes": {
+        "current_applicability": 1,
+        "information_date": 1,
+        "object_relation": 1
+      },
+      "profile_evaluations": {
+        "correct": 8,
+        "incorrect": 1
+      },
+      "severity_atoms": {
+        "high": 2,
+        "none": 10
+      },
+      "severity_axes": {
+        "medium": 1,
+        "none": 8
+      }
+    }
+  },
+  "human_reviewed": 0,
+  "imported_pairs": 1,
+  "insufficient_sources": [],
+  "judge_contexts_independent": true,
+  "method": "semantic-v3-three-used-profiles",
+  "new_source_calls": 0,
+  "new_verifier_attempts": 4,
+  "profiles": [
+    "A5015573260",
+    "A5027597767",
+    "A5100670875"
+  ],
+  "quality_reference": "agent_judgement_only",
+  "source_hashes": {
+    "instruction.txt": "5daab4966b5ae3842cc8f16639cbc3adb3e88390870220c85d02e5156f5f5240",
+    "judge-instruction.txt": "37d33150291f94080c42220eafaa906b5819aab4324e370a39a05f2d2a3892e5",
+    "judge-schema.json": "e7d8a0d241ca220497bf89443c1e1c3074850d1445fdc416ea9a71eab47e591d",
+    "schema.json": "19e4232b1c2d1936d4428d46e2c67c436b173f1ac2c45b891c61e998ca6b05c9"
+  },
+  "source_head": "0a73d45badf8ddded8dbb0366c74553e2bb9d191",
+  "subscription_quota_delta": null,
+  "valid_pairs": 3,
+  "verifier_usage": {
+    "glm": [
+      {
+        "author_id": "A5015573260",
+        "backend_model": null,
+        "cost_usd": null,
+        "effective_sdk_config": {
+          "effort": "high",
+          "model": "glm-5.3-flash",
+          "provider": "zai"
+        },
+        "imported": true,
+        "requested_effort": "high",
+        "requested_model": "glm-5.3-flash",
+        "subscription_quota_delta": null,
+        "token_usage": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 3857,
+          "output": 15050,
+          "reasoning": 13006,
+          "totalTokens": 18907
+        },
+        "wall_elapsed_seconds": 257.99035906791687
+      },
+      {
+        "author_id": "A5027597767",
+        "backend_model": null,
+        "cost_usd": null,
+        "effective_sdk_config": {
+          "effort": "high",
+          "model": "glm-5.3-flash",
+          "provider": "zai"
+        },
+        "imported": false,
+        "requested_effort": "high",
+        "requested_model": "glm-5.3-flash",
+        "subscription_quota_delta": null,
+        "token_usage": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 4592,
+          "output": 13012,
+          "reasoning": 10911,
+          "totalTokens": 17604
+        },
+        "wall_elapsed_seconds": 209.8180968761444
+      },
+      {
+        "author_id": "A5100670875",
+        "backend_model": null,
+        "cost_usd": null,
+        "effective_sdk_config": {
+          "effort": "high",
+          "model": "glm-5.3-flash",
+          "provider": "zai"
+        },
+        "imported": false,
+        "requested_effort": "high",
+        "requested_model": "glm-5.3-flash",
+        "subscription_quota_delta": null,
+        "token_usage": {
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "input": 3870,
+          "output": 14392,
+          "reasoning": 12295,
+          "totalTokens": 18262
+        },
+        "wall_elapsed_seconds": 235.8967957496643
+      }
+    ],
+    "sol": [
+      {
+        "author_id": "A5015573260",
+        "backend_model": null,
+        "cost_usd": null,
+        "effective_sdk_config": null,
+        "imported": true,
+        "requested_effort": "high",
+        "requested_model": "gpt-6.1-sol",
+        "subscription_quota_delta": null,
+        "token_usage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 16427,
+          "output_tokens": 2376,
+          "reasoning_output_tokens": 672
+        },
+        "wall_elapsed_seconds": 73.27739906311035
+      },
+      {
+        "author_id": "A5027597767",
+        "backend_model": null,
+        "cost_usd": null,
+        "effective_sdk_config": null,
+        "imported": false,
+        "requested_effort": "high",
+        "requested_model": "gpt-6.1-sol",
+        "subscription_quota_delta": null,
+        "token_usage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 17148,
+          "output_tokens": 2256,
+          "reasoning_output_tokens": 506
+        },
+        "wall_elapsed_seconds": 63.71465015411377
+      },
+      {
+        "author_id": "A5100670875",
+        "backend_model": null,
+        "cost_usd": null,
+        "effective_sdk_config": null,
+        "imported": false,
+        "requested_effort": "high",
+        "requested_model": "gpt-6.1-sol",
+        "subscription_quota_delta": null,
+        "token_usage": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_tokens": 16459,
+          "output_tokens": 2872,
+          "reasoning_output_tokens": 1231
+        },
+        "wall_elapsed_seconds": 83.74829602241516
+      }
+    ]
+  },
+  "artifact_metrics_sha256": "9c3e8bfad815c5385844ad795eb45f16144fe8a7d7f3c71f2dc51d619835b172",
+  "judge_usage": [
+    {
+      "agent_task": "/root/facts_judge_01",
+      "backend_model": null,
+      "cost_usd": null,
+      "effort_selected": "xhigh",
+      "end": "2026-10-09T16:54:48.344Z",
+      "fork_turns": "none",
+      "model_selected": "gpt-6-astra",
+      "raw_final_sha256": "8364150389d2327d44244462832f7f7df44652c264a2652cf5f56a0c2dcfe2e6",
+      "response_item_types": [
+        "agent_message",
+        "message",
+        "reasoning"
+      ],
+      "start": "2026-10-09T16:52:55.778Z",
+      "subscription_quota_delta": null,
+      "token_usage": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_tokens": 34727,
+        "output_tokens": 4435,
+        "reasoning_output_tokens": 2070,
+        "total_tokens": 39162
+      },
+      "tool_calls": 0,
+      "wall_elapsed_seconds": 112.566
+    },
+    {
+      "agent_task": "/root/facts_judge_02",
+      "backend_model": null,
+      "cost_usd": null,
+      "effort_selected": "xhigh",
+      "end": "2026-10-09T17:17:25.776Z",
+      "fork_turns": "none",
+      "model_selected": "gpt-6-astra",
+      "raw_final_sha256": "775e09e10027a04d7b2b63197ffe3d8c57146b4aa1f0b8641949c2a947c37e64",
+      "response_item_types": [
+        "agent_message",
+        "message",
+        "reasoning"
+      ],
+      "start": "2026-10-09T17:14:29.938Z",
+      "subscription_quota_delta": null,
+      "token_usage": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 28160,
+        "input_tokens": 39669,
+        "output_tokens": 7103,
+        "reasoning_output_tokens": 2588,
+        "total_tokens": 46772
+      },
+      "tool_calls": 0,
+      "wall_elapsed_seconds": 175.838
+    }
+  ],
+  "preparation_usage": {
+    "cached_read_is_subset_of_input": true,
+    "complete": false,
+    "cost_usd": null,
+    "cutoff": "2026-10-09T17:17:41.361Z",
+    "exclusive_preparation_seconds": null,
+    "final_token_usage": null,
+    "reasoning_is_subset_of_output": true,
+    "scope": "Счётчики собственной координационной сессии от начала продолжения до cutoff; включая подготовку и ожидание, не только изготовление пакетов. Не итог всей сессии. Два судьи и проверяющие учтены отдельно по их журналам.",
+    "start": "2026-10-09T16:48:51.250Z",
+    "subscription_quota_delta": null,
+    "token_usage_delta": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 5563904,
+      "input_tokens": 5713963,
+      "output_tokens": 47341,
+      "reasoning_output_tokens": 11132,
+      "total_tokens": 5761304
+    }
+  }
+}

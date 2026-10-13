@@ -12,6 +12,7 @@
 - `docs/DECISIONS.md` — действующие решения и их основания, история по темам.
 - `docs/product/` — документы стартапа (бриф «Где мы сейчас», спека MVP, история и Q&A, гранты, ресерчи); оглавление — `docs/product/README.md`.
 - `docs/reports/` — отчёты итераций; `docs/specs/` — спеки закрытых итераций; `docs/metrics/` — JSON метрик (генерируются).
+- [Enrichment](enrichment/README.md) — рабочий CLI контактов; [карта исследований и архивов](enrichment/research/INDEX.md).
 - `apps/api/README.md` (FastAPI-сервис поиска), `apps/web/README.md` (Next.js), `deploy/README.md` (выкладка на VPS), `packages/sfr-match/eval/README.md` (golden set, судейство, дедупликация).
 - Задачи и доска — https://github.com/users/borisboriov/projects/5.
 
@@ -37,6 +38,7 @@ packages/sfr-match/  # индекс, поиск, eval-харнесс, CLI `sfr-m
 apps/api/            # FastAPI-сервис поиска: /api/match, /api/supervisors, /api/health
 apps/web/            # фронт Next.js (дизайн-система apps/web/design/DESIGN_SYSTEM.md)
 deploy/              # боевая компоновка: compose, Caddy, процедуры выкладки
+enrichment/          # рабочий модуль, конфигурация, тесты и исторические исследования контактов
 scripts/             # бенчи, метрики, аудит, синхронизация доски
 data/                # gitignored: raw-кэш API, SQLite, экспорты, индексы, прогоны eval
 docs/                # карта в docs/README.md

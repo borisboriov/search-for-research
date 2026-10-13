@@ -1,0 +1,269 @@
+{
+  "method_version": "v2_complete_r2",
+  "subset_requested": false,
+  "denominators": {
+    "sample": 100,
+    "inputs": 100,
+    "outputs": 100,
+    "human_reviewed": 0,
+    "pilot": {
+      "frozen": 10,
+      "inputs": 10,
+      "outputs": 10
+    },
+    "evaluation": {
+      "frozen": 90,
+      "inputs": 90,
+      "outputs": 90
+    }
+  },
+  "fields": {
+    "personal_contact": {
+      "collector_found_profiles": 71,
+      "verifier_confirmed_original_profiles": 68,
+      "verifier_confirmed_original_claims": 78,
+      "verifier_new_finding_profiles": 39,
+      "verifier_new_findings": 40,
+      "verifier_combined_profiles": 79
+    },
+    "coordinator_contact": {
+      "collector_found_profiles": 5,
+      "verifier_confirmed_original_profiles": 3,
+      "verifier_confirmed_original_claims": 3,
+      "verifier_new_finding_profiles": 15,
+      "verifier_new_findings": 15,
+      "verifier_combined_profiles": 18
+    },
+    "supervision_history": {
+      "collector_found_profiles": 31,
+      "verifier_confirmed_original_profiles": 27,
+      "verifier_confirmed_original_claims": 29,
+      "verifier_new_finding_profiles": 33,
+      "verifier_new_findings": 34,
+      "verifier_combined_profiles": 50
+    },
+    "published_recruitment": {
+      "collector_found_profiles": 17,
+      "verifier_confirmed_original_profiles": 15,
+      "verifier_confirmed_original_claims": 15,
+      "verifier_new_finding_profiles": 13,
+      "verifier_new_findings": 14,
+      "verifier_combined_profiles": 21
+    },
+    "direct_willingness": {
+      "collector_found_profiles": 4,
+      "verifier_confirmed_original_profiles": 4,
+      "verifier_confirmed_original_claims": 4,
+      "verifier_new_finding_profiles": 1,
+      "verifier_new_findings": 1,
+      "verifier_combined_profiles": 5
+    },
+    "topic": {
+      "collector_found_profiles": 75,
+      "verifier_confirmed_original_profiles": 69,
+      "verifier_confirmed_original_claims": 69,
+      "verifier_new_finding_profiles": 23,
+      "verifier_new_findings": 23,
+      "verifier_combined_profiles": 81
+    },
+    "supervisor_role": {
+      "collector_found_profiles": 35,
+      "verifier_confirmed_original_profiles": 31,
+      "verifier_confirmed_original_claims": 31,
+      "verifier_new_finding_profiles": 28,
+      "verifier_new_findings": 28,
+      "verifier_combined_profiles": 56
+    },
+    "student_level": {
+      "collector_found_profiles": 33,
+      "verifier_confirmed_original_profiles": 30,
+      "verifier_confirmed_original_claims": 30,
+      "verifier_new_finding_profiles": 16,
+      "verifier_new_findings": 16,
+      "verifier_combined_profiles": 42
+    },
+    "student_year": {
+      "collector_found_profiles": 3,
+      "verifier_confirmed_original_profiles": 3,
+      "verifier_confirmed_original_claims": 3,
+      "verifier_new_finding_profiles": 5,
+      "verifier_new_findings": 5,
+      "verifier_combined_profiles": 8
+    },
+    "required_skills": {
+      "collector_found_profiles": 8,
+      "verifier_confirmed_original_profiles": 6,
+      "verifier_confirmed_original_claims": 6,
+      "verifier_new_finding_profiles": 7,
+      "verifier_new_findings": 7,
+      "verifier_combined_profiles": 11
+    },
+    "external_students": {
+      "collector_found_profiles": 5,
+      "verifier_confirmed_original_profiles": 4,
+      "verifier_confirmed_original_claims": 4,
+      "verifier_new_finding_profiles": 2,
+      "verifier_new_findings": 2,
+      "verifier_combined_profiles": 6
+    },
+    "thesis_possible": {
+      "collector_found_profiles": 7,
+      "verifier_confirmed_original_profiles": 7,
+      "verifier_confirmed_original_claims": 7,
+      "verifier_new_finding_profiles": 2,
+      "verifier_new_findings": 2,
+      "verifier_combined_profiles": 9
+    },
+    "city": {
+      "collector_found_profiles": 35,
+      "verifier_confirmed_original_profiles": 31,
+      "verifier_confirmed_original_claims": 31,
+      "verifier_new_finding_profiles": 13,
+      "verifier_new_findings": 13,
+      "verifier_combined_profiles": 43
+    },
+    "work_format": {
+      "collector_found_profiles": 3,
+      "verifier_confirmed_original_profiles": 2,
+      "verifier_confirmed_original_claims": 2,
+      "verifier_new_finding_profiles": 4,
+      "verifier_new_findings": 4,
+      "verifier_combined_profiles": 6
+    },
+    "workload": {
+      "collector_found_profiles": 2,
+      "verifier_confirmed_original_profiles": 2,
+      "verifier_confirmed_original_claims": 2,
+      "verifier_new_finding_profiles": 4,
+      "verifier_new_findings": 4,
+      "verifier_combined_profiles": 6
+    },
+    "payment": {
+      "collector_found_profiles": 3,
+      "verifier_confirmed_original_profiles": 2,
+      "verifier_confirmed_original_claims": 2,
+      "verifier_new_finding_profiles": 8,
+      "verifier_new_findings": 8,
+      "verifier_combined_profiles": 8
+    },
+    "deadline": {
+      "collector_found_profiles": 4,
+      "verifier_confirmed_original_profiles": 4,
+      "verifier_confirmed_original_claims": 4,
+      "verifier_new_finding_profiles": 4,
+      "verifier_new_findings": 4,
+      "verifier_combined_profiles": 6
+    },
+    "response_method": {
+      "collector_found_profiles": 9,
+      "verifier_confirmed_original_profiles": 7,
+      "verifier_confirmed_original_claims": 7,
+      "verifier_new_finding_profiles": 5,
+      "verifier_new_findings": 5,
+      "verifier_combined_profiles": 11
+    }
+  },
+  "claim_verdicts": {
+    "confirmed_by_source": 327,
+    "insufficient_evidence": 36
+  },
+  "identity_verdicts": {
+    "insufficient_evidence": 19,
+    "confirmed_by_source": 81
+  },
+  "current_affiliation_verdicts": {
+    "confirmed_by_source": 43,
+    "insufficient_evidence": 45,
+    "sources_conflict": 8,
+    "refuted": 4
+  },
+  "omissions": {
+    "city": 13,
+    "topic": 23,
+    "personal_contact": 40,
+    "supervision_history": 34,
+    "student_level": 16,
+    "supervisor_role": 28,
+    "payment": 8,
+    "coordinator_contact": 15,
+    "published_recruitment": 14,
+    "student_year": 5,
+    "required_skills": 7,
+    "workload": 4,
+    "deadline": 4,
+    "external_students": 2,
+    "response_method": 5,
+    "work_format": 4,
+    "thesis_possible": 2,
+    "direct_willingness": 1
+  },
+  "freshness": {
+    "unknown_date_evidence": 524,
+    "dated_evidence": 421
+  },
+  "collector_operations": {
+    "search_queries": 398,
+    "pages": 599,
+    "access_failures": 103,
+    "access_failures_by_operation": {
+      "rules": 79,
+      "page": 24
+    },
+    "cost_usd_known_sum": 0,
+    "cost_usd_unknown_count": 962,
+    "elapsed_seconds_known_sum": 53.853,
+    "elapsed_seconds_unknown_count": 973
+  },
+  "verifier_operations": {
+    "search_queries": 399,
+    "pages": 475,
+    "access_failures": 92,
+    "access_failures_by_operation": {
+      "rules": 77,
+      "page": 15
+    },
+    "cost_usd_known_sum": 0,
+    "cost_usd_unknown_count": 845,
+    "elapsed_seconds_known_sum": 398.925,
+    "elapsed_seconds_unknown_count": 723
+  },
+  "page_read_operations_known_sum": 276,
+  "page_read_operations_unknown_profiles": 65,
+  "failure_classification_version": "v2_1",
+  "source_family_contributions": {
+    "thesis_source": {
+      "collector_claim_evidence": 16,
+      "verifier_confirmed_claim_evidence": 13,
+      "verifier_new_finding_evidence": 5
+    },
+    "other_source": {
+      "collector_claim_evidence": 273,
+      "verifier_confirmed_claim_evidence": 254,
+      "verifier_new_finding_evidence": 181
+    },
+    "structured_orcid": {
+      "collector_claim_evidence": 28,
+      "verifier_confirmed_claim_evidence": 26,
+      "verifier_new_finding_evidence": 4
+    },
+    "person_page": {
+      "collector_claim_evidence": 38,
+      "verifier_confirmed_claim_evidence": 38,
+      "verifier_new_finding_evidence": 19
+    },
+    "offer_or_program_page": {
+      "collector_claim_evidence": 8,
+      "verifier_new_finding_evidence": 20,
+      "verifier_confirmed_claim_evidence": 10
+    },
+    "public_channel": {
+      "verifier_new_finding_evidence": 2
+    }
+  },
+  "source_family_note": "URL grouping diagnostics; evidence counts, not people or accuracy",
+  "human_claim_error_rate": null,
+  "human_identity_error_rate": null,
+  "human_verifier_disagreement_rate": null,
+  "human_review_minutes": null,
+  "disputed_automatically_accepted": 0
+}

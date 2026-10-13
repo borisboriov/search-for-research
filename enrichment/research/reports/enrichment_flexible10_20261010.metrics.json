@@ -1,0 +1,476 @@
+{
+  "method": "flexible-public10-code-first-v1",
+  "created_at": "2026-10-10T18:42:39.293189+00:00",
+  "sample_sha256": "07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387",
+  "profiles": [
+    {
+      "author_id": "A5070748575",
+      "name": "Salman Ahmadi‐Asl",
+      "institution_frozen": "Автономная некоммерческая организация высшего образования Университет Иннополис",
+      "sources": 3,
+      "source_kind_counts": {
+        "direct_pdf": 1,
+        "structured_orcid": 1,
+        "direct_http": 1
+      },
+      "candidate_atoms": 1,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "historical": 1
+      },
+      "contact_dates": [
+        "2024-04-08"
+      ],
+      "identity": "supported",
+      "current_affiliation": "supported",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 6,
+      "candidate_cap": 32,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 42678,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1321,
+        "reasoning_output_tokens": 268
+      },
+      "model_seconds": 33.61312007904053,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5047877230",
+      "name": "Evgeny Styrin",
+      "institution_frozen": "Высшая школа экономики",
+      "sources": 3,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_http": 2
+      },
+      "candidate_atoms": 1,
+      "usable_personal_contact_atoms": 0,
+      "contact_applicability": {},
+      "contact_dates": [],
+      "identity": "supported",
+      "current_affiliation": "supported",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 5,
+      "candidate_cap": 8,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 41550,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1980,
+        "reasoning_output_tokens": 994
+      },
+      "model_seconds": 60.14573693275452,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5006480668",
+      "name": "О. В. Тушавина",
+      "institution_frozen": "Московский авиационный институт",
+      "sources": 2,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_pdf": 1
+      },
+      "candidate_atoms": 5,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "historical": 1
+      },
+      "contact_dates": [
+        "2019"
+      ],
+      "identity": "supported",
+      "current_affiliation": "insufficient",
+      "activity": "unknown",
+      "readiness": "unknown",
+      "HTTP_reservations": 4,
+      "candidate_cap": 8,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 45086,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2756,
+        "reasoning_output_tokens": 850
+      },
+      "model_seconds": 58.862375020980835,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5011172734",
+      "name": "Alena Nastulyavichus",
+      "institution_frozen": "Московский государственный технический университет имени Н. Э. Баумана",
+      "sources": 2,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_http": 1
+      },
+      "candidate_atoms": 2,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "undated": 1
+      },
+      "contact_dates": [
+        null
+      ],
+      "identity": "supported",
+      "current_affiliation": "insufficient",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 9,
+      "candidate_cap": 32,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 29138,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2004,
+        "reasoning_output_tokens": 717
+      },
+      "model_seconds": 50.305301904678345,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5069670094",
+      "name": "И. В. Морозов",
+      "institution_frozen": "Московский государственный университет",
+      "sources": 2,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_http": 1
+      },
+      "candidate_atoms": 1,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "undated": 1
+      },
+      "contact_dates": [
+        null
+      ],
+      "identity": "supported",
+      "current_affiliation": "supported",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 3,
+      "candidate_cap": 8,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 35395,
+        "cached_input_tokens": 12800,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1365,
+        "reasoning_output_tokens": 443
+      },
+      "model_seconds": 46.7151837348938,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5054791318",
+      "name": "Alexey K. Kovalev",
+      "institution_frozen": "Московский физико-технический институт",
+      "sources": 5,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_pdf": 2,
+        "direct_http": 2
+      },
+      "candidate_atoms": 8,
+      "usable_personal_contact_atoms": 0,
+      "contact_applicability": {},
+      "contact_dates": [],
+      "identity": "supported",
+      "current_affiliation": "insufficient",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 9,
+      "candidate_cap": 32,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 57564,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 4229,
+        "reasoning_output_tokens": 1455
+      },
+      "model_seconds": 107.29882216453552,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5065694561",
+      "name": "Mikhail Derkach",
+      "institution_frozen": "Национальный исследовательский технологический университет МИСиС",
+      "sources": 2,
+      "source_kind_counts": {
+        "direct_http": 1,
+        "structured_orcid": 1
+      },
+      "candidate_atoms": 19,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "undated": 1
+      },
+      "contact_dates": [
+        null
+      ],
+      "identity": "supported",
+      "current_affiliation": "supported",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 6,
+      "candidate_cap": 32,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 73408,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6377,
+        "reasoning_output_tokens": 970
+      },
+      "model_seconds": 132.179527759552,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5054586424",
+      "name": "Alexey Maslov",
+      "institution_frozen": "Национальный исследовательский ядерный университет МИФИ",
+      "sources": 2,
+      "source_kind_counts": {
+        "direct_http": 1,
+        "structured_orcid": 1
+      },
+      "candidate_atoms": 5,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "historical": 1
+      },
+      "contact_dates": [
+        "2007"
+      ],
+      "identity": "supported",
+      "current_affiliation": "insufficient",
+      "activity": "unknown",
+      "readiness": "unknown",
+      "HTTP_reservations": 3,
+      "candidate_cap": 8,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 33821,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 2440,
+        "reasoning_output_tokens": 505
+      },
+      "model_seconds": 56.21970725059509,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5089458364",
+      "name": "Д. В. Исангулова",
+      "institution_frozen": "Новосибирский государственный университет",
+      "sources": 2,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_http": 1
+      },
+      "candidate_atoms": 2,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "undated": 1
+      },
+      "contact_dates": [
+        null
+      ],
+      "identity": "supported",
+      "current_affiliation": "insufficient",
+      "activity": "unknown",
+      "readiness": "unknown",
+      "HTTP_reservations": 9,
+      "candidate_cap": 32,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 39945,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1521,
+        "reasoning_output_tokens": 349
+      },
+      "model_seconds": 45.73448991775513,
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5042154547",
+      "name": "Maria S. Ledovskaya",
+      "institution_frozen": "Санкт-Петербургский государственный университет",
+      "sources": 2,
+      "source_kind_counts": {
+        "structured_orcid": 1,
+        "direct_http": 1
+      },
+      "candidate_atoms": 1,
+      "usable_personal_contact_atoms": 1,
+      "contact_applicability": {
+        "undated": 1
+      },
+      "contact_dates": [
+        null
+      ],
+      "identity": "supported",
+      "current_affiliation": "supported",
+      "activity": "active",
+      "readiness": "unknown",
+      "HTTP_reservations": 3,
+      "candidate_cap": 8,
+      "requested_model": "gpt-6.1-sol",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_effort": null,
+      "runtime_status": "runtime_not_exposed",
+      "tokens": {
+        "input_tokens": 35319,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1614,
+        "reasoning_output_tokens": 626
+      },
+      "model_seconds": 54.55548715591431,
+      "human_reviewed": 0
+    }
+  ],
+  "profiles_total": 10,
+  "profiles_with_complete_source": 10,
+  "profiles_with_usable_personal_contact": 8,
+  "usable_personal_contact_atoms": 8,
+  "candidate_atoms": 45,
+  "rejected_or_insufficient_atoms": 37,
+  "identity_counts": {
+    "supported": 10
+  },
+  "current_affiliation_counts": {
+    "supported": 5,
+    "insufficient": 5
+  },
+  "readiness_counts": {
+    "unknown": 10
+  },
+  "source_kind_counts": {
+    "direct_pdf": 4,
+    "structured_orcid": 10,
+    "direct_http": 11
+  },
+  "HTTP_reserved": 57,
+  "HTTP_started": 56,
+  "HTTP_status_counts": {
+    "200": 43,
+    "301": 4,
+    "302": 3,
+    "None": 5,
+    "404": 1,
+    "502": 1
+  },
+  "HTTP_seconds_sum": 92.69822891500189,
+  "HTTP_seconds_median": 1.195070375000796,
+  "HTTP_body_bytes_sum": 14306067,
+  "logical_search_queries": 23,
+  "search_physical_HTTP": "not exposed by web tool; separate from controlled HTTP ledger",
+  "new_GLM_jobs": 0,
+  "new_Sol_jobs": 10,
+  "new_Astra_jobs": 0,
+  "day_model_jobs_before": 7,
+  "day_model_jobs_after": 17,
+  "model_seconds_sum": 645.6297519207001,
+  "tokens": {
+    "input_tokens": 433904,
+    "cached_input_tokens": 12800,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 25607,
+    "reasoning_output_tokens": 7177
+  },
+  "tokens_counted_total": 459511,
+  "reasoning_tokens_included_in_output": true,
+  "cache_tokens_included_in_input": true,
+  "actual_model_or_effort_exposed": false,
+  "requested_profile_model": "gpt-6.1-sol/high; full unchanged semantic-v3; native subscription; one per person; MCP disabled",
+  "paid_API_calls": 0,
+  "human_reviewed": 0,
+  "human_gold": 0,
+  "OCR_calls": 0,
+  "browser_runs": 0,
+  "ordinary_JS_derivative_profiles": 2,
+  "automatic_HTTP_retries": 0,
+  "native_physical_model_requests": "not exposed; counts are CLI profile jobs",
+  "same_person_model_retries": 0,
+  "limits": {
+    "created_at": "2026-10-10T18:01:05.262455+00:00",
+    "deadline_acquisition": "2026-10-10T19:31:05.262466+00:00",
+    "method": "flexible-public10-code-first-v1",
+    "starting_head": "d09c420cccf76a032dca3a5c42801caf2618b9d9",
+    "base": "accc508cd398b5e57105fe1c45f906f89330d636",
+    "sample_sha256": "07cc9fd0fcdfe7b4ad1847bbd8d6c6de4840f735b75fabe2ae7e5b2bfba3e387",
+    "authorization_sha256": "15d8ba77b2281cbf205a36a5f6cdacfbe801d4f1c78199297201714c231f4520",
+    "scope_sha256": "cc8396a2eca13ffcb2ea289bf014e0a3cc9500ae7876d6ab55c57bc6102ae514",
+    "day_model_jobs_before": 7,
+    "max_new_profile_model_jobs": 20,
+    "day_cap": 30,
+    "remaining_before": 13,
+    "remaining_stop": 0,
+    "HTTP_total_cap": 200,
+    "HTTP_per_profile_cap": 20,
+    "search_query_cap": 40,
+    "time_minutes": 90,
+    "concurrency": 1,
+    "max_redirects_per_load": 5,
+    "timeout_seconds": 30,
+    "HTML_JSON_body_cap": 2097152,
+    "PDF_body_cap": 8388608,
+    "image_body_cap": 2097152,
+    "retries": 0,
+    "source_code_freeze_required_before_acquisition": true,
+    "prior_diagnostic_index": "/Users/boris/Experiments/search-for-research/enrichment-validated-redirect-hse-20261010/transfer-SHA-index-d09c420.json",
+    "prior_diagnostic_index_sha256": "16c0ceffe94ee965104ac88a5e791001dc053da09a23edbc81b39a969b7e2e48",
+    "prior_source_HTTP_separate": 4,
+    "prior_model_jobs": 0
+  },
+  "interpretation": "Agent-confirmed sourced contact coverage, not human precision/recall, causal method comparison, current email deliverability or intake readiness. Other 17 fields not systematically collected."
+}

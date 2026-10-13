@@ -29,10 +29,12 @@ format: unhide
 
 typecheck: unhide
 	uv run mypy packages/sfr-core/src/sfr_core packages/sfr-etl/src/sfr_etl \
-		packages/sfr-match/src/sfr_match apps/api/src/sfr_api scripts
+		packages/sfr-match/src/sfr_match apps/api/src/sfr_api scripts enrichment/src \
+		enrichment/research/legacy enrichment/tests enrichment/research/inventory.py
 
 test: unhide
 	uv run python -m unittest discover -s scripts -p 'test_*.py'
+	uv run python enrichment/tests/run_offline.py
 	uv run pytest -m "not integration and not slow"
 
 test-integration: unhide

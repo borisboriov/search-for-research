@@ -1,0 +1,1273 @@
+{
+  "actor_usage": {
+    "actors": {
+      "independent_code_review": {
+        "actual_backend": null,
+        "elapsed_interval_including_waits": 247.427,
+        "latest_cumulative_snapshot": {
+          "at": "2026-10-09T21:03:43.872Z",
+          "tokens": {
+            "cache_write_input_tokens": 0,
+            "cached_input_tokens": 1635584,
+            "input_tokens": 1793415,
+            "output_tokens": 8741,
+            "reasoning_output_tokens": 2455,
+            "total_tokens": 1802156
+          }
+        },
+        "raw_exported": false,
+        "requested_configs": [
+          {
+            "effort": "high",
+            "model": "gpt-6.1-sol"
+          }
+        ],
+        "source_log": "/Users/boris/.codex/sessions/2026/10/09/rollout-2026-10-09T23-59-36-01a12276-d7de-7332-9690-c336aacc8b1a.jsonl",
+        "source_prefix_bytes": 2488621,
+        "source_prefix_sha256": "44ecd88c2e88cb8802283d8199ff067f5e4db9b7da95a03ab4cccaafd5054581",
+        "start_at": "2026-10-09T20:59:36.445Z"
+      },
+      "technical_session_orchestration": {
+        "actual_backend": null,
+        "elapsed_interval_including_waits": 1551.882,
+        "latest_cumulative_snapshot": {
+          "at": "2026-10-09T21:17:45.264Z",
+          "tokens": {
+            "cache_write_input_tokens": 0,
+            "cached_input_tokens": 9355520,
+            "input_tokens": 9564878,
+            "output_tokens": 52594,
+            "reasoning_output_tokens": 19748,
+            "total_tokens": 9617472
+          }
+        },
+        "raw_exported": false,
+        "requested_configs": [
+          {
+            "effort": "high",
+            "model": "gpt-6.1-sol"
+          }
+        ],
+        "source_log": "/Users/boris/.codex/sessions/2026/10/09/rollout-2026-10-09T23-51-52-01a1226f-c4e4-7d30-9c9c-ca47dee747b8.jsonl",
+        "source_prefix_bytes": 3376140,
+        "source_prefix_sha256": "888c735ad6d5c95f98eb4a0e1b7de24dfe18a44278410343bc795deb52485154",
+        "start_at": "2026-10-09T20:51:53.382Z"
+      }
+    },
+    "human_reviewed": 0,
+    "money_and_session_quota_delta": null,
+    "not_final_usage": "Cumulative actor snapshots at explicit cutoff; final review/publication afterwards excluded. Cached input is part of input; reasoning is part of output. Native content jobs are measured separately."
+  },
+  "actual_gate": {
+    "author_ids": [
+      "A5080057408",
+      "A5101711419",
+      "A5111695924"
+    ],
+    "jobs_not_called": 3,
+    "tokens_avoided_unknown": true,
+    "tokens_spent": 0
+  },
+  "analysis_sha256": "5b4f09a07235c6d1813d3ea0886531a90346801082ade8abdc89a7f63c51a547",
+  "blind_judge": {
+    "atom_evaluations": [
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it1",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it2",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it3",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev1",
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it4",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev1",
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it5",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev4",
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it6",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev1",
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it7",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev3",
+          "ev2"
+        ],
+        "grade": "correct",
+        "item_id": "it8",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "error_types": [],
+        "evidence_refs": [
+          "ev4",
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "item_id": "it9",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5011844904",
+        "error_types": [],
+        "evidence_refs": [
+          "isir_profile",
+          "isir_thesis"
+        ],
+        "grade": "correct",
+        "item_id": "it1",
+        "response": "A",
+        "severity": "none"
+      }
+    ],
+    "blinding": {
+      "affected_author_id": "A5080057408",
+      "affected_field": "profiles[2].responses.A.summary (four strings)",
+      "fully_blind_acceptance": false,
+      "future_gate_wording_fix_measured": false,
+      "grading_unchanged": true,
+      "leaked_model_name": "Sol",
+      "measured_code_head": "52c3ca25761a13db7bf484b80aa9f388a5ee577e",
+      "measured_metrics_sha256": "6eaf5a624c74c94b60b6530ff132994d8b62130a54d81bdce822ec03ad1ca74b",
+      "new_judge_calls": 0,
+      "packet_sha256": "6550e37398c332d16094bf306722c1b7d1ea7567d51988984dc0d3f89e687c75",
+      "prompt_sha256": "9411024b00089137e085a516e1ceed1f417bb50639dc9a6e982f73f825f568df",
+      "qualification_file": "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/validation/blinding-qualification.json",
+      "qualification_sha256": "5efb634dc4bfdfab6187a62c949aa14369162802e2ff5982bfb0ca8b1a4f83b8",
+      "quality_limit": "The recorded grading is a partly unblinded small agent audit, not fully blind acceptance or human truth.",
+      "reason": "The frozen gate summary disclosed that Sol was not called. This exact packet was included in the native judge prompt.",
+      "status": "partly_unblinded"
+    },
+    "grades": {
+      "atom_evaluations": {
+        "correct": 10
+      },
+      "profile_evaluations": {
+        "correct": 9
+      }
+    },
+    "high_critical": 0,
+    "profile_evaluations": [
+      {
+        "author_id": "A5061174451",
+        "axis": "identity",
+        "error_types": [],
+        "evidence_refs": [
+          "ev3",
+          "ev2"
+        ],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "axis": "current_affiliation",
+        "error_types": [],
+        "evidence_refs": [
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5061174451",
+        "axis": "activity",
+        "error_types": [],
+        "evidence_refs": [
+          "ev2",
+          "ev3"
+        ],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5011844904",
+        "axis": "identity",
+        "error_types": [],
+        "evidence_refs": [
+          "isir_profile",
+          "isir_thesis"
+        ],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5011844904",
+        "axis": "current_affiliation",
+        "error_types": [],
+        "evidence_refs": [
+          "isir_profile"
+        ],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5011844904",
+        "axis": "activity",
+        "error_types": [],
+        "evidence_refs": [
+          "isir_profile",
+          "isir_thesis"
+        ],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5080057408",
+        "axis": "identity",
+        "error_types": [],
+        "evidence_refs": [],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5080057408",
+        "axis": "current_affiliation",
+        "error_types": [],
+        "evidence_refs": [],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      },
+      {
+        "author_id": "A5080057408",
+        "axis": "activity",
+        "error_types": [],
+        "evidence_refs": [],
+        "grade": "correct",
+        "response": "A",
+        "severity": "none"
+      }
+    ],
+    "requested": {
+      "effort": "xhigh",
+      "model": "gpt-6-astra"
+    }
+  },
+  "counterfactual": {
+    "denominator": 12,
+    "gate_after_two_allowed_recoveries": {
+      "cases": 4,
+      "ids": [
+        "A5039216145",
+        "A5041484793",
+        "A5053581596",
+        "A5068285041"
+      ],
+      "previous_input_plus_output": 68143,
+      "previous_observed_tokens": {
+        "cached_input_tokens": 0,
+        "input_tokens": 65826,
+        "output_tokens": 2317,
+        "reasoning_output_tokens": 290
+      }
+    },
+    "gate_on_saved_input": {
+      "cases": 5,
+      "ids": [
+        "A5011844904",
+        "A5039216145",
+        "A5041484793",
+        "A5053581596",
+        "A5068285041"
+      ],
+      "previous_input_plus_output": 85141,
+      "previous_observed_tokens": {
+        "cached_input_tokens": 0,
+        "input_tokens": 82217,
+        "output_tokens": 2924,
+        "reasoning_output_tokens": 394
+      }
+    }
+  },
+  "created_at": "2026-10-09T21:19:41.757064+00:00",
+  "frozen_code_head": "52c3ca25761a13db7bf484b80aa9f388a5ee577e",
+  "human_reviewed": 0,
+  "jobs": [
+    {
+      "actual_backend": null,
+      "agent_id": "codex-ephemeral:01a12286-5bf5-7100-bdf5-73d68e98a307",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/judges/blind-three"
+      ],
+      "author_id": null,
+      "budget": null,
+      "completion": "receipt_available",
+      "model_requests": null,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/judges/blind-three/receipt.json"
+      ],
+      "receipt_sha256": "3996fa56c672be7ed5c6fed2f74dce78255630e159fd8841ec257a8761a48456",
+      "requested_config": {
+        "effort": "xhigh",
+        "model": "gpt-6-astra"
+      },
+      "root": "enrichment-night-literal-format-v5-replay-fixed-20261010",
+      "stage": "judge",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 25335,
+        "input_tokens": 20767,
+        "output_tokens": 4568,
+        "reasoning_output_tokens": 2070,
+        "usage_complete": true
+      },
+      "wall_seconds": 103.98983097076416
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "codex-ephemeral:01a1227d-f2fb-7f02-be8c-df95a04e1a04",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/runs/A5011844904/native_verifier"
+      ],
+      "author_id": "A5011844904",
+      "budget": null,
+      "completion": "receipt_available",
+      "model_requests": null,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/runs/A5011844904/native_verifier/receipt.json"
+      ],
+      "receipt_sha256": "b80b26a1f194d49a2f864575863b49da0bdbaf8d8e8b01c43bfd7a08418ec43b",
+      "requested_config": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "root": "enrichment-night-literal-format-v5-replay-fixed-20261010",
+      "stage": "native_verifier",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 17907,
+        "input_tokens": 16689,
+        "output_tokens": 1218,
+        "reasoning_output_tokens": 364,
+        "usage_complete": true
+      },
+      "wall_seconds": 34.31998300552368
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "codex-ephemeral:01a1227c-06ab-7f83-a8c6-19565dfebe71",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/runs/A5061174451/native_verifier"
+      ],
+      "author_id": "A5061174451",
+      "budget": null,
+      "completion": "receipt_available",
+      "model_requests": null,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/runs/A5061174451/native_verifier/receipt.json"
+      ],
+      "receipt_sha256": "b44b512607adb091de21de02299cc6535cbccf443d0300e98743de87003e3812",
+      "requested_config": {
+        "effort": "high",
+        "model": "gpt-6.1-sol"
+      },
+      "root": "enrichment-night-literal-format-v5-replay-fixed-20261010",
+      "stage": "native_verifier",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 21810,
+        "input_tokens": 17180,
+        "output_tokens": 4630,
+        "reasoning_output_tokens": 2006,
+        "usage_complete": true
+      },
+      "wall_seconds": 123.78200793266296
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "pi-cli:A5080057408:16a6a22d193ad52f",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5080057408/collector"
+      ],
+      "author_id": "A5080057408",
+      "budget": {
+        "host_robots": 1,
+        "resources_remaining_including_robots": 7,
+        "search_remaining": 1,
+        "source_reads": 0
+      },
+      "completion": "receipt_available",
+      "model_requests": 5,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5080057408/collector/receipt.json"
+      ],
+      "receipt_sha256": "490c736a5222f7a140cc93c5f586a54f47f2703e5826cbf056c4f6c79e971104",
+      "requested_config": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      },
+      "root": "enrichment-night-literal-format-v5-fresh-20261010",
+      "stage": "collector",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 8576,
+        "input_plus_output": 30051,
+        "input_tokens": 26537,
+        "output_tokens": 3514,
+        "reasoning_output_tokens": 3083,
+        "uncached_input_tokens": 17961,
+        "usage_complete": true
+      },
+      "wall_seconds": 79.42434720799793
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "pi-cli:A5101711419:7912885bbf0a129b",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5101711419/collector"
+      ],
+      "author_id": "A5101711419",
+      "budget": {
+        "host_robots": 1,
+        "resources_remaining_including_robots": 6,
+        "search_remaining": 0,
+        "source_reads": 1
+      },
+      "completion": "receipt_available",
+      "model_requests": 5,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5101711419/collector/receipt.json"
+      ],
+      "receipt_sha256": "30fecf3f97dda76a05912a895f17b59162b0dfa5768e7916951dff879f973d5f",
+      "requested_config": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      },
+      "root": "enrichment-night-literal-format-v5-fresh-20261010",
+      "stage": "collector",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 10112,
+        "input_plus_output": 30407,
+        "input_tokens": 25151,
+        "output_tokens": 5256,
+        "reasoning_output_tokens": 4728,
+        "uncached_input_tokens": 15039,
+        "usage_complete": true
+      },
+      "wall_seconds": 121.57088391704019
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "pi-cli:A5111695924:fa6d32b2af586a4c",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5111695924/collector"
+      ],
+      "author_id": "A5111695924",
+      "budget": {
+        "host_robots": 0,
+        "resources_remaining_including_robots": 8,
+        "search_remaining": 1,
+        "source_reads": 0
+      },
+      "completion": "receipt_available",
+      "model_requests": 5,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5111695924/collector/receipt.json"
+      ],
+      "receipt_sha256": "a72c97a183967c5f1026ae6346c1420807af79562e05a2502f73040abfa50baf",
+      "requested_config": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      },
+      "root": "enrichment-night-literal-format-v5-fresh-20261010",
+      "stage": "collector",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 10240,
+        "input_plus_output": 27849,
+        "input_tokens": 24836,
+        "output_tokens": 3013,
+        "reasoning_output_tokens": 2510,
+        "uncached_input_tokens": 14596,
+        "usage_complete": true
+      },
+      "wall_seconds": 76.46082420897437
+    }
+  ],
+  "limits": {
+    "actual_backend_model_effort": null,
+    "glm_actual_quota": null,
+    "no_human_truth": true,
+    "no_recruitment_or_willingness_without_direct_evidence": true
+  },
+  "method": "enrichment-cli-literal-format-v5",
+  "new_content_jobs": 6,
+  "night_astra_jobs_after": 3,
+  "night_content_jobs_after": 40,
+  "night_fresh_people_after": 15,
+  "old_metrics_unchanged": true,
+  "profiles": {
+    "enrichment-night-literal-format-v5-fresh-20261010": [
+      {
+        "author_id": "A5080057408",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 7,
+          "search_remaining": 1,
+          "source_reads": 0
+        },
+        "collector_model_requests": 5,
+        "collector_receipt_is_reused_historical": false,
+        "collector_seconds": 79.42434720799793,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8576,
+          "input_plus_output": 30051,
+          "input_tokens": 26537,
+          "output_tokens": 3514,
+          "reasoning_output_tokens": 3083,
+          "uncached_input_tokens": 17961,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 79.42434720799793,
+        "rejected_candidates": 0,
+        "result_sha256": "f1966bf649caeb699d437c59479a43085edd1a15aa8812224271608fad05b594",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5101711419",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 6,
+          "search_remaining": 0,
+          "source_reads": 1
+        },
+        "collector_model_requests": 5,
+        "collector_receipt_is_reused_historical": false,
+        "collector_seconds": 121.57088391704019,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 10112,
+          "input_plus_output": 30407,
+          "input_tokens": 25151,
+          "output_tokens": 5256,
+          "reasoning_output_tokens": 4728,
+          "uncached_input_tokens": 15039,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 121.57088391704019,
+        "rejected_candidates": 0,
+        "result_sha256": "dea4da5706b4d4c2593fff7e9ef7e72145bc390348d2d9e4ee6ec7fbcc8e9ad6",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5111695924",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 0,
+          "resources_remaining_including_robots": 8,
+          "search_remaining": 1,
+          "source_reads": 0
+        },
+        "collector_model_requests": 5,
+        "collector_receipt_is_reused_historical": false,
+        "collector_seconds": 76.46082420897437,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 10240,
+          "input_plus_output": 27849,
+          "input_tokens": 24836,
+          "output_tokens": 3013,
+          "reasoning_output_tokens": 2510,
+          "uncached_input_tokens": 14596,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 76.46082420897437,
+        "rejected_candidates": 0,
+        "result_sha256": "bf167147cac5863749a9f6b47a142f66e71c74fda38b415613319c222b9bbbfd",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      }
+    ],
+    "enrichment-night-literal-format-v5-replay-fixed-20261010": [
+      {
+        "author_id": "A5061174451",
+        "axes": {
+          "activity": "supported",
+          "current_affiliation": "supported",
+          "identity": "supported"
+        },
+        "candidate_atoms": 9,
+        "collector_budget": {
+          "host_robots": 4,
+          "resources_remaining_including_robots": 0,
+          "search_remaining": 2,
+          "source_reads": 4
+        },
+        "collector_model_requests": 5,
+        "collector_receipt_is_reused_historical": true,
+        "collector_seconds": 179.81737929099472,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8256,
+          "input_plus_output": 51063,
+          "input_tokens": 43367,
+          "output_tokens": 7696,
+          "reasoning_output_tokens": 5921,
+          "uncached_input_tokens": 35111,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [
+          "personal_contact",
+          "supervision_history"
+        ],
+        "literal_evidence": 4,
+        "model_not_called": false,
+        "original_coverage_atoms": 5,
+        "original_coverage_fields": {
+          "personal_contact": 3,
+          "supervision_history": 1,
+          "supervisor_role": 1
+        },
+        "pipeline_seconds": 303.5993872236577,
+        "rejected_candidates": 0,
+        "result_sha256": "ce0633746ce392c1606738d50835340c5a5da7e278fff15918f210e0dd44958a",
+        "supported_facts_by_field_including_additional_historical": {
+          "personal_contact": 3,
+          "supervision_history": 2,
+          "supervisor_role": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "coordinator_contact",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 123.78200793266296,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 21810,
+          "input_tokens": 17180,
+          "output_tokens": 4630,
+          "reasoning_output_tokens": 2006,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5011844904",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "supported"
+        },
+        "candidate_atoms": 1,
+        "collector_budget": {
+          "host_robots": 2,
+          "resources_remaining_including_robots": 3,
+          "search_remaining": 1,
+          "source_reads": 3
+        },
+        "collector_model_requests": 5,
+        "collector_receipt_is_reused_historical": true,
+        "collector_seconds": 316.6426934999763,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8448,
+          "input_plus_output": 48470,
+          "input_tokens": 39907,
+          "output_tokens": 8563,
+          "reasoning_output_tokens": 6840,
+          "uncached_input_tokens": 31459,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [
+          "personal_contact"
+        ],
+        "literal_evidence": 2,
+        "model_not_called": false,
+        "original_coverage_atoms": 1,
+        "original_coverage_fields": {
+          "personal_contact": 1
+        },
+        "pipeline_seconds": 350.9626765055,
+        "rejected_candidates": 6,
+        "result_sha256": "a44f5d381342711cf149f5eb7a76d699c1fe8bf02fba5438725cea6c095be779",
+        "supported_facts_by_field_including_additional_historical": {
+          "personal_contact": 1
+        },
+        "unknown_or_unchecked_fields": [
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 34.31998300552368,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 17907,
+          "input_tokens": 16689,
+          "output_tokens": 1218,
+          "reasoning_output_tokens": 364,
+          "usage_complete": true
+        }
+      }
+    ]
+  },
+  "quota_snapshots": [
+    {
+      "ordinaryUsageAllowed": true,
+      "primary": {
+        "resetsAt": 1791959338,
+        "usedPercent": 67,
+        "windowDurationMins": 10080
+      },
+      "remainingPercent": 33,
+      "time": "2026-10-09 21:04:53 UTC"
+    },
+    {
+      "ordinaryUsageAllowed": true,
+      "primary": {
+        "resetsAt": 1791959338,
+        "usedPercent": 67,
+        "windowDurationMins": 10080
+      },
+      "remainingPercent": 33,
+      "time": "2026-10-09 21:08:45 UTC"
+    },
+    {
+      "ordinaryUsageAllowed": true,
+      "primary": {
+        "resetsAt": 1791959338,
+        "usedPercent": 67,
+        "windowDurationMins": 10080
+      },
+      "remainingPercent": 33,
+      "time": "2026-10-09 21:11:35 UTC"
+    },
+    {
+      "ordinaryUsageAllowed": true,
+      "primary": {
+        "resetsAt": 1791959338,
+        "usedPercent": 67,
+        "windowDurationMins": 10080
+      },
+      "remainingPercent": 33,
+      "time": "2026-10-09 21:14:26 UTC"
+    },
+    {
+      "ordinaryUsageAllowed": true,
+      "primary": {
+        "resetsAt": 1791959338,
+        "usedPercent": 68,
+        "windowDurationMins": 10080
+      },
+      "remainingPercent": 32,
+      "time": "2026-10-09 21:16:28 UTC"
+    },
+    {
+      "ordinaryUsageAllowed": true,
+      "primary": {
+        "resetsAt": 1791959338,
+        "usedPercent": 68,
+        "windowDurationMins": 10080
+      },
+      "remainingPercent": 32,
+      "time": "2026-10-09 21:19:39 UTC"
+    }
+  ],
+  "recoveries": [
+    {
+      "atom_ids_added": [
+        "it1"
+      ],
+      "atoms_after": 1,
+      "atoms_before": 0,
+      "author_id": "A5011844904",
+      "quotes_after": 2,
+      "quotes_before": 0,
+      "recovered_quote_refs": [
+        "isir_profile",
+        "isir_thesis"
+      ],
+      "recovered_reader_seals": [
+        {
+          "block": 0,
+          "body_sha256": "02cb89f23774a901222ab2178e299535766ae76ee26e0f92f5a5cbfa2b5f050b",
+          "end": 1477,
+          "method": "enrichment-cli-literal-format-v5",
+          "normalizations": [
+            "NBSP/space",
+            "apostrophe ‘/’/'",
+            "Markdown bullet/ATX prefix"
+          ],
+          "offset_unit": "Unicode code points; zero based; end exclusive",
+          "reader_raw_path": "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/runs/A5011844904/collector/pi/000063-mcp-response.json",
+          "reader_raw_sha256": "8ecdead7e61689740808af705f11922a4534be16822f24e26fbba2ee58d8eccf",
+          "start": 1300
+        },
+        {
+          "block": 0,
+          "body_sha256": "02cb89f23774a901222ab2178e299535766ae76ee26e0f92f5a5cbfa2b5f050b",
+          "end": 3619,
+          "method": "enrichment-cli-literal-format-v5",
+          "normalizations": [
+            "NBSP/space",
+            "apostrophe ‘/’/'",
+            "Markdown bullet/ATX prefix"
+          ],
+          "offset_unit": "Unicode code points; zero based; end exclusive",
+          "reader_raw_path": "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/runs/A5011844904/collector/pi/000063-mcp-response.json",
+          "reader_raw_sha256": "8ecdead7e61689740808af705f11922a4534be16822f24e26fbba2ee58d8eccf",
+          "start": 3405
+        }
+      ],
+      "remaining_rejected_atoms": 5,
+      "remaining_rejected_evidence_refs": [
+        "jmir_authors_2025"
+      ]
+    },
+    {
+      "atom_ids_added": [
+        "it1",
+        "it8"
+      ],
+      "atoms_after": 9,
+      "atoms_before": 7,
+      "author_id": "A5061174451",
+      "quotes_after": 4,
+      "quotes_before": 3,
+      "recovered_quote_refs": [
+        "ev3"
+      ],
+      "recovered_reader_seals": [
+        {
+          "block": 0,
+          "body_sha256": "43640a39ea9f35a8dbcab732d197a9728f992a66c58fb0603e45fddf1d614c1d",
+          "end": 1993,
+          "method": "enrichment-cli-literal-format-v5",
+          "normalizations": [
+            "NBSP/space",
+            "apostrophe ‘/’/'",
+            "Markdown bullet/ATX prefix"
+          ],
+          "offset_unit": "Unicode code points; zero based; end exclusive",
+          "reader_raw_path": "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/runs/A5061174451/collector/pi/000082-mcp-response.json",
+          "reader_raw_sha256": "d8ff5cc3286a474f4744844e5da03db1b8dbcf5150da21c64fc86710a426e461",
+          "start": 1883
+        }
+      ],
+      "remaining_rejected_atoms": 0,
+      "remaining_rejected_evidence_refs": []
+    }
+  ],
+  "references": {
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v3-fixed-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v3/inputs/A5041484793.json": "f5208d9df73519091373c6fae2006194eaac79ab67e8fdad5a41849d4c462133",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v3-fixed-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v3/inputs/A5047730452.json": "39ce2948610b8f3a280f918b4a1d68ebbf20aecc0aca51a7b7dc5e0c3a2477ed",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v3-fixed-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v3/inputs/A5079662185.json": "7451ee8e08d5360fa03507f5f11b49ddbc49af735df36af9cf2c1b5f0b6f14b5",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5008895365.json": "4fc6c4c980ee8a48a77b3ba23f88af64d7603c1ed8cabaaee973b6b40f8d8e72",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5011844904.json": "0c8bc0643e557b355941bc6f83916e877634aa6d9922e7611f2893c2a269057a",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5026442137.json": "6bec2a4dba2d568d5f6ad8dbd207aa249a88126d609f7d7427c126e4ae49bfee",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5039216145.json": "8ffeb64977a52f625ef33114760ce6a4417074680da59560f5d1e68b7dfa1abe",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5039855737.json": "a33f7ab1fdcc6017d1a5b21e2ac6b7efb51b07e25605fcd2a2e17b521e6a3194",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5040643973.json": "4b873aed154dfa64637cacbcbed952731fa1c7b78558a3665dc0d786894d1bdf",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5041484793.json": "b327427b2f1e5e077552e5f43cf956affa6bb1c8975b4d3db7acaa98e38ca4be",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5047730452.json": "65c0416e8ec17769f2bf73568b3ebe85553f7a68976df685ea6c9f4bea3e92d5",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5053581596.json": "f0a181c6c16cd8b1aa8316e56461c63f61860242e5fc3805493a7af924bcb193",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5061174451.json": "5713e1f0ae9870a26826318434eb443e1d7268e82fb1fe8c8233d05ac6e8c20c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5068285041.json": "c910ca84115645f4ba4a734b5697d1f614f607e2e3d4798d9bbf1e0f353d702e",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/results/A5079662185.json": "c3e7b99fd6d6df18c7cc92b37d7ec1fac361c3ec9e53408d2ceb0b4e8201a220",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/runs/A5011844904/collector/pi/000063-mcp-response.json": "8ecdead7e61689740808af705f11922a4534be16822f24e26fbba2ee58d8eccf",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/runs/A5061174451/collector/pi/000082-mcp-response.json": "d8ff5cc3286a474f4744844e5da03db1b8dbcf5150da21c64fc86710a426e461",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5008895365.json": "ff559bb92eacb703a80b1fc7b7dd70fb6a3ec9f10099f695669a92f2120b3807",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5011844904.json": "6f04c7316c07b4d75e2ad5967900cfa0323a102c684fb6546966fc7a13764f7f",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5026442137.json": "dbec56c4e151cdacb7534772c47b301ce2f9820f712c02667e4e5d8fcc38e485",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5039216145.json": "1596183fe784a8def39adb1d00e3739a209ca43e183761e3799e6f0748fe5e6c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5039855737.json": "8446f00a9d8ab0806c81b3286d62364aa1f4fcbbe37adefbc2393738659acecd",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5040643973.json": "51ecb3fdb57d2c6c52564c12d6de58dcf1323b4ed02c91dfad7c252215cb81ad",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5053581596.json": "8f34794d4710912c8c95ca9c160d07071da35ab002fd454ec143b09827b3ddd5",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5061174451.json": "fb187632c3a15549590bd046e93a5037bd9de2b76f8ea7500f5229b73f97b3ea",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-cli-v4-20261009/semantics/semantic-v3/control-runs/enrichment-cli-bounded-v4/inputs/A5068285041.json": "3b8d8fe054be29ee18ae109158f21664202578ac45e37cf30bf104769b6708ee",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/gates/A5080057408.json": "ea3d9a27eef555fdee380e47a3d63e36ad72927fc5deb3d9fb0abd9d2c2a7118",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/gates/A5101711419.json": "a350f68c91ddcd47b042c53ad9b1288d5b6d9e0a1a9606485f3507ad8e2835cb",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/gates/A5111695924.json": "bff0e60bb8fad6c4938d56b810715f3da24d6e720a6a5b7a2c6b6b100a270edd",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/manifest.json": "f0e2d705c8c8e410ff3f0802deeaffa2b9d7955ca882c142dc4b96f092e3491d",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/preflight.json": "81a8f277d88774d070cd6d3695a7c1febedb66b3e00fcdab0430201d8891e59d",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/rejections/A5080057408.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/rejections/A5101711419.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/rejections/A5111695924.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/results/A5080057408.json": "f1966bf649caeb699d437c59479a43085edd1a15aa8812224271608fad05b594",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/results/A5101711419.json": "dea4da5706b4d4c2593fff7e9ef7e72145bc390348d2d9e4ee6ec7fbcc8e9ad6",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/results/A5111695924.json": "bf167147cac5863749a9f6b47a142f66e71c74fda38b415613319c222b9bbbfd",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/sample.json": "d191bc286678b914ae355d531c8b85f2eb82cd3432aef5ad83b4edfe6a86abb9",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/semantics/semantic-v3/control-runs/enrichment-cli-literal-format-v5/inputs/A5080057408.json": "463473070e9805ee58992c44271cfe9086c0476e3fe1fac887807810e1ee4d0c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/semantics/semantic-v3/control-runs/enrichment-cli-literal-format-v5/inputs/A5101711419.json": "c6db3575721da78485ea53a6ef09c6b4475db07ee3306f4ee847f8da46b390dd",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/semantics/semantic-v3/control-runs/enrichment-cli-literal-format-v5/inputs/A5111695924.json": "a0fb069c06001c3fc539fcfa5e8218b5f3d2ce4dcf5c8c4061498ac96c23b20c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-20261010/counterfactual-12.json": "10d79b0debbbd85065bee5f9893f2330950033d081fd538fa0c381203da49a56",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/judge-inputs/blind-three.json": "6550e37398c332d16094bf306722c1b7d1ea7567d51988984dc0d3f89e687c75",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/judges/blind-three/validated.json": "367415f583557cfd4cd2d68cffd324e1f0c6ce454d83df4686f612852c28cf45",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/manifest.json": "1d33c589688b822f6390fe0486222f07ece8fa89e1a567287698bbf50b190e35",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/preflight.json": "e03380f663d21c4a4580cb76a2928ce94bfaa3928174c1d904fc61404360061c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/rejections/A5011844904.json": "f316f97e243abe82fadbe7f5596d17b2866cceb4c2bc19abf725832b308f10a8",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/rejections/A5061174451.json": "b8f106d9693bcfe5cbf7a841396b0114c808c8ddfa3faefd115f0185dcdd68e7",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/results/A5011844904.json": "a44f5d381342711cf149f5eb7a76d699c1fe8bf02fba5438725cea6c095be779",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/results/A5061174451.json": "ce0633746ce392c1606738d50835340c5a5da7e278fff15918f210e0dd44958a",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/sample.json": "937500c96dee73ec49cfe1023269c615725a8ecc68470df54adb6d81e8cc8d07",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/semantics/semantic-v3/control-runs/enrichment-cli-literal-format-v5/inputs/A5011844904.json": "5296c01535e477db01bf81399f31b2ecd9c19ac4d4f7af5d7745ba7cbec13065",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-replay-fixed-20261010/semantics/semantic-v3/control-runs/enrichment-cli-literal-format-v5/inputs/A5061174451.json": "bae30ee2457812ad943b96858c8925190b99d04f22aa728275612a7a3536b706"
+  },
+  "restored_atom_assessments": [
+    {
+      "author_id": "A5011844904",
+      "blind_error_types": [],
+      "blind_grade": "correct",
+      "blind_severity": "none",
+      "current_applicability": "undated",
+      "field_verdict": "correct",
+      "identity_verdict": "supported",
+      "information_date": null,
+      "item_id": "it1",
+      "object_relation": "supported",
+      "supported_by_sol": true,
+      "text_verdict": "supported",
+      "usable_coverage": true
+    },
+    {
+      "author_id": "A5061174451",
+      "blind_error_types": [],
+      "blind_grade": "correct",
+      "blind_severity": "none",
+      "current_applicability": "historical",
+      "field_verdict": "correct",
+      "identity_verdict": "supported",
+      "information_date": "2021",
+      "item_id": "it1",
+      "object_relation": "supported",
+      "supported_by_sol": true,
+      "text_verdict": "supported",
+      "usable_coverage": true
+    },
+    {
+      "author_id": "A5061174451",
+      "blind_error_types": [],
+      "blind_grade": "correct",
+      "blind_severity": "none",
+      "current_applicability": "unknown",
+      "field_verdict": "correct",
+      "identity_verdict": "supported",
+      "information_date": null,
+      "item_id": "it8",
+      "object_relation": "supported",
+      "supported_by_sol": false,
+      "text_verdict": "insufficient",
+      "usable_coverage": false
+    }
+  ],
+  "stages": {
+    "collector": {
+      "jobs": 3,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 28928,
+        "input_plus_output": 88307,
+        "input_tokens": 76524,
+        "output_tokens": 11783,
+        "reasoning_output_tokens": 10321
+      },
+      "known_wall_seconds_subtotal": 277.4560553340125,
+      "model_requests": 15,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 28928,
+        "input_plus_output": 88307,
+        "input_tokens": 76524,
+        "output_tokens": 11783,
+        "reasoning_output_tokens": 10321
+      },
+      "usage_complete": true,
+      "wall_seconds": 277.4560553340125
+    },
+    "judge": {
+      "jobs": 1,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 25335,
+        "input_tokens": 20767,
+        "output_tokens": 4568,
+        "reasoning_output_tokens": 2070
+      },
+      "known_wall_seconds_subtotal": 103.98983097076416,
+      "model_requests": null,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 25335,
+        "input_tokens": 20767,
+        "output_tokens": 4568,
+        "reasoning_output_tokens": 2070
+      },
+      "usage_complete": true,
+      "wall_seconds": 103.98983097076416
+    },
+    "native_verifier": {
+      "jobs": 2,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 39717,
+        "input_tokens": 33869,
+        "output_tokens": 5848,
+        "reasoning_output_tokens": 2370
+      },
+      "known_wall_seconds_subtotal": 158.10199093818665,
+      "model_requests": null,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 0,
+        "input_plus_output": 39717,
+        "input_tokens": 33869,
+        "output_tokens": 5848,
+        "reasoning_output_tokens": 2370
+      },
+      "usage_complete": true,
+      "wall_seconds": 158.10199093818665
+    }
+  }
+}

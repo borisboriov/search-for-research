@@ -1,0 +1,557 @@
+{
+  "kind": "final_targeted_publication_control1",
+  "generated_at": "2026-10-11T11:48:08.694910+00:00",
+  "author_id": "A5054586424",
+  "human_gold": 0,
+  "scope_url": "https://github.com/borisboriov/search-for-research/pull/194#issuecomment-6108525639",
+  "executed_head": "b75750c3ae3a66417341dee720e31072fec9ece6",
+  "manifest_sha256": "57ebd55d7211ae12d8b06124705581d336cc363eabdfbc32a9e4ac1db8ba2927",
+  "selection": "predeclared_targeted_code_seed_NOT_model_discovery",
+  "random_sample": false,
+  "anchor_observed": {
+    "author_id": "A5054586424",
+    "title": "A New Face for DSpace",
+    "doi": "10.1045/november2007-phillips",
+    "work_put_code": 10435134,
+    "source_url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+    "body_sha256": "82b4b7906f8b62b0b5b7f4a4bfc7aaa3891f5d67309175c89d0232b82b098ea7",
+    "text_sha256": "a59a7d95e5bfb6694e42de460bb7dc898ec29b6df11ec6e4d5456c367c1cdc08",
+    "checked_at": "2026-10-11T11:42:37.385471+00:00",
+    "resolver_url": "https://doi.org/10.1045/november2007-phillips",
+    "selection": "predeclared_targeted_code_seed_NOT_model_discovery",
+    "resolver_NOT_search_exact_URL": true
+  },
+  "criteria": {
+    "A": {
+      "pass": false,
+      "reason": "no complete newly read target article body; ORCID metadata and unrelated root are insufficient"
+    },
+    "B": {
+      "pass": true,
+      "candidate_count": 1,
+      "literal_binding_valid": true,
+      "reason": "actual GLM candidates bound to saved spans"
+    },
+    "C": {
+      "pass": true,
+      "checks": {
+        "full_schema": true,
+        "task_ids": true,
+        "entire_new_corpus": true,
+        "independent_receipt": true,
+        "full_semantic_v3": true,
+        "unchanged_full_date_guard": true
+      },
+      "error": null,
+      "raw_sha256": "f9031650815a9bcbac63fc1f3fc1f6b6bace0f12379c7a793ab771d7d09563ac",
+      "identity_verdict": "supported",
+      "unknown_or_conflicting_identity_can_pass_C": true
+    }
+  },
+  "final_decision": "GLM_autonomous_catalog_search_not_accepted; recommend_existing_Sol_assisted_search_code_verification_only",
+  "new_batch_or_fallback_launched": false,
+  "sources": [
+    {
+      "source_id": "A5054586424-S89a6817ea75501cd02ab",
+      "url": "https://mephi.ru",
+      "body_sha256": "f72f2c15cd730b8bedb750ca697546b780dbc2bc2591b7319f3710641a4b60bc",
+      "text_sha256": "21d44fff167fc3185707f7a3ce70b5c31803266ceae26507ccc6f873d49b60d3",
+      "source_kind": "direct_http",
+      "checked_at": "2026-10-11T11:43:26.133015+00:00",
+      "source_record_sha256": "bedb2d694e72ae86854c304eff90d74d3f7c477454810e6059fc864c85d177e4",
+      "record": "sources/A5054586424/source-4af8c3072fbcc3db2faca5fa13d6a1a2b5107e8da9776d385061a3a20affc643.json",
+      "text_chars": 43200,
+      "complete": true,
+      "HTTP_started": true,
+      "status": 200,
+      "location": null,
+      "anchors": {
+        "A New Face for DSpace": {
+          "present": false,
+          "first_offset": -1
+        },
+        "10.1045/november2007-phillips": {
+          "present": false,
+          "first_offset": -1
+        },
+        "Alexey Maslov": {
+          "present": false,
+          "first_offset": -1
+        }
+      }
+    },
+    {
+      "source_id": "A5054586424-Sdde198632266a734378a",
+      "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+      "body_sha256": "82b4b7906f8b62b0b5b7f4a4bfc7aaa3891f5d67309175c89d0232b82b098ea7",
+      "text_sha256": "a59a7d95e5bfb6694e42de460bb7dc898ec29b6df11ec6e4d5456c367c1cdc08",
+      "source_kind": "structured_orcid",
+      "checked_at": "2026-10-11T11:42:37.385471+00:00",
+      "source_record_sha256": "dea8d17d02786d812c71c30bfdb5715120ee67f9590004518a1f9fca3cf9cdc0",
+      "record": "sources/A5054586424/source-9b92b1af01d10b7f35d8d0daddd09240512cdb5f51cc2b0e3c3f4b1fbc561b84.json",
+      "text_chars": 9040,
+      "complete": true,
+      "HTTP_started": true,
+      "status": 200,
+      "location": null,
+      "anchors": {
+        "A New Face for DSpace": {
+          "present": true,
+          "first_offset": 7079
+        },
+        "10.1045/november2007-phillips": {
+          "present": true,
+          "first_offset": 5538
+        },
+        "Alexey Maslov": {
+          "present": true,
+          "first_offset": 4201
+        }
+      }
+    }
+  ],
+  "source_count": 2,
+  "fragment_count": 36,
+  "email_value_count": 1,
+  "queries": [
+    {
+      "at": "2026-10-11T11:42:49.558832+00:00",
+      "author_id": "A5054586424",
+      "query": "\"A New Face for DSpace\" \"10.1045/november2007-phillips\"",
+      "source": "native_Zai_search",
+      "request_event": "/Users/boris/Experiments/search-for-research/enrichment-publication-control1-20261011/runs/A5054586424/collector/pi/000030-host-event.json",
+      "record": "search/0000-reserved.json",
+      "record_sha256": "6d5fcdc2a07ecf9c2a4fcd474ea8e3c0390a930284ac67c187a1ca82f214460e"
+    },
+    {
+      "at": "2026-10-11T11:43:06.142854+00:00",
+      "author_id": "A5054586424",
+      "query": "\"Alexey Maslov\" \"МИФИ\" НИЯУ МИФИ",
+      "source": "native_Zai_search",
+      "request_event": "/Users/boris/Experiments/search-for-research/enrichment-publication-control1-20261011/runs/A5054586424/collector/pi/000044-host-event.json",
+      "record": "search/0001-reserved.json",
+      "record_sha256": "b53ab7df5e56f1b6b6efd3504779f0ffffe12299154e7c684f1a898bc9b18503"
+    },
+    {
+      "at": "2026-10-11T11:43:46.804277+00:00",
+      "author_id": "A5054586424",
+      "query": "\"Alexey Maslov\"",
+      "source": "native_Zai_search",
+      "request_event": "/Users/boris/Experiments/search-for-research/enrichment-publication-control1-20261011/runs/A5054586424/collector/pi/000064-host-event.json",
+      "record": "search/0002-reserved.json",
+      "record_sha256": "296e63b03a904d0bc5cc9a88f1b44395da64fadc3e6708a65d2120998c1ad27b"
+    },
+    {
+      "at": "2026-10-11T11:44:26.757373+00:00",
+      "author_id": "A5054586424",
+      "query": "\"Alexey Maslov\" DSpace repository",
+      "source": "native_Zai_search",
+      "request_event": "/Users/boris/Experiments/search-for-research/enrichment-publication-control1-20261011/runs/A5054586424/collector/pi/000078-host-event.json",
+      "record": "search/0003-reserved.json",
+      "record_sha256": "599064f2fb7f9570b745d7e05f178d396649989cf648c60be8cbb7b565bd3808"
+    }
+  ],
+  "search_outputs": [
+    {
+      "record": "runs/A5054586424/collector/pi/000035-mcp-response.json",
+      "sha256": "ee4f27370ab62c2f1821892c551b564a1b0046645250149022166fdb0a7ade7c",
+      "actual_links": [
+        "https://www.dlib.org/dlib/september12",
+        "https://tpcarchives.lyrasistechnology.org/digital_objects",
+        "https://ijdc.net/ijdc/article/download",
+        "https://www.semanticscholar.org/paper",
+        "https://www.researchgate.net/publication",
+        "https://old.diglib.org/forums/myrick-2005-04",
+        "https://www.scribd.com/document/DSpace",
+        "https://www.dlib.org/dlib/june05",
+        "https://www.dfrws.org/Papers%20&%20Presentations"
+      ]
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000049-mcp-response.json",
+      "sha256": "450432f7241a122da29fe854e641ee3e7db5d0eb3650251294482cc06eb55e59",
+      "actual_links": [
+        "https://mephi.ru"
+      ]
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000069-mcp-response.json",
+      "sha256": "233b251589a42e4768e50f9f45b435bafc1726cd4dbab5c84bc3365ceef5a6e4",
+      "actual_links": [
+        "https://en.wikipedia.org/wiki/Alexey_Maslov",
+        "https://moscowstate.academia.edu/AlexeyMaslov",
+        "https://historica.fandom.com/wiki/Alexey_Maslov",
+        "https://www.wikidata.org/wiki",
+        "https://www.sherdog.com/fighter",
+        "https://www.researchgate.net/profile/Alexey-Maslov-3",
+        "https://orcid.org",
+        "https://boxrec.com/box-pro"
+      ]
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000083-mcp-response.json",
+      "sha256": "8d9da78460554e2e524dd11f4932434a5649fd121f5a5d3057d50717eea62d2a",
+      "actual_links": [
+        "https://moscowstate.academia.edu",
+        "https://en.wikipedia.org",
+        "https://find-and-update.company-information.service.gov.uk",
+        "https://offshoreleaks.icij.org",
+        "https://apps.apple.com",
+        "https://www.behance.net"
+      ]
+    }
+  ],
+  "source_requests": [
+    {
+      "record": "runs/A5054586424/collector/pi/000022-host-event.json",
+      "sha256": "8774cd0c8afc91cfa4e5a8b926b3fdcc7d8903a6e84d9657939532f0c3303322",
+      "arguments": {
+        "action": "read",
+        "query": "10.1045/november2007-phillips",
+        "start": 0,
+        "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record"
+      },
+      "allowed": true,
+      "reason": null,
+      "response": "runs/A5054586424/collector/pi/ipc-21.response.json",
+      "response_sha256": "e57142e23c42549dc8a699a0320ca6ea0482d8668549edc01b5ae3f86483b206"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000024-host-event.json",
+      "sha256": "5e66df29ce5e9da875eb1ed367f6dbf6f0c9be9bf036fa931298fac38f168ce3",
+      "arguments": {
+        "action": "public_search",
+        "query": "\"A New Face for DSpace\" \"10.1045/november2007-phillips\"",
+        "start": 0,
+        "url": ""
+      },
+      "allowed": false,
+      "reason": "Reserved publication native search must precede other search",
+      "response": "runs/A5054586424/collector/pi/ipc-23.response.json",
+      "response_sha256": "8de02a54f551a9343d1d5c281314a86ddbfb76647fa67b50166d7cedd8d3d5b1"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000042-host-event.json",
+      "sha256": "166a34fe59d50f1ab1006a9739c21ffe3496fa5eb7b90cc2670d1c380e96021d",
+      "arguments": {
+        "action": "read",
+        "query": "A New Face for DSpace",
+        "start": 0,
+        "url": "https://doi.org/10.1045/november2007-phillips"
+      },
+      "allowed": false,
+      "reason": "No full allowing robots",
+      "response": "runs/A5054586424/collector/pi/ipc-41.response.json",
+      "response_sha256": "c895f979d0e97df7ca28bbf6fcaffcae0f627d40f6ea8c6e70273eb55a90b92d"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000056-host-event.json",
+      "sha256": "fe9f013cbe50f42c82b1c6dbba545efed8c00979348f0d821f37b4d32ec41858",
+      "arguments": {
+        "action": "links",
+        "query": "Maslov",
+        "start": 0,
+        "url": "https://mephi.ru"
+      },
+      "allowed": true,
+      "reason": null,
+      "response": "runs/A5054586424/collector/pi/ipc-55.response.json",
+      "response_sha256": "5221310f76ba3f9b7b4a63ca1bd39b1cf16f94d51ac91ddf798052c2fc6f36d8"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000062-host-event.json",
+      "sha256": "7fd8dc4a28383777785077792ad53db3783800120c14a4d3740335f460f92eaf",
+      "arguments": {
+        "action": "inspect",
+        "query": "employment organization name",
+        "start": 0,
+        "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record"
+      },
+      "allowed": true,
+      "reason": null,
+      "response": "runs/A5054586424/collector/pi/ipc-61.response.json",
+      "response_sha256": "b706e3497b827ef00cb84b3d341a7ffff3276eef5808fa8a2f7c147f0fd16bfd"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000076-host-event.json",
+      "sha256": "1e87cd53fc0b4f823bfb54c23b1c5eae4cd563878d39d2d612b4661c603e5938",
+      "arguments": {
+        "action": "inspect",
+        "query": "Alexey Maslov",
+        "start": 0,
+        "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record"
+      },
+      "allowed": true,
+      "reason": null,
+      "response": "runs/A5054586424/collector/pi/ipc-75.response.json",
+      "response_sha256": "c733c8e6ab85225099eac736d496261fd41db377a5372b5af9b65a9ee6419f81"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000090-host-event.json",
+      "sha256": "7a239fed8dcf241629550e81042e9ead00093434ce6e26cae42ff47ae8f77670",
+      "arguments": {
+        "action": "read",
+        "query": "email",
+        "start": 0,
+        "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record"
+      },
+      "allowed": true,
+      "reason": null,
+      "response": "runs/A5054586424/collector/pi/ipc-89.response.json",
+      "response_sha256": "b8c0583ef357ceac19fb96ff114a027cfc5753d20ec6ca1a35bbc2ba651cbbad"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/000092-host-event.json",
+      "sha256": "19a7bff38d8ef4298207016c60b14d243d56e1bc8fbf32dac6fdabec42226ea9",
+      "arguments": {
+        "action": "read",
+        "query": "given-names",
+        "start": 0,
+        "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record"
+      },
+      "allowed": true,
+      "reason": null,
+      "response": "runs/A5054586424/collector/pi/ipc-91.response.json",
+      "response_sha256": "f7a9870ff1a38132d5aff18fae8ac1cab34c96f38bbd13b28d4fc75b83a717f3"
+    }
+  ],
+  "tool_refusals": [
+    {
+      "record": "runs/A5054586424/collector/pi/ipc-23.response.json",
+      "reason": "Reserved publication native search must precede other search"
+    },
+    {
+      "record": "runs/A5054586424/collector/pi/ipc-41.response.json",
+      "reason": "No full allowing robots"
+    }
+  ],
+  "HTTP": [
+    {
+      "record": "HTTP-ledger/0000-finished.json",
+      "sha256": "7fbd9fc3f43e9db965ba6f92c17d023c181baa8f2d132c1539f41446ff5793d9",
+      "at": "2026-10-11T11:42:37.384612+00:00",
+      "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+      "kind": "structured_orcid",
+      "author_id": "A5054586424",
+      "HTTP_started": true,
+      "status": 200,
+      "finished_timestamp": 1791718958.216318,
+      "receipt_sha256": "4f6bac3de83540b86c6459ae1a221dd2413b00be85064eeeb33d1655f4b49e85"
+    },
+    {
+      "record": "HTTP-ledger/0001-finished.json",
+      "sha256": "8ee2011598267e649dae2281726817b68da6b1291569725a56d82250f047ee58",
+      "at": "2026-10-11T11:43:05.669474+00:00",
+      "url": "https://doi.org/robots.txt",
+      "kind": "robots",
+      "author_id": "A5054586424",
+      "HTTP_started": true,
+      "status": 301,
+      "finished_timestamp": 1791718986.117592,
+      "receipt_sha256": "046557579c87951ea4cc4204212c41233afb314fbbd76eef9014653b971c2437"
+    },
+    {
+      "record": "HTTP-ledger/0002-finished.json",
+      "sha256": "0109092f6b6af2a9dc48a09a4ab1446762cd34cdee082dfe1e7068db6546d83a",
+      "at": "2026-10-11T11:43:15.993839+00:00",
+      "url": "https://mephi.ru/robots.txt",
+      "kind": "robots",
+      "author_id": "A5054586424",
+      "HTTP_started": true,
+      "status": 200,
+      "finished_timestamp": 1791718996.2369332,
+      "receipt_sha256": "79fd069e0a7732bc006e16c68dc627533108d21cb79549afd3f1ec543e1538c3"
+    },
+    {
+      "record": "HTTP-ledger/0003-finished.json",
+      "sha256": "b9af3f9a53eaba332b31dd37473377aa43f86d57b0294767108e9f7dc7cb32ff",
+      "at": "2026-10-11T11:43:26.132158+00:00",
+      "url": "https://mephi.ru",
+      "kind": "direct_http",
+      "author_id": "A5054586424",
+      "HTTP_started": true,
+      "status": 200,
+      "finished_timestamp": 1791719007.667665,
+      "receipt_sha256": "60436a6c86d9dc41b2d4ef1360fc2e885ee31ac77392c4b0b6300db734c97d6a"
+    }
+  ],
+  "candidates": [
+    {
+      "item_id": "A5054586424-Sdde198632266a734378a-F3000-4800-text",
+      "field": "topic",
+      "kind": "text",
+      "fragment_id": "A5054586424-Sdde198632266a734378a-F3000-4800",
+      "source_id": "A5054586424-Sdde198632266a734378a",
+      "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+      "start": 3000,
+      "end": 4800,
+      "value_sha256": "4871e683f9375e461675c53591166d6bdb0768b4a0ddee99de9e184c61696f1d",
+      "evidence_refs": [
+        "A5054586424-Sdde198632266a734378a-F3000-4800"
+      ],
+      "literal_binding": true
+    }
+  ],
+  "collector": {
+    "at": "2026-10-11T11:46:43.975445+00:00",
+    "author_id": "A5054586424",
+    "probe": false,
+    "mode": "live",
+    "exit_code": 0,
+    "done": true,
+    "host_error": null,
+    "wall_elapsed_seconds": 261.62768562500423,
+    "requested_config": {
+      "provider": "zai",
+      "model": "glm-5.3-flash",
+      "effort": "high"
+    },
+    "backend": null,
+    "cost_usd": null,
+    "token_usage": {
+      "input": 43298,
+      "output": 8855,
+      "cacheRead": 21120,
+      "cacheWrite": 0,
+      "totalTokens": 73273,
+      "reasoning_included_output": null
+    },
+    "completed_messages": 8,
+    "model_requests": 8,
+    "source_tool_calls": 8,
+    "search_queries": 4,
+    "token_fields_complete": true,
+    "usage_complete": true
+  },
+  "Sol": {
+    "runtime_status": "runtime_not_exposed",
+    "tokens": {
+      "cache_write_input_tokens": 0,
+      "cached_input_tokens": 0,
+      "input_tokens": 42513,
+      "output_tokens": 1408,
+      "reasoning_output_tokens": 291
+    },
+    "cost_usd": null,
+    "wall_elapsed_seconds": 47.15892696380615,
+    "tool_calls": 0,
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "requested_provider": "openai",
+    "automatic_cli_retries": 0,
+    "transport_retries": null
+  },
+  "Sol_processing": {
+    "record": "verification/A5054586424/verdict.json",
+    "sha256": "1f8b7054ca95b0984e1357c57a26b2c3fd18c70bfdabbfa06e69cb6003f79fb2",
+    "packet_status": "verified",
+    "reason": null,
+    "counts": null,
+    "classifications": {
+      "A5054586424-Sdde198632266a734378a-F3000-4800-text": {
+        "usable_coverage": true,
+        "coverage_field": "topic",
+        "reason": [],
+        "corrected_field": null,
+        "candidate_only": false
+      }
+    },
+    "usable_atoms": 1
+  },
+  "usage": {
+    "new_profile_jobs_reserved": 2,
+    "cumulative_before": 41,
+    "cumulative_after": 43,
+    "GLM_jobs": 1,
+    "Sol_jobs": 1,
+    "Astra_jobs": 0,
+    "native_search_queries": 4,
+    "source_calls": 8,
+    "HTTP_reserved": 4,
+    "HTTP_started": 4,
+    "automatic_retries": 0,
+    "full_profile_debit": "unknown",
+    "model_cost_USD": "unknown",
+    "development_review_tokens": "not separately exposed; excluded from profile usage"
+  },
+  "execution": {
+    "at": "2026-10-11T11:47:34.845009+00:00",
+    "rows": [
+      {
+        "author_id": "A5054586424",
+        "collector_receipt": {
+          "at": "2026-10-11T11:46:43.975445+00:00",
+          "author_id": "A5054586424",
+          "probe": false,
+          "mode": "live",
+          "exit_code": 0,
+          "done": true,
+          "host_error": null,
+          "wall_elapsed_seconds": 261.62768562500423,
+          "requested_config": {
+            "provider": "zai",
+            "model": "glm-5.3-flash",
+            "effort": "high"
+          },
+          "backend": null,
+          "cost_usd": null,
+          "token_usage": {
+            "input": 43298,
+            "output": 8855,
+            "cacheRead": 21120,
+            "cacheWrite": 0,
+            "totalTokens": 73273,
+            "reasoning_included_output": null
+          },
+          "completed_messages": 8,
+          "model_requests": 8,
+          "source_tool_calls": 8,
+          "search_queries": 4,
+          "token_fields_complete": true,
+          "usage_complete": true
+        },
+        "Sol": {
+          "author_id": "A5054586424",
+          "status": "verified",
+          "candidates": 1,
+          "prompt_utf8_bytes": 132297
+        }
+      }
+    ],
+    "partial_reason": null,
+    "stage_jobs_reserved": 2,
+    "cumulative_reserved": 43,
+    "max_stage_jobs": 2,
+    "human_gold": 0
+  },
+  "stopped": {
+    "at": "2026-10-11T11:47:34.846479+00:00",
+    "new_source_model_jobs": "forbidden",
+    "reason": "finite_live3_complete"
+  },
+  "old_raw_metrics_seals_unchanged": true,
+  "limitations": [
+    "single known positive control",
+    "historical publication is not current availability or readiness",
+    "no human gold",
+    "no bulk coverage or economic inference",
+    "DOI resolver route is separate from exact search URL",
+    "runtime backend/model of nativeSol not exposed beyond requested config"
+  ],
+  "quota": {
+    "before_remaining_percent": 82,
+    "after_remaining_percent": 81,
+    "before_at": "2026-10-11 11:29:32 UTC",
+    "after_at": "2026-10-11 11:48:35 UTC",
+    "window": "accountwide_weekly",
+    "profile_debit": "unknown",
+    "all_activity_included": true
+  },
+  "old_preservation_proof": {
+    "old_partial_mapped_files_verified": 77,
+    "old_live3_mapped_files_verified": 655,
+    "record": "old-mapped-preservation.json",
+    "sha256": "db6367212896ac04a87c295853ab4aa475611fd47ca29de55c3fe90d62a23e4e"
+  },
+  "core_private_result_sha256": "394fa7539955e612d9bdc00e4bacea53afbaebb0c6fe670c6775cd8aa04e3125"
+}

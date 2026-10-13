@@ -1,0 +1,438 @@
+{
+  "author_id": "A5054586424",
+  "kind": "posthoc_saved_trace_diagnosis",
+  "human_gold": 0,
+  "new_model_jobs": 0,
+  "new_source_calls": 0,
+  "new_search_calls": 0,
+  "cumulative_jobs": 41,
+  "seed": {
+    "id": "A5054586424",
+    "name": "Alexey Maslov",
+    "institution": "Национальный исследовательский ядерный университет МИФИ",
+    "orcid": "https://orcid.org/0000-0001-7196-1640",
+    "institution_id": "I887846188",
+    "suspect_merge": false
+  },
+  "queries": [
+    {
+      "kind": "native_Zai",
+      "query": "Alexey Maslov ORCID 0000-0001-7196-1640"
+    },
+    {
+      "kind": "native_Zai",
+      "query": "Алексей Маслов МИФИ доцент кафедра"
+    },
+    {
+      "kind": "public_DDG",
+      "query": "\"Alexey Maslov\" \"MEPhI\"",
+      "allowed": false,
+      "reason": "Robots refusal/excessive delay"
+    },
+    {
+      "kind": "native_Zai",
+      "query": "\"Маслов\" НИЯУ МИФИ сотрудник аспирантам"
+    }
+  ],
+  "native_search_outputs": [
+    {
+      "file": "runs/A5054586424/collector/pi/000039-mcp-response.json",
+      "sha256": "6b4c0ac0d8707ac62188baa4ee2b6cdb3d94573683a4c9019b17dc37de805320",
+      "actual_title_link_rows": [
+        {
+          "title": "Viacheslav Maslov",
+          "link": "https://orcid.org"
+        },
+        {
+          "title": "Alexey Maslov's research works | N. I. Lobachevsky State",
+          "link": "https://www.researchgate.net"
+        }
+      ],
+      "registered_links": [
+        "https://orcid.org",
+        "https://www.researchgate.net"
+      ]
+    },
+    {
+      "file": "runs/A5054586424/collector/pi/000047-mcp-response.json",
+      "sha256": "8b95d0df3ec98feb1b73e610d8fb80968d692b55e84dc6e7678e23b4de7bd126",
+      "actual_title_link_rows": [
+        {
+          "title": "MiFi",
+          "link": "https://en.wikipedia.org"
+        },
+        {
+          "title": "MiFi Distribution | Durham, NC",
+          "link": "https://www.durhamnc.gov"
+        },
+        {
+          "title": "What is MiFi and how does it work?",
+          "link": "https://www.verizon.com"
+        },
+        {
+          "title": "Mikael Finstad (mifi)",
+          "link": "https://github.com"
+        },
+        {
+          "title": "Официальный сайт НИЯУ МИФИ",
+          "link": "https://mephi.ru"
+        },
+        {
+          "title": "INTELLATIP MIFI™ OPEN-IRRIGATED Ablation Catheter",
+          "link": "https://www.bostonscientific.com"
+        },
+        {
+          "title": "Inseego MiFi PRO M4 5G Hotspot: Deals, Price & Specs",
+          "link": "https://www.t-mobile.com"
+        }
+      ],
+      "registered_links": [
+        "https://en.wikipedia.org",
+        "https://www.durhamnc.gov",
+        "https://www.verizon.com",
+        "https://github.com",
+        "https://mephi.ru",
+        "https://www.bostonscientific.com",
+        "https://www.t-mobile.com"
+      ]
+    },
+    {
+      "file": "runs/A5054586424/collector/pi/000061-mcp-response.json",
+      "sha256": "16a44eb3830f4050e20dc033d418d60cdd4e34fccb2078ad734d455f0aacc56c",
+      "actual_title_link_rows": [
+        {
+          "title": "Юрий Маслов, НИЯУ МИФИ: «Поступить в университет,",
+          "link": "https://www.atomic-energy.ru"
+        },
+        {
+          "title": "Представители Росатома и Минобрнауки побывали в",
+          "link": "https://mephi.ru"
+        },
+        {
+          "title": "Маслов Юрий Александрович - Служба IP-телефонии",
+          "link": "https://voip.mephi.ru"
+        },
+        {
+          "title": "САРОВСКИЙ ФИЗИКО-ТЕХНИЧЕСКИЙ ИНСТИТУТ",
+          "link": "https://sarfti.ru"
+        },
+        {
+          "title": "ИНТЭЛ НИЯУ МИФИ",
+          "link": "https://t.me"
+        }
+      ],
+      "registered_links": [
+        "https://www.atomic-energy.ru",
+        "https://mephi.ru",
+        "https://voip.mephi.ru",
+        "https://sarfti.ru",
+        "https://t.me"
+      ]
+    }
+  ],
+  "source_tool_trace": [
+    {
+      "id": "ipc-21",
+      "action": "read",
+      "query": "Alexey Maslov",
+      "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [
+        "A5054586424-Sdde198632266a734378a-F3000-4800",
+        "A5054586424-Sdde198632266a734378a-F4500-6300",
+        "A5054586424-Sdde198632266a734378a-F6000-7800",
+        "A5054586424-Sdde198632266a734378a-F7500-9040"
+      ],
+      "returned_observed_links": [],
+      "matching": 4,
+      "returned_DOI": true,
+      "returned_article_title": true
+    },
+    {
+      "id": "ipc-27",
+      "action": "inspect",
+      "query": "employment",
+      "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [
+        "A5054586424-Sdde198632266a734378a-F0-1800",
+        "A5054586424-Sdde198632266a734378a-F1500-3300",
+        "A5054586424-Sdde198632266a734378a-F3000-4800"
+      ],
+      "returned_observed_links": [],
+      "matching": 3,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-53",
+      "action": "public_search",
+      "query": "\"Alexey Maslov\" \"MEPhI\"",
+      "url": "",
+      "allowed": false,
+      "reason": "Robots refusal/excessive delay",
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": null,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-67",
+      "action": "links",
+      "query": "Маслов Алексей",
+      "url": "https://voip.mephi.ru",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": 0,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-69",
+      "action": "inspect",
+      "query": "Маслов Алексей",
+      "url": "https://voip.mephi.ru",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": 0,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-75",
+      "action": "inspect",
+      "query": "Маслов",
+      "url": "https://voip.mephi.ru",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": 0,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-81",
+      "action": "read",
+      "query": "Maslov",
+      "url": "https://api.semanticscholar.org/graph/v1/author/A5054586424?fields=name,affiliations,paperCount,hIndex,papers.title,papers.year,papers.externalIds",
+      "allowed": false,
+      "reason": "Unregistered URL: use an actual search row or observed href",
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": null,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-87",
+      "action": "inspect",
+      "query": "/api",
+      "url": "https://voip.mephi.ru",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": 0,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-89",
+      "action": "links",
+      "query": "сотрудники",
+      "url": "https://mephi.ru",
+      "allowed": true,
+      "reason": null,
+      "returned_fragment_ids": [],
+      "returned_observed_links": [
+        "https://home.mephi.ru/ru/people?division_id=1028",
+        "https://home.mephi.ru/ru/people?division_id=1030",
+        "https://home.mephi.ru/ru/people?division_id=1031",
+        "https://home.mephi.ru/ru/people?division_id=1032",
+        "https://home.mephi.ru/ru/people?division_id=1029",
+        "https://mephi.ru/about/cae/his/staff",
+        "https://home.mephi.ru/ru/people?division_id=1186"
+      ],
+      "matching": 7,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-95",
+      "action": "links",
+      "query": "people",
+      "url": "https://home.mephi.ru/ru/people?division_id=1028",
+      "allowed": false,
+      "reason": "Robots refusal/excessive delay",
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": null,
+      "returned_DOI": false,
+      "returned_article_title": false
+    },
+    {
+      "id": "ipc-101",
+      "action": "read",
+      "query": "Maslov",
+      "url": "https://www.semanticscholar.org/author/Alexey-Maslov/5054586424",
+      "allowed": false,
+      "reason": "Unregistered URL: use an actual search row or observed href",
+      "returned_fragment_ids": [],
+      "returned_observed_links": [],
+      "matching": null,
+      "returned_DOI": false,
+      "returned_article_title": false
+    }
+  ],
+  "saved_sources": [
+    {
+      "url": "https://mephi.ru",
+      "body_sha256": "1bfa004a7aae43ef52c2fc1ecdb1bd2cf431854cb1172a28d3a1824b52744d5b",
+      "text_sha256": "800ed20cc16b31df5c90bbe07b5e96d3ecae0b8b305391c64235a6d4a93e127c",
+      "source_kind": "direct_http",
+      "checked_at": "2026-10-11T10:05:42.619425+00:00",
+      "source_id": "A5054586424-S087286f318ed2448e9d9",
+      "characters": 43200,
+      "representation": "checked_static",
+      "source_record_sha256": "65c05c093032917ded1b25725038267b998d435c7fbb13898fc48e105050b806"
+    },
+    {
+      "url": "https://pub.orcid.org/v3.0/0000-0001-7196-1640/record",
+      "body_sha256": "82b4b7906f8b62b0b5b7f4a4bfc7aaa3891f5d67309175c89d0232b82b098ea7",
+      "text_sha256": "a59a7d95e5bfb6694e42de460bb7dc898ec29b6df11ec6e4d5456c367c1cdc08",
+      "source_kind": "structured_orcid",
+      "checked_at": "2026-10-11T10:02:53.977597+00:00",
+      "source_id": "A5054586424-Sdde198632266a734378a",
+      "characters": 9040,
+      "representation": "checked_static",
+      "source_record_sha256": "5e98797e31d275aebf3d90f49bc055c4c04f7e33aa1f69caa5e441a7f142adb7"
+    },
+    {
+      "url": "https://voip.mephi.ru",
+      "body_sha256": "9d2bf02ce6e376caeb5fa61e7f8490a6ce0b63b28e470384a959c3a79a8ebc0a",
+      "text_sha256": "ef2915c66404c15e1d57a2638d952359f1a8494d888bfb58977adbb6d693ae3c",
+      "source_kind": "direct_http",
+      "checked_at": "2026-10-11T10:04:35.685988+00:00",
+      "source_id": "A5054586424-Sda82b8ba167608b0471e",
+      "characters": 101383,
+      "representation": "checked_static",
+      "source_record_sha256": "643eee81fe4f5cab1c0d73e88d9b136fd6c78c5789ea2627fd634f59a15ff5c5"
+    }
+  ],
+  "saved_fragments": 104,
+  "collector_selections": [],
+  "collector_profile_evidence": {
+    "identity": [
+      "A5054586424-Sdde198632266a734378a-F0-1800",
+      "A5054586424-Sdde198632266a734378a-F3000-4800"
+    ],
+    "current_affiliation": []
+  },
+  "last_model_payload_sha256": "2ea40fec693b6cc7b2cc40ec13ba9a6788f69e0775c81e477f9bea9930549a50",
+  "last_model_payload_article_title_present": true,
+  "last_model_payload_DOI_present": true,
+  "last_model_payload_DLib_URL_present": false,
+  "baseline_article": {
+    "url": "https://dlib.org/dlib/november07/phillips/11phillips.html",
+    "body_sha256": "f9268f918e552aff850de943cad03ce153e986971370d87b2988d2261dc630c4",
+    "text_sha256": "88a1593d0b9d3d91817ea9acd4bfb721b09dd2f867a907a8d026d3e23b001ce2",
+    "source_kind": "direct_http",
+    "checked_at": "2026-10-10T18:17:49.686753+00:00",
+    "source_id": "A5054586424-S15073c828aa4b0e9c3bb",
+    "characters": 31071,
+    "representation": "checked_static"
+  },
+  "baseline_contact_value_sha256": "50f372d274bafdc6f3c8bc01f580ccc8da3e238fe657ae22b9da356bf1e1607f",
+  "baseline_contact_date": "2007",
+  "baseline_contact_applicability": "historical",
+  "baseline_contact_identity_verdict": "supported",
+  "baseline_contact_present_in_new_corpus": false,
+  "DLib_present_in_search_registered_links": false,
+  "DLib_present_in_observed_href_responses": false,
+  "DLib_requested_or_read": false,
+  "proven_stage": "discovery/source acquisition: ORCID title+DOI seen, article URL/body never discovered/read",
+  "local_bug_proven": false,
+  "unknown": [
+    "Would an article-title/DOI search return an actual link?",
+    "Would the historical contact be attributed to this MEPhI seed rather than a namesake?",
+    "Would a future collector select a received historical contact?"
+  ],
+  "next_control_not_run": {
+    "proposal": "Separately freeze a finite collector control reserving one of four search queries for the observed ORCID work DOI/title. Read only actual returned URLs/observed hrefs, keep historical status and identity ambiguity. Never inject the baseline article into discovery.",
+    "success_evidence": "actual search row/href -> checked article body -> literal candidate -> independent semantic/date assessment; separate discovery absence/refusal/interpretation failure",
+    "requires_separate_authorization_and_freeze": true
+  },
+  "old_evidence_sha256": {
+    "runs/A5054586424/collector/pi/000003-host-event.json": "da58e561dcdca191321856ea7c508f2c2c724585f0d4b7a275c509c62272295c",
+    "runs/A5054586424/collector/pi/000005-host-event.json": "4e2155967bd460f5ea72ac059ddaf0f1bcba1c4e3ada65d51008bf494ea45e65",
+    "runs/A5054586424/collector/pi/000008-host-event.json": "4e65387c20f10b8d3ceb68fea62bbbb1143bcf89857fe5333a3d6d8f9c86bd63",
+    "runs/A5054586424/collector/pi/000011-host-event.json": "34190556a7f221537952e4e4e57497d9920798b19f2e00aea8f7334c66d41de1",
+    "runs/A5054586424/collector/pi/000013-host-event.json": "0574bbe8dc7a4df08e88a206e7f6c337e3a8737ff5f0bd30249af1f22b4e4482",
+    "runs/A5054586424/collector/pi/000015-host-event.json": "c5558ddd64e94773f15bd255804ffb7b27ab9043baaed0a772bc2229fb16e438",
+    "runs/A5054586424/collector/pi/000020-host-event.json": "8cf0bb550e45badd51aff9af43e160f712d76c954e2719704dabbadfd0dd11de",
+    "runs/A5054586424/collector/pi/000022-host-event.json": "e147c79908386dff14401b4c43196547f906c8aa5b736a4099a899e4a468be76",
+    "runs/A5054586424/collector/pi/000026-host-event.json": "8125af6a94475787575b23c285973dd748ef987c7fa24b6b191b4f589fb2fbd3",
+    "runs/A5054586424/collector/pi/000028-host-event.json": "1be70e6a6c778e05b45989678f01590d4537208abff94d8e364ac2635ee61369",
+    "runs/A5054586424/collector/pi/000032-host-event.json": "41c9670e64a0f0d3a520a1e06d65c962c441e0c35b9d6522b7f8fe263aa28719",
+    "runs/A5054586424/collector/pi/000034-host-event.json": "8fcca811c5efaf76875ede1b2c83a9dccb4b5b11712d4916b9cbf9c2a26fa537",
+    "runs/A5054586424/collector/pi/000038-host-event.json": "2b422553cb410780d86c78e1bec0ca0b0c23d143a8bd8f29d657d24d01e48271",
+    "runs/A5054586424/collector/pi/000040-host-event.json": "85d13cfc9978de4347b954a6541deb0002bdcfbb1ff391595fe77da7642789c5",
+    "runs/A5054586424/collector/pi/000042-host-event.json": "dd609daa1551e0f051fef8ca569fc90b101cce04f363bce1ed5f4a3dea219124",
+    "runs/A5054586424/collector/pi/000046-host-event.json": "d99d9e5c4acc781377feda583fc248e36ecb2079e9f4bf4120c09796cacfc68b",
+    "runs/A5054586424/collector/pi/000048-host-event.json": "63a296d96d91e1f3405f584c77c09dd0c7e865b2c0698befd966a857c63f1cde",
+    "runs/A5054586424/collector/pi/000052-host-event.json": "c4fe838d92b03c733e0021537c93132525f800c4329f7b030b20b9135f45e734",
+    "runs/A5054586424/collector/pi/000054-host-event.json": "c134583db99d0dcd75fe2c9fbebcc7e0d81b49322aa60c2420b79978961477af",
+    "runs/A5054586424/collector/pi/000056-host-event.json": "8413bd2bacb450fb93eedab9f192a36d5285af0639f4403e49cd306cf46d0974",
+    "runs/A5054586424/collector/pi/000060-host-event.json": "88d3719ccb2264819e6afe040ea30b296a8f5378bd330ce946c9aa3b8e50a4f7",
+    "runs/A5054586424/collector/pi/000062-host-event.json": "51d56fbea2599cd829209c68de5b3a0c071b9e8e8a6721db8cd6cd13a7681670",
+    "runs/A5054586424/collector/pi/000066-host-event.json": "4203e0d18e387bdcbe4a802bc637be1babd7480380d4504116be02c77f6f8fd8",
+    "runs/A5054586424/collector/pi/000068-host-event.json": "1a77f71a0ad29ade2d6922b9000f053b6b359da5dfed1ea1a71328a59535bb0b",
+    "runs/A5054586424/collector/pi/000070-host-event.json": "c025e59778c8da2152154b0c5ece857e763489c8fd1714fa68ec0899d8a35445",
+    "runs/A5054586424/collector/pi/000074-host-event.json": "fc35d7337d00246eddc1874c4b703f60a59c454fc73861092d9850748aee9a79",
+    "runs/A5054586424/collector/pi/000076-host-event.json": "e890cdc52849b2cf3b9efe23496ce2521b6d85a8bbad717e2844c61264b80e36",
+    "runs/A5054586424/collector/pi/000080-host-event.json": "a73eac0f063863bee43ec4f68efa707b3345c5cd04627c9137259acb92d0f0e9",
+    "runs/A5054586424/collector/pi/000082-host-event.json": "03e956921d519e3848a1e85e7eec19dfb424a9ccda0dae237a1cb05503cf3405",
+    "runs/A5054586424/collector/pi/000086-host-event.json": "037f115155d0d62738392cc8ddc1c9a7bab09933fd8e1ef35489be35a1b35d3d",
+    "runs/A5054586424/collector/pi/000088-host-event.json": "8da2ede38e920c54ea73e15d74a3a8096766f5115ac216327b028a934cb6ae88",
+    "runs/A5054586424/collector/pi/000090-host-event.json": "28002c4692b6e1e092a869cd56e65373da91091ba0e794b4f34eb77cbb36d9fd",
+    "runs/A5054586424/collector/pi/000094-host-event.json": "7bc6da5881ed17e3ab1bafc8ce1e2bbac511d3daa753ac56b787472381a0b4eb",
+    "runs/A5054586424/collector/pi/000096-host-event.json": "7d2fac21ed65264e07e7aeed2f9e9754c171511b363a795e64e040f0db1d4ac6",
+    "runs/A5054586424/collector/pi/000100-host-event.json": "7e7872944e45e52e2a2223e76d7b97bd4db7fd55078d2c937ebcea557d336dda",
+    "runs/A5054586424/collector/pi/000102-host-event.json": "fd4770cafe9b64973d99b5a8ed672cb4822f934d8f02ac1b246b005168ae4805",
+    "runs/A5054586424/collector/pi/000106-host-event.json": "3fe551ad79c6627bc900cdef2120a2eb80c46cd57732de040dfe693413600dd0",
+    "runs/A5054586424/collector/pi/000108-host-event.json": "70bdcf902694aab9d75abb47370decd8a06b36337836a2d13bbdba3a7437292b",
+    "runs/A5054586424/collector/pi/000110-host-event.json": "5f54706a2726a21b97219b0774bcc80435170329eb891423dd2ae5783d457396",
+    "runs/A5054586424/collector/pi/ipc-21.response.json": "f67a090fecec6e506ff85a5cf2b79be5c00726eb58fb1114cb71a9e519fbabbe",
+    "runs/A5054586424/collector/pi/ipc-27.response.json": "3564f1764ef3965e086bf4779339f31b34abab4b2cc29496a5c430d065b3584d",
+    "runs/A5054586424/collector/pi/ipc-33.response.json": "d23835635dff94c1e02723539a737065cd1a0dc0424f88faa6764675c1b08ae9",
+    "runs/A5054586424/collector/pi/ipc-41.response.json": "8e10305d03d9767bd47816549ba3155b8860ed040b3b934b5937814525e16557",
+    "runs/A5054586424/collector/pi/ipc-53.response.json": "0b14dedc4f75f0886edd8c93e8d1dbd9f949b53be9ae2f8896d4da1e38e3c041",
+    "runs/A5054586424/collector/pi/ipc-55.response.json": "ac8d9a72706855eadbe89ca155180397cdc1d670828cb098d2b8bed4d071a185",
+    "runs/A5054586424/collector/pi/ipc-67.response.json": "9474b4d52f1364ddde0864a19488c64990cefc4e477d7e91b70c3a53988400f5",
+    "runs/A5054586424/collector/pi/ipc-69.response.json": "8befcce79f658ece7dae883eb395621998d96d905b368a8a35b28aba823d9f6c",
+    "runs/A5054586424/collector/pi/ipc-75.response.json": "54cb66c4632bfc57af0372b52322b8206f08c0a24e7d81537781140e4359baff",
+    "runs/A5054586424/collector/pi/ipc-81.response.json": "c7002cc90e181b2858490a625fd646bc94ba3b37f474300be1e5c5248dd3d666",
+    "runs/A5054586424/collector/pi/ipc-87.response.json": "4654075b627e2aba2faa6c104e2fbcd31d2de9786bd3f58558e3f07e38afd438",
+    "runs/A5054586424/collector/pi/ipc-89.response.json": "619d79e7fda22e02ec1bf6829efb33a30ad8fa7aab7bedb538281e349e1e2f65",
+    "runs/A5054586424/collector/pi/ipc-95.response.json": "76ae9e2b10425ba06821c43597e21db3ea3d4af57e2cabed1158e3651c4dfaba",
+    "runs/A5054586424/collector/pi/ipc-101.response.json": "dca2e7f714c548f9bb66d52a3a1a5592f63c2614841649be44295159bcc4809d",
+    "runs/A5054586424/collector/pi/000039-mcp-response.json": "6b4c0ac0d8707ac62188baa4ee2b6cdb3d94573683a4c9019b17dc37de805320",
+    "runs/A5054586424/collector/pi/000047-mcp-response.json": "8b95d0df3ec98feb1b73e610d8fb80968d692b55e84dc6e7678e23b4de7bd126",
+    "runs/A5054586424/collector/pi/000061-mcp-response.json": "16a44eb3830f4050e20dc033d418d60cdd4e34fccb2078ad734d455f0aacc56c",
+    "sample.json": "4630a5566e09f65c13445734d3ccfd9412f3dfd3cf82e40cf3814c2f21ae0df8",
+    "corpora/A5054586424.json": "cb2253dab8facd5f4103f2019381dc1c2778502856f0ebc8513f18cc64d8ec61",
+    "runs/A5054586424/collector/raw-result.json": "e91f1e33cb520ea78b492e42a59c7b2d88350683f7a75833102f4e1e28377f93",
+    "runs/A5054586424/collector/pi/000104-model-payload.json": "2ea40fec693b6cc7b2cc40ec13ba9a6788f69e0775c81e477f9bea9930549a50"
+  },
+  "baseline_index_sha256": "a5543ca1336dfa7adcd8ca43b3b4844cc13c460c46a288d61fefa5cac4ee5f62",
+  "baseline_normalized_sha256": "d6b51da8af9dedf0e5031386a0dccae29989722eda91c62b0f5c694062379078",
+  "baseline_corpus_sha256": "8a0fa060ecbe8b01ac97d29558c4d72f7e46868e0b99000ce7a6db26599a9b6f"
+}

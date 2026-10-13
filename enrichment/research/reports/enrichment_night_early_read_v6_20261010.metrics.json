@@ -1,0 +1,735 @@
+{
+  "analysis_sha256": "bf0d876c03e867f4bf42939feff215cb5eb2be70052a140b467b54701d6ea5ca",
+  "baseline": {
+    "conditional_fresh_allowed": false,
+    "profiles": [
+      {
+        "author_id": "A5080057408",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 7,
+          "search_remaining": 1,
+          "source_reads": 0
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 79.42434720799793,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8576,
+          "input_plus_output": 30051,
+          "input_tokens": 26537,
+          "output_tokens": 3514,
+          "reasoning_output_tokens": 3083,
+          "uncached_input_tokens": 17961,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 79.42434720799793,
+        "rejected_candidates": 0,
+        "result_sha256": "f1966bf649caeb699d437c59479a43085edd1a15aa8812224271608fad05b594",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5101711419",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 6,
+          "search_remaining": 0,
+          "source_reads": 1
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 121.57088391704019,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 10112,
+          "input_plus_output": 30407,
+          "input_tokens": 25151,
+          "output_tokens": 5256,
+          "reasoning_output_tokens": 4728,
+          "uncached_input_tokens": 15039,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 121.57088391704019,
+        "rejected_candidates": 0,
+        "result_sha256": "dea4da5706b4d4c2593fff7e9ef7e72145bc390348d2d9e4ee6ec7fbcc8e9ad6",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5111695924",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 0,
+          "resources_remaining_including_robots": 8,
+          "search_remaining": 1,
+          "source_reads": 0
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 76.46082420897437,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 10240,
+          "input_plus_output": 27849,
+          "input_tokens": 24836,
+          "output_tokens": 3013,
+          "reasoning_output_tokens": 2510,
+          "uncached_input_tokens": 14596,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 76.46082420897437,
+        "rejected_candidates": 0,
+        "result_sha256": "bf167147cac5863749a9f6b47a142f66e71c74fda38b415613319c222b9bbbfd",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      }
+    ],
+    "profiles_with_substantive_body": 0,
+    "profiles_with_supported_identity_or_fact": 0,
+    "routes": [
+      {
+        "author_id": "A5080057408",
+        "first_substantive_by_request3": false,
+        "first_substantive_model_request": null,
+        "host_denied": 1,
+        "reader_bodies": [],
+        "reader_finished": 0,
+        "references": {},
+        "route_guard_denied": {},
+        "search_finished": 3,
+        "substantive_reader_bodies": 0,
+        "substantive_reads_on_request4": 0
+      },
+      {
+        "author_id": "A5101711419",
+        "first_substantive_by_request3": false,
+        "first_substantive_model_request": null,
+        "host_denied": 0,
+        "reader_bodies": [
+          {
+            "body_chars_utf16": 5,
+            "model_request": 3,
+            "reader_raw_sha256": "1dc95ad69dd4e6aff414b83e41204eb771957c07876ed5f25fa7c499de7670bf",
+            "substantive": false,
+            "url": "https://orcid.org/0000-0001-7883-6017",
+            "word_tokens": 1
+          }
+        ],
+        "reader_finished": 1,
+        "references": {
+          "/Users/boris/Experiments/search-for-research/enrichment-night-literal-format-v5-fresh-20261010/runs/A5101711419/collector/pi/000063-mcp-response.json": "1dc95ad69dd4e6aff414b83e41204eb771957c07876ed5f25fa7c499de7670bf"
+        },
+        "route_guard_denied": {},
+        "search_finished": 4,
+        "substantive_reader_bodies": 0,
+        "substantive_reads_on_request4": 0
+      },
+      {
+        "author_id": "A5111695924",
+        "first_substantive_by_request3": false,
+        "first_substantive_model_request": null,
+        "host_denied": 1,
+        "reader_bodies": [],
+        "reader_finished": 0,
+        "references": {},
+        "route_guard_denied": {},
+        "search_finished": 3,
+        "substantive_reader_bodies": 0,
+        "substantive_reads_on_request4": 0
+      }
+    ]
+  },
+  "control": {
+    "conditional_fresh_allowed": false,
+    "profiles": [
+      {
+        "author_id": "A5014957454",
+        "completed": false
+      }
+    ],
+    "profiles_with_substantive_body": 0,
+    "profiles_with_supported_identity_or_fact": 0,
+    "routes": [
+      {
+        "author_id": "A5014957454",
+        "first_substantive_by_request3": false,
+        "first_substantive_model_request": null,
+        "host_denied": 0,
+        "reader_bodies": [],
+        "reader_finished": 0,
+        "references": {},
+        "route_guard_denied": {},
+        "search_finished": 0,
+        "substantive_reader_bodies": 0,
+        "substantive_reads_on_request4": 0
+      }
+    ]
+  },
+  "human_reviewed": 0,
+  "measured_head": "4de4a8f1ddf895a861fd956d01f86c460cf6b7ce",
+  "measurement_plan_sha256": "e6fc4d01c24267b16bc9b712f205a96d037e62096c9efb7d3ffda4fb74e41e50",
+  "method": "enrichment-cli-early-read-v6",
+  "night_totals": {
+    "astra_jobs": 3,
+    "content_jobs": 43,
+    "new_people": 15
+  },
+  "paired": {
+    "conditional_fresh_allowed": false,
+    "profiles": [
+      {
+        "author_id": "A5080057408",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 7,
+          "search_remaining": 3,
+          "source_reads": 0
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 63.270314541994594,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 5376,
+          "input_plus_output": 25230,
+          "input_tokens": 22903,
+          "output_tokens": 2327,
+          "reasoning_output_tokens": 1924,
+          "uncached_input_tokens": 17527,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 63.270314541994594,
+        "rejected_candidates": 0,
+        "result_sha256": "e37fff8341a0e083ae14a88027bcf6e70d0f555160ed0922b64eafbebe957070",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5101711419",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 2,
+          "resources_remaining_including_robots": 4,
+          "search_remaining": 2,
+          "source_reads": 2
+        },
+        "collector_model_requests": 5,
+        "collector_seconds": 288.00652679096675,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 8896,
+          "input_plus_output": 54153,
+          "input_tokens": 43444,
+          "output_tokens": 10709,
+          "reasoning_output_tokens": 10018,
+          "uncached_input_tokens": 34548,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 288.00652679096675,
+        "rejected_candidates": 0,
+        "result_sha256": "cf14cc34b3b0b98b4b850ed0e6a2cbb8449d34c6283173e351aca0f00eb2d148",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      },
+      {
+        "author_id": "A5111695924",
+        "axes": {
+          "activity": "insufficient",
+          "current_affiliation": "insufficient",
+          "identity": "insufficient"
+        },
+        "candidate_atoms": 0,
+        "collector_budget": {
+          "host_robots": 1,
+          "resources_remaining_including_robots": 6,
+          "search_remaining": 2,
+          "source_reads": 1
+        },
+        "collector_model_requests": 4,
+        "collector_seconds": 237.7821617499576,
+        "collector_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 11264,
+          "input_plus_output": 33773,
+          "input_tokens": 22539,
+          "output_tokens": 11234,
+          "reasoning_output_tokens": 10142,
+          "uncached_input_tokens": 11275,
+          "usage_complete": true
+        },
+        "completed": true,
+        "important_fields_with_coverage": [],
+        "literal_evidence": 0,
+        "model_not_called": true,
+        "original_coverage_atoms": 0,
+        "original_coverage_fields": {},
+        "pipeline_seconds": 237.7821617499576,
+        "rejected_candidates": 6,
+        "result_sha256": "85db38e4740d62991b88c9f64fd2de1d28d8dfb1ad7bc90f58051cdc146e0203",
+        "supported_facts_by_field_including_additional_historical": {},
+        "unknown_or_unchecked_fields": [
+          "personal_contact",
+          "coordinator_contact",
+          "supervision_history",
+          "published_recruitment",
+          "direct_willingness",
+          "topic",
+          "supervisor_role",
+          "student_level",
+          "student_year",
+          "required_skills",
+          "external_students",
+          "thesis_possible",
+          "city",
+          "work_format",
+          "workload",
+          "payment",
+          "deadline",
+          "response_method"
+        ],
+        "verifier_seconds": 0,
+        "verifier_tokens": {
+          "cache_write_input_tokens": 0,
+          "cached_input_tokens": 0,
+          "input_plus_output": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "reasoning_output_tokens": 0,
+          "usage_complete": true
+        }
+      }
+    ],
+    "profiles_with_substantive_body": 1,
+    "profiles_with_supported_identity_or_fact": 0,
+    "routes": [
+      {
+        "author_id": "A5080057408",
+        "first_substantive_by_request3": false,
+        "first_substantive_model_request": null,
+        "host_denied": 2,
+        "reader_bodies": [],
+        "reader_finished": 0,
+        "references": {},
+        "route_guard_denied": {
+          "Read a discovered URL now; preserve request4 for an alternative after refusal or empty shell": 1
+        },
+        "search_finished": 1,
+        "substantive_reader_bodies": 0,
+        "substantive_reads_on_request4": 0
+      },
+      {
+        "author_id": "A5101711419",
+        "first_substantive_by_request3": false,
+        "first_substantive_model_request": null,
+        "host_denied": 0,
+        "reader_bodies": [
+          {
+            "body_chars_utf16": 212,
+            "model_request": 3,
+            "reader_raw_sha256": "5afdf2e9e2fb6c54ac2468b53fa56f428640236c4e4c76dd6ad60be27fe8e65b",
+            "substantive": false,
+            "url": "https://denuo.legal/people/alexander-sergeev",
+            "word_tokens": 26
+          },
+          {
+            "body_chars_utf16": 193,
+            "model_request": 4,
+            "reader_raw_sha256": "647bbb33c99d8cac0d745bb32964b491b315beaf0a0e9775be702203e9f5121c",
+            "substantive": false,
+            "url": "https://fen.nsu.ru/med/ecology_med_16_print",
+            "word_tokens": 39
+          }
+        ],
+        "reader_finished": 2,
+        "references": {
+          "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5101711419/collector/pi/000066-mcp-response.json": "5afdf2e9e2fb6c54ac2468b53fa56f428640236c4e4c76dd6ad60be27fe8e65b",
+          "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5101711419/collector/pi/000078-mcp-response.json": "647bbb33c99d8cac0d745bb32964b491b315beaf0a0e9775be702203e9f5121c"
+        },
+        "route_guard_denied": {},
+        "search_finished": 2,
+        "substantive_reader_bodies": 0,
+        "substantive_reads_on_request4": 0
+      },
+      {
+        "author_id": "A5111695924",
+        "first_substantive_by_request3": true,
+        "first_substantive_model_request": 3,
+        "host_denied": 0,
+        "reader_bodies": [
+          {
+            "body_chars_utf16": 2050,
+            "model_request": 3,
+            "reader_raw_sha256": "8ed7ed570876279ef084eb6ea42373f36069bf61a858d286cbec05134aa23d02",
+            "substantive": true,
+            "url": "https://fcpir.fcntp.ru",
+            "word_tokens": 214
+          }
+        ],
+        "reader_finished": 1,
+        "references": {
+          "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5111695924/collector/pi/000066-mcp-response.json": "8ed7ed570876279ef084eb6ea42373f36069bf61a858d286cbec05134aa23d02"
+        },
+        "route_guard_denied": {},
+        "search_finished": 2,
+        "substantive_reader_bodies": 1,
+        "substantive_reads_on_request4": 0
+      }
+    ]
+  },
+  "physical_jobs": [
+    {
+      "actual_backend": null,
+      "agent_id": "pi-cli:A5080057408:46c8670d6ffa4abe",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5080057408/collector"
+      ],
+      "author_id": "A5080057408",
+      "budget": {
+        "host_robots": 1,
+        "resources_remaining_including_robots": 7,
+        "search_remaining": 3,
+        "source_reads": 0
+      },
+      "completion": "receipt_available",
+      "model_requests": 5,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5080057408/collector/receipt.json"
+      ],
+      "receipt_sha256": "2462393915ec248f3f5dae6451d1ae962056aa4a57ce5df30fe5d98c7258c55f",
+      "requested_config": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      },
+      "root": "enrichment-night-early-read-v6-paired-20261010",
+      "stage": "collector",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 5376,
+        "input_plus_output": 25230,
+        "input_tokens": 22903,
+        "output_tokens": 2327,
+        "reasoning_output_tokens": 1924,
+        "uncached_input_tokens": 17527,
+        "usage_complete": true
+      },
+      "wall_seconds": 63.270314541994594
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "pi-cli:A5101711419:ab2f4f9c165dd05a",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5101711419/collector"
+      ],
+      "author_id": "A5101711419",
+      "budget": {
+        "host_robots": 2,
+        "resources_remaining_including_robots": 4,
+        "search_remaining": 2,
+        "source_reads": 2
+      },
+      "completion": "receipt_available",
+      "model_requests": 5,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5101711419/collector/receipt.json"
+      ],
+      "receipt_sha256": "4832b50abc418baf04ca6bc4b1ed4d7b269c586c77634ff2dedd5efef23ca759",
+      "requested_config": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      },
+      "root": "enrichment-night-early-read-v6-paired-20261010",
+      "stage": "collector",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 8896,
+        "input_plus_output": 54153,
+        "input_tokens": 43444,
+        "output_tokens": 10709,
+        "reasoning_output_tokens": 10018,
+        "uncached_input_tokens": 34548,
+        "usage_complete": true
+      },
+      "wall_seconds": 288.00652679096675
+    },
+    {
+      "actual_backend": null,
+      "agent_id": "pi-cli:A5111695924:2e08590e4a44b000",
+      "attempt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5111695924/collector"
+      ],
+      "author_id": "A5111695924",
+      "budget": {
+        "host_robots": 1,
+        "resources_remaining_including_robots": 6,
+        "search_remaining": 2,
+        "source_reads": 1
+      },
+      "completion": "receipt_available",
+      "model_requests": 4,
+      "receipt_copies": [
+        "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5111695924/collector/receipt.json"
+      ],
+      "receipt_sha256": "6ce4d36ff1df200bb0537880b97373f41d2e78176d7dbf6a412d79b0cb267739",
+      "requested_config": {
+        "effort": "high",
+        "model": "glm-5.3-flash",
+        "provider": "zai"
+      },
+      "root": "enrichment-night-early-read-v6-paired-20261010",
+      "stage": "collector",
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 11264,
+        "input_plus_output": 33773,
+        "input_tokens": 22539,
+        "output_tokens": 11234,
+        "reasoning_output_tokens": 10142,
+        "uncached_input_tokens": 11275,
+        "usage_complete": true
+      },
+      "wall_seconds": 237.7821617499576
+    }
+  ],
+  "references": {
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-control-20261010/manifest.json": "baae16dc59954c76116dd120175b390f37d1b6ae2bdc44527086e578d03610cb",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/manifest.json": "ed2f7c2d402752c555f55426a546112d8b941711c34127d9d2569da32e4ea121",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/results/A5080057408.json": "e37fff8341a0e083ae14a88027bcf6e70d0f555160ed0922b64eafbebe957070",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/results/A5101711419.json": "cf14cc34b3b0b98b4b850ed0e6a2cbb8449d34c6283173e351aca0f00eb2d148",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/results/A5111695924.json": "85db38e4740d62991b88c9f64fd2de1d28d8dfb1ad7bc90f58051cdc146e0203",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5101711419/collector/pi/000066-mcp-response.json": "5afdf2e9e2fb6c54ac2468b53fa56f428640236c4e4c76dd6ad60be27fe8e65b",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5101711419/collector/pi/000078-mcp-response.json": "647bbb33c99d8cac0d745bb32964b491b315beaf0a0e9775be702203e9f5121c",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/runs/A5111695924/collector/pi/000066-mcp-response.json": "8ed7ed570876279ef084eb6ea42373f36069bf61a858d286cbec05134aa23d02",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/semantics/semantic-v3/control-runs/enrichment-cli-early-read-v6/inputs/A5080057408.json": "b0455206cf70d849f6d0873d824ae68c6bfc4ac241918629fb155a8d2562b34d",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/semantics/semantic-v3/control-runs/enrichment-cli-early-read-v6/inputs/A5101711419.json": "91eb408826a817b117c70807c45e79314fdb468689c841aa1654cb992a0ed343",
+    "/Users/boris/Experiments/search-for-research/enrichment-night-early-read-v6-paired-20261010/semantics/semantic-v3/control-runs/enrichment-cli-early-read-v6/inputs/A5111695924.json": "878d4ee41f3e41aed32db637ab196f191f3a1bd7e1636f2c3a6f3084019acc2f"
+  },
+  "stage_totals": {
+    "collector": {
+      "jobs": 3,
+      "known_token_subtotals": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 25536,
+        "input_plus_output": 113156,
+        "input_tokens": 88886,
+        "output_tokens": 24270,
+        "reasoning_output_tokens": 22084
+      },
+      "known_wall_seconds_subtotal": 589.0590030829189,
+      "model_requests": 14,
+      "receipt_missing_jobs": 0,
+      "tokens": {
+        "cache_write_input_tokens": 0,
+        "cached_input_tokens": 25536,
+        "input_plus_output": 113156,
+        "input_tokens": 88886,
+        "output_tokens": 24270,
+        "reasoning_output_tokens": 22084
+      },
+      "usage_complete": true,
+      "wall_seconds": 589.0590030829189
+    }
+  }
+}
