@@ -83,7 +83,7 @@ robots/error и human provenance.
 байтовую сохранность raw/events, usage, receipt и ошибку/timeout без нового job.
 Сжатие не выбрано. В рабочем assisted verifier #202 stdout/events и stderr
 ограничены 16 MiB каждый; переполнение завершает job без повтора. Опциональный
-`scope.disk_byte_cap` проверяет бюджет перед HTTP/native; #202 задаёт128 MiB.
+`scope.disk_byte_cap` проверяет бюджет перед HTTP/native; #202 задаёт 128 MiB.
 Time/source/request caps и лимит каждого потока учитываются отдельно.
 
 Более широкий ограниченный census: **77 путей, 387467 уникальных файлов,
