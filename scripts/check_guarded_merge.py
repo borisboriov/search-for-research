@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -23,7 +23,7 @@ def validate(snapshot: object, expected: str) -> None:
     ):
         raise HandoffError("Нужны ожидаемый head, main и non-draft PR")
     comments = snapshot["comments"]
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)  # noqa: UP017 — system hook supports Python 3.9
     entries = [
         (comment_time(c.get("createdAt"), now), i, c["body"])
         for i, c in enumerate(comments)

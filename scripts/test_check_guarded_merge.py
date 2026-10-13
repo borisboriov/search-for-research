@@ -79,6 +79,25 @@ class GuardTests(unittest.TestCase):
         ):
             self.assertEqual(main(), 1)
 
+    def test_system_python_isolated_gate(self) -> None:
+        root = Path(__file__).resolve().parent
+        executable = Path("/usr/bin/python3")
+        if not executable.exists():
+            self.skipTest("No system Python")
+        program = (
+            "import sys,json; sys.path.insert(0, sys.argv[1]); "
+            "from check_guarded_merge import validate; "
+            "validate(json.load(sys.stdin), sys.argv[2])"
+        )
+        result = subprocess.run(
+            [str(executable), "-I", "-c", program, str(root), HEAD],
+            input=json.dumps(ready()),
+            text=True,
+            capture_output=True,
+            timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_hook_dispatch(self) -> None:
         # Evaluate the embedded parser with subprocess mocked, no executable shims.
         root = Path(__file__).resolve().parents[1]
