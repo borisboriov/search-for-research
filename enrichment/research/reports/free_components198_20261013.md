@@ -193,6 +193,25 @@ evaluate → export_summary. Private manifest/results/цитаты сохран�
 результатам. Повтор всегда в новом root; выводы пишутся create-only. Baseline
 corpus не дублируется и не переименовывается.
 
+Независимый `sfr-reviewer` проверил полный диапазон base
+`897a7b6b0f002581cb9f34dfb2c1aa809bcf83e3` → head
+`c0f25a15978f369fe0ef549ae54b3ce27c1e5658`: **pass, 0 блокирующих и открытых
+находок**. Подтверждены состав/SHA входов, freeze до replay, 62 успешных строки,
+70 profile/tool строк, 40 покрытых adjudication кандидатов и границы human8.
+Проверка ревьюера read-only, без нового replay/тестов/инференса; масса каталога,
+доставляемость/current, полная экономика и полная повторная перепись старых
+roots не подтверждены. После этой записи финальный docs diff проходит повторное
+ревью; актуальный marker с окончательными base/head хранится в PR #200.
+
+Локально пройдены lint/typecheck, 265 offline enrichment tests, основной test
+388 pass / 8 skip / 5 deselected, docs-check; strict audit после web-setup PASS,
+отдельный pip-audit изолированного lock PASS. Начальный audit без node_modules
+сохранён как отказ среды, критерии не ослаблялись. Итоговый `disk-final.json`
+даёт собственный private root **113697632 logical bytes**; workspace Python
+**1174819562**, node **522555314** logical bytes отдельно для обязательных checks,
+не часть parser replay. Более поздние review/handoff receipts добавляют компактные
+байты к этому срезу. Allocated/shared-cache/APFS ограничения прежние.
+
 Обязательные AGENTS checks и независимое ревью проверенной версии находятся в
 PR #200; финальный машинный marker хранит точные base/head, а handoff-check
 проверяет актуальные CI. Автор прекращает запись перед передачей координатору.
