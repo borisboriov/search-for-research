@@ -7,6 +7,7 @@ import subprocess
 import sys
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 from check_guarded_merge import main, validate
@@ -14,7 +15,7 @@ from check_handoff import HandoffError
 from test_check_handoff import BASE, HEAD, fixture
 
 
-def ready():
+def ready() -> dict[str, Any]:
     data = fixture()
     data["isDraft"] = False
     data["comments"].append(
@@ -29,10 +30,10 @@ def ready():
 
 
 class GuardTests(unittest.TestCase):
-    def test_ready(self):
+    def test_ready(self) -> None:
         validate(ready(), HEAD)
 
-    def test_not_ready(self):
+    def test_not_ready(self) -> None:
         for key, value in [
             ("state", "CLOSED"),
             ("isDraft", True),
@@ -45,14 +46,14 @@ class GuardTests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(HandoffError):
                 validate(data, HEAD)
 
-    def test_pending_or_missing(self):
+    def test_pending_or_missing(self) -> None:
         for checks in [[], [dict(c, conclusion="FAILURE") for c in ready()["statusCheckRollup"]]]:
             data = ready()
             data["statusCheckRollup"] = checks
             with self.assertRaises(HandoffError):
                 validate(data, HEAD)
 
-    def test_newer_blocked_product_overrides(self):
+    def test_newer_blocked_product_overrides(self) -> None:
         data = ready()
         data["comments"].append(
             dict(
@@ -64,27 +65,27 @@ class GuardTests(unittest.TestCase):
         with self.assertRaises(HandoffError):
             validate(data, HEAD)
 
-    def test_missing_stale_product(self):
+    def test_missing_stale_product(self) -> None:
         for replacement in ["", ready()["comments"][-1]["body"].replace(BASE, "d" * 40)]:
             data = ready()
             data["comments"][-1]["body"] = replacement
             with self.assertRaises(HandoffError):
                 validate(data, HEAD)
 
-    def test_network_error(self):
+    def test_network_error(self) -> None:
         with (
             patch.object(sys, "argv", ["gate", "200", HEAD]),
             patch("check_guarded_merge.fetch_handoff", side_effect=HandoffError("offline")),
         ):
             self.assertEqual(main(), 1)
 
-    def test_hook_dispatch(self):
+    def test_hook_dispatch(self) -> None:
         # Evaluate the embedded parser with subprocess mocked, no executable shims.
         root = Path(__file__).resolve().parents[1]
         for hook in [".codex/hooks/block-push.sh", ".claude/hooks/block-push.sh"]:
             script = (root / hook).read_text().split("<<'PY' || true\n", 1)[1].split("\nPY\n", 1)[0]
             script = script.replace("sys.exit(main())", "")
-            scope = {}
+            scope: dict[str, Any] = {}
             exec(compile(script, hook, "exec"), scope)
             cmd = (
                 "gh pr merge --repo borisboriov/search-for-research 200 "
