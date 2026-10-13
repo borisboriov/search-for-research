@@ -25,7 +25,7 @@ from typing import Any
 from urllib.parse import quote
 
 REPO = "borisboriov/search-for-research"
-FIELDS = "headRefOid,baseRefOid,baseRefName,state,statusCheckRollup,comments"
+FIELDS = "headRefOid,baseRefOid,baseRefName,isDraft,state,statusCheckRollup,comments"
 REQUIRED_CHECKS = ("checks", "web", "audit")
 SHA = re.compile(r"[0-9a-f]{40}")
 MARKER_START = re.compile(r"<!--\s*sfr-review\b")

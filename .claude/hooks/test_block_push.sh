@@ -254,7 +254,7 @@ echo "[1,2 МБ] большая команда разбирается"
 # Сообщение отказа — то, что увидит агент.
 msg=$(payload "git -c x=y push origin main" | bash "$hook" 2>&1 >/dev/null)
 case $msg in
-    *"push в main и merge — только Борис"*"push своей ветки"*) ;;
+    *"push в main запрещён; merge только после актуальной приёмки"*"push своей ветки"*) ;;
     *) echo "FAIL текст отказа: $msg"; failures=$((failures + 1)) ;;
 esac
 
