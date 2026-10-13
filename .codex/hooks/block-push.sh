@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse-хук для Bash: push в main, force/delete и merge — только Борис
+# PreToolUse-хук: main/force/delete закрыты; merge — только через live gate.
 # (AGENTS.md, DECISIONS 27.09, #129); push своей ветки сессии разрешён (27.09, #140).
 #
 # Запрет `Bash(git push *)` в settings.json — префиксное правило: `git -C . push`,
@@ -16,7 +16,7 @@
 #     (`-C`, `-c`, `--git-dir`, …) и алиасы (`git -c alias.p=push p`, алиас из
 #     git config) разбираются. Разрешено: `git push origin <ветка>`,
 #     `git push -u origin HEAD` не из `main`;
-#   * `gh pr merge`;
+#   * `gh pr merge`, кроме целой буквальной команды с --match-head-commit;
 #   * `gh api`, меняющий PR: эндпоинт `…/pulls/N/merge`, методы PUT/PATCH/DELETE
 #     на `…/pulls…`, GraphQL-мутации слияния;
 #   * дополнительная цель/Makefile у разрешённой make-команды либо повторный
@@ -34,7 +34,7 @@
 set -uo pipefail
 
 payload=$(cat 2>/dev/null || true)
-reason_prefix="защищённая команда: push в main и merge — только Борис (AGENTS.md, DECISIONS 27.09)"
+reason_prefix="защищённая команда: push в main запрещён; merge только после актуальной приёмки"
 
 # Осторожный отказ без разбора: только встроенные средства bash — без python3
 # может не оказаться и grep.
@@ -62,7 +62,7 @@ import shlex
 import subprocess
 import sys
 
-PREFIX = "защищённая команда: push в main и merge — только Борис (AGENTS.md, DECISIONS 27.09)"
+PREFIX = "защищённая команда: push в main запрещён; merge только после актуальной приёмки"
 SEPARATORS = {";", "&&", "||", "|", "&", "|&", ";;", "(", ")", "{", "}", "\n"}
 KEYWORDS = {"if", "then", "else", "elif", "fi", "do", "done", "while", "until", "!", "time"}
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh"}
@@ -510,6 +510,22 @@ def main() -> int:
     if not isinstance(command, str) or not command.strip():
         return 0
     try:
+        # Only this entire literal command may enter the network gate. Wrappers,
+        # assignments, compound commands and all alternate merge syntax stay denied.
+        match = re.fullmatch(
+            r"gh pr merge --repo borisboriov/search-for-research ([1-9][0-9]*) "
+            r"--merge --match-head-commit ([0-9a-f]{40})", command.strip()
+        )
+        if match:
+            guard = os.path.join(sys.argv[1], "scripts", "check_guarded_merge.py")
+            result = subprocess.run(
+                [sys.executable, "-I", guard, match[1], match[2]],
+                capture_output=True, text=True, timeout=180,
+            )
+            if result.returncode == 0:
+                return 0
+            print(f"{PREFIX}: live merge gate отказал: {result.stderr[:1000]}", file=sys.stderr)
+            return 2
         found = check_command(command, payload.get("cwd"))
     except Exception as exc:  # noqa: BLE001 — хук-граница: при сбое разбора закрыться
         if re.search(r"push|merge|make|gh", command, re.IGNORECASE):
@@ -520,7 +536,7 @@ def main() -> int:
         print(
             f"{PREFIX}: отклонено «{found}». Разрешён только push своей ветки — "
             "`git push origin <ветка>` не из main, без --force/--delete; PR — `gh pr create`; "
-            "push в main, merge и выкладка — Борис. "
+            "push в main и выкладка — Борис; merge требует точной формы и live gate. "
             "Если это текст, а не вызов (сообщение коммита, markdown): обратные кавычки "
             "и $(…) внутри \"…\" bash выполняет — передай текст файлом или heredoc в "
             "кавычках (git commit -F - <<'MSG').",
@@ -533,7 +549,7 @@ def main() -> int:
 sys.exit(main())
 PY
 
-printf '%s' "$payload" | python3 -c "$script"
+printf '%s' "$payload" | python3 -c "$script" "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 code=$?
 # 0 — пропуск, 2 — отказ. Любой другой код — python упал раньше своего разбора
 # (синтаксис, память): закрываемся так же, как без python3.

@@ -620,6 +620,7 @@ issues-audit: unhide
 # из PATH, на системном /usr/bin/python3 и без python3. В CI не гоняется.
 hooks-test:
 	bash .claude/hooks/test_block_push.sh
+	python3 -m unittest discover -s scripts -p 'test_check*.py'
 
 # Согласованность живых документов (#144): пути и старые адреса в md, блок «Состояние»
 # DECISIONS против брифа, meta.json боевого индекса и ApiSettings, открытая итерация,

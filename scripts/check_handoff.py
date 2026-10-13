@@ -20,12 +20,12 @@ import json
 import re
 import subprocess
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import quote
 
 REPO = "borisboriov/search-for-research"
-FIELDS = "headRefOid,baseRefOid,baseRefName,state,statusCheckRollup,comments"
+FIELDS = "headRefOid,baseRefOid,baseRefName,isDraft,state,statusCheckRollup,comments"
 REQUIRED_CHECKS = ("checks", "web", "audit")
 SHA = re.compile(r"[0-9a-f]{40}")
 MARKER_START = re.compile(r"<!--\s*sfr-review\b")
@@ -113,7 +113,7 @@ def check_pr(snapshot: object, *, now: datetime | None = None) -> tuple[str, str
     base, head = snapshot.get("baseBranchOid"), snapshot.get("headRefOid")
     if not valid_sha(base) or not valid_sha(head):
         raise HandoffError("Неизвестна текущая версия PR: нужны полные live base/head SHA")
-    receipt = latest_receipt(snapshot.get("comments"), now or datetime.now(UTC))
+    receipt = latest_receipt(snapshot.get("comments"), now or datetime.now(timezone.utc))  # noqa: UP017 — system hook supports Python 3.9
     if receipt["base"] != base or receipt["head"] != head:
         raise HandoffError("Последнее ревью устарело: base/head не совпадают с текущим PR")
     checks = snapshot.get("statusCheckRollup")
