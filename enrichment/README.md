@@ -2,8 +2,11 @@
 
 Рабочий модуль контактов Search For Research. Алгоритмы, рубрика и принятые
 границы результата сохранены; [карта исследований и хранения](research/INDEX.md)
-ведёт к baseline, human record и live3. Код и документы этого переноса пока в
-[PR #194](https://github.com/borisboriov/search-for-research/pull/194).
+ведёт к baseline, human record и live3. Перенос [PR #194](https://github.com/borisboriov/search-for-research/pull/194)
+и бесплатное сравнение [PR #200](https://github.com/borisboriov/search-for-research/pull/200)
+влиты 13.10.2026. Интеграция и новая пятёрка пока в
+[PR #204](https://github.com/borisboriov/search-for-research/pull/204):
+[результаты и ограничения #202](research/reports/runtime202_20261013.md).
 
 ## Зачем нужен модуль и где его границы
 
@@ -185,10 +188,15 @@ uv run sfr-enrichment prepare --root "$SFR_ENRICHMENT_DATA_ROOT" \
 uv run sfr-enrichment dry-run --root "$SFR_ENRICHMENT_DATA_ROOT"
 # Только для отдельно разрешённого live scope и фактического официального остатка:
 uv run sfr-enrichment run --live --root "$SFR_ENRICHMENT_DATA_ROOT" \
+  --remaining-percent ACTUAL_OFFICIAL_PERCENT --author-id FIRST_FROZEN_PROFILE_ID
+# Затем весь тот же frozen sample: готовый smoke output переиспользуется.
+uv run sfr-enrichment run --live --root "$SFR_ENRICHMENT_DATA_ROOT" \
   --remaining-percent ACTUAL_OFFICIAL_PERCENT
 ```
 
-В этом этапе live не запускался. `prepare` замораживает все фактические `.py`
+В #202 пять новых профилей прошли локальный live цикл: четыре кандидата, три
+принятых Sol личных контакта без установленной актуальности, human_reviewed=0.
+Это веточный результат, не production и не человеческая приёмка. `prepare` замораживает все фактические `.py`
 рабочего пакета, lock, packaging и рубрику; wrappers и исторические runners
 не входят в новый freeze. Старые manifest/code hashes остаются неизменными:
 для исторического code freeze нужен его точный Git SHA и lock, продолжать его

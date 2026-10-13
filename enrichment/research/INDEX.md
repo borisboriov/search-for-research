@@ -32,7 +32,21 @@ Trafilatura/FYP + PDF. [Новые агрегаты](reports/free_components198_
 inference 0. [Агрегаты](reports/free_components198_metrics.json) получены из private
 run, источники/ответы не опубликованы. Новый root `enrichment-free198-20261013`;
 старые архивы не менялись. Ветка/ревью/CI — [PR #200](https://github.com/borisboriov/search-for-research/pull/200),
-часть B Яндекс ожидает отдельного разрешения; это не принятое изменение live.
+PR #200 влит 13.10.2026; часть B Яндекс ожидает отдельного разрешения.
+
+## Рабочий путь и новая пятёрка — #202
+
+[Отчёт интеграции, 13.10.2026](reports/runtime202_20261013.md),
+[агрегаты](reports/runtime202_metrics.json): пять новых каталожных профилей из пяти
+организаций, семь пригодных источников, четыре кандидата old/new, три личных
+контакта по Sol без установленной актуальности, один отклонённый общий ящик.
+15 search queries, 13 физических source HTTP, шесть native attempts включая
+неудачный startup; human_reviewed=0. Все 404 model-visible spans/SHA проверены.
+Прироста извлечения на этой пятёрке нет; новизна ограничена проверенными
+метаданными старых runs, это не holdout. Частный root
+`enrichment-runtime202-20261013` сохраняет тела/receipts/карточки/STOP и отказы.
+[PR #204](https://github.com/borisboriov/search-for-research/pull/204) ещё не влит;
+старые данные и human record не изменялись.
 
 ## До и после переноса
 
