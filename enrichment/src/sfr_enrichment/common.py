@@ -133,3 +133,18 @@ def public_candidates(record: dict[str, Any]) -> dict[str, Any]:
         "identity_verdict": "not_checked",
         "warning": "OpenAlex ORCID is a candidate; verify name and independent identity signal",
     }
+
+
+def check_storage_budget(root: Path, reserve_bytes: int = 0) -> None:
+    """Optional frozen run cap, conservative reservations before source/native writes."""
+    path = root / "manifest.json"
+    if not path.exists():
+        return
+    cap = read(path).get("disk_byte_cap")
+    if cap is None:
+        return
+    if type(cap) is not int or not 1 <= cap <= 512 * 1024 * 1024:
+        raise ValueError("Invalid frozen disk cap")
+    size = sum(p.stat().st_size for p in root.rglob("*") if p.is_file() and not p.is_symlink())
+    if size + reserve_bytes > cap:
+        raise ValueError("Frozen disk budget")

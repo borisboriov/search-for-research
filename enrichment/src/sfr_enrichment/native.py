@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import resource
 import subprocess
 import time
 import tomllib
@@ -293,6 +294,7 @@ def execute(
     required_config: dict[str, str] | None = None,
     system_prompt: str | None = None,
     deadline_epoch: float | None = None,
+    max_output_file_bytes: int | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     if required_config is not None:
@@ -305,6 +307,10 @@ def execute(
             or effort != expected["effort"]
         ):
             raise ValueError("Отсутствует или неверна явная конфигурация native high-v1")
+    if max_output_file_bytes is not None and (
+        type(max_output_file_bytes) is not int or max_output_file_bytes <= 0
+    ):
+        raise ValueError("Invalid native output file cap")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     if required_config is not None:
         immutable(directory / "requested-config.json", encoded(required_config))
@@ -410,6 +416,13 @@ def execute(
                 command[2:2] = ["-c", f"mcp_servers.{name}.enabled=false"]
         if required_config is not None:
             immutable(directory / "command.json", encoded(command))
+
+        def output_limit() -> None:
+            if max_output_file_bytes is not None:
+                resource.setrlimit(
+                    resource.RLIMIT_FSIZE, (max_output_file_bytes, max_output_file_bytes)
+                )
+
         with (
             (directory / "events.jsonl").open("xb") as event_stream,
             (directory / "stderr.log").open("xb") as errors,
@@ -420,6 +433,7 @@ def execute(
                     input=prompt_bytes,
                     stdout=event_stream,
                     stderr=errors,
+                    preexec_fn=output_limit if max_output_file_bytes is not None else None,
                     timeout=deadline_timeout(timeout_seconds, deadline_epoch),
                     check=False,
                 )

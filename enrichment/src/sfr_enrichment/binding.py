@@ -9,7 +9,7 @@ from typing import Any
 from urllib.parse import quote, urlencode, urljoin
 
 from sfr_enrichment.common import ORCID_API, ensure_not_stopped, now, read, sha
-from sfr_enrichment.contacts import EMAIL, checked_source, digest, safe_url
+from sfr_enrichment.contacts import checked_source, digest, flexible_email_matches, safe_url
 from sfr_enrichment.evidence import immutable_bytes, immutable_json
 from sfr_enrichment.http_policy import extract
 from sfr_enrichment.sources import PublicLoader, observed_links, render_mathnet_contacts
@@ -404,8 +404,8 @@ class SourceHost:
                 "candidate_ids_NOT_personal_verdicts": True,
             }
         candidates = [
-            {"value": m[0], "quote": static[max(0, m.start() - 500) : m.end() + 500]}
-            for m in list(EMAIL.finditer(static))[:32]
+            {"value": address, "quote": static[max(0, start - 500) : end + 500]}
+            for address, start, end in list(flexible_email_matches(static))[:32]
         ]
         return {
             "url": source["url"],
@@ -475,8 +475,16 @@ class SourceHost:
                 raise ValueError("Personal contact requires literal email ID")
             if value["kind"] == "email" and literal != value["literal"]:
                 raise ValueError("Literal email changed")
+            bound_value = literal
+            if value["kind"] == "email":
+                matches = list(flexible_email_matches(literal))
+                if len(matches) != 1 or matches[0][1:] != (0, len(literal)):
+                    raise ValueError("Email normalization not bound to complete original span")
+                bound_value = matches[0][0]
+                if bound_value != value["normalized_email"]:
+                    raise ValueError("Normalized email changed")
             items.append(
-                {"item_id": key, "field": row["field"], "value": literal, "evidence_refs": refs}
+                {"item_id": key, "field": row["field"], "value": bound_value, "evidence_refs": refs}
             )
         for refs in result["profile_evidence"].values():
             if (

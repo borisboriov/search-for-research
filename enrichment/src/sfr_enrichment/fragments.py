@@ -6,7 +6,7 @@ import re
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from sfr_enrichment.contacts import EMAIL
+from sfr_enrichment.contacts import flexible_email_matches
 
 DATE_GUARD_POLICY = "fragment-date-v2-orcid-employment-ms"
 
@@ -50,19 +50,18 @@ def catalog(author_id: str, records: list[dict[str, Any]]) -> dict[str, Any]:
             }
             values[ref + "-text"] = {"kind": "text", "fragment_id": ref, "start": start, "end": end}
             intervals.append((start, end, ref))
-        for match in EMAIL.finditer(text):
-            containing = next(
-                (r for s, e, r in intervals if s <= match.start() and match.end() <= e), None
-            )
+        for address, start, end in flexible_email_matches(text):
+            containing = next((r for s, e, r in intervals if s <= start and end <= e), None)
             if containing is None:
                 raise ValueError("Literal email crosses all fragment boundaries")
-            key = f"{source_id}-M{match.start()}-{match.end()}"
+            key = f"{source_id}-M{start}-{end}"
             values[key] = {
                 "kind": "email",
                 "fragment_id": containing,
-                "start": match.start(),
-                "end": match.end(),
-                "literal": match.group(),
+                "start": start,
+                "end": end,
+                "literal": text[start:end],
+                "normalized_email": address,
             }
     return {"sources": sources, "fragments": fragments, "values": values}
 

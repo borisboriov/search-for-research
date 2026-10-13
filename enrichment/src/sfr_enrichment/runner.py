@@ -30,7 +30,7 @@ from sfr_enrichment.native import normalized_provenance
 from sfr_enrichment.replay import legacy_pdf_text
 from sfr_enrichment.review import make_packet, normalize
 from sfr_enrichment.semantics import prepare_control
-from sfr_enrichment.sources import PublicLoader
+from sfr_enrichment.sources import PublicLoader, SourceUnavailable
 
 METHOD = "sol-assisted-contacts-v1"
 
@@ -102,6 +102,11 @@ def prepare(root: Path, profiles_path: Path, plan_path: Path, scope_path: Path) 
             raise ValueError("Недопустимый явный HTTP cap")
     if scope.get("remaining_stop") not in (0, 5, 15) or type(scope["remaining_stop"]) is not int:
         raise ValueError("Нужен явный remaining_stop 0/5/15")
+    if scope.get("disk_byte_cap") is not None and (
+        type(scope["disk_byte_cap"]) is not int
+        or not 1 <= scope["disk_byte_cap"] <= 512 * 1024 * 1024
+    ):
+        raise ValueError("Invalid explicit disk cap")
     immutable_json(root / "sample.json", profiles)
     immutable_json(root / "search-plan.json", plan)
     immutable_json(root / "scope.json", scope)
@@ -126,6 +131,12 @@ def prepare(root: Path, profiles_path: Path, plan_path: Path, scope_path: Path) 
             "human_reviewed": 0,
             "code_layout": "sfr-enrichment-package-v1",
             "event_storage": "native-jsonl-no-pi-session-snapshots",
+            "disk_byte_cap": scope.get("disk_byte_cap"),
+            "extraction_version": "literal-code-v2",
+            "extraction_policy": (
+                "shared flexible matcher; automatic checked literal renderer; "
+                "exact cross-source dedup; no automatic attribution"
+            ),
         },
     )
     return root / "manifest.json"
@@ -144,14 +155,18 @@ def frozen(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         raise ValueError("Frozen код/план/scope/policy изменён; нужен новый разрешённый root")
     profiles = verified_sample(root)
     scope = read(root / "scope.json")
-    if manifest["model_job_cap"] != len(profiles) or any(
-        manifest[key] != scope[key]
-        for key in (
-            "HTTP_total_cap",
-            "HTTP_per_profile_cap",
-            "remaining_stop",
-            "deadline_acquisition",
-            "deadline_verification",
+    if (
+        manifest["model_job_cap"] != len(profiles)
+        or manifest.get("disk_byte_cap") != scope.get("disk_byte_cap")
+        or any(
+            manifest[key] != scope[key]
+            for key in (
+                "HTTP_total_cap",
+                "HTTP_per_profile_cap",
+                "remaining_stop",
+                "deadline_acquisition",
+                "deadline_verification",
+            )
         )
     ):
         raise ValueError("Frozen caps/deadlines изменены")
@@ -340,16 +355,23 @@ def saved(
     return cards
 
 
-async def run_pipeline(root: Path, remaining_percent: float) -> Path:
+async def run_pipeline(
+    root: Path, remaining_percent: float, author_ids: list[str] | None = None
+) -> Path:
     """После нового разрешения: источники → литералы → независимый Sol → карточки."""
     ensure_not_stopped(root)
     profiles, plan = frozen(root)
     if read(root / "scope.json")["live_authorized"] is not True:
         raise ValueError("Offline scope: live source/model calls не разрешены")
     check_quota(root, remaining_percent, "assisted pipeline")
+    selected = set(author_ids) if author_ids is not None else {p["id"] for p in profiles}
+    if not selected or not selected <= {p["id"] for p in profiles}:
+        raise ValueError("Profile selector outside frozen sample")
     paths = []
     for profile in profiles:
         aid = profile["id"]
+        if aid not in selected:
+            continue
         result_path = root / "results" / f"{aid}.json"
         prepared_path = root / "prepared" / f"{aid}.json"
         if prepared_path.exists():
@@ -361,9 +383,33 @@ async def run_pipeline(root: Path, remaining_percent: float) -> Path:
             source_paths = []
             host = SourceHost(root, profile, "live")
             for spec in row["sources"]:
-                source = await loader.load(spec["url"], kind=spec["kind"])
+                failure_path = (
+                    root / "source-failures" / aid / f"{digest(spec['url'].encode())}.json"
+                )
+                if failure_path.exists():
+                    continue
+                try:
+                    source = await loader.load(spec["url"], kind=spec["kind"])
+                except SourceUnavailable as exc:
+                    immutable_json(
+                        failure_path,
+                        {
+                            "url": spec["url"],
+                            "kind": spec["kind"],
+                            "error": str(exc),
+                            "retries": 0,
+                            "at": datetime.now(UTC).isoformat(),
+                        },
+                    )
+                    continue
                 path = directory / f"source-{digest(source['url'].encode())}.json"
-                if spec.get("render_mathnet"):
+                decoded, _ = checked_source(path.parent, source)
+                automatic_renderer = (
+                    source["source_kind"] == "direct_http"
+                    and "document.write(decode_email(" in decoded
+                    and "func_string.js" in decoded
+                )
+                if spec.get("render_mathnet") or automatic_renderer:
                     rendered = list((root / "rendered-sources" / aid).rglob(path.name))
                     if len(rendered) > 1:
                         raise ValueError("Неоднозначный сохранённый renderer")
@@ -375,18 +421,34 @@ async def run_pipeline(root: Path, remaining_percent: float) -> Path:
                     await host.render(spec["url"])
                     path = host.records[spec["url"]]
                 source_paths.append(path)
+            if not source_paths:
+                immutable_json(
+                    root / "profile-failures" / f"{aid}.json",
+                    {
+                        "author_id": aid,
+                        "status": "no_usable_source",
+                        "model_called": False,
+                    },
+                )
+                continue
             collector = {
                 "author_id": aid,
                 "items": [],
                 "evidence_pool": {},
                 "profile_evidence": {"identity": [], "current_affiliation": []},
                 "field_statuses": {},
-                "provenance": {"agent_id": "code:" + METHOD},
+                "provenance": {
+                    "agent_id": "code:" + METHOD,
+                    "collector_kind": "deterministic_contact_candidates",
+                    "model_called": False,
+                    "automatic_retries": 0,
+                },
                 "limits": {
                     "candidates_per_source": 32,
                     "literal_normalization": "whitespace_around_at_only",
                 },
             }
+            by_email: dict[str, dict[str, Any]] = {}
             for path in source_paths:
                 part = contact_packet(
                     path.parent, profile, [read(path)], candidate_cap=32, flexible_literals=True
@@ -399,13 +461,19 @@ async def run_pipeline(root: Path, remaining_percent: float) -> Path:
                     {aliases[k]: v for k, v in part["evidence_pool"].items()}
                 )
                 for item in part["items"]:
-                    collector["items"].append(
-                        item
-                        | {
+                    refs = [aliases[r] for r in item["evidence_refs"]]
+                    if item["value"] in by_email:
+                        previous = by_email[item["value"]]
+                        previous["evidence_refs"] = list(
+                            dict.fromkeys(previous["evidence_refs"] + refs)
+                        )
+                    else:
+                        merged = item | {
                             "item_id": f"contact_{len(collector['items']) + 1:03d}",
-                            "evidence_refs": [aliases[r] for r in item["evidence_refs"]],
+                            "evidence_refs": refs,
                         }
-                    )
+                        collector["items"].append(merged)
+                        by_email[item["value"]] = merged
                 collector["profile_evidence"]["identity"] += [
                     aliases[r] for r in part["profile_evidence"]["identity"]
                 ]
@@ -469,14 +537,26 @@ async def run_pipeline(root: Path, remaining_percent: float) -> Path:
         dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
         immutable_json(root / "date-checks" / f"{aid}.json", dates)
         paths.append((input_path, result_path))
-    entries = packet_entries(paths)
+    all_paths = []
+    for profile in profiles:
+        aid = profile["id"]
+        result_path = root / "results" / f"{aid}.json"
+        if result_path.exists():
+            input_path = Path(read(root / "prepared" / f"{aid}.json")["input_path"])
+            check_result(root, input_path, result_path)
+            all_paths.append((input_path, result_path))
+    entries = packet_entries(all_paths)
+    if selected != {p["id"] for p in profiles}:
+        return make_packet(
+            root, "smoke-" + "-".join(sorted(selected)), entries, contact_review=True
+        )
     immutable_json(root / "entries.json", entries)
     cards = make_packet(root, "assisted-contacts", entries, contact_review=True)
     immutable_json(root / "completed-progress.json", progress(root))
     return cards
 
 
-async def run(root: Path, remaining_percent: float) -> Path:
+async def run(root: Path, remaining_percent: float, author_ids: list[str] | None = None) -> Path:
     ensure_not_stopped(root)
     # Один процесс на root: reservations существующих компонентов не являются mutex.
     with (root / "run.lock").open("a") as lock:
@@ -485,7 +565,7 @@ async def run(root: Path, remaining_percent: float) -> Path:
         except BlockingIOError as exc:
             raise ValueError("Другой run уже пишет этот root") from exc
         try:
-            return await run_pipeline(root, remaining_percent)
+            return await run_pipeline(root, remaining_percent, author_ids)
         finally:
             fcntl.flock(lock, fcntl.LOCK_UN)
 
@@ -502,6 +582,7 @@ def main() -> None:
         if command == "run":
             item.add_argument("--live", action="store_true", required=True)
             item.add_argument("--remaining-percent", type=float, required=True)
+            item.add_argument("--author-id", action="append")
         if command == "saved":
             for key in ("baseline", "index", "legacy-pdf-root", "legacy-index"):
                 item.add_argument("--" + key, type=Path, required=True)
@@ -523,7 +604,7 @@ def main() -> None:
             )
         )
     elif args.command == "run":
-        output = str(asyncio.run(run(args.root, args.remaining_percent)))
+        output = str(asyncio.run(run(args.root, args.remaining_percent, args.author_id)))
     else:
         frozen(args.root)
         output = progress(args.root)

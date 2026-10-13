@@ -16,10 +16,21 @@ from urllib.parse import urljoin, urlsplit
 
 import httpx
 
-from sfr_enrichment.common import ORCID_API, ensure_not_stopped, now, private_root, read
+from sfr_enrichment.common import (
+    ORCID_API,
+    check_storage_budget,
+    ensure_not_stopped,
+    now,
+    private_root,
+    read,
+)
 from sfr_enrichment.contacts import Loader, checked_source, digest, safe_url
 from sfr_enrichment.evidence import immutable_bytes, immutable_json
 from sfr_enrichment.http_policy import AGENT, DomainStops, extract, policy
+
+
+class SourceUnavailable(ValueError):
+    """Absent/unsupported source only; access/STOP/caps/binding stay fatal."""
 
 
 class ObservedLinks(HTMLParser):
@@ -178,6 +189,7 @@ class PublicLoader(Loader):
         path = self.root / f"request-result-{key}.json"
         if path.exists():
             return dict(read(path))
+        check_storage_budget(self.experiment, cap * 7 + 2 * 1024 * 1024)
         previous = [read(p) for p in self.ledger.glob("*-reserved.json")]
         if (
             len(previous) >= self.manifest["HTTP_total_cap"]
@@ -359,6 +371,8 @@ class PublicLoader(Loader):
                     )
                     url = target
                     continue
+                if response["status"] in (404, 410):
+                    raise SourceUnavailable("Source absent HTTP404/410")
                 if response["status"] != 200:
                     raise ValueError("Source access refusal")
                 raw = (self.root / response["body_path"]).read_bytes()
@@ -368,22 +382,22 @@ class PublicLoader(Loader):
                     media_kind = "direct_pdf"
                 if media_kind == "direct_pdf":
                     if "pdf" not in ctype or not raw.startswith(b"%PDF"):
-                        raise ValueError("Not a PDF")
+                        raise SourceUnavailable("Not a PDF")
                     decoded = static = pdf_text(raw)
                 else:
                     charset = re.search(r"charset=([\w-]+)", ctype, re.I)
                     try:
                         decoded = raw.decode(charset[1] if charset else "utf-8", errors="strict")
-                    except LookupError as exc:
+                    except (LookupError, UnicodeError) as exc:
                         # Preserve the saved bytes; reject only this source, without guessing text.
-                        raise ValueError("Unsupported declared source encoding") from exc
+                        raise SourceUnavailable("Unsupported declared source encoding") from exc
                     if api:
                         if "json" not in ctype:
-                            raise ValueError("Not public API JSON")
+                            raise SourceUnavailable("Not public API JSON")
                         static = json.dumps(json.loads(decoded), ensure_ascii=False, indent=2)
                     else:
                         if "text/html" not in ctype:
-                            raise ValueError("Not HTML; register actual PDF separately")
+                            raise SourceUnavailable("Not HTML; register actual PDF separately")
                         if protection(decoded):
                             self.stops.observe(url, 403)
                             raise ValueError("Protection/login HTML; no bypass")
