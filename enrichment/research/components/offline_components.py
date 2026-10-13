@@ -45,7 +45,8 @@ RULES = {
     "emails": "runtime EMAIL regexp; exact literal only; lower-case for comparison",
     "html": (
         "control visible text + mailto + same-host image email query; "
-        "bs4 visible text + mailto; trafilatura default plain text only"
+        "bs4 visible text + mailto; trafilatura default plain text only; "
+        "FindYourProfessor.extract_emails on raw HTML"
     ),
     "pdf": "default page.extract_text; no OCR, no inferred reconstruction",
     "orcid": "person.emails.email with public visibility only; no search in works",
@@ -98,13 +99,16 @@ def freeze(baseline: Path, root: Path) -> None:
                 "information_date": meta.get("information_date"),
             }
         )
-    assert len(sources) == 25
-    assert set(s["author_id"] for s in sources) == set(FROZEN10)
-    assert Counter(s["source_kind"] for s in sources) == {
+    if len(sources) != 25:
+        raise ValueError("Expected 25 sources")
+    if set(s["author_id"] for s in sources) != set(FROZEN10):
+        raise ValueError("Frozen10 mismatch")
+    if Counter(s["source_kind"] for s in sources) != {
         "structured_orcid": 10,
         "direct_http": 11,
         "direct_pdf": 4,
-    }
+    }:
+        raise ValueError("Format counts mismatch")
     packages = {}
     for name in PACKAGES:
         m = importlib.metadata.metadata(name)
@@ -120,6 +124,10 @@ def freeze(baseline: Path, root: Path) -> None:
             "rules": RULES,
             "script_sha256": sha(Path(__file__).read_bytes()),
             "sources": sources,
+            "runtime_files": {
+                str(p.relative_to(Path(__file__).resolve().parents[2])): sha(p.read_bytes())
+                for p in (Path(__file__).resolve().parents[2] / "src/sfr_enrichment").glob("*.py")
+            },
             "packages": packages,
             "python": os.sys.version,
             "baseline": str(baseline),
@@ -136,7 +144,7 @@ def blocked(*args: Any, **kwargs: Any) -> Any:
     raise RuntimeError("Offline replay forbids network")
 
 
-def parse(kind: str, raw: bytes, decoded: str, url: str) -> tuple[str, list[str]]:
+def parse(kind: str, raw: bytes, decoded: str, url: str) -> tuple[str, list[dict[str, str]]]:
     from sfr_enrichment.contacts import ContactsHTML
     from sfr_enrichment.http_policy import extract
     from sfr_enrichment.sources import pdf_text
@@ -144,7 +152,7 @@ def parse(kind: str, raw: bytes, decoded: str, url: str) -> tuple[str, list[str]
     if kind == "control":
         parser = ContactsHTML(url)
         parser.feed(decoded)
-        extras = [x["value"] for x in parser.mailto + parser.image_contacts]
+        extras = parser.mailto + parser.image_contacts
         return extract(decoded, url)["text"], extras
     if kind == "bs4-lxml":
         from bs4 import BeautifulSoup
@@ -153,11 +161,21 @@ def parse(kind: str, raw: bytes, decoded: str, url: str) -> tuple[str, list[str]
         for tag in soup(["script", "style", "noscript"]):
             tag.decompose()
         extras = [
-            unquote(str(a["href"])[7:].split("?", 1)[0])
+            {"value": unquote(str(a["href"])[7:].split("?", 1)[0]), "quote": str(a)}
             for a in soup.select("a[href]")
             if str(a["href"]).lower().startswith("mailto:")
         ]
         return soup.get_text("\n", strip=True), extras
+    if kind == "findyourprofessor":
+        from FindYourProfessor import extract_emails
+
+        return "", [
+            {
+                "value": v,
+                "quote": decoded[max(0, decoded.find(v) - 160) : decoded.find(v) + len(v) + 160],
+            }
+            for v in extract_emails(decoded)
+        ]
     if kind == "trafilatura":
         import trafilatura
 
@@ -183,8 +201,16 @@ def replay(root: Path) -> None:
     from sfr_enrichment.contacts import EMAIL
 
     manifest = read(root / "manifest.json")
+    module_root = Path(__file__).resolve().parents[2]
+    for rel, expected in manifest["runtime_files"].items():
+        if sha((module_root / rel).read_bytes()) != expected:
+            raise ValueError("Runtime changed after freeze")
+    for name, meta in manifest["packages"].items():
+        if importlib.metadata.version(name) != meta["version"]:
+            raise ValueError("Package version differs from freeze")
     if manifest["script_sha256"] != sha(Path(__file__).read_bytes()):
         raise ValueError("Script changed after freeze")
+    socket.socket.connect_ex = blocked  # type: ignore[method-assign]
     socket.socket.connect = blocked  # type: ignore[method-assign]
     socket.create_connection = blocked
     rows = []
@@ -199,7 +225,7 @@ def replay(root: Path) -> None:
         if sha(raw) != source["body_sha256"] or sha(decoded_bytes) != source["decoded_sha256"]:
             raise ValueError("Source SHA mismatch")
         kinds = {
-            "direct_http": ["control", "bs4-lxml", "trafilatura"],
+            "direct_http": ["control", "bs4-lxml", "trafilatura", "findyourprofessor"],
             "direct_pdf": ["pypdf", "pdfplumber"],
             "structured_orcid": ["orcid-json"],
         }[source["source_kind"]]
@@ -226,9 +252,9 @@ def replay(root: Path) -> None:
                         }
                     )
                 candidates.extend(
-                    {"value": v, "channel": "attribute", "quote": v}
+                    {"value": v["value"], "channel": "attribute", "quote": v["quote"]}
                     for v in extras
-                    if EMAIL.fullmatch(v)
+                    if EMAIL.fullmatch(v["value"])
                 )
                 row.update(
                     status="ok",
@@ -263,16 +289,27 @@ def replay(root: Path) -> None:
 
 def evaluate(root: Path, human: Path) -> None:
     replayed = read(root / "replay.json")
+    if replayed["manifest_sha256"] != sha((root / "manifest.json").read_bytes()):
+        raise ValueError("Manifest changed after replay")
     answers = read(human)
     known = {}
     for item in answers["comparisons"]:
         dims = item["human"]["dimensions"]
         if dims["text"] == dims["identity"] == "agree":
             known[item["author_id"]] = item
-    assert len(known) == 8
+    if len(known) != 8:
+        raise ValueError("Expected human8")
     summary = []
     for author_id in FROZEN10:
-        for tool in ("control", "bs4-lxml", "trafilatura", "pypdf", "pdfplumber", "orcid-json"):
+        for tool in (
+            "control",
+            "bs4-lxml",
+            "trafilatura",
+            "pypdf",
+            "pdfplumber",
+            "orcid-json",
+            "findyourprofessor",
+        ):
             rows = [
                 r for r in replayed["rows"] if r["author_id"] == author_id and r["tool"] == tool
             ]

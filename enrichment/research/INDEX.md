@@ -21,6 +21,16 @@ root исключён из исторической переписи. Полно
 рядом как `offline-equivalence.json`: 17 прежних index SHA и 2468 mapped файлов
 в четырёх ключевых roots. Исторические transfer indices не перезаписаны.
 
+## Бесплатные компоненты — #198, часть A
+
+[Offline comparison frozen10, 13.10.2026](reports/free_components198_20261013.md):
+25 сохранённых источников; обычные HTML/PDF extractor восстановили 5/8 известных
+human-контактов. Принадлежность требует отдельной проверки; source HTTP/model
+inference 0. [Агрегаты](reports/free_components198_metrics.json) получены из private
+run, источники/ответы не опубликованы. Новый root `enrichment-free198-20261013`;
+старые архивы не менялись. Ветка/ревью/CI — [PR #200](https://github.com/borisboriov/search-for-research/pull/200),
+часть B Яндекс ожидает отдельного разрешения; это не принятое изменение live.
+
 ## До и после переноса
 
 | До | Теперь | Граница |
