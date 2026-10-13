@@ -230,5 +230,30 @@
       "contact_current": [],
       "human_reviewed": 0
     }
-  ]
+  ],
+  "final_storage": {
+    "at": "2026-10-13T19:23:46.530017+00:00",
+    "data_root": {
+      "paths": 698,
+      "unique_files": 365,
+      "logical_bytes": 16489855,
+      "allocated_bytes": 17461248
+    },
+    "excludes_self_and_seal": true,
+    "worktree_regenerable_dependencies": {
+      ".venv": {
+        "paths": 31393,
+        "unique_files": 31391,
+        "logical_bytes": 1194894086,
+        "allocated_bytes": 1281019904
+      },
+      "apps/web/node_modules": {
+        "paths": 29653,
+        "unique_files": 29622,
+        "logical_bytes": 522555314,
+        "allocated_bytes": 610013184
+      }
+    },
+    "old_roots_modified": false
+  }
 }
