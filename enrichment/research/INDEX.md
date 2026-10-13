@@ -45,7 +45,7 @@ PR #200 влит 13.10.2026; часть B Яндекс ожидает отдел
 Прироста извлечения на этой пятёрке нет; новизна ограничена проверенными
 метаданными старых runs, это не holdout. Частный root
 `enrichment-runtime202-20261013` сохраняет тела/receipts/карточки/STOP и отказы.
-[PR #204](https://github.com/borisboriov/search-for-research/pull/204) ещё не влит;
+[PR #204](https://github.com/borisboriov/search-for-research/pull/204) влит 13.10.2026;
 старые данные и human record не изменялись.
 
 ## Три пропуска после новой пятёрки — #205

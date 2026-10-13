@@ -4,7 +4,7 @@
 границы результата сохранены; [карта исследований и хранения](research/INDEX.md)
 ведёт к baseline, human record и live3. Перенос [PR #194](https://github.com/borisboriov/search-for-research/pull/194)
 и бесплатное сравнение [PR #200](https://github.com/borisboriov/search-for-research/pull/200)
-влиты 13.10.2026. Интеграция и новая пятёрка пока в
+влиты 13.10.2026. Интеграция и новая пятёрка также влиты в
 [PR #204](https://github.com/borisboriov/search-for-research/pull/204):
 [результаты и ограничения #202](research/reports/runtime202_20261013.md).
 
@@ -196,7 +196,7 @@ uv run sfr-enrichment run --live --root "$SFR_ENRICHMENT_DATA_ROOT" \
 
 В #202 пять новых профилей прошли локальный live цикл: четыре кандидата, три
 принятых Sol личных контакта без установленной актуальности, human_reviewed=0.
-Это веточный результат, не production и не человеческая приёмка. `prepare` замораживает все фактические `.py`
+Код влит, обогащение не выложено; человеческой приёмки этих контактов нет. `prepare` замораживает все фактические `.py`
 рабочего пакета, lock, packaging и рубрику; wrappers и исторические runners
 не входят в новый freeze. Старые manifest/code hashes остаются неизменными:
 для исторического code freeze нужен его точный Git SHA и lock, продолжать его
