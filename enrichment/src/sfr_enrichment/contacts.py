@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
@@ -18,6 +18,18 @@ from sfr_enrichment.evidence import immutable_bytes, immutable_json
 from sfr_enrichment.http_policy import AGENT, Budget, DomainStops, extract, policy
 
 EMAIL = re.compile(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+
+
+def flexible_email_matches(text: str) -> Iterator[tuple[str, int, int]]:
+    """Прежняя нормализация пробелов вокруг @ с исходным непрерывным span."""
+    for match in re.finditer(
+        r"([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+)\s*@\s*"
+        r"([A-Za-z0-9.-]+\.[A-Za-z]{2,})",
+        text,
+    ):
+        address = match[1] + "@" + match[2]
+        if EMAIL.fullmatch(address):
+            yield address, match.start(), match.end()
 
 
 def digest(data: bytes) -> str:
@@ -425,14 +437,8 @@ def contact_packet(
                     )
         if flexible_literals and source["source_kind"] in ("direct_http", "direct_pdf"):
             # Единственная явная нормализация: пробелы вокруг @, без OCR/угадывания.
-            for match in re.finditer(
-                r"([A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+)\s*@\s*"
-                r"([A-Za-z0-9.-]+\.[A-Za-z]{2,})",
-                static,
-            ):
-                address = match[1] + "@" + match[2]
-                if EMAIL.fullmatch(address):
-                    candidates.append((address, match.start(), match.end(), static, "static_text"))
+            for address, start, end in flexible_email_matches(static):
+                candidates.append((address, start, end, static, "static_text"))
         seen: set[str] = set()
         for address, start, end, body, representation in (
             candidates if flexible_literals else candidates[:candidate_cap]
