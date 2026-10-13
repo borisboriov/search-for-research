@@ -72,3 +72,18 @@ scraper и его keyword filtering/обход не проверяются. Ос
 строкой через stdlib html.unescape, не добавляет email. Старый run-v2 повторять
 на его frozen checkout `fabb991e61390c5aeaae1d42c56a4a35f6b928be`; новый helper
 меняет runtime SHA, хотя unadapted extraction правила/результат прежние.
+
+Исправление provenance уже сохранённого адаптированного replay без extraction:
+
+```sh
+"$COMPONENT_PYTHON" enrichment/research/components/adapted_control.py bind \
+  --root "$ADAPTED_PRIVATE_ROOT" --prefix corrected-
+"$COMPONENT_PYTHON" enrichment/research/components/bind_entity_quotes.py \
+  --root "$ADAPTED_PRIVATE_ROOT" --input-prefix corrected- --prefix corrected-
+```
+
+Точные CRLF сохраняются через bytes.decode(); offsets — позиции символов исходного
+decoded UTF-8 представления, SHA — байтов файла. Старые binding-файлы не меняются.
+При свежем replay исправленный binder вызывается автоматически. Единственный
+сохранённый extraction в новом root относится к frozen adapter на `b929c4b`;
+исправление только provenance использует последующий head, не новый эксперимент.

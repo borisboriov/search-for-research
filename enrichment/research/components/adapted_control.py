@@ -116,19 +116,47 @@ def replay(root: Path) -> None:
 
     base.parse = adapted
     base.replay(root)
+    bind_original_quotes(root, transforms_by_url=transforms_by_url)
+
+
+def bind_original_quotes(
+    root: Path, prefix: str = "", transforms_by_url: dict[str, Any] | None = None
+) -> None:
+    """Quote-only correction on retained replay; never runs extraction again."""
+    input_provenance_sha = None
+    if transforms_by_url is None:
+        path = root / "preprocessing-provenance.json"
+        transforms_by_url = base.read(path)["transformation_records"]
+        input_provenance_sha = base.sha(path.read_bytes())
+    base.save(
+        root / f"{prefix}quote-binding-manifest.json",
+        {
+            "script_sha256": base.sha(Path(__file__).read_bytes()),
+            "replay_sha256": base.sha((root / "replay.json").read_bytes()),
+            "input_provenance_sha256": input_provenance_sha,
+            "rule": "Quote-only spans on exact decoded bytes.decode(), no newline normalization",
+        },
+    )
     result = base.read(root / "replay.json")
     manifest = base.read(root / "manifest.json")
     sources = {s["url"]: s for s in manifest["sources"]}
     rows = []
     for row in result["rows"]:
         source = sources[row["url"]]
-        original = Path(source["decoded_path"]).read_text()
+        original_bytes = Path(source["decoded_path"]).read_bytes()
+        if base.sha(original_bytes) != source["decoded_sha256"]:
+            raise ValueError("Original decoded SHA changed")
+        original = original_bytes.decode()
         for candidate in row["candidates"]:
             value = candidate["value"]
             origin = None
-            index = original.lower().find(value.lower())
-            if index >= 0:
-                origin = {"kind": "original_literal", "start": index, "end": index + len(value)}
+            literal = re.search(re.escape(value), original, re.I)
+            if literal is not None:
+                origin = {
+                    "kind": "original_literal",
+                    "start": literal.start(),
+                    "end": literal.end(),
+                }
             else:
                 for normalized, start, end in flexible_email_matches(original):
                     if normalized.lower() == value.lower():
@@ -160,7 +188,7 @@ def replay(root: Path) -> None:
                 }
             )
     base.save(
-        root / "preprocessing-provenance.json",
+        root / f"{prefix}preprocessing-provenance.json",
         {
             "adaptation_sha256": base.sha((root / "adaptation.json").read_bytes()),
             "replay_sha256": base.sha((root / "replay.json").read_bytes()),
@@ -173,10 +201,11 @@ def replay(root: Path) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("phase", choices=["freeze", "replay", "evaluate"])
+    parser.add_argument("phase", choices=["freeze", "replay", "evaluate", "bind"])
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--human", type=Path)
+    parser.add_argument("--prefix", default="corrected-")
     args = parser.parse_args()
     if args.phase == "freeze":
         if args.baseline is None:
@@ -184,6 +213,8 @@ if __name__ == "__main__":
         freeze(args.baseline.resolve(), args.root.resolve())
     elif args.phase == "replay":
         replay(args.root.resolve())
+    elif args.phase == "bind":
+        bind_original_quotes(args.root.resolve(), args.prefix)
     else:
         if args.human is None:
             parser.error("--human required")

@@ -289,9 +289,17 @@ Math-Net footer Contact us/Обратная связь (тот же адрес �
 и cached-decoder receipt chain. В первом literal связывании 15 повторных
 вхождений пяти D-Lib email через HTML entities не имели raw literal span;
 отдельный **post-extraction** stdlib html.unescape per original line связал их с
-оригинальными строками, без новых кандидатов/нового replay. Итог
-`final-original-quote-bindings.json`: **259 candidate occurrences, 0 unbound**.
-Все original_quote проверяемы по точному decoded SHA/start/end; decoder-backed
+оригинальными строками, без новых кандидатов/нового replay. Первичный итог
+`final-original-quote-bindings.json` имел 259 occurrences/0 unbound, но независимый
+review обнаружил **38 неверных spans** из-за CRLF normalization в read_text().
+0 unbound не означало сохранность точных offsets. Quote-only исправление читает
+bytes.decode() и не повторяет extraction; первичные proof-файлы сохранены.
+Финальный `corrected-original-quote-bindings.json`: **259 occurrences, 0 unbound,
+0 span/quote-SHA ошибок** по `corrected-span-validation.json`. Отдельная
+`corrected-agent-source-adjudication.json` переносит те же 45 решений на исправленные
+bindings; значения/категории/current не повышены.
+Все corrected original_quote проверяемы по точному decoded SHA/start/end;
+decoder-backed
 цитаты сохраняют исходный script block и SHA точной проверенной функции.
 Первые binding-файлы сохранены; final-prefix stage отличается форматированием
 helper/именами create-only выходов, не правилами извлечения или результатами.
@@ -301,7 +309,8 @@ helper/именами create-only выходов, не правилами изв
 таймер не ставился. Среда с прежним lock переиспользована, новых installations,
 локальных models/weights и source HTTP **0**, профильных model jobs **0**, API
 **0 ₽**, human labour **0 минут**. Disk snapshot в новом root: только новые
-proofs/logs, несколько сотен KiB; окончательный размер после review/checks —
+proofs/logs, **1209478 logical bytes** (~1,2 MB) в срезе; окончательный размер
+после review/checks —
 private disk receipt. Corpus и auxiliary JS не копировались. Полная цена
 агентской работы и доля production-случаев, требующих модели, неизвестны.
 
@@ -310,4 +319,12 @@ attribution/current. Сохраняем live default. Выделение сущ�
 проверяется прежними регрессиями и новой проверкой исходных NBSP spans;
 сам адаптированный режим остаётся исследовательским CLI. Яндекс, новые источники,
 GROBID и browser live не запускались. Новый head проходит независимое ревью
-от текущей main и fresh CI/handoff; итоговый marker в PR заменяет старую базу.
+от актуальной main `95e4d8568c4d051fa65790f2dc556672ece3b7f9` и fresh CI/handoff;
+итоговый marker в PR заменяет старую базу. Локальный merge origin/main не выполнялся:
+интеграцию с пятью новыми docs-файлами main подтверждает synthetic merge CI.
+Review b929c4b: один Medium CRLF blocker и Low округления размера. Обе находки
+исправлены в этом PR; отдельной issue не требуется. Повторная проверка включает
+259 исправленных spans/SHA и новую CRLF регрессию; финальные refs/вердикт в PR.
+Extraction adapter b929c4b сохранён отдельным code snapshot в новом private root:
+исправление quote-only code SHA не подменяет прежний frozen extraction.
+

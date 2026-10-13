@@ -23,7 +23,7 @@ def original_line(text: str, value: str) -> dict[str, Any] | None:
     return None
 
 
-def bind(root: Path, prefix: str = "") -> None:
+def bind(root: Path, prefix: str = "", input_prefix: str = "") -> None:
     base.save(
         root / f"{prefix}entity-binding-manifest.json",
         {
@@ -32,10 +32,12 @@ def bind(root: Path, prefix: str = "") -> None:
                 "Post-extraction provenance only: stdlib html.unescape per original line; "
                 "no new or changed email candidates"
             ),
-            "provenance_sha256": base.sha((root / "preprocessing-provenance.json").read_bytes()),
+            "provenance_sha256": base.sha(
+                (root / f"{input_prefix}preprocessing-provenance.json").read_bytes()
+            ),
         },
     )
-    provenance = base.read(root / "preprocessing-provenance.json")
+    provenance = base.read(root / f"{input_prefix}preprocessing-provenance.json")
     sources = {s["url"]: s for s in base.read(root / "manifest.json")["sources"]}
     rows = []
     for row in provenance["rows"]:
@@ -63,5 +65,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--prefix", default="")
+    parser.add_argument("--input-prefix", default="")
     args = parser.parse_args()
-    bind(args.root.resolve(), args.prefix)
+    bind(args.root.resolve(), args.prefix, args.input_prefix)
