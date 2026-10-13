@@ -544,6 +544,9 @@ async def run_pipeline(
         if result_path.exists():
             input_path = Path(read(root / "prepared" / f"{aid}.json")["input_path"])
             check_result(root, input_path, result_path)
+            # Selector reuse cannot export an earlier result that failed its date gate.
+            dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
+            immutable_json(root / "date-checks" / f"{aid}.json", dates)
             all_paths.append((input_path, result_path))
     entries = packet_entries(all_paths)
     if selected != {p["id"] for p in profiles}:

@@ -213,6 +213,21 @@ class AssistedTests(unittest.TestCase):
         self.assertEqual(progress(self.root)["validated_results"], 2)
         self.assertTrue((self.root / "entries.json").exists())
 
+    def test_selector_rechecks_date_gate_of_other_saved_results(self) -> None:
+        self.mocked_run()
+        from sfr_enrichment.fragments import check_dates
+
+        def gate(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
+            if result["author_id"] == "A2":
+                raise ValueError("Saved profile date gate failed")
+            return check_dates(corpus, result)
+
+        with (
+            patch("sfr_enrichment.runner.check_dates", side_effect=gate),
+            self.assertRaisesRegex(ValueError, "Saved profile date gate"),
+        ):
+            self.mocked_run(author_ids=["A1"])
+
     def test_selector_rejects_foreign_profile_before_calls(self) -> None:
         with self.assertRaisesRegex(ValueError, "selector"):
             asyncio.run(run(self.root, 90, ["A999"]))
