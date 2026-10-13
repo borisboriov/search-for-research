@@ -13,7 +13,14 @@ from urllib.parse import parse_qsl, unquote, urljoin, urlsplit
 
 import httpx
 
-from sfr_enrichment.common import ensure_not_stopped, now, private_root, public_candidates, read
+from sfr_enrichment.common import (
+    check_storage_budget,
+    ensure_not_stopped,
+    now,
+    private_root,
+    public_candidates,
+    read,
+)
 from sfr_enrichment.evidence import immutable_bytes, immutable_json
 from sfr_enrichment.http_policy import AGENT, Budget, DomainStops, extract, policy
 
@@ -595,6 +602,8 @@ def verify_contact_input(
         or len(prompt.encode()) + len(instruction.encode()) > prompt_byte_cap
     ):
         raise ValueError("Полный prompt вместе с инструкциями превышает cap; model skipped")
+    output_file_cap = 16 * 1024 * 1024
+    check_storage_budget(root, 3 * output_file_cap + 4 * 1024 * 1024)
     workspace = private_root(root / "native-workspace")
     result_path, receipt = execute(
         root / "runs" / aid / "native_verifier",
@@ -604,6 +613,7 @@ def verify_contact_input(
         model="gpt-6.1-sol",
         effort="high",
         timeout_seconds=600,
+        max_output_file_bytes=output_file_cap,
         skip_git_repo_check=True,
         disable_mcp=True,
         required_config=HIGH_CONFIGS["native_verifier"],

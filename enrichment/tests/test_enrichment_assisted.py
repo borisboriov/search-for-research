@@ -163,7 +163,11 @@ class AssistedTests(unittest.TestCase):
         return path, receipt
 
     def mocked_run(
-        self, *, native: Callable[..., Any] | None = None, body: str | None = None
+        self,
+        *,
+        native: Callable[..., Any] | None = None,
+        body: str | None = None,
+        author_ids: list[str] | None = None,
     ) -> tuple[Path, int]:
         def response(request: httpx.Request) -> httpx.Response:
             if request.url.path == "/robots.txt":
@@ -195,8 +199,62 @@ class AssistedTests(unittest.TestCase):
                 "sfr_enrichment.native.execute", side_effect=native or self.fake_native
             ) as execute,
         ):
-            cards = asyncio.run(run(self.root, 90))
+            cards = asyncio.run(run(self.root, 90, author_ids))
             return cards, execute.call_count
+
+    def test_smoke_selector_keeps_frozen_sample_then_completes_remaining(self) -> None:
+        cards, calls = self.mocked_run(author_ids=["A1"])
+        self.assertEqual(calls, 1)
+        self.assertFalse((self.root / "entries.json").exists())
+        self.assertEqual(frozen(self.root)[0], self.profiles)
+        self.assertIn("smoke-A1", str(cards))
+        cards, calls = self.mocked_run()
+        self.assertEqual(calls, 1)
+        self.assertEqual(progress(self.root)["validated_results"], 2)
+        self.assertTrue((self.root / "entries.json").exists())
+
+    def test_selector_rechecks_date_gate_of_other_saved_results(self) -> None:
+        self.mocked_run()
+        from sfr_enrichment.fragments import check_dates
+
+        def gate(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
+            if result["author_id"] == "A2":
+                raise ValueError("Saved profile date gate failed")
+            return check_dates(corpus, result)
+
+        with (
+            patch("sfr_enrichment.runner.check_dates", side_effect=gate),
+            self.assertRaisesRegex(ValueError, "Saved profile date gate"),
+        ):
+            self.mocked_run(author_ids=["A1"])
+
+    def test_selector_rejects_foreign_profile_before_calls(self) -> None:
+        with self.assertRaisesRegex(ValueError, "selector"):
+            asyncio.run(run(self.root, 90, ["A999"]))
+
+    def test_same_address_in_two_sources_preserves_both_refs(self) -> None:
+        for row in self.plan["profiles"]:
+            source = dict(row["sources"][0])
+            source["url"] += "/second"
+            source["discovery"] = dict(source["discovery"], observed_url=source["url"])
+            row["sources"].append(source)
+        # Test-only fixture root regenerated; production frozen plans are never mutated.
+        immutable_json(self.base / "plan-two.json", self.plan)
+        self.root = self.base / "two"
+        prepare(
+            self.root,
+            self.base / "profiles.json",
+            self.base / "plan-two.json",
+            self.base / "scope.json",
+        )
+        _, calls = self.mocked_run()
+        self.assertEqual(calls, 2)
+        collector = read(self.root / "normalized/A1/collector.json")
+        self.assertEqual(len(collector["items"]), 1)
+        refs = collector["items"][0]["evidence_refs"]
+        urls = {collector["evidence_pool"][r]["url"] for r in refs}
+        self.assertEqual(len(urls), 2)
+        self.assertFalse(collector["provenance"]["model_called"])
 
     def test_pipeline_binding_full_context_reuse_and_contact_packet(self) -> None:
         cards, calls = self.mocked_run()

@@ -10,6 +10,7 @@ import json
 import os
 import re
 import subprocess
+import threading
 import time
 import tomllib
 from pathlib import Path
@@ -279,6 +280,58 @@ def deadline_timeout(seconds: int, deadline_epoch: float | None) -> float:
     return remaining
 
 
+def bounded_output_run(
+    command: list[str], prompt: bytes, output: Any, errors: Any, timeout: float, cap: int
+) -> subprocess.CompletedProcess[bytes]:
+    """Limit only task-owned streams, never the client's existing files."""
+    process = subprocess.Popen(
+        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    exceeded = threading.Event()
+
+    def drain(stream: Any, destination: Any) -> None:
+        size = 0
+        while block := stream.read(65536):
+            if size + len(block) > cap:
+                exceeded.set()
+                process.kill()
+                break
+            destination.write(block)
+            destination.flush()
+            size += len(block)
+
+    def feed() -> None:
+        assert process.stdin is not None
+        try:
+            process.stdin.write(prompt)
+            process.stdin.close()
+        except BrokenPipeError:
+            pass
+
+    workers = [
+        threading.Thread(target=drain, args=pair, daemon=True)
+        for pair in ((process.stdout, output), (process.stderr, errors))
+    ] + [threading.Thread(target=feed, daemon=True)]
+    for worker in workers:
+        worker.start()
+    try:
+        try:
+            code = process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+            raise
+    finally:
+        for worker in workers:
+            worker.join(timeout=5)
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None:
+                stream.close()
+    if exceeded.is_set():
+        raise ValueError("Native output stream cap: saved partial; no automatic retry")
+    return subprocess.CompletedProcess(command, code)
+
+
 def execute(
     directory: Path,
     prompt: str,
@@ -293,6 +346,7 @@ def execute(
     required_config: dict[str, str] | None = None,
     system_prompt: str | None = None,
     deadline_epoch: float | None = None,
+    max_output_file_bytes: int | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     if required_config is not None:
@@ -305,6 +359,10 @@ def execute(
             or effort != expected["effort"]
         ):
             raise ValueError("Отсутствует или неверна явная конфигурация native high-v1")
+    if max_output_file_bytes is not None and (
+        type(max_output_file_bytes) is not int or max_output_file_bytes <= 0
+    ):
+        raise ValueError("Invalid native output file cap")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
     if required_config is not None:
         immutable(directory / "requested-config.json", encoded(required_config))
@@ -410,19 +468,43 @@ def execute(
                 command[2:2] = ["-c", f"mcp_servers.{name}.enabled=false"]
         if required_config is not None:
             immutable(directory / "command.json", encoded(command))
+
         with (
             (directory / "events.jsonl").open("xb") as event_stream,
             (directory / "stderr.log").open("xb") as errors,
         ):
             try:
-                result = subprocess.run(
-                    command,
-                    input=prompt_bytes,
-                    stdout=event_stream,
-                    stderr=errors,
-                    timeout=deadline_timeout(timeout_seconds, deadline_epoch),
-                    check=False,
+                if max_output_file_bytes is not None:
+                    result = bounded_output_run(
+                        command,
+                        prompt_bytes,
+                        event_stream,
+                        errors,
+                        deadline_timeout(timeout_seconds, deadline_epoch),
+                        max_output_file_bytes,
+                    )
+                else:
+                    result = subprocess.run(
+                        command,
+                        input=prompt_bytes,
+                        stdout=event_stream,
+                        stderr=errors,
+                        timeout=deadline_timeout(timeout_seconds, deadline_epoch),
+                        check=False,
+                    )
+            except ValueError as exc:
+                immutable(
+                    directory / "finished.json",
+                    encoded(
+                        {
+                            "exit_code": -9,
+                            "finished_at_epoch": time.time(),
+                            "output_cap_exceeded": True,
+                            "full_job_usage": None,
+                        }
+                    ),
                 )
+                raise ValueError(str(exc)) from None
             except subprocess.TimeoutExpired:
                 immutable(
                     directory / "finished.json",

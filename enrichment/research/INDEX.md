@@ -32,7 +32,21 @@ Trafilatura/FYP + PDF. [Новые агрегаты](reports/free_components198_
 inference 0. [Агрегаты](reports/free_components198_metrics.json) получены из private
 run, источники/ответы не опубликованы. Новый root `enrichment-free198-20261013`;
 старые архивы не менялись. Ветка/ревью/CI — [PR #200](https://github.com/borisboriov/search-for-research/pull/200),
-часть B Яндекс ожидает отдельного разрешения; это не принятое изменение live.
+PR #200 влит 13.10.2026; часть B Яндекс ожидает отдельного разрешения.
+
+## Рабочий путь и новая пятёрка — #202
+
+[Отчёт интеграции, 13.10.2026](reports/runtime202_20261013.md),
+[агрегаты](reports/runtime202_metrics.json): пять новых каталожных профилей из пяти
+организаций, семь пригодных источников, четыре кандидата old/new, три личных
+контакта по Sol без установленной актуальности, один отклонённый общий ящик.
+15 search queries, 13 физических source HTTP, шесть native attempts включая
+неудачный startup; human_reviewed=0. Все 404 model-visible spans/SHA проверены.
+Прироста извлечения на этой пятёрке нет; новизна ограничена проверенными
+метаданными старых runs, это не holdout. Частный root
+`enrichment-runtime202-20261013` сохраняет тела/receipts/карточки/STOP и отказы.
+[PR #204](https://github.com/borisboriov/search-for-research/pull/204) ещё не влит;
+старые данные и human record не изменялись.
 
 ## До и после переноса
 
@@ -67,8 +81,10 @@ robots/error и human provenance.
 В поддерживаемом CLI Pi исключён; native сохраняет поток в один JSONL без
 отдельных cumulative snapshot файлов. Synthetic 100-event fixture проверяет
 байтовую сохранность raw/events, usage, receipt и ошибку/timeout без нового job.
-Сжатие не выбрано. Общее ограничение размера native-потока остаётся отдельным
-вопросом: текущие time/source/request caps не равны лимиту диска.
+Сжатие не выбрано. В рабочем assisted verifier #202 stdout/events и stderr
+ограничены 16 MiB каждый; переполнение завершает job без повтора. Опциональный
+`scope.disk_byte_cap` проверяет бюджет перед HTTP/native; #202 задаёт 128 MiB.
+Time/source/request caps и лимит каждого потока учитываются отдельно.
 
 Более широкий ограниченный census: **77 путей, 387467 уникальных файлов,
 38083866465 logical / 39016140800 allocated bytes**. Это контекст SFR, включая

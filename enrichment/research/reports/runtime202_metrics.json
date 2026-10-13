@@ -1,0 +1,259 @@
+{
+  "stage": "issue202",
+  "measurement_code": "863a0ea",
+  "pair": {
+    "profiles": 5,
+    "old_unique_candidates": 4,
+    "new_unique_candidates": 4,
+    "union_unique_candidates": 4,
+    "old_only": 0,
+    "new_only": 0,
+    "all_new_match_actual_values_and_refs": true,
+    "all_unions_match_actual_values": true,
+    "model_visible_pool_refs_checked": 404,
+    "Sol_usable_old": 3,
+    "Sol_usable_new": 3,
+    "human_precision": null,
+    "limitations": [
+      "Same search-selected bodies; no population coverage or independent search comparison",
+      "Old snapshot flexible=True; identical current locked PDF parser for both",
+      "Semantic assessments are reused only for candidates actually in sealed Sol input",
+      "No human precision estimate; corpus sources can follow earlier-root pointers"
+    ],
+    "offline_resources": {
+      "wall_seconds": 9.083742082992103,
+      "CPU_seconds_self": 8.059836,
+      "CPU_seconds_children": 0.951636,
+      "peak_RSS_bytes_self": 67665920,
+      "peak_RSS_bytes_max_child": 52969472,
+      "RSS_platform": "macOS ru_maxrss bytes; self and max child separately, not combined peak"
+    }
+  },
+  "resources": {
+    "measured_at_epoch": 1791919077.1910641,
+    "search_queries": 15,
+    "source_physical_HTTP": 13,
+    "profile_attempts": 6,
+    "completed_profile_receipts": 5,
+    "generative_extraction_jobs": 0,
+    "human_reviewed": 0,
+    "tokens": {
+      "input_tokens": 457520,
+      "output_tokens": 6463,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 2053
+    },
+    "model_wall_seconds": 241.69768691062927,
+    "logical_bytes_unique_inodes": 15202257,
+    "allocated_bytes_unique_inodes": 16064512,
+    "unique_files": 319,
+    "path_files": 652,
+    "API_licence_paid_cost": 0,
+    "subscription_debit": null,
+    "development_review_tokens_cost": null,
+    "unknown_failed_attempt_usage": 1,
+    "requested_profile_model": "gpt-6.1-sol/high",
+    "actual_backend_model": "not exposed in CLI receipts"
+  },
+  "rows": [
+    {
+      "author_id": "A5052197217",
+      "catalogue_name": "Victor Popovnin",
+      "source_count": 2,
+      "source_kinds": [
+        "direct_pdf",
+        "structured_orcid"
+      ],
+      "candidate_count": 1,
+      "Sol_usable_contacts": 1,
+      "Sol_rejected_contacts": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "status": "active",
+          "information_date": "2025",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_current": [
+        "undated"
+      ],
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5069718528",
+      "catalogue_name": "Aleksei Gorin",
+      "source_count": 1,
+      "source_kinds": [
+        "structured_orcid"
+      ],
+      "candidate_count": 0,
+      "Sol_usable_contacts": 0,
+      "Sol_rejected_contacts": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "insufficient",
+          "status": "unknown",
+          "information_date": "2022",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": "2015-10-20",
+          "date_basis": "source_metadata"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_current": [],
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5066753211",
+      "catalogue_name": "V. V. Kiselev",
+      "source_count": 1,
+      "source_kinds": [
+        "structured_orcid"
+      ],
+      "candidate_count": 0,
+      "Sol_usable_contacts": 0,
+      "Sol_rejected_contacts": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "status": "active",
+          "information_date": "2026",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": "2025-05-29",
+          "date_basis": "source_metadata"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_current": [],
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5034797741",
+      "catalogue_name": "Alexandr Marunchenko",
+      "source_count": 2,
+      "source_kinds": [
+        "direct_http",
+        "structured_orcid"
+      ],
+      "candidate_count": 3,
+      "Sol_usable_contacts": 2,
+      "Sol_rejected_contacts": 1,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "status": "active",
+          "information_date": "2026-10-13",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_current": [
+        "undated",
+        "undated",
+        "undated"
+      ],
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5015964881",
+      "catalogue_name": "E. B. Kuznetsov",
+      "source_count": 1,
+      "source_kinds": [
+        "structured_orcid"
+      ],
+      "candidate_count": 0,
+      "Sol_usable_contacts": 0,
+      "Sol_rejected_contacts": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "insufficient",
+          "status": "unknown",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": "2019-12-11",
+          "date_basis": "source_metadata"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_current": [],
+      "human_reviewed": 0
+    }
+  ],
+  "final_storage": {
+    "at": "2026-10-13T19:23:46.530017+00:00",
+    "data_root": {
+      "paths": 698,
+      "unique_files": 365,
+      "logical_bytes": 16489855,
+      "allocated_bytes": 17461248
+    },
+    "excludes_self_and_seal": true,
+    "worktree_regenerable_dependencies": {
+      ".venv": {
+        "paths": 31393,
+        "unique_files": 31391,
+        "logical_bytes": 1194894086,
+        "allocated_bytes": 1281019904
+      },
+      "apps/web/node_modules": {
+        "paths": 29653,
+        "unique_files": 29622,
+        "logical_bytes": 522555314,
+        "allocated_bytes": 610013184
+      }
+    },
+    "old_roots_modified": false
+  }
+}

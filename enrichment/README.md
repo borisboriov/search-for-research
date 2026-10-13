@@ -2,8 +2,11 @@
 
 Рабочий модуль контактов Search For Research. Алгоритмы, рубрика и принятые
 границы результата сохранены; [карта исследований и хранения](research/INDEX.md)
-ведёт к baseline, human record и live3. Код и документы этого переноса пока в
-[PR #194](https://github.com/borisboriov/search-for-research/pull/194).
+ведёт к baseline, human record и live3. Перенос [PR #194](https://github.com/borisboriov/search-for-research/pull/194)
+и бесплатное сравнение [PR #200](https://github.com/borisboriov/search-for-research/pull/200)
+влиты 13.10.2026. Интеграция и новая пятёрка пока в
+[PR #204](https://github.com/borisboriov/search-for-research/pull/204):
+[результаты и ограничения #202](research/reports/runtime202_20261013.md).
 
 ## Зачем нужен модуль и где его границы
 
@@ -185,10 +188,15 @@ uv run sfr-enrichment prepare --root "$SFR_ENRICHMENT_DATA_ROOT" \
 uv run sfr-enrichment dry-run --root "$SFR_ENRICHMENT_DATA_ROOT"
 # Только для отдельно разрешённого live scope и фактического официального остатка:
 uv run sfr-enrichment run --live --root "$SFR_ENRICHMENT_DATA_ROOT" \
+  --remaining-percent ACTUAL_OFFICIAL_PERCENT --author-id FIRST_FROZEN_PROFILE_ID
+# Затем весь тот же frozen sample: готовый smoke output переиспользуется.
+uv run sfr-enrichment run --live --root "$SFR_ENRICHMENT_DATA_ROOT" \
   --remaining-percent ACTUAL_OFFICIAL_PERCENT
 ```
 
-В этом этапе live не запускался. `prepare` замораживает все фактические `.py`
+В #202 пять новых профилей прошли локальный live цикл: четыре кандидата, три
+принятых Sol личных контакта без установленной актуальности, human_reviewed=0.
+Это веточный результат, не production и не человеческая приёмка. `prepare` замораживает все фактические `.py`
 рабочего пакета, lock, packaging и рубрику; wrappers и исторические runners
 не входят в новый freeze. Старые manifest/code hashes остаются неизменными:
 для исторического code freeze нужен его точный Git SHA и lock, продолжать его
@@ -209,9 +217,12 @@ patch targets общих helpers и передаёт их подмены фак�
 Новый рабочий путь сохраняет один `events.jsonl` native verifier, полный raw/result,
 receipt, request, usage, ошибки и timeout. Pi-клиент с отдельным полным snapshot
 на каждый token delta не импортируется. Это устранение источника будущего
-раздувания без сжатия; hard cap всего native event stream не введён. Источники и
-производные сохраняются полностью в действующих лимитах (8 MiB PDF, 2 MiB другие
-ответы), общий размер run не обещан заранее.
+раздувания без сжатия. В рабочем assisted verifier #202 stdout/events и stderr
+ограничены **16 MiB каждый**: переполнение завершает job без повтора и сохраняет
+частичный лог/отказ. Источники и производные сохраняются полностью в действующих
+лимитах (8 MiB PDF, 2 MiB другие ответы). Опциональный `scope.disk_byte_cap`
+проверяется перед HTTP и native job с консервативным резервом; в #202 задано
+128 MiB. Это отдельное ограничение от лимита каждого потока.
 
 Частные данные, raw, human answers, STOP и seals не входят в git. Старые архивы
 сейчас объединены ссылками в каталоге: ни перемещения, ни удаления, ни сжатия,
