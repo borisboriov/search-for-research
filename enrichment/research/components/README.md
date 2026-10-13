@@ -49,3 +49,26 @@ scraper и его keyword filtering/обход не проверяются. Ос
 текущий HTML extractor и ContactsHTML, а не полный семантический baseline10.
 Преобразование пробелов около `@`, OCR и Math-Net rendering не входят в правила.
 Границы и выводы — [отчёт #198](../reports/free_components198_20261013.md).
+
+## Один дополнительный post-observation вариант
+
+Готовые проектные renderer и правило пробелов, без произвольного JS/сети:
+
+```sh
+"$COMPONENT_PYTHON" enrichment/research/components/adapted_control.py freeze \
+  --baseline "$BASELINE_ROOT" --root "$ADAPTED_PRIVATE_ROOT"
+"$COMPONENT_PYTHON" enrichment/research/components/adapted_control.py replay \
+  --root "$ADAPTED_PRIVATE_ROOT"
+"$COMPONENT_PYTHON" enrichment/research/components/adapted_control.py evaluate \
+  --root "$ADAPTED_PRIVATE_ROOT" --human "$HUMAN_RECORD"
+"$COMPONENT_PYTHON" enrichment/research/components/bind_entity_quotes.py \
+  --root "$ADAPTED_PRIVATE_ROOT" --prefix final-
+"$COMPONENT_PYTHON" enrichment/research/components/export_summary.py \
+  --root "$ADAPTED_PRIVATE_ROOT" --output /absolute/new-adapted-summary.json
+```
+
+Новый root обязателен; adapter/rules и существующие decoder receipts фиксируются
+до replay. Entity binding только связывает уже извлечённые значения с исходной
+строкой через stdlib html.unescape, не добавляет email. Старый run-v2 повторять
+на его frozen checkout `fabb991e61390c5aeaae1d42c56a4a35f6b928be`; новый helper
+меняет runtime SHA, хотя unadapted extraction правила/результат прежние.

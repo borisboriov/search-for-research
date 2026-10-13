@@ -47,6 +47,15 @@ class ComponentReplayTests(unittest.TestCase):
         text, _ = module.parse("orcid-json", raw, "", "https://example.org")
         self.assertEqual(text, "p@example.org")
 
+    def test_existing_flexible_rule_retains_original_spans(self) -> None:
+        from sfr_enrichment.contacts import flexible_email_matches
+
+        text = "Contact: somebody\u00a0 @  example.org; no guessing"
+        matches = list(flexible_email_matches(text))
+        self.assertEqual(matches[0][0], "somebody@example.org")
+        self.assertEqual(text[matches[0][1] : matches[0][2]], "somebody\u00a0 @  example.org")
+        self.assertEqual(list(flexible_email_matches("somebody at example.org")), [])
+
     def test_no_network_guard(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "forbids network"):
             module.blocked("https://example.org")

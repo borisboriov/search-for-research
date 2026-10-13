@@ -25,7 +25,10 @@ root исключён из исторической переписи. Полно
 
 [Offline comparison frozen10, 13.10.2026](reports/free_components198_20261013.md):
 25 сохранённых источников; обычные HTML/PDF extractor восстановили 5/8 известных
-human-контактов. Принадлежность требует отдельной проверки; source HTTP/model
+human-контактов без предобработки; отдельный post-observation контроль с готовыми
+проектными обработчиками восстановил 8/8 для control/bs4 + PDF, 7/8 для
+Trafilatura/FYP + PDF. [Новые агрегаты](reports/free_components198_adapted_metrics.json).
+Принадлежность требует отдельной проверки; source HTTP/model
 inference 0. [Агрегаты](reports/free_components198_metrics.json) получены из private
 run, источники/ответы не опубликованы. Новый root `enrichment-free198-20261013`;
 старые архивы не менялись. Ветка/ревью/CI — [PR #200](https://github.com/borisboriov/search-for-research/pull/200),
