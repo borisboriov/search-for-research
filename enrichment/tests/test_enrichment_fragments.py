@@ -114,7 +114,11 @@ def metadata_fixture(
             }
         },
     }
-    if mutation == "seconds":
+    if mutation == "same_epoch_aliases":
+        employment["created-date"]["value"] = employment["last-modified-date"]["value"]
+    elif mutation == "same_year_different_instants":
+        employment["created-date"]["value"] = employment["last-modified-date"]["value"] - 1000
+    elif mutation == "seconds":
         employment["last-modified-date"]["value"] = 1576026926
     elif mutation == "boolean":
         employment["last-modified-date"]["value"] = True
@@ -195,6 +199,13 @@ class FragmentTests(unittest.TestCase):
         self.assertEqual(item["information_date"], "2007")
         self.assertEqual(item["current_applicability"], "historical")
         self.assertFalse(normalized["derived"][item["item_id"]]["usable_coverage"])
+
+    def test_identical_epoch_aliases_keep_both_paths_but_different_instants_reject(self) -> None:
+        result = hydrate(*metadata_fixture("same_epoch_aliases"))
+        binding = result["date_guard"]["metadata_bindings"][0]
+        self.assertEqual(len(binding["equivalent_json_paths"]), 2)
+        with self.assertRaisesRegex(ValueError, "different.*instants"):
+            hydrate(*metadata_fixture("same_year_different_instants"))
 
     def test_metadata_dates_reject_wrong_units_objects_fields_and_uncited_spans(self) -> None:
         for mutation in (

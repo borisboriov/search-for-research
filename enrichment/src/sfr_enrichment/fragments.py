@@ -8,7 +8,7 @@ from typing import Any
 
 from sfr_enrichment.contacts import flexible_email_matches
 
-DATE_GUARD_POLICY = "fragment-date-v2-orcid-employment-ms"
+DATE_GUARD_POLICY = "fragment-date-v3-identical-epoch-aliases"
 
 
 def catalog(author_id: str, records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -214,8 +214,15 @@ def _orcid_employment_date(
                     "object_path": employment["path"],
                 }
             )
-    if len(matches) != 1:
+    if not matches:
         raise ValueError("Date does not match one cited ORCID employment metadata field")
+    if len(matches) > 1:
+        # Same object and exact instant can be present in both created/modified fields.
+        # Different instants sharing a day/year remain ambiguous and are rejected.
+        if len({row["epoch_milliseconds"] for row in matches}) != 1:
+            raise ValueError("Date matches different ORCID employment metadata instants")
+        primary = next(row for row in matches if row["json_path"][-2] == "last-modified-date")
+        return primary | {"equivalent_json_paths": [row["json_path"] for row in matches]}
     return matches[0]
 
 
