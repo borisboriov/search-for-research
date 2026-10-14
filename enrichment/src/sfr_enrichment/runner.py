@@ -16,6 +16,7 @@ from sfr_enrichment.binding import SourceHost
 from sfr_enrichment.common import ensure_not_stopped, private_root, read, sha, verified_sample
 from sfr_enrichment.config import RUBRIC, repository_root
 from sfr_enrichment.contacts import (
+    ContactInputTooLarge,
     check_contact_input,
     check_quota,
     checked_source,
@@ -372,6 +373,8 @@ async def run_pipeline(
         aid = profile["id"]
         if aid not in selected:
             continue
+        if (root / "profile-failures" / f"{aid}.json").exists():
+            continue
         result_path = root / "results" / f"{aid}.json"
         prepared_path = root / "prepared" / f"{aid}.json"
         if prepared_path.exists():
@@ -534,8 +537,6 @@ async def run_pipeline(
                 namespace=METHOD,
                 source_kind=METHOD,
             )
-            if input_path.stat().st_size > 1_000_000:
-                raise ValueError("Полный вход превышает 1MB; остановка без model/truncation")
             immutable_json(
                 root / "corpora" / f"{aid}.json", corpus | {"fragments": collector["evidence_pool"]}
             )
@@ -555,14 +556,30 @@ async def run_pipeline(
             deadline = datetime.fromisoformat(read(root / "manifest.json")["deadline_verification"])
             if datetime.now(UTC) >= deadline:
                 raise ValueError("Verification deadline; новые jobs запрещены")
-            verify_contact_input(
-                root,
-                input_path,
-                remaining_percent=remaining_percent,
-                allow_profile_evidence=True,
-                deadline_epoch=deadline.timestamp(),
-                prompt_byte_cap=1_000_000,
-            )
+            try:
+                verify_contact_input(
+                    root,
+                    input_path,
+                    remaining_percent=remaining_percent,
+                    allow_profile_evidence=True,
+                    deadline_epoch=deadline.timestamp(),
+                    prompt_byte_cap=1_000_000,
+                    lossless_compact=True,
+                )
+            except ContactInputTooLarge as exc:
+                immutable_json(
+                    root / "profile-failures" / f"{aid}.json",
+                    {
+                        "author_id": aid,
+                        "status": "input_too_large",
+                        "model_called": False,
+                        "actual_delivered_bytes": exc.actual_bytes,
+                        "cap_bytes": exc.cap,
+                        "input_path": str(input_path),
+                        "input_sha256": sha(input_path),
+                    },
+                )
+                continue
         check_result(root, input_path, result_path)
         # Raw/native result не переписывается; gate обязателен до выдачи карточек.
         dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
