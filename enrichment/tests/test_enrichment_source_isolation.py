@@ -37,9 +37,9 @@ class IsolationTests(unittest.TestCase):
     ) -> tuple[Path, dict[str, Any]]:
         return self.fixture.fake_native(directory, prompt, *args, **kwargs)
 
-    def configure(self, *, alternative: bool = True, cap: int = 20) -> None:
+    def configure(self, *, alternative: bool = True, cap: int = 20, person_cap: int = 8) -> None:
         self.root = self.base / ("case-" + str(len(list(self.base.iterdir()))))
-        self.scope.update(HTTP_total_cap=cap, HTTP_per_profile_cap=8)
+        self.scope.update(HTTP_total_cap=cap, HTTP_per_profile_cap=person_cap)
         self.plan["profiles"][0]["sources"] = [
             self.spec("https://bad.example/a"),
             self.spec("https://bad.example/b"),
@@ -79,6 +79,24 @@ class IsolationTests(unittest.TestCase):
 
         def response(request: httpx.Request) -> httpx.Response:
             calls.append(str(request.url))
+            if mode.startswith("decoder") and request.url.host == "decoder.example":
+                if mode == "decoder_connect":
+                    raise httpx.ConnectError("decoder fixture", request=request)
+                if request.url.path == "/robots.txt":
+                    return httpx.Response(
+                        200, text="User-agent: *\nAllow: /", headers={"content-type": "text/plain"}
+                    )
+                return httpx.Response(404, text="missing", headers={"content-type": "text/plain"})
+            if mode.startswith("decoder") and request.url.host == "bad.example":
+                if request.url.path == "/robots.txt":
+                    return httpx.Response(
+                        200, text="User-agent: *\nAllow: /", headers={"content-type": "text/plain"}
+                    )
+                return httpx.Response(
+                    200,
+                    text='<h1>Jane Example</h1><a href="mailto:jane@example.edu">Email</a><script src="https://decoder.example/func_string.js"></script><script>document.write(decode_email("GA"));</script>',
+                    headers={"content-type": "text/html"},
+                )
             if request.url.host == "bad.example":
                 if mode in ("empty", "identity"):
                     if request.url.path == "/robots.txt":
@@ -173,6 +191,34 @@ class IsolationTests(unittest.TestCase):
         _, _calls, jobs = self.invoke("identity")
         self.assertEqual(jobs, 2)
         self.assertEqual(read(self.root / "results/A1.json")["result"]["items"], [])
+
+    def test_decoder_failure_keeps_parent_and_continues_second_profile(self) -> None:
+        for mode in ("decoder_connect", "decoder_404"):
+            with self.subTest(mode=mode):
+                self.configure(alternative=False)
+                _, calls, jobs = self.invoke(mode)
+                self.assertEqual(jobs, 2)
+                self.assertIn("https://other.example/b", calls)
+                failures = [read(p) for p in (self.root / "source-failures/A1").glob("*.json")]
+                self.assertTrue(all(r["phase"] == "renderer" for r in failures))
+                self.assertTrue(
+                    all(Path(r["usable_parent_record_path"]).exists() for r in failures)
+                )
+                self.assertTrue(all(Path(r["receipt_path"]).exists() for r in failures))
+                if mode == "decoder_connect":
+                    self.assertNotIn("https://decoder.example/func_string.js", calls)
+                    self.assertEqual(calls.count("https://decoder.example/robots.txt"), 1)
+
+    def test_profile_HTTP_cap_does_not_cancel_other_people(self) -> None:
+        self.configure(person_cap=2)
+        _, calls, jobs = self.invoke()
+        self.assertNotIn("https://good.example/a", calls)
+        self.assertIn("https://other.example/b", calls)
+        self.assertEqual(jobs, 1)
+        proof = read(self.root / "sources/A1/profile-http-stop.json")
+        self.assertEqual(proof["cap"], 2)
+        self.assertEqual(proof["reserved_requests"], 2)
+        self.assertFalse((self.root / "results/A1.json").exists())
 
     def test_global_budget_and_unknown_or_unsafe_errors_still_abort(self) -> None:
         for mode in ("unknown", "unsafe"):

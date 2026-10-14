@@ -422,8 +422,29 @@ async def run_pipeline(
                         path = rendered[0]
                     host.allowed[spec["url"]] = 0
                     host.records[spec["url"]] = path
-                    await host.render(spec["url"])
-                    path = host.records[spec["url"]]
+                    try:
+                        await host.render(spec["url"])
+                    except SourceUnavailable as exc:
+                        immutable_json(
+                            failure_path,
+                            {
+                                "url": spec["url"],
+                                "kind": spec["kind"],
+                                "phase": "renderer",
+                                "error": str(exc),
+                                "status": "skipped" if exc.scope == "domain" else "failed",
+                                "scope": exc.scope,
+                                "failed_url": exc.url,
+                                "receipt_path": exc.receipt_path,
+                                "retries": 0,
+                                "at": datetime.now(UTC).isoformat(),
+                                "usable_parent_record_path": str(path),
+                            },
+                        )
+                        # The sealed parent HTML remains usable identity evidence;
+                        # failure of its decoder does not imply contact absence.
+                    else:
+                        path = host.records[spec["url"]]
                 source_paths.append(path)
             if not source_paths:
                 immutable_json(

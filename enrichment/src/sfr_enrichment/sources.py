@@ -226,12 +226,25 @@ class PublicLoader(Loader):
             return dict(read(path))
         check_storage_budget(self.experiment, cap * 7 + 2 * 1024 * 1024)
         previous = [read(p) for p in self.ledger.glob("*-reserved.json")]
-        if (
-            len(previous) >= self.manifest["HTTP_total_cap"]
-            or sum(p["author_id"] == self.author_id for p in previous)
-            >= self.manifest["HTTP_per_profile_cap"]
-        ):
+        if len(previous) >= self.manifest["HTTP_total_cap"]:
             raise ValueError("Frozen HTTP budget")
+        person_requests = sum(p["author_id"] == self.author_id for p in previous)
+        if person_requests >= self.manifest["HTTP_per_profile_cap"]:
+            receipt = self.root / "profile-http-stop.json"
+            if not receipt.exists():
+                immutable_json(
+                    receipt,
+                    {
+                        "author_id": self.author_id,
+                        "reason": "HTTP_per_profile_cap",
+                        "cap": self.manifest["HTTP_per_profile_cap"],
+                        "reserved_requests": person_requests,
+                        "at": now(),
+                    },
+                )
+            raise SourceUnavailable(
+                "Frozen profile HTTP budget", url=url, receipt_path=str(receipt), scope="profile"
+            )
         requests = private_root(self.root / "requests")
         if any(read(p)["url"] == url and read(p)["kind"] == kind for p in requests.glob("*.json")):
             raise ValueError("Unfinished source: no retry")
