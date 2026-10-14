@@ -192,3 +192,5 @@ SHA и права, выбрать единственный оригинал, п�
 доставляемости и покрытия не повышаются результатом реорганизации.
 
 - [Изоляция ошибок источников #209, 14.10.2026](reports/isolation209_20261014.md) — PR #210: один профиль завершён, второй остановлен guard 1 MB, восемь не запущены; frozen meter failed, post-hoc диагностика раскрыта. [Агрегаты](reports/isolation209_metrics.json).
+
+- [Lossless вход и все десять исходов #209, 14.10.2026](reports/compact209_20261014.md) — продолжение в PR210:6date-gated (1inherited),2oversized,2invaliddate; frozenR3meterPASS,7newjobs/29HTTP/0search. [Агрегаты](reports/compact209_metrics.json).
