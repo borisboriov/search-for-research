@@ -58,8 +58,20 @@ PR #200 влит 13.10.2026; часть B Яндекс ожидает отдел
 ошибка выбора одноимённого автора исправлена, общие/чужие адреса отклонены.
 16search/15physicalsourceHTTP/4native jobs,385spans проверены; private root
 `enrichment-misses205-20261013` хранит отказы, тела, карточки иSTOP.
-[PR206](https://github.com/borisboriov/search-for-research/pull/206) ещё не влит.
+[PR206](https://github.com/borisboriov/search-for-research/pull/206) влит 14.10.2026.
 Это не holdout и не общая оценка качества/экономики каталога.
+
+## Заключительная новая десятка — #207
+
+[Отчёт partial, 14.10.2026](reports/final207_20261014.md),
+[агрегаты](reports/final207_metrics.json): frozen10 из десяти каталожных организаций,
+155 известных IDs исключены по ограниченным метаданным; не blind holdout.
+30 search queries, 2 физических source HTTP, 0 native jobs. Первый smoke
+остановился на ConnectError robots.txt КФУ после полного ORCID200; остальные
+9 не начаты по заранее заданному правилу. Контактное покрытие, качество и полная
+воспроизводимость не измерены. Runtime/рубрика неизменны, retries 0, STOP сохранён.
+Private root `enrichment-final207-20261014`; [PR208](https://github.com/borisboriov/search-for-research/pull/208)
+содержит технический результат до продуктовой приёмки. Новая партия не запускается.
 
 ## До и после переноса
 
