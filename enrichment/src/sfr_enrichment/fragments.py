@@ -271,12 +271,12 @@ def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any
                     raise ValueError("Invalid typed ORCID metadata") from error
                 date_bindings.append(binding)
                 continue
+            _well_formed_calendar_date(date)
             if not years:
                 raise ValueError("Date year absent from referenced saved evidence")
             if not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
                 if not re.fullmatch(r"\d{4}(?:-\d{2}){0,2}", date):
                     raise ValueError("Malformed content date outside cited evidence")
-                _well_formed_calendar_date(date)
                 local_error = MissingCitedDateYear(
                     "Date year absent from referenced saved evidence"
                 )

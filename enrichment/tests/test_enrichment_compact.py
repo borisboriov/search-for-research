@@ -325,3 +325,26 @@ class DateIsolationTests(unittest.TestCase):
         )
         self.assertFalse((fixture.root / "date-checks/A1.json").exists())
         self.assertTrue((fixture.root / "date-checks/A2.json").exists())
+
+    def test_malformed_present_year_is_common_in_both_mixed_orders(self) -> None:
+        from sfr_enrichment.fragments import (
+            MissingCitedDateYear,
+            UnsupportedIdentityMetadataDate,
+            check_dates,
+        )
+
+        corpus = {"fragments": {"E": {"excerpt": "Publication 2018"}}}
+        local = {"information_date": "2020", "date_basis": "content", "evidence_refs": ["E"]}
+        for date in ["2018-02-31", "2018-99", "date2018"]:
+            malformed = dict(local, information_date=date)
+            for pairs in [
+                [("activity", malformed)],
+                [("identity", local), ("activity", malformed)],
+                [("activity", malformed), ("identity", local)],
+            ]:
+                with self.subTest(date=date, order=pairs[0][0]):
+                    with self.assertRaises(ValueError) as raised:
+                        check_dates(corpus, {"items": [], "profile_assessments": dict(pairs)})
+                    self.assertNotIsInstance(
+                        raised.exception, (MissingCitedDateYear, UnsupportedIdentityMetadataDate)
+                    )
