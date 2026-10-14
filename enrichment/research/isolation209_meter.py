@@ -1,6 +1,7 @@
 """Frozen offline audit for #209 continuation; never invokes HTTP or models."""
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,83 @@ from sfr_enrichment.config import RUBRIC
 from sfr_enrichment.contacts import check_contact_input
 from sfr_enrichment.fragments import check_dates
 from sfr_enrichment.runner import check_result, code_hashes
+
+
+def unfinished_outcome(run: Path, aid: str) -> dict[str, Any]:
+    native = run / "runs" / aid / "native_verifier"
+    if (native / "started.json").exists():
+        receipt = native / "receipt.json"
+        return {
+            "outcome": "failed_native_unvalidated" if receipt.exists() else "failed_native_unknown",
+            "model_attempted": True,
+            "native_start_sha256": sha(native / "started.json"),
+            "native_receipt_sha256": sha(receipt) if receipt.exists() else None,
+        }
+    if (run / "prepared" / f"{aid}.json").exists() or (
+        run / "model-inputs" / f"{aid}.json"
+    ).exists():
+        return {"outcome": "failed_prepared_unverified", "model_attempted": False}
+    reserved = [
+        p for p in (run / "HTTP-ledger").glob("*-reserved.json") if read(p)["author_id"] == aid
+    ]
+    sources = list((run / "sources" / aid).glob("source-*.json"))
+    if reserved or sources:
+        return {
+            "outcome": "failed_source_partial",
+            "model_attempted": False,
+            "source_reservation_sha256": [sha(p) for p in sorted(reserved)],
+        }
+    return {"outcome": "not_attempted", "model_attempted": False}
+
+
+def source_http_counts(run: Path) -> dict[str, Any]:
+    reserved = sorted((run / "HTTP-ledger").glob("*-reserved.json"))
+    proofs = []
+    physical = unknown = pre_http_failures = 0
+    for path in reserved:
+        request = read(path)
+        finished_path = path.with_name(path.name.replace("-reserved.json", "-finished.json"))
+        proof: dict[str, Any] = {"reservation_path": str(path), "reservation_sha256": sha(path)}
+        if not finished_path.exists():
+            unknown += 1
+            proof["HTTP_started"] = None
+        else:
+            finished = read(finished_path)
+            if any(finished.get(k) != v for k, v in request.items()):
+                raise ValueError("Finished reservation binding changed")
+            key = hashlib.sha256((request["kind"] + "\0" + request["url"]).encode()).hexdigest()
+            candidates = [
+                p
+                for p in run.rglob(f"request-result-{key}.json")
+                if sha(p) == finished["receipt_sha256"]
+            ]
+            if not candidates:
+                raise ValueError("Finished request-result SHA changed")
+            receipt = read(candidates[0])
+            flag = finished["HTTP_started"]
+            if (
+                type(flag) is not bool
+                or receipt["HTTP_started"] != flag
+                or any(receipt[k] != request[k] for k in ("url", "kind"))
+            ):
+                raise ValueError("HTTP receipt binding changed")
+            physical += int(flag)
+            pre_http_failures += int(not flag)
+            proof.update(
+                HTTP_started=flag,
+                finished_path=str(finished_path),
+                finished_sha256=sha(finished_path),
+                receipt_path=str(candidates[0]),
+                receipt_sha256=sha(candidates[0]),
+            )
+        proofs.append(proof)
+    return {
+        "source_reservations": len(reserved),
+        "physical_HTTP": physical,
+        "pre_HTTP_failures": pre_http_failures,
+        "unknown_HTTP_attempts": unknown,
+        "proofs": proofs,
+    }
 
 
 def measure(root: Path) -> dict[str, Any]:
@@ -109,13 +187,14 @@ def measure(root: Path) -> dict[str, Any]:
             ):
                 raise ValueError("Oversized outcome/model invariant")
         else:
-            row["outcome"] = "not_attempted"
+            row.update(unfinished_outcome(run, aid))
         rows.append(row)
     starts = sorted(run.glob("runs/*/native_verifier/started.json"))
     receipts = sorted(run.glob("runs/*/native_verifier/receipt.json"))
     new_receipts = [p for p in receipts if p.parent.parent.name not in inherited_ids]
     native = [read(p) for p in new_receipts]
     http = sorted(run.glob("HTTP-ledger/*-reserved.json"))
+    http_counts = source_http_counts(run)
     if len(starts) > 9 or len(http) > 180:
         raise ValueError("New round budgets exceeded")
     metrics = {
@@ -127,7 +206,10 @@ def measure(root: Path) -> dict[str, Any]:
         "new_native_starts": len(starts),
         "new_completed_receipts": len(new_receipts),
         "unknown_attempts": len(starts) - len(new_receipts),
-        "new_source_HTTP": len(http),
+        "new_source_HTTP": http_counts["physical_HTTP"],
+        "new_source_reservations": http_counts["source_reservations"],
+        "new_pre_HTTP_failures": http_counts["pre_HTTP_failures"],
+        "unknown_source_HTTP_attempts": http_counts["unknown_HTTP_attempts"],
         "new_search": 0,
         "inherited_search": 30,
         "tokens": {
@@ -158,7 +240,7 @@ def measure(root: Path) -> dict[str, Any]:
         "rows": rows,
         "code_head": freeze["code_head"],
         "meter_sha256": sha(Path(__file__)),
-        "HTTP_receipts": [{"path": str(p), "sha256": sha(p)} for p in http],
+        "HTTP_receipts": http_counts["proofs"],
         "new_native_receipts": [{"path": str(p), "sha256": sha(p)} for p in new_receipts],
     }
 

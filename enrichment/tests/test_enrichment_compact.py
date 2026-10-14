@@ -1,18 +1,31 @@
 """Lossless delivered evidence and oversized profile isolation, no real transports."""
 
 import asyncio
+import importlib.util
 import json
+import socket
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
 
+import httpx
 import test_enrichment_assisted as helpers
 
 from sfr_enrichment.common import read
 from sfr_enrichment.compact import compact_input, encode, expand_input
 from sfr_enrichment.contacts import ContactInputTooLarge, verify_contact_input
 from sfr_enrichment.runner import run
+
+
+def meter_module() -> Any:
+    path = Path(__file__).parents[1] / "research/isolation209_meter.py"
+    spec = importlib.util.spec_from_file_location("isolation209_meter", path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def source() -> dict[str, Any]:
@@ -129,3 +142,57 @@ class CompactTests(unittest.TestCase):
             self.assertEqual(
                 read(fixture.root / f"model-inputs/{aid}.json")["compact_input"], compact
             )
+
+
+class MeterTests(unittest.TestCase):
+    def test_native_prepared_source_and_unattempted_are_distinct(self) -> None:
+        from sfr_enrichment.evidence import immutable_json
+
+        meter = meter_module()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.assertEqual(meter.unfinished_outcome(root, "A")["outcome"], "not_attempted")
+            immutable_json(root / "sources/A/source-test.json", {})
+            self.assertEqual(
+                meter.unfinished_outcome(root, "A")["outcome"], "failed_source_partial"
+            )
+            immutable_json(root / "prepared/A.json", {})
+            self.assertEqual(
+                meter.unfinished_outcome(root, "A")["outcome"], "failed_prepared_unverified"
+            )
+            immutable_json(root / "runs/A/native_verifier/started.json", {})
+            self.assertEqual(
+                meter.unfinished_outcome(root, "A")["outcome"], "failed_native_unknown"
+            )
+            immutable_json(root / "runs/A/native_verifier/receipt.json", {})
+            self.assertEqual(
+                meter.unfinished_outcome(root, "A")["outcome"], "failed_native_unvalidated"
+            )
+
+    def test_DNS_failure_has_reservation_without_physical_HTTP(self) -> None:
+        from sfr_enrichment.sources import PublicLoader
+
+        fixture = helpers.AssistedTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        url = "https://public.example/a"
+        loader = PublicLoader(fixture.root / "sources/A1", [url], fixture.root, "A1")
+
+        async def request() -> None:
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(lambda _: self.fail("DNS failure must not GET"))
+            ) as client:
+                await loader.request(client, url, "test", 1000)
+
+        with patch("sfr_enrichment.sources.socket.getaddrinfo", side_effect=socket.gaierror("DNS")):
+            asyncio.run(request())
+        counts = meter_module().source_http_counts(fixture.root)
+        self.assertEqual(counts["source_reservations"], 1)
+        self.assertEqual(counts["physical_HTTP"], 0)
+        self.assertEqual(counts["pre_HTTP_failures"], 1)
+        self.assertEqual(counts["unknown_HTTP_attempts"], 0)
+        path = fixture.root / "HTTP-ledger/0000-finished.json"
+        path.unlink()
+        counts = meter_module().source_http_counts(fixture.root)
+        self.assertEqual(counts["unknown_HTTP_attempts"], 1)
+        self.assertEqual(counts["physical_HTTP"], 0)
