@@ -224,6 +224,7 @@ def progress(root: Path) -> dict[str, Any]:
         "method": METHOD,
         "profiles": len(profiles),
         "validated_results": gated_results,
+        "profile_failures": [read(p) for p in sorted((root / "profile-failures").glob("*.json"))],
         "native_outputs_saved": len(results),
         "source_reservations": len(list((root / "HTTP-ledger").glob("*-reserved.json"))),
         "native_jobs_started": len(started),
@@ -631,6 +632,12 @@ async def run_pipeline(
             immutable_json(root / "date-checks" / f"{aid}.json", dates)
             all_paths.append((input_path, result_path))
     entries = packet_entries(all_paths)
+    if not entries:
+        # A completed queue without validated outputs is an unverified outcome,
+        # never an empty successful contact packet.
+        output = root / "unverified-progress.json"
+        immutable_json(output, progress(root))
+        return output
     if selected != {p["id"] for p in profiles}:
         return make_packet(
             root, "smoke-" + "-".join(sorted(selected)), entries, contact_review=True
