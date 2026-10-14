@@ -105,6 +105,9 @@ def _orcid_employment_date(
 ) -> dict[str, Any]:
     """Bind metadata to one cited employment, never to reading time or a nearby object."""
     if axis == "identity":
+        date = assessment.get("information_date")
+        if not isinstance(date, str) or not re.fullmatch(r"\d{4}(?:-\d{2}){0,2}", date):
+            raise ValueError("Invalid metadata calendar date")
         raise UnsupportedIdentityMetadataDate("Unsupported metadata date object")
     if axis != "current_affiliation":
         raise ValueError("Unsupported metadata date object")
@@ -237,6 +240,7 @@ def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any
     pool = corpus["fragments"]
     # Literal year presence is a provenance check, not proof of date attribution.
     date_bindings = []
+    identity_error: UnsupportedIdentityMetadataDate | None = None
     assessments = [("item", a) for a in result["items"]] + list(
         result["profile_assessments"].items()
     )
@@ -248,10 +252,15 @@ def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any
             if assessment["date_basis"] == "source_metadata":
                 try:
                     binding = _orcid_employment_date(corpus, assessment, axis)
+                except UnsupportedIdentityMetadataDate as error:
+                    identity_error = error
+                    continue
                 except (AttributeError, IndexError, KeyError, TypeError, OverflowError) as error:
                     raise ValueError("Invalid typed ORCID metadata") from error
                 date_bindings.append(binding)
                 continue
             if not years or not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
                 raise ValueError("Date year absent from referenced saved evidence")
+    if identity_error is not None:
+        raise identity_error
     return {"policy": DATE_GUARD_POLICY, "metadata_bindings": date_bindings}

@@ -245,7 +245,31 @@ class DateIsolationTests(unittest.TestCase):
         from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, _orcid_employment_date
 
         with self.assertRaises(UnsupportedIdentityMetadataDate):
-            _orcid_employment_date({}, {}, "identity")
+            _orcid_employment_date({}, {"information_date": "2023-04-03"}, "identity")
         with self.assertRaises(ValueError) as raised:
             _orcid_employment_date({}, {}, "activity")
+        self.assertNotIsInstance(raised.exception, UnsupportedIdentityMetadataDate)
+
+    def test_mixed_identity_and_common_date_error_is_fatal_in_any_order(self) -> None:
+        from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, check_dates
+
+        corpus = {"fragments": {"E": {"excerpt": "Publication 2023"}}}
+        identity = {
+            "information_date": "2023-04-03",
+            "date_basis": "source_metadata",
+            "evidence_refs": ["E"],
+        }
+        for basis, date in [("source_metadata", "2023"), ("content", "2024")]:
+            activity = {"information_date": date, "date_basis": basis, "evidence_refs": ["E"]}
+            for pairs in [
+                [("identity", identity), ("activity", activity)],
+                [("activity", activity), ("identity", identity)],
+            ]:
+                with self.subTest(basis=basis, order=pairs[0][0]):
+                    with self.assertRaises(ValueError) as raised:
+                        check_dates(corpus, {"items": [], "profile_assessments": dict(pairs)})
+                    self.assertNotIsInstance(raised.exception, UnsupportedIdentityMetadataDate)
+        malformed = dict(identity, information_date="bad")
+        with self.assertRaises(ValueError) as raised:
+            check_dates(corpus, {"items": [], "profile_assessments": {"identity": malformed}})
         self.assertNotIsInstance(raised.exception, UnsupportedIdentityMetadataDate)
