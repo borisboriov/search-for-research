@@ -82,11 +82,23 @@ class DomainStops:
     def observe(self, url: str, status_code: int | None) -> None:
         if status_code not in (403, 429) or self.blocked(url):
             return
+        self.block(url, f"HTTP{status_code}", status_code)
+
+    def block(self, url: str, reason: str, status_code: int | None = None) -> None:
+        """Keep a conservative domain stop with its real observed status/reason."""
+        if self.blocked(url):
+            return
         domain = urlparse(url).netloc
         name = hashlib.sha256(domain.encode()).hexdigest()
         write_new(
             self.root / f"domain-stop-{name}.json",
-            {"domain": domain, "url": url, "status_code": status_code, "checked_at": now()},
+            {
+                "domain": domain,
+                "url": url,
+                "status_code": status_code,
+                "reason": reason,
+                "checked_at": now(),
+            },
         )
         self.domains.add(domain)
 

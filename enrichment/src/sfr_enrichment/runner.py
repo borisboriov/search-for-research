@@ -397,6 +397,10 @@ async def run_pipeline(
                             "url": spec["url"],
                             "kind": spec["kind"],
                             "error": str(exc),
+                            "status": "skipped" if exc.scope == "domain" else "failed",
+                            "scope": exc.scope,
+                            "failed_url": exc.url or spec["url"],
+                            "receipt_path": exc.receipt_path,
                             "retries": 0,
                             "at": datetime.now(UTC).isoformat(),
                         },
@@ -519,7 +523,13 @@ async def run_pipeline(
             )
         if sha(input_path) != read(prepared_path)["sha256"]:
             raise ValueError("Prepared input SHA изменён")
-        check_contact_input(root, input_path)
+        contact_input = check_contact_input(root, input_path)
+        if not contact_input["items"] and not any(contact_input["profile_evidence"].values()):
+            immutable_json(
+                root / "profile-failures" / f"{aid}.json",
+                {"author_id": aid, "status": "empty_evidence", "model_called": False},
+            )
+            continue
         if not result_path.exists():
             deadline = datetime.fromisoformat(read(root / "manifest.json")["deadline_verification"])
             if datetime.now(UTC) >= deadline:
