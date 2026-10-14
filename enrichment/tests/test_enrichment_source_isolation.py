@@ -79,6 +79,27 @@ class IsolationTests(unittest.TestCase):
 
         def response(request: httpx.Request) -> httpx.Response:
             calls.append(str(request.url))
+            if (
+                mode in ("decoder_same_403", "decoder_same_429")
+                and request.url.host == "bad.example"
+            ):
+                if request.url.path == "/robots.txt":
+                    return httpx.Response(
+                        200, text="User-agent: *\nAllow: /", headers={"content-type": "text/plain"}
+                    )
+                if request.url.path == "/func_string.js":
+                    return httpx.Response(
+                        int(mode[-3:]), text="blocked", headers={"content-type": "text/plain"}
+                    )
+                return httpx.Response(
+                    200,
+                    text=(
+                        '<h1>Jane Example</h1><a href="mailto:jane@example.edu">Email</a>'
+                        '<script src="/func_string.js"></script>'
+                        '<script>document.write(decode_email("GA"));</script>'
+                    ),
+                    headers={"content-type": "text/html"},
+                )
             if mode.startswith("decoder") and request.url.host == "decoder.example":
                 if mode == "decoder_connect":
                     raise httpx.ConnectError("decoder fixture", request=request)
@@ -208,6 +229,16 @@ class IsolationTests(unittest.TestCase):
                 if mode == "decoder_connect":
                     self.assertNotIn("https://decoder.example/func_string.js", calls)
                     self.assertEqual(calls.count("https://decoder.example/robots.txt"), 1)
+
+    def test_decoder_domain_stop_is_shared_with_already_created_loader(self) -> None:
+        for mode in ("decoder_same_403", "decoder_same_429"):
+            with self.subTest(mode=mode):
+                self.configure(alternative=False)
+                _, calls, jobs = self.invoke(mode)
+                self.assertEqual(jobs, 2)
+                self.assertNotIn("https://bad.example/b", calls)
+                self.assertEqual(calls.count("https://bad.example/func_string.js"), 1)
+                self.assertIn("https://other.example/b", calls)
 
     def test_profile_HTTP_cap_does_not_cancel_other_people(self) -> None:
         self.configure(person_cap=2)
