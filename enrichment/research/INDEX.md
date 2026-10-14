@@ -45,8 +45,21 @@ PR #200 влит 13.10.2026; часть B Яндекс ожидает отдел
 Прироста извлечения на этой пятёрке нет; новизна ограничена проверенными
 метаданными старых runs, это не holdout. Частный root
 `enrichment-runtime202-20261013` сохраняет тела/receipts/карточки/STOP и отказы.
-[PR #204](https://github.com/borisboriov/search-for-research/pull/204) ещё не влит;
+[PR #204](https://github.com/borisboriov/search-for-research/pull/204) влит 13.10.2026;
 старые данные и human record не изменялись.
+
+## Три пропуска после новой пятёрки — #205
+
+[Диагностика и альтернативы](reports/misses205_20261013.md),
+[агрегаты](reports/misses205_metrics.json): на тех же трёх трудных случаях
+получены три личных email по Sol у двух людей (Киселев1historical, Кузнецов2undated),
+Горин в пределах поиска без email. Новых human оценок0; актуальность/readiness
+неизвестны. Изменились источники, extractor из влитого #204 не менялся;
+ошибка выбора одноимённого автора исправлена, общие/чужие адреса отклонены.
+16search/15physicalsourceHTTP/4native jobs,385spans проверены; private root
+`enrichment-misses205-20261013` хранит отказы, тела, карточки иSTOP.
+[PR206](https://github.com/borisboriov/search-for-research/pull/206) ещё не влит.
+Это не holdout и не общая оценка качества/экономики каталога.
 
 ## До и после переноса
 

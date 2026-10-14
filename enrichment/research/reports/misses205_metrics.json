@@ -1,0 +1,300 @@
+{
+  "stage": "issue205",
+  "code_base": "978293f61e2b99e9bbf7054058f75114cc3d998d",
+  "runtime_changed": false,
+  "known_cases_not_holdout": true,
+  "source_set_changed": true,
+  "metrics": {
+    "profiles": 3,
+    "before_Sol_usable": 0,
+    "after_candidates": 12,
+    "after_Sol_usable": 3,
+    "source_refs_audited": 385,
+    "search_queries": 16,
+    "physical_source_HTTP": 15,
+    "profile_attempts": 4,
+    "completed_native_receipts": 4,
+    "tokens": {
+      "input_tokens": 673661,
+      "output_tokens": 10969,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 2836
+    },
+    "native_wall_seconds": 301.05466079711914,
+    "unknown_started_attempts": 0,
+    "generative_extraction_jobs": 0,
+    "human_reviewed": 0,
+    "subscription_debit": null,
+    "search_and_development_review_usage": null,
+    "API_licence_paid_cost": 0,
+    "data_logical_unique_inode_bytes_snapshot": 19495532,
+    "data_allocated_unique_inode_bytes_snapshot": 20467712,
+    "data_unique_files_snapshot": 312,
+    "data_paths_snapshot": 653,
+    "offline_wall_seconds": 11.312129625002854,
+    "offline_CPU_seconds": 11.341899,
+    "offline_max_RSS_bytes_macOS": 68829184
+  },
+  "rows": [
+    {
+      "author_id": "A5069718528",
+      "before_usable": 0,
+      "after_candidates": 0,
+      "after_Sol_usable": 0,
+      "after_Sol_rejected": 0,
+      "distinct_source_bodies": 2,
+      "source_views": 2,
+      "source_urls": [
+        "https://pub.orcid.org/v3.0/0000-0002-1707-7456/record",
+        "https://www.hse.ru/sci/diss/501028954"
+      ],
+      "human_reviewed": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "insufficient",
+          "status": "unknown",
+          "information_date": "2022",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_assessments": [],
+      "input_sha256": "7ce521ac2c0d34add2f48357395aa4aabfc0ada58ea4ee065e3eed303dbe4426"
+    },
+    {
+      "author_id": "A5066753211",
+      "before_usable": 0,
+      "after_candidates": 9,
+      "after_Sol_usable": 1,
+      "after_Sol_rejected": 8,
+      "distinct_source_bodies": 3,
+      "source_views": 3,
+      "source_urls": [
+        "https://indico.particle.mephi.ru/event/275/contributions/3244/attachments/1841/3244/ICPPA-2022.pdf",
+        "https://pk.mipt.ru/phd/2019_programs/lpr/",
+        "https://pub.orcid.org/v3.0/0000-0002-0096-2301/record"
+      ],
+      "human_reviewed": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "status": "active",
+          "information_date": "2026",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": "2025-05-29",
+          "date_basis": "source_metadata"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_assessments": [
+        {
+          "item_id": "contact_001",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "historical",
+          "information_date": "2019",
+          "date_basis": "content"
+        },
+        {
+          "item_id": "contact_002",
+          "text_verdict": "supported",
+          "identity_verdict": "insufficient",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        {
+          "item_id": "contact_003",
+          "text_verdict": "supported",
+          "identity_verdict": "insufficient",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        {
+          "item_id": "contact_004",
+          "text_verdict": "supported",
+          "identity_verdict": "insufficient",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        {
+          "item_id": "contact_005",
+          "text_verdict": "supported",
+          "identity_verdict": "insufficient",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        {
+          "item_id": "contact_006",
+          "text_verdict": "supported",
+          "identity_verdict": "insufficient",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "historical",
+          "information_date": "2019",
+          "date_basis": "content"
+        },
+        {
+          "item_id": "contact_007",
+          "text_verdict": "supported",
+          "identity_verdict": "insufficient",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "historical",
+          "information_date": "2019",
+          "date_basis": "content"
+        },
+        {
+          "item_id": "contact_008",
+          "text_verdict": "supported",
+          "identity_verdict": "refuted",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "current_applicability": "historical",
+          "information_date": "2022-11-30",
+          "date_basis": "content"
+        },
+        {
+          "item_id": "contact_009",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "current_applicability": "historical",
+          "information_date": "2022-11-30",
+          "date_basis": "content"
+        }
+      ],
+      "input_sha256": "bb9dcab94ee88a33b9cff101c6dc00202ef5fd81ffcafdc9af28cb9adbbda036"
+    },
+    {
+      "author_id": "A5015964881",
+      "before_usable": 0,
+      "after_candidates": 3,
+      "after_Sol_usable": 2,
+      "after_Sol_rejected": 1,
+      "distinct_source_bodies": 2,
+      "source_views": 3,
+      "source_urls": [
+        "https://pub.orcid.org/v3.0/0000-0002-9452-6577/record",
+        "https://www.mathnet.ru/php/person.phtml?option_lang=rus&personid=17315"
+      ],
+      "human_reviewed": 0,
+      "profile_assessments": {
+        "activity": {
+          "verdict": "insufficient",
+          "status": "unknown",
+          "information_date": "2024",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "status": null,
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "contact_assessments": [
+        {
+          "item_id": "contact_001",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        {
+          "item_id": "contact_002",
+          "text_verdict": "supported",
+          "identity_verdict": "supported",
+          "field_verdict": "correct",
+          "object_type": "scientist",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        {
+          "item_id": "contact_003",
+          "text_verdict": "supported",
+          "identity_verdict": "refuted",
+          "field_verdict": "misclassified",
+          "object_type": "organization",
+          "current_applicability": "undated",
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      ],
+      "input_sha256": "5d78ee9cfa4e2a41266a1c47b3534fdb38cfbec8c6cbc55943294cb932290796"
+    }
+  ],
+  "storage": {
+    "data_root": {
+      "paths": 662,
+      "unique_files": 321,
+      "logical_bytes": 19750462,
+      "allocated_bytes": 20746240,
+      "new_inodes_not_shared_with202": 296,
+      "new_logical_bytes_not_shared_with202": 18787510,
+      "new_allocated_bytes_not_shared_with202": 19726336
+    },
+    "dependencies": {
+      ".venv": {
+        "paths": 30623,
+        "unique_files": 30621,
+        "logical_bytes": 1176772731,
+        "allocated_bytes": 1261199360
+      },
+      "apps/web/node_modules": {
+        "paths": 29653,
+        "unique_files": 29622,
+        "logical_bytes": 522555314,
+        "allocated_bytes": 618401792
+      }
+    },
+    "excludes_this_storage_file_and_future_seal": true,
+    "APFS_clone_extents_not_measured": true,
+    "old_roots_not_modified": true
+  }
+}
