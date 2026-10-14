@@ -10,7 +10,7 @@ from sfr_enrichment.common import read, sha
 from sfr_enrichment.compact import expand_input
 from sfr_enrichment.config import RUBRIC
 from sfr_enrichment.contacts import check_contact_input
-from sfr_enrichment.fragments import check_dates
+from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, check_dates
 from sfr_enrichment.runner import check_result, code_hashes
 
 
@@ -100,6 +100,7 @@ def measure(root: Path) -> dict[str, Any]:
         raise ValueError("Frozen meter changed")
     inherited = read(root / "inherited.json")
     inherited_ids = set(inherited["verified_profile_ids"])
+    inherited_job_ids = set(inherited.get("inherited_profile_job_ids", inherited_ids))
     rows = []
     refs_total = 0
     for profile in read(root / "profiles.json"):
@@ -139,7 +140,7 @@ def measure(root: Path) -> dict[str, Any]:
         else:
             row["candidates"] = None
         row["Sol_usable"] = None
-        if result.exists():
+        if result.exists() and not failure.exists():
             check_result(run, inp_path, result)
             wrapper = read(result)
             if check_dates(read(run / "corpora" / f"{aid}.json"), wrapper["result"]) != read(
@@ -158,7 +159,9 @@ def measure(root: Path) -> dict[str, Any]:
             prompt = read(native / "prompt.txt")
             delivered = prompt["task"]["semantic_input"]
             if aid in inherited_ids:
-                if delivered != inp:
+                if (
+                    expand_input(delivered) if delivered.get("evidence_transport") else delivered
+                ) != inp:
                     raise ValueError("Inherited original input changed")
             else:
                 if expand_input(delivered) != inp or delivered != transport["compact_input"]:
@@ -180,7 +183,18 @@ def measure(root: Path) -> dict[str, Any]:
             data = read(failure)
             row.update(outcome=data["status"], failure=data)
             if data.get("model_called") is not False:
-                raise ValueError("Unverified profile must not claim model completion")
+                if data.get("status") != "invalid_identity_metadata_date":
+                    raise ValueError("Unverified profile must not claim model completion")
+                bad_result = Path(data["result_path"])
+                if sha(bad_result) != data["result_sha256"]:
+                    raise ValueError("Invalid output proof changed")
+                check_result(run, inp_path, bad_result)
+                try:
+                    check_dates(read(run / "corpora" / f"{aid}.json"), read(bad_result)["result"])
+                except UnsupportedIdentityMetadataDate:
+                    pass
+                else:
+                    raise ValueError("Invalid identity metadata outcome not reproduced")
             if data["status"] == "input_too_large" and (
                 data["actual_delivered_bytes"] <= data["cap_bytes"]
                 or (run / "runs" / aid / "native_verifier" / "started.json").exists()
@@ -191,11 +205,14 @@ def measure(root: Path) -> dict[str, Any]:
         rows.append(row)
     starts = sorted(run.glob("runs/*/native_verifier/started.json"))
     receipts = sorted(run.glob("runs/*/native_verifier/receipt.json"))
-    new_receipts = [p for p in receipts if p.parent.parent.name not in inherited_ids]
+    new_receipts = [p for p in receipts if p.parent.parent.name not in inherited_job_ids]
     native = [read(p) for p in new_receipts]
     http = sorted(run.glob("HTTP-ledger/*-reserved.json"))
     http_counts = source_http_counts(run)
-    if len(starts) > 9 or len(http) > 180:
+    if (
+        len(starts) > read(run / "manifest.json")["model_job_cap"]
+        or len(http) > read(run / "manifest.json")["HTTP_total_cap"]
+    ):
         raise ValueError("New round budgets exceeded")
     metrics = {
         "profiles": len(rows),

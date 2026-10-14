@@ -196,3 +196,56 @@ class MeterTests(unittest.TestCase):
         counts = meter_module().source_http_counts(fixture.root)
         self.assertEqual(counts["unknown_HTTP_attempts"], 1)
         self.assertEqual(counts["physical_HTTP"], 0)
+
+
+class DateIsolationTests(unittest.TestCase):
+    def test_invalid_identity_metadata_date_rejected_and_other_person_verified(self) -> None:
+        from sfr_enrichment.evidence import immutable_json
+
+        fixture = helpers.AssistedTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+
+        def native(
+            directory: Path, prompt: str, *args: object, **kwargs: Any
+        ) -> tuple[Path, dict[str, Any]]:
+            result_path, receipt = fixture.fake_native(directory, prompt, *args, **kwargs)
+            if json.loads(prompt)["task"]["author_id"] == "A1":
+                result = read(result_path)
+                result["profile_assessments"]["identity"].update(
+                    information_date="2023-04-03", date_basis="source_metadata"
+                )
+                result_path.unlink()  # disposable mocked fixture only
+                immutable_json(result_path, result)
+                from sfr_enrichment.common import sha
+
+                receipt["raw_result_sha256"] = sha(result_path)
+                (directory / "receipt.json").unlink()
+                immutable_json(directory / "receipt.json", receipt)
+            return result_path, receipt
+
+        fixture.mocked_run(native=native)
+        failure = read(fixture.root / "profile-failures/A1.json")
+        self.assertEqual(failure["status"], "invalid_identity_metadata_date")
+        self.assertTrue(failure["model_called"])
+        self.assertTrue((fixture.root / "results/A1.json").exists())
+        self.assertFalse((fixture.root / "date-checks/A1.json").exists())
+        self.assertTrue((fixture.root / "date-checks/A2.json").exists())
+        self.assertNotIn(
+            "A1",
+            [
+                read(Path(row["input_path"]))["author_id"]
+                for row in read(fixture.root / "entries.json")
+            ],
+        )
+        with patch("sfr_enrichment.native.execute", side_effect=AssertionError("retry")):
+            asyncio.run(run(fixture.root, 90))
+
+    def test_other_metadata_axis_remains_common_invariant(self) -> None:
+        from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, _orcid_employment_date
+
+        with self.assertRaises(UnsupportedIdentityMetadataDate):
+            _orcid_employment_date({}, {}, "identity")
+        with self.assertRaises(ValueError) as raised:
+            _orcid_employment_date({}, {}, "activity")
+        self.assertNotIsInstance(raised.exception, UnsupportedIdentityMetadataDate)

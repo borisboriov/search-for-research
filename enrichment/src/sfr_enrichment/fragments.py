@@ -96,10 +96,16 @@ def _json_span(text: str, path: list[str | int]) -> tuple[int, int]:
     return start, json.JSONDecoder().raw_decode(text, start)[1]
 
 
+class UnsupportedIdentityMetadataDate(ValueError):
+    """A model identity claim cites unsupported metadata; source integrity is separate."""
+
+
 def _orcid_employment_date(
     corpus: dict[str, Any], assessment: dict[str, Any], axis: str
 ) -> dict[str, Any]:
     """Bind metadata to one cited employment, never to reading time or a nearby object."""
+    if axis == "identity":
+        raise UnsupportedIdentityMetadataDate("Unsupported metadata date object")
     if axis != "current_affiliation":
         raise ValueError("Unsupported metadata date object")
     date = assessment["information_date"]

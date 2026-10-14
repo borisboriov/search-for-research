@@ -26,7 +26,7 @@ from sfr_enrichment.contacts import (
     verify_contact_input,
 )
 from sfr_enrichment.evidence import identifier, immutable_json
-from sfr_enrichment.fragments import check_dates
+from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, check_dates
 from sfr_enrichment.native import normalized_provenance
 from sfr_enrichment.replay import legacy_pdf_text
 from sfr_enrichment.review import make_packet, normalize
@@ -108,6 +108,9 @@ def prepare(root: Path, profiles_path: Path, plan_path: Path, scope_path: Path) 
         or not 1 <= scope["disk_byte_cap"] <= 512 * 1024 * 1024
     ):
         raise ValueError("Invalid explicit disk cap")
+    model_cap = scope.get("model_job_cap", len(profiles))
+    if type(model_cap) is not int or not 1 <= model_cap <= len(profiles):
+        raise ValueError("Invalid explicit model job cap")
     immutable_json(root / "sample.json", profiles)
     immutable_json(root / "search-plan.json", plan)
     immutable_json(root / "scope.json", scope)
@@ -120,7 +123,7 @@ def prepare(root: Path, profiles_path: Path, plan_path: Path, scope_path: Path) 
             "plan_sha256": sha(root / "search-plan.json"),
             "scope_sha256": sha(root / "scope.json"),
             "code_sha256": code_hashes(),
-            "model_job_cap": len(profiles),
+            "model_job_cap": scope.get("model_job_cap", len(profiles)),
             "HTTP_total_cap": scope["HTTP_total_cap"],
             "HTTP_per_profile_cap": scope["HTTP_per_profile_cap"],
             "remaining_stop": scope["remaining_stop"],
@@ -157,7 +160,7 @@ def frozen(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     profiles = verified_sample(root)
     scope = read(root / "scope.json")
     if (
-        manifest["model_job_cap"] != len(profiles)
+        manifest["model_job_cap"] != scope.get("model_job_cap", len(profiles))
         or manifest.get("disk_byte_cap") != scope.get("disk_byte_cap")
         or any(
             manifest[key] != scope[key]
@@ -184,6 +187,8 @@ def progress(root: Path) -> dict[str, Any]:
         aid = profile["id"]
         result_path = root / "results" / f"{aid}.json"
         gate_path = root / "date-checks" / f"{aid}.json"
+        if (root / "profile-failures" / f"{aid}.json").exists():
+            continue
         if result_path.exists() and gate_path.exists():
             input_path = Path(read(root / "prepared" / f"{aid}.json")["input_path"])
             check_result(root, input_path, result_path)
@@ -582,12 +587,33 @@ async def run_pipeline(
                 continue
         check_result(root, input_path, result_path)
         # Raw/native result не переписывается; gate обязателен до выдачи карточек.
-        dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
+        try:
+            dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
+        except UnsupportedIdentityMetadataDate as exc:
+            # check_result already established source/raw/schema binding. Reject the
+            # unsupported identity date; never export this output as a verified card.
+            immutable_json(
+                root / "profile-failures" / f"{aid}.json",
+                {
+                    "author_id": aid,
+                    "status": "invalid_identity_metadata_date",
+                    "model_called": True,
+                    "date_error": str(exc),
+                    "axis": "identity",
+                    "input_path": str(input_path),
+                    "input_sha256": sha(input_path),
+                    "result_path": str(result_path),
+                    "result_sha256": sha(result_path),
+                },
+            )
+            continue
         immutable_json(root / "date-checks" / f"{aid}.json", dates)
         paths.append((input_path, result_path))
     all_paths = []
     for profile in profiles:
         aid = profile["id"]
+        if (root / "profile-failures" / f"{aid}.json").exists():
+            continue
         result_path = root / "results" / f"{aid}.json"
         if result_path.exists():
             input_path = Path(read(root / "prepared" / f"{aid}.json")["input_path"])
