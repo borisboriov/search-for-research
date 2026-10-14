@@ -77,16 +77,35 @@ class DomainStops:
         self.domains = {read(p)["domain"] for p in root.glob("domain-stop-*.json")}
 
     def blocked(self, url: str) -> bool:
-        return urlparse(url).netloc in self.domains
+        domain = urlparse(url).netloc
+        # Decoder/other loader instances share the persisted stop, not a stale snapshot.
+        record = self.root / f"domain-stop-{hashlib.sha256(domain.encode()).hexdigest()}.json"
+        if record.exists():
+            if read(record).get("domain") != domain:
+                raise ValueError("Domain STOP record mismatch")
+            self.domains.add(domain)
+        return domain in self.domains
 
     def observe(self, url: str, status_code: int | None) -> None:
         if status_code not in (403, 429) or self.blocked(url):
+            return
+        self.block(url, f"HTTP{status_code}", status_code)
+
+    def block(self, url: str, reason: str, status_code: int | None = None) -> None:
+        """Keep a conservative domain stop with its real observed status/reason."""
+        if self.blocked(url):
             return
         domain = urlparse(url).netloc
         name = hashlib.sha256(domain.encode()).hexdigest()
         write_new(
             self.root / f"domain-stop-{name}.json",
-            {"domain": domain, "url": url, "status_code": status_code, "checked_at": now()},
+            {
+                "domain": domain,
+                "url": url,
+                "status_code": status_code,
+                "reason": reason,
+                "checked_at": now(),
+            },
         )
         self.domains.add(domain)
 

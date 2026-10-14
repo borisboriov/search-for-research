@@ -1,0 +1,493 @@
+{
+  "metrics": {
+    "profiles": 10,
+    "terminal_outcomes": 10,
+    "verified_total": 6,
+    "verified_new_continuation": 5,
+    "verified_inherited_old209": 1,
+    "input_too_large": 2,
+    "invalid_date_unverified": 2,
+    "not_attempted": 0,
+    "accepted_contacts_verified_only": 3,
+    "verified_profiles_with_contact": 3,
+    "literal_refs_audited": 2186,
+    "new_native_starts": 7,
+    "new_completed_receipts": 7,
+    "unknown_native_attempts": 0,
+    "new_physical_HTTP": 29,
+    "new_HTTP_reservations": 29,
+    "unknown_HTTP_attempts": 0,
+    "new_search": 0,
+    "inherited_search": 30,
+    "old209_HTTP": 5,
+    "old209_native_jobs": 1,
+    "old209_tokens": 76071,
+    "tokens": {
+      "input_tokens": 373215,
+      "output_tokens": 12601,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "reasoning_output_tokens": 4431
+    },
+    "new_native_wall_seconds": 489.1024537086487,
+    "requested_model": "gpt-6.1-sol",
+    "requested_effort": "high",
+    "actual_backend_model": null,
+    "actual_backend_effort": null,
+    "human_reviewed": 0,
+    "GLM_jobs": 0,
+    "Astra_profile_jobs": 0,
+    "generative_extraction_jobs": 0,
+    "subscription_debit": null,
+    "API_licence_fee": 0,
+    "search_usage": null,
+    "development_review_usage": null,
+    "R3_original_frozen_meter_pass": true,
+    "R1_R2_original_measurements_rejected_date_outputs": true,
+    "live_phases": [
+      {
+        "root": "enrichment-compact209-20261014",
+        "wall_seconds": 339.83,
+        "CPU_seconds": 35.89,
+        "max_RSS_bytes_macOS": 121946112,
+        "peak_memory_footprint_bytes": 79725048,
+        "log_sha256": "46e2d6898034ab781d465a9b5f94d2ae1290211d1988b53401b87fcc995c8256"
+      },
+      {
+        "root": "enrichment-compact209-r2-20261014",
+        "wall_seconds": 226.44,
+        "CPU_seconds": 44.720000000000006,
+        "max_RSS_bytes_macOS": 121241600,
+        "peak_memory_footprint_bytes": 65913384,
+        "log_sha256": "4c64995d736708d284fbf983263b453e4f8ba484ac1c5f132bf9c15d74cfb084"
+      },
+      {
+        "root": "enrichment-compact209-r3-20261014",
+        "wall_seconds": 254.35,
+        "CPU_seconds": 135.27,
+        "max_RSS_bytes_macOS": 123142144,
+        "peak_memory_footprint_bytes": 127173232,
+        "log_sha256": "fb67a25be7726457f1009d0375ce5ef802f9344ef06db35c6db0c7aafd665c71"
+      }
+    ],
+    "live_total_wall_seconds": 820.62,
+    "live_total_CPU_seconds": 215.88000000000002,
+    "live_max_RSS_bytes_macOS": 123142144,
+    "total_tokens": 385816
+  },
+  "rows": [
+    {
+      "author_id": "A5084165517",
+      "name": "А. М. Камалутдинов",
+      "outcome": "verified_inherited",
+      "candidates": 0,
+      "Sol_usable": 0,
+      "source_refs_audited": 60,
+      "canonical_input_bytes": 222174,
+      "actual_delivered_bytes": null,
+      "compact_blocks": null,
+      "input_sha256": "5bba63fce4a21cf6d90d9fc1e9d9f463aba04e37dad2979d2c814871f636c1c2",
+      "transport_sha256": null,
+      "old_actual_delivered_bytes": 227067,
+      "source_failures_count": 2,
+      "source_failure_statuses": [
+        "failed",
+        "skipped"
+      ],
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "information_date": "2026-07-01",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5075370519",
+      "name": "Tatiana V. Magdesieva",
+      "outcome": "input_too_large",
+      "candidates": 23,
+      "Sol_usable": null,
+      "source_refs_audited": 574,
+      "canonical_input_bytes": 1779958,
+      "actual_delivered_bytes": 1081416,
+      "compact_blocks": 8,
+      "input_sha256": "8c9044e327e3e4df006b8d6dbffc68f59e8a81b907b0b1968cb0987aaf5462ac",
+      "transport_sha256": "3f48217a69649e92cdaba5ab693ace7a62c8543c82d30f270a3c24d20ebaf225",
+      "old_actual_delivered_bytes": 1724261,
+      "source_failures_count": 0,
+      "source_failure_statuses": [],
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5029727917",
+      "name": "P. A. Alekseev",
+      "outcome": "verified_inherited",
+      "candidates": 2,
+      "Sol_usable": 1,
+      "source_refs_audited": 142,
+      "canonical_input_bytes": 467287,
+      "actual_delivered_bytes": 292333,
+      "compact_blocks": 3,
+      "input_sha256": "1057c21fb6320da62384ba332322a9b30fb979f568bc8d0e7c23eea568302794",
+      "transport_sha256": "462611b868615b2ed306b6660f0e9c1d3616e29fc1f2789c2a1410f4f37d5196",
+      "old_actual_delivered_bytes": 462645,
+      "source_failures_count": 0,
+      "source_failure_statuses": [],
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "information_date": "2026-06-22",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5037987093",
+      "name": "A.A. Lavrukhin",
+      "outcome": "verified_inherited",
+      "candidates": 2,
+      "Sol_usable": 1,
+      "source_refs_audited": 91,
+      "canonical_input_bytes": 318882,
+      "actual_delivered_bytes": 202520,
+      "compact_blocks": 3,
+      "input_sha256": "f1a6596ec8f81c7a085aab552f535258fe80165266e0edf605f333a2ec032d5d",
+      "transport_sha256": "b0f051f2a738a8f1ad2340d7fa4f7384eac12470e077c75165f2479978a2242c",
+      "old_actual_delivered_bytes": 320054,
+      "source_failures_count": 1,
+      "source_failure_statuses": [
+        "failed"
+      ],
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "current_affiliation": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5060332543",
+      "name": "A.B. Ivanova",
+      "outcome": "verified_inherited",
+      "candidates": 0,
+      "Sol_usable": 0,
+      "source_refs_audited": 33,
+      "canonical_input_bytes": 144630,
+      "actual_delivered_bytes": 101696,
+      "compact_blocks": 2,
+      "input_sha256": "76e581192568df8eb16d15cf4714e270feb3907d17c80d2ec816d9c56bfcfbe6",
+      "transport_sha256": "32176c8431a74bfd9664e209a46447b2911fbd1708bd5e01c52b517cad0fab6e",
+      "old_actual_delivered_bytes": 152601,
+      "source_failures_count": 1,
+      "source_failure_statuses": [
+        "failed"
+      ],
+      "profile_assessments": {
+        "activity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "conflicting"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "information_date": null,
+          "date_basis": "unknown"
+        },
+        "identity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5072656241",
+      "name": "Gulsara D. Kugabaeva",
+      "outcome": "invalid_identity_metadata_date",
+      "candidates": 0,
+      "Sol_usable": null,
+      "source_refs_audited": 15,
+      "canonical_input_bytes": 85003,
+      "actual_delivered_bytes": 64150,
+      "compact_blocks": 2,
+      "input_sha256": "f0df9676b43dca2b4b840a59861004b70089b3fdac6dda67e6e2b1c57f98c04b",
+      "transport_sha256": "0181c3f03ddd7a65be78ae5bea0fb9130ef97fc8c10ee8dea6bd12aa577d3469",
+      "old_actual_delivered_bytes": 95914,
+      "source_failures_count": 1,
+      "source_failure_statuses": [
+        "failed"
+      ],
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5101512470",
+      "name": "Anna Zakharova",
+      "outcome": "date_year_absent_unverified",
+      "candidates": 8,
+      "Sol_usable": null,
+      "source_refs_audited": 128,
+      "canonical_input_bytes": 481409,
+      "actual_delivered_bytes": 279068,
+      "compact_blocks": 4,
+      "input_sha256": "e2e9719217a9a414dc4237056e3add0514757420af717ae9b4b3fda3a8d9f676",
+      "transport_sha256": "11566eac98867c85ce1a76aabcc50d92f0ba27c1e97305d297a399f1819d0747",
+      "old_actual_delivered_bytes": 477843,
+      "source_failures_count": 1,
+      "source_failure_statuses": [
+        "failed"
+      ],
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5104087496",
+      "name": "Irina Plotnikova",
+      "outcome": "verified_new",
+      "candidates": 1,
+      "Sol_usable": 1,
+      "source_refs_audited": 33,
+      "canonical_input_bytes": 118456,
+      "actual_delivered_bytes": 72747,
+      "compact_blocks": 2,
+      "input_sha256": "a942fd95dd9b8990f879b89bbb3fda33ed398ce9b45f46f057f0bc48cd8766b5",
+      "transport_sha256": "7623e4e39eb443cc1bc00d26c8148adcc2fd481e070781e03b77f659b3bb867e",
+      "old_actual_delivered_bytes": 126313,
+      "source_failures_count": 0,
+      "source_failure_statuses": [],
+      "profile_assessments": {
+        "activity": {
+          "verdict": "insufficient",
+          "information_date": "2019-10-30",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "information_date": "2019-10-30",
+          "date_basis": "content"
+        },
+        "identity": {
+          "verdict": "supported",
+          "information_date": "2019-10-30",
+          "date_basis": "content"
+        }
+      },
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5019255845",
+      "name": "P. Egorov",
+      "outcome": "input_too_large",
+      "candidates": 2,
+      "Sol_usable": null,
+      "source_refs_audited": 1057,
+      "canonical_input_bytes": 3097805,
+      "actual_delivered_bytes": 1930222,
+      "compact_blocks": 2,
+      "input_sha256": "ebc1ee08c039da417ee7caacdf2b14385a6591e33862e7ef227cd0e1753cd174",
+      "transport_sha256": "fa8c026227cab3ba9f72185a6f47f54075c214993483934e1e96d30204df5596",
+      "old_actual_delivered_bytes": 2988869,
+      "source_failures_count": 1,
+      "source_failure_statuses": [
+        "failed"
+      ],
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    },
+    {
+      "author_id": "A5018715265",
+      "name": "V. N. Skopinsky",
+      "outcome": "verified_new",
+      "candidates": 0,
+      "Sol_usable": 0,
+      "source_refs_audited": 53,
+      "canonical_input_bytes": 261526,
+      "actual_delivered_bytes": 157531,
+      "compact_blocks": 3,
+      "input_sha256": "57383b85426ed524191c47fb5031e901d493b226e05e1f8e0ecbfdeedeee5501",
+      "transport_sha256": "f726c2aa9a381fe0fae6745941dc787a29e11af01d063dca9eef47bd67411e84",
+      "old_actual_delivered_bytes": 267719,
+      "source_failures_count": 0,
+      "source_failure_statuses": [],
+      "profile_assessments": {
+        "activity": {
+          "verdict": "insufficient",
+          "information_date": "2014-08-01",
+          "date_basis": "content"
+        },
+        "current_affiliation": {
+          "verdict": "insufficient",
+          "information_date": "1970-02-17",
+          "date_basis": "content"
+        },
+        "identity": {
+          "verdict": "supported",
+          "information_date": null,
+          "date_basis": "unknown"
+        }
+      },
+      "current": "unknown",
+      "readiness": "unknown",
+      "human_reviewed": 0
+    }
+  ],
+  "storage": {
+    "R3_snapshot": {
+      "logical_unique_inode_bytes": 52265047,
+      "allocated_unique_inode_bytes": 55074816,
+      "paths": 414,
+      "unique_inodes": 414
+    },
+    "three_roots_union_snapshot": {
+      "logical_unique_inode_bytes": 61445314,
+      "allocated_unique_inode_bytes": 64663552,
+      "paths": 1010,
+      "unique_inodes": 555
+    },
+    "dependencies": {
+      ".venv": {
+        "logical_unique_inode_bytes": 1194889163,
+        "allocated_unique_inode_bytes": 1281007616,
+        "paths": 31391,
+        "unique_inodes": 31389
+      },
+      "apps/web/node_modules": {
+        "logical_unique_inode_bytes": 522555314,
+        "allocated_unique_inode_bytes": 606654464,
+        "paths": 29653,
+        "unique_inodes": 29622
+      }
+    },
+    "hardlinks_deduplicated_across_three_roots": true,
+    "old209_and_older_root_global_incremental_bytes_not_measured": true,
+    "APFS_shared_extents_measured": false,
+    "snapshot_excludes_this_file_and_future_seals": true,
+    "regenerable_dependencies_separate": true
+  },
+  "preflight": {
+    "rows": [
+      {
+        "author_id": "A5075370519",
+        "canonical_input_bytes": 1781106,
+        "canonical_input_sha256": "0d500ffb342082e320a71bca2392bd2841d1719bdfcea15087d15ef36da81816",
+        "old_actual_delivered_bytes": 1725409,
+        "compact_actual_delivered_bytes": 1081432,
+        "all_old_refs_lossless": 574,
+        "blocks": 8,
+        "lossless_equal": true,
+        "model_called": false,
+        "compact_prompt_sha256": "746d3dbacf2ac7aaddfe603919607fa8264e551c9a48ff0b253b75ee7b3736c3"
+      },
+      {
+        "author_id": "A5084165517",
+        "canonical_input_bytes": 222174,
+        "canonical_input_sha256": "5bba63fce4a21cf6d90d9fc1e9d9f463aba04e37dad2979d2c814871f636c1c2",
+        "old_actual_delivered_bytes": 227067,
+        "compact_actual_delivered_bytes": 149611,
+        "all_old_refs_lossless": 60,
+        "blocks": 2,
+        "lossless_equal": true,
+        "model_called": false,
+        "compact_prompt_sha256": "1530ce401ca951cfbeac736c1e6a42ccfc7abce832858e7944a716ffc8675934"
+      }
+    ],
+    "total_refs": 634,
+    "semantic_equivalence_tested": false,
+    "new_jobs": 0
+  },
+  "measured_code_head": "69472556f202c75f5d66bc610dc4a9adaed610b9",
+  "base": "6038766a34ff06afae3beb9690c62d98884d31da",
+  "private_sources": [
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/measurement.json",
+      "sha256": "8489cfd65a8c795cc80e01ef43ce7f2b4865047e7c8cc49ff689e30d59417bfc"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/stage-freeze.json",
+      "sha256": "6fb9d181e2a579963dcbb2cc9d53f82efefd98d4241ee2e2047270317508739a"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/inherited.json",
+      "sha256": "e0f35d97c492db678334b706daf0bbcb41bbe5407753e663f401efe83a51a79e"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-20261014/diagnosis-after-stop.json",
+      "sha256": "fa7869fed6ef8e3397e4d1495630eb0f4bc471296a628bfc5a7b881d6d6de04f"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r2-20261014/posthoc-resource-counters.json",
+      "sha256": "2a1d1314bd26f842a567c28c5d0513de9becd8d47c48345331c2b6629d39f88e"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-20261014/preflight-summary.json",
+      "sha256": "00a2106994677556bbe8965c48b1ac140a7d4a8b5b3f87c5a3dc0c5622dfd807"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/STOP",
+      "sha256": "6432d53f421672c38a829879ae31cfdd6ea6a8025aa9f5d40d3ab0c295f89010"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/continuation-rollup.json",
+      "sha256": "86c16a03029e7e0621124034ab1034670d8cda4625c5cd12a15e7ba8dfc9b31a"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/storage.json",
+      "sha256": "c2aa8369994a40b060ef80de910637c4e52a6f92c0cc2154a4b6a39304986fcc"
+    },
+    {
+      "path": "/Users/boris/Experiments/search-for-research/enrichment-compact209-r3-20261014/seal-compact209-r3.json",
+      "sha256": "5684f31c439f8d47f5f5ea43eec4e0b5e5ef06cd1d2b669efd0d8d22feca7f18"
+    }
+  ]
+}

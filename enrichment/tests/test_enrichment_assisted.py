@@ -474,14 +474,16 @@ class AssistedTests(unittest.TestCase):
             (directory / "receipt.json").write_text(json.dumps(receipt))
             return path, receipt
 
-        with self.assertRaisesRegex(ValueError, "Date year absent"):
-            self.mocked_run(native=wrong_date)
+        self.mocked_run(native=wrong_date)
+        self.assertEqual(
+            read(self.root / "profile-failures/A1.json")["status"], "date_year_absent_unverified"
+        )
+        self.assertTrue((self.root / "unverified-progress.json").exists())
         raw_path = self.root / "runs/A1/native_verifier/raw-result.json"
         raw_sha = sha(raw_path)
         self.assertEqual(progress(self.root)["validated_results"], 0)
         with patch("sfr_enrichment.native.execute") as model:
-            with self.assertRaisesRegex(ValueError, "Date year absent"):
-                asyncio.run(run(self.root, 90))
+            asyncio.run(run(self.root, 90))
             model.assert_not_called()
         self.assertEqual(sha(raw_path), raw_sha)
 

@@ -96,10 +96,31 @@ def _json_span(text: str, path: list[str | int]) -> tuple[int, int]:
     return start, json.JSONDecoder().raw_decode(text, start)[1]
 
 
+class UnsupportedIdentityMetadataDate(ValueError):
+    """A model identity claim cites unsupported metadata; source integrity is separate."""
+
+
+class MissingCitedDateYear(ValueError):
+    """A well-formed model date is absent from its intact cited literal spans."""
+
+
+def _well_formed_calendar_date(value: str) -> None:
+    if not re.fullmatch(r"\d{4}(?:-\d{2}){0,2}", value):
+        raise ValueError("Malformed calendar date")
+    parts = [int(part) for part in value.split("-")]
+    datetime(parts[0], parts[1] if len(parts) > 1 else 1, parts[2] if len(parts) > 2 else 1)
+
+
 def _orcid_employment_date(
     corpus: dict[str, Any], assessment: dict[str, Any], axis: str
 ) -> dict[str, Any]:
     """Bind metadata to one cited employment, never to reading time or a nearby object."""
+    if axis == "identity":
+        date = assessment.get("information_date")
+        if not isinstance(date, str) or not re.fullmatch(r"\d{4}(?:-\d{2}){0,2}", date):
+            raise ValueError("Invalid metadata calendar date")
+        _well_formed_calendar_date(date)
+        raise UnsupportedIdentityMetadataDate("Unsupported metadata date object")
     if axis != "current_affiliation":
         raise ValueError("Unsupported metadata date object")
     date = assessment["information_date"]
@@ -231,6 +252,7 @@ def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any
     pool = corpus["fragments"]
     # Literal year presence is a provenance check, not proof of date attribution.
     date_bindings = []
+    local_error: UnsupportedIdentityMetadataDate | MissingCitedDateYear | None = None
     assessments = [("item", a) for a in result["items"]] + list(
         result["profile_assessments"].items()
     )
@@ -242,10 +264,22 @@ def check_dates(corpus: dict[str, Any], result: dict[str, Any]) -> dict[str, Any
             if assessment["date_basis"] == "source_metadata":
                 try:
                     binding = _orcid_employment_date(corpus, assessment, axis)
+                except UnsupportedIdentityMetadataDate as error:
+                    local_error = error
+                    continue
                 except (AttributeError, IndexError, KeyError, TypeError, OverflowError) as error:
                     raise ValueError("Invalid typed ORCID metadata") from error
                 date_bindings.append(binding)
                 continue
-            if not years or not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
+            _well_formed_calendar_date(date)
+            if not years:
                 raise ValueError("Date year absent from referenced saved evidence")
+            if not set(years) <= set(re.findall(r"(?<!\d)\d{4}(?!\d)", body)):
+                if not re.fullmatch(r"\d{4}(?:-\d{2}){0,2}", date):
+                    raise ValueError("Malformed content date outside cited evidence")
+                local_error = MissingCitedDateYear(
+                    "Date year absent from referenced saved evidence"
+                )
+    if local_error is not None:
+        raise local_error
     return {"policy": DATE_GUARD_POLICY, "metadata_bindings": date_bindings}

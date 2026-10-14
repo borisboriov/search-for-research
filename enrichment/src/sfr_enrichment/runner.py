@@ -16,6 +16,7 @@ from sfr_enrichment.binding import SourceHost
 from sfr_enrichment.common import ensure_not_stopped, private_root, read, sha, verified_sample
 from sfr_enrichment.config import RUBRIC, repository_root
 from sfr_enrichment.contacts import (
+    ContactInputTooLarge,
     check_contact_input,
     check_quota,
     checked_source,
@@ -25,7 +26,11 @@ from sfr_enrichment.contacts import (
     verify_contact_input,
 )
 from sfr_enrichment.evidence import identifier, immutable_json
-from sfr_enrichment.fragments import check_dates
+from sfr_enrichment.fragments import (
+    MissingCitedDateYear,
+    UnsupportedIdentityMetadataDate,
+    check_dates,
+)
 from sfr_enrichment.native import normalized_provenance
 from sfr_enrichment.replay import legacy_pdf_text
 from sfr_enrichment.review import make_packet, normalize
@@ -107,6 +112,9 @@ def prepare(root: Path, profiles_path: Path, plan_path: Path, scope_path: Path) 
         or not 1 <= scope["disk_byte_cap"] <= 512 * 1024 * 1024
     ):
         raise ValueError("Invalid explicit disk cap")
+    model_cap = scope.get("model_job_cap", len(profiles))
+    if type(model_cap) is not int or not 1 <= model_cap <= len(profiles):
+        raise ValueError("Invalid explicit model job cap")
     immutable_json(root / "sample.json", profiles)
     immutable_json(root / "search-plan.json", plan)
     immutable_json(root / "scope.json", scope)
@@ -119,7 +127,7 @@ def prepare(root: Path, profiles_path: Path, plan_path: Path, scope_path: Path) 
             "plan_sha256": sha(root / "search-plan.json"),
             "scope_sha256": sha(root / "scope.json"),
             "code_sha256": code_hashes(),
-            "model_job_cap": len(profiles),
+            "model_job_cap": scope.get("model_job_cap", len(profiles)),
             "HTTP_total_cap": scope["HTTP_total_cap"],
             "HTTP_per_profile_cap": scope["HTTP_per_profile_cap"],
             "remaining_stop": scope["remaining_stop"],
@@ -156,7 +164,7 @@ def frozen(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     profiles = verified_sample(root)
     scope = read(root / "scope.json")
     if (
-        manifest["model_job_cap"] != len(profiles)
+        manifest["model_job_cap"] != scope.get("model_job_cap", len(profiles))
         or manifest.get("disk_byte_cap") != scope.get("disk_byte_cap")
         or any(
             manifest[key] != scope[key]
@@ -183,6 +191,8 @@ def progress(root: Path) -> dict[str, Any]:
         aid = profile["id"]
         result_path = root / "results" / f"{aid}.json"
         gate_path = root / "date-checks" / f"{aid}.json"
+        if (root / "profile-failures" / f"{aid}.json").exists():
+            continue
         if result_path.exists() and gate_path.exists():
             input_path = Path(read(root / "prepared" / f"{aid}.json")["input_path"])
             check_result(root, input_path, result_path)
@@ -214,6 +224,7 @@ def progress(root: Path) -> dict[str, Any]:
         "method": METHOD,
         "profiles": len(profiles),
         "validated_results": gated_results,
+        "profile_failures": [read(p) for p in sorted((root / "profile-failures").glob("*.json"))],
         "native_outputs_saved": len(results),
         "source_reservations": len(list((root / "HTTP-ledger").glob("*-reserved.json"))),
         "native_jobs_started": len(started),
@@ -372,6 +383,8 @@ async def run_pipeline(
         aid = profile["id"]
         if aid not in selected:
             continue
+        if (root / "profile-failures" / f"{aid}.json").exists():
+            continue
         result_path = root / "results" / f"{aid}.json"
         prepared_path = root / "prepared" / f"{aid}.json"
         if prepared_path.exists():
@@ -397,6 +410,10 @@ async def run_pipeline(
                             "url": spec["url"],
                             "kind": spec["kind"],
                             "error": str(exc),
+                            "status": "skipped" if exc.scope == "domain" else "failed",
+                            "scope": exc.scope,
+                            "failed_url": exc.url or spec["url"],
+                            "receipt_path": exc.receipt_path,
                             "retries": 0,
                             "at": datetime.now(UTC).isoformat(),
                         },
@@ -418,8 +435,29 @@ async def run_pipeline(
                         path = rendered[0]
                     host.allowed[spec["url"]] = 0
                     host.records[spec["url"]] = path
-                    await host.render(spec["url"])
-                    path = host.records[spec["url"]]
+                    try:
+                        await host.render(spec["url"])
+                    except SourceUnavailable as exc:
+                        immutable_json(
+                            failure_path,
+                            {
+                                "url": spec["url"],
+                                "kind": spec["kind"],
+                                "phase": "renderer",
+                                "error": str(exc),
+                                "status": "skipped" if exc.scope == "domain" else "failed",
+                                "scope": exc.scope,
+                                "failed_url": exc.url,
+                                "receipt_path": exc.receipt_path,
+                                "retries": 0,
+                                "at": datetime.now(UTC).isoformat(),
+                                "usable_parent_record_path": str(path),
+                            },
+                        )
+                        # The sealed parent HTML remains usable identity evidence;
+                        # failure of its decoder does not imply contact absence.
+                    else:
+                        path = host.records[spec["url"]]
                 source_paths.append(path)
             if not source_paths:
                 immutable_json(
@@ -509,8 +547,6 @@ async def run_pipeline(
                 namespace=METHOD,
                 source_kind=METHOD,
             )
-            if input_path.stat().st_size > 1_000_000:
-                raise ValueError("Полный вход превышает 1MB; остановка без model/truncation")
             immutable_json(
                 root / "corpora" / f"{aid}.json", corpus | {"fragments": collector["evidence_pool"]}
             )
@@ -519,27 +555,74 @@ async def run_pipeline(
             )
         if sha(input_path) != read(prepared_path)["sha256"]:
             raise ValueError("Prepared input SHA изменён")
-        check_contact_input(root, input_path)
+        contact_input = check_contact_input(root, input_path)
+        if not contact_input["items"] and not any(contact_input["profile_evidence"].values()):
+            immutable_json(
+                root / "profile-failures" / f"{aid}.json",
+                {"author_id": aid, "status": "empty_evidence", "model_called": False},
+            )
+            continue
         if not result_path.exists():
             deadline = datetime.fromisoformat(read(root / "manifest.json")["deadline_verification"])
             if datetime.now(UTC) >= deadline:
                 raise ValueError("Verification deadline; новые jobs запрещены")
-            verify_contact_input(
-                root,
-                input_path,
-                remaining_percent=remaining_percent,
-                allow_profile_evidence=True,
-                deadline_epoch=deadline.timestamp(),
-                prompt_byte_cap=1_000_000,
-            )
+            try:
+                verify_contact_input(
+                    root,
+                    input_path,
+                    remaining_percent=remaining_percent,
+                    allow_profile_evidence=True,
+                    deadline_epoch=deadline.timestamp(),
+                    prompt_byte_cap=1_000_000,
+                    lossless_compact=True,
+                )
+            except ContactInputTooLarge as exc:
+                immutable_json(
+                    root / "profile-failures" / f"{aid}.json",
+                    {
+                        "author_id": aid,
+                        "status": "input_too_large",
+                        "model_called": False,
+                        "actual_delivered_bytes": exc.actual_bytes,
+                        "cap_bytes": exc.cap,
+                        "input_path": str(input_path),
+                        "input_sha256": sha(input_path),
+                    },
+                )
+                continue
         check_result(root, input_path, result_path)
         # Raw/native result не переписывается; gate обязателен до выдачи карточек.
-        dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
+        try:
+            dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
+        except (UnsupportedIdentityMetadataDate, MissingCitedDateYear) as exc:
+            # check_result already established source/raw/schema binding. Reject the
+            # unsupported identity date; never export this output as a verified card.
+            immutable_json(
+                root / "profile-failures" / f"{aid}.json",
+                {
+                    "author_id": aid,
+                    "status": (
+                        "invalid_identity_metadata_date"
+                        if isinstance(exc, UnsupportedIdentityMetadataDate)
+                        else "date_year_absent_unverified"
+                    ),
+                    "model_called": True,
+                    "date_error": str(exc),
+                    "error_kind": type(exc).__name__,
+                    "input_path": str(input_path),
+                    "input_sha256": sha(input_path),
+                    "result_path": str(result_path),
+                    "result_sha256": sha(result_path),
+                },
+            )
+            continue
         immutable_json(root / "date-checks" / f"{aid}.json", dates)
         paths.append((input_path, result_path))
     all_paths = []
     for profile in profiles:
         aid = profile["id"]
+        if (root / "profile-failures" / f"{aid}.json").exists():
+            continue
         result_path = root / "results" / f"{aid}.json"
         if result_path.exists():
             input_path = Path(read(root / "prepared" / f"{aid}.json")["input_path"])
@@ -549,6 +632,12 @@ async def run_pipeline(
             immutable_json(root / "date-checks" / f"{aid}.json", dates)
             all_paths.append((input_path, result_path))
     entries = packet_entries(all_paths)
+    if not entries:
+        # A completed queue without validated outputs is an unverified outcome,
+        # never an empty successful contact packet.
+        output = root / "unverified-progress.json"
+        immutable_json(output, progress(root))
+        return output
     if selected != {p["id"] for p in profiles}:
         return make_packet(
             root, "smoke-" + "-".join(sorted(selected)), entries, contact_review=True

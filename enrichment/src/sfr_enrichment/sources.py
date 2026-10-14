@@ -15,6 +15,7 @@ from typing import Any
 from urllib.parse import urljoin, urlsplit
 
 import httpx
+from pypdf.errors import PdfReadError
 
 from sfr_enrichment.common import (
     ORCID_API,
@@ -30,7 +31,24 @@ from sfr_enrichment.http_policy import AGENT, DomainStops, extract, policy
 
 
 class SourceUnavailable(ValueError):
-    """Absent/unsupported source only; access/STOP/caps/binding stay fatal."""
+    """Expected source/domain failure; global guards and invariants remain fatal."""
+
+    def __init__(
+        self,
+        reason: str,
+        *,
+        url: str | None = None,
+        receipt_path: str | None = None,
+        scope: str = "source",
+    ) -> None:
+        super().__init__(reason)
+        self.url = url
+        self.receipt_path = receipt_path
+        self.scope = scope
+
+
+class SourceBodyLimit(ValueError):
+    """Per-response body cap, unlike the global storage/HTTP budgets."""
 
 
 class ObservedLinks(HTMLParser):
@@ -99,10 +117,10 @@ def pdf_text(raw: bytes) -> str:
     except ImportError as exc:
         raise ValueError("PDF parser отсутствует") from exc
     if reader.is_encrypted or len(reader.pages) > 100:
-        raise ValueError("Encrypted/слишком большой PDF")
+        raise SourceUnavailable("Encrypted/слишком большой PDF")
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
     if len(text) > 1_000_000:
-        raise ValueError("PDF text budget")
+        raise SourceUnavailable("PDF text budget")
     return text
 
 
@@ -174,6 +192,23 @@ class PublicLoader(Loader):
             elapsed = max(0.0, time.time() - record["finished_timestamp"])
             self.budget.last[host] = max(self.budget.last.get(host, 0), time.monotonic() - elapsed)
 
+    def unavailable(
+        self,
+        reason: str,
+        url: str,
+        response: dict[str, Any] | None = None,
+        *,
+        scope: str = "source",
+    ) -> SourceUnavailable:
+        receipt = None
+        if response is not None:
+            key = digest((response["kind"] + "\0" + response["url"]).encode())
+            receipt = str(self.root / f"request-result-{key}.json")
+        elif scope == "domain":
+            key = digest(urlsplit(url).netloc.encode())
+            receipt = str(self.stops.root / f"domain-stop-{key}.json")
+        return SourceUnavailable(reason, url=url, receipt_path=receipt, scope=scope)
+
     async def request(
         self, client: httpx.AsyncClient, url: str, kind: str, cap: int
     ) -> dict[str, Any]:
@@ -184,19 +219,32 @@ class PublicLoader(Loader):
         if datetime.now(UTC) >= deadline:
             raise ValueError("Acquisition deadline")
         if self.stops.blocked(url):
-            raise ValueError("Domain STOP403/429/challenge")
+            raise self.unavailable("Domain STOP/access policy", url, scope="domain")
         key = digest((kind + "\0" + url).encode())
         path = self.root / f"request-result-{key}.json"
         if path.exists():
             return dict(read(path))
         check_storage_budget(self.experiment, cap * 7 + 2 * 1024 * 1024)
         previous = [read(p) for p in self.ledger.glob("*-reserved.json")]
-        if (
-            len(previous) >= self.manifest["HTTP_total_cap"]
-            or sum(p["author_id"] == self.author_id for p in previous)
-            >= self.manifest["HTTP_per_profile_cap"]
-        ):
+        if len(previous) >= self.manifest["HTTP_total_cap"]:
             raise ValueError("Frozen HTTP budget")
+        person_requests = sum(p["author_id"] == self.author_id for p in previous)
+        if person_requests >= self.manifest["HTTP_per_profile_cap"]:
+            receipt = self.root / "profile-http-stop.json"
+            if not receipt.exists():
+                immutable_json(
+                    receipt,
+                    {
+                        "author_id": self.author_id,
+                        "reason": "HTTP_per_profile_cap",
+                        "cap": self.manifest["HTTP_per_profile_cap"],
+                        "reserved_requests": person_requests,
+                        "at": now(),
+                    },
+                )
+            raise SourceUnavailable(
+                "Frozen profile HTTP budget", url=url, receipt_path=str(receipt), scope="profile"
+            )
         requests = private_root(self.root / "requests")
         if any(read(p)["url"] == url and read(p)["kind"] == kind for p in requests.glob("*.json")):
             raise ValueError("Unfinished source: no retry")
@@ -217,6 +265,7 @@ class PublicLoader(Loader):
             "complete": False,
             "error": None,
         }
+        fatal_error: ValueError | None = None
         try:
             async with asyncio.timeout(30):
                 parsed = urlsplit(url)
@@ -243,11 +292,15 @@ class PublicLoader(Loader):
                     size = cap if response.status_code == 200 else min(cap, 65536)
                     async for chunk in response.aiter_bytes():
                         if len(body) + len(chunk) > size:
-                            raise ValueError("Bounded source body")
+                            raise SourceBodyLimit("Bounded source body")
                         body.extend(chunk)
                     meta["complete"] = True
-        except (httpx.HTTPError, TimeoutError, ValueError, OSError) as exc:
+        except (httpx.HTTPError, TimeoutError, socket.gaierror, SourceBodyLimit) as exc:
             meta["error"] = type(exc).__name__
+        except ValueError as exc:
+            # Preserve the receipt, then propagate unsafe destinations/unknown code errors.
+            meta["error"] = type(exc).__name__
+            fatal_error = exc
         raw = self.root / f"body-{key}.bin"
         immutable_bytes(raw, bytes(body))
         meta.update(
@@ -267,6 +320,8 @@ class PublicLoader(Loader):
                 "receipt_sha256": digest(path.read_bytes()),
             },
         )
+        if fatal_error is not None:
+            raise fatal_error
         return meta
 
     async def load(self, url: str, *, kind: str = "direct_http") -> dict[str, Any]:
@@ -322,7 +377,8 @@ class PublicLoader(Loader):
                             or robots_status != 200
                             or "text/" not in (robots["content_type"] or "")
                         ):
-                            raise ValueError("No full allowing robots")
+                            self.stops.block(url, "robots_unavailable", robots_status)
+                            raise self.unavailable("No full allowing robots", url, robots)
                         allowed, delay = policy(
                             (self.root / robots["body_path"])
                             .read_bytes()
@@ -342,23 +398,25 @@ class PublicLoader(Loader):
                         },
                     )
                     if not allowed or delay > 30:
-                        raise ValueError("Robots refusal/excessive delay")
+                        self.stops.block(url, "robots_denied_or_delay", robots_status)
+                        raise self.unavailable("Robots refusal/excessive delay", url, robots)
                     await self.budget.wait(url, delay)
                 response = await self.request(
                     client, url, kind, 8388608 if kind == "direct_pdf" else 2097152
                 )
                 if not response["complete"]:
-                    raise ValueError("Incomplete HTTP source")
+                    raise self.unavailable("Incomplete HTTP source", url, response)
                 if response["status"] in (301, 302, 303, 307, 308):
                     if api or hop == 5 or not response["location"]:
-                        raise ValueError("API/redirect budget/refusal")
+                        raise self.unavailable("API/redirect budget/refusal", url, response)
                     target = urljoin(url, response["location"])
                     safe_url(target)
                     if any(
                         w in (urlsplit(target).path + "?" + urlsplit(target).query).lower()
                         for w in ("captcha", "challenge", "__cf_chl", "/login", "/signin")
                     ):
-                        raise ValueError("Protection redirect; no bypass")
+                        self.stops.block(url, "protection_redirect", response["status"])
+                        raise self.unavailable("Protection redirect; no bypass", url, response)
                     immutable_json(
                         self.root / f"redirect-{digest(url.encode())}.json",
                         {
@@ -372,9 +430,9 @@ class PublicLoader(Loader):
                     url = target
                     continue
                 if response["status"] in (404, 410):
-                    raise SourceUnavailable("Source absent HTTP404/410")
+                    raise self.unavailable("Source absent HTTP404/410", url, response)
                 if response["status"] != 200:
-                    raise ValueError("Source access refusal")
+                    raise self.unavailable("Source access refusal", url, response)
                 raw = (self.root / response["body_path"]).read_bytes()
                 ctype = response["content_type"] or ""
                 media_kind = kind
@@ -382,26 +440,42 @@ class PublicLoader(Loader):
                     media_kind = "direct_pdf"
                 if media_kind == "direct_pdf":
                     if "pdf" not in ctype or not raw.startswith(b"%PDF"):
-                        raise SourceUnavailable("Not a PDF")
-                    decoded = static = pdf_text(raw)
+                        raise self.unavailable("Not a PDF", url, response)
+                    try:
+                        decoded = static = pdf_text(raw)
+                    except (PdfReadError, SourceUnavailable) as exc:
+                        raise self.unavailable("Unusable PDF: " + str(exc), url, response) from exc
                 else:
                     charset = re.search(r"charset=([\w-]+)", ctype, re.I)
                     try:
                         decoded = raw.decode(charset[1] if charset else "utf-8", errors="strict")
                     except (LookupError, UnicodeError) as exc:
                         # Preserve the saved bytes; reject only this source, without guessing text.
-                        raise SourceUnavailable("Unsupported declared source encoding") from exc
+                        raise self.unavailable(
+                            "Unsupported declared source encoding", url, response
+                        ) from exc
                     if api:
                         if "json" not in ctype:
-                            raise SourceUnavailable("Not public API JSON")
-                        static = json.dumps(json.loads(decoded), ensure_ascii=False, indent=2)
+                            raise self.unavailable("Not public API JSON", url, response)
+                        try:
+                            static = json.dumps(json.loads(decoded), ensure_ascii=False, indent=2)
+                        except json.JSONDecodeError as exc:
+                            raise self.unavailable(
+                                "Invalid public API JSON", url, response
+                            ) from exc
                     else:
                         if "text/html" not in ctype:
-                            raise SourceUnavailable("Not HTML; register actual PDF separately")
+                            raise self.unavailable(
+                                "Not HTML; register actual PDF separately", url, response
+                            )
                         if protection(decoded):
                             self.stops.observe(url, 403)
-                            raise ValueError("Protection/login HTML; no bypass")
+                            raise self.unavailable(
+                                "Protection/login HTML; no bypass", url, response
+                            )
                         static = extract(decoded, url)["text"]
+                if not static.strip():
+                    raise self.unavailable("No usable source text", url, response)
                 key = digest(url.encode())
                 immutable_bytes(self.root / f"decoded-{key}.txt", decoded.encode())
                 immutable_bytes(self.root / f"text-{key}.txt", static.encode())

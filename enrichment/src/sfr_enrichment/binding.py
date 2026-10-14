@@ -12,7 +12,12 @@ from sfr_enrichment.common import ORCID_API, ensure_not_stopped, now, read, sha
 from sfr_enrichment.contacts import checked_source, digest, flexible_email_matches, safe_url
 from sfr_enrichment.evidence import immutable_bytes, immutable_json
 from sfr_enrichment.http_policy import extract
-from sfr_enrichment.sources import PublicLoader, observed_links, render_mathnet_contacts
+from sfr_enrichment.sources import (
+    PublicLoader,
+    SourceUnavailable,
+    observed_links,
+    render_mathnet_contacts,
+)
 
 
 def search_links(raw: Any) -> list[str]:
@@ -289,11 +294,23 @@ class SourceHost:
             raise ValueError("Unrendered replay source; no live decoder fetch")
         # Ordinary observed script, same robots/access policy as HTML; raw receipt
         # can be usable JS even when HTML decoding intentionally refuses it.
-        with suppress(ValueError, UnicodeError):
-            await PublicLoader(self.directory, [target], self.root, self.aid).load(target)
         receipt = (
             self.directory / f"request-result-{digest(('direct_http\0' + target).encode())}.json"
         )
+        try:
+            await PublicLoader(self.directory, [target], self.root, self.aid).load(target)
+        except SourceUnavailable:
+            # JS is deliberately refused by the HTML decoder; only its complete
+            # ordinary JS receipt may proceed. Transport/access failures propagate.
+            if not receipt.exists():
+                raise
+            saved = read(receipt)
+            if (
+                saved["status"] != 200
+                or not saved["complete"]
+                or "javascript" not in (saved["content_type"] or "")
+            ):
+                raise
         if not receipt.exists():
             raise ValueError("No decoder receipt")
         js = read(receipt)
@@ -302,7 +319,9 @@ class SourceHost:
             or not js["complete"]
             or "javascript" not in (js["content_type"] or "")
         ):
-            raise ValueError("Decoder inaccessible; no bypass")
+            raise SourceUnavailable(
+                "Decoder inaccessible; no bypass", url=target, receipt_path=str(receipt)
+            )
         raw = (receipt.parent / js["body_path"]).read_bytes()
         if digest(raw) != js["body_sha256"]:
             raise ValueError("Decoder bytes changed")

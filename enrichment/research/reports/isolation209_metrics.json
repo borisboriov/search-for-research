@@ -1,0 +1,132 @@
+{
+  "profiles": 10,
+  "terminal_outcomes": 1,
+  "completed_verified": 1,
+  "candidates": 0,
+  "Sol_usable": 0,
+  "profiles_with_Sol_contact": 0,
+  "source_refs_audited": 60,
+  "new_search_queries": 0,
+  "inherited_search_queries": 30,
+  "physical_source_HTTP": 5,
+  "native_starts": 1,
+  "completed_native_receipts": 1,
+  "unknown_attempts": 0,
+  "tokens": {
+    "input_tokens": 75093,
+    "output_tokens": 978,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
+    "reasoning_output_tokens": 152
+  },
+  "native_wall_seconds": 38.962159156799316,
+  "human_reviewed": 0,
+  "generative_extraction_jobs": 0,
+  "GLM_jobs": 0,
+  "Astra_profile_jobs": 0,
+  "subscription_debit": null,
+  "search_tokens_and_wall": null,
+  "development_review_tokens_and_wall": null,
+  "API_licence_fee": 0,
+  "data_logical_unique_inode_bytes_snapshot": 9289957,
+  "data_allocated_unique_inode_bytes_snapshot": 9592832,
+  "data_unique_files_snapshot": 106,
+  "data_paths_snapshot": 106,
+  "offline_wall_seconds": 0.3842718329979107,
+  "offline_CPU_seconds": 0.483441,
+  "offline_max_RSS_bytes_macOS": 52183040,
+  "measurement_method": "post-hoc offline supplementary audit; frozen meter209 failed on rubric alias",
+  "measured_code_head": "258edd706770a2a7e18d13a261492c2d5dffae75",
+  "completed_profiles": 1,
+  "failed_input_guard_profiles": 1,
+  "not_started_profiles": 8,
+  "candidate_count_scope": "candidates and Sol_usable in original supplementary metrics concern completed first profile only",
+  "second_profile_candidates_unassessed": 23,
+  "second_input_bytes": 1781106,
+  "second_literal_refs_audited": 574,
+  "total_tokens": 76071,
+  "actual_backend_model": null,
+  "actual_backend_effort": null,
+  "requested_model": "gpt-6.1-sol",
+  "requested_effort": "high",
+  "full10_completed": false,
+  "storage_later_snapshot": {
+    "data_logical_unique_inode_bytes_snapshot": 9528587,
+    "data_allocated_unique_inode_bytes_snapshot": 9863168,
+    "data_paths_snapshot": 116,
+    "data_unique_inodes_snapshot": 116,
+    "snapshot_excludes_this_file_and_future_seals": true,
+    "APFS_clone_extents_measured": false,
+    "dependencies": {
+      ".venv": {
+        "logical_unique_inode_bytes": 1176885195,
+        "allocated_unique_inode_bytes": 1263001600,
+        "unique_files": 31388,
+        "regenerable": true
+      },
+      "apps/web/node_modules": {
+        "logical_unique_inode_bytes": 522555314,
+        "allocated_unique_inode_bytes": 606760960,
+        "unique_files": 29622,
+        "regenerable": true
+      }
+    }
+  },
+  "live_resources": [
+    {
+      "phase": "smoke",
+      "wall_seconds": 43.95,
+      "CPU_seconds": 1.84,
+      "max_RSS_bytes_macOS": 123912192,
+      "peak_memory_footprint_bytes": 45892136
+    },
+    {
+      "phase": "continuation",
+      "wall_seconds": 7.17,
+      "CPU_seconds": 1.7200000000000002,
+      "max_RSS_bytes_macOS": 83410944,
+      "peak_memory_footprint_bytes": 67453480
+    }
+  ],
+  "live_wall_seconds": 51.120000000000005,
+  "live_CPU_seconds": 3.5600000000000005,
+  "live_max_RSS_bytes_macOS": 123912192,
+  "private_aggregate_sources": [
+    {
+      "file": "supplementary-audit209.json",
+      "sha256": "db70e3b7e93efdbf7031967d94890ec3bf0e3fc10ced0d22d65644f8f3e86c32"
+    },
+    {
+      "file": "terminal-outcomes209.json",
+      "sha256": "205da43dc03f3114e32d1ec650b5c062c54011b3846ba9aabe6513bce30619ec"
+    },
+    {
+      "file": "second-input-diagnosis.json",
+      "sha256": "8852a4c40e0d155872c6bacf9978a953d19e149484d117c53ffb72a4ae235804"
+    },
+    {
+      "file": "storage209.json",
+      "sha256": "222e83c72056a9c086e16d2d9aae3085447478796260e305090788ce84923505"
+    },
+    {
+      "file": "smoke.time-stderr.log",
+      "sha256": "99c8298121be80b72b59270736eb1d64111629cbc339d857899a8036bf3b09c5"
+    },
+    {
+      "file": "continuation.time-stderr.log",
+      "sha256": "9625c849680a811ef53e20aa012508c3269131774de8a6d57668bcf4a8f77f6e"
+    },
+    {
+      "file": "meter-failure209.json",
+      "sha256": "3dc829f322bcd02da776db164dfbf472cabba488f36b5f351bcd4ec5a4312e70"
+    },
+    {
+      "file": "stage-freeze.json",
+      "sha256": "282f88dc447be5851a13dfb642dff589417a004a86d6b2c5c85abce928f827a0"
+    },
+    {
+      "file": "old-integrity209.json",
+      "sha256": "ceba8f95c439125cf8c81c81c2b6a02fa2c2fbeb93797140c93571688fef0c42"
+    }
+  ]
+}

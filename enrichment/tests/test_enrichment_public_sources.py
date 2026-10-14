@@ -13,6 +13,7 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 
+from sfr_enrichment.common import read
 from sfr_enrichment.evidence import immutable_bytes, immutable_json
 from sfr_enrichment.sources import (
     MATHNET_DECODER,
@@ -224,7 +225,9 @@ class PublicSourceTests(unittest.TestCase):
                     ) as client:
                         return await loader.request(client, URL, "direct_http", 100)
 
-                result = asyncio.run(run())
+                with self.assertRaisesRegex(ValueError, "Nonpublic destination IP"):
+                    asyncio.run(run())
+                result = read(next((root / "sources").glob("request-result-*.json")))
             self.assertFalse(result["HTTP_started"])
 
     def test_no_quota_reserve_applies_only_manifest_choice_legacy_unchanged(self) -> None:
