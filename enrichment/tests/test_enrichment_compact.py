@@ -259,7 +259,7 @@ class DateIsolationTests(unittest.TestCase):
             "date_basis": "source_metadata",
             "evidence_refs": ["E"],
         }
-        for basis, date in [("source_metadata", "2023"), ("content", "2024")]:
+        for basis, date in [("source_metadata", "2023"), ("content", "bad")]:
             activity = {"information_date": date, "date_basis": basis, "evidence_refs": ["E"]}
             for pairs in [
                 [("identity", identity), ("activity", activity)],
@@ -273,3 +273,55 @@ class DateIsolationTests(unittest.TestCase):
         with self.assertRaises(ValueError) as raised:
             check_dates(corpus, {"items": [], "profile_assessments": {"identity": malformed}})
         self.assertNotIsInstance(raised.exception, UnsupportedIdentityMetadataDate)
+
+    def test_cited_year_absent_is_local_but_mixed_metadata_errors_are_common(self) -> None:
+        from sfr_enrichment.fragments import MissingCitedDateYear, check_dates
+
+        corpus = {"fragments": {"E": {"excerpt": "Publication 2023"}}}
+        item = {"information_date": "2018", "date_basis": "content", "evidence_refs": ["E"]}
+        with self.assertRaises(MissingCitedDateYear):
+            check_dates(corpus, {"items": [item], "profile_assessments": {}})
+        activity = dict(item, date_basis="source_metadata")
+        for pairs in [
+            [("identity", item), ("activity", activity)],
+            [("activity", activity), ("identity", item)],
+        ]:
+            with self.assertRaises(ValueError) as raised:
+                check_dates(corpus, {"items": [], "profile_assessments": dict(pairs)})
+            self.assertNotIsInstance(raised.exception, MissingCitedDateYear)
+        for date in ["bad", "date2018", "0000", "2024-99", "2024-02-31"]:
+            with self.assertRaises(ValueError) as raised:
+                check_dates(
+                    corpus,
+                    {"items": [dict(item, information_date=date)], "profile_assessments": {}},
+                )
+            self.assertNotIsInstance(raised.exception, MissingCitedDateYear)
+
+    def test_invalid_cited_year_has_no_card_and_next_person_continues(self) -> None:
+        from sfr_enrichment.common import sha
+        from sfr_enrichment.evidence import immutable_json
+
+        fixture = helpers.AssistedTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+
+        def native(
+            directory: Path, prompt: str, *args: object, **kwargs: Any
+        ) -> tuple[Path, dict[str, Any]]:
+            path, receipt = fixture.fake_native(directory, prompt, *args, **kwargs)
+            if json.loads(prompt)["task"]["author_id"] == "A1":
+                result = read(path)
+                result["items"][0].update(information_date="2018", date_basis="content")
+                path.unlink()
+                immutable_json(path, result)
+                receipt["raw_result_sha256"] = sha(path)
+                (directory / "receipt.json").unlink()
+                immutable_json(directory / "receipt.json", receipt)
+            return path, receipt
+
+        fixture.mocked_run(native=native)
+        self.assertEqual(
+            read(fixture.root / "profile-failures/A1.json")["status"], "date_year_absent_unverified"
+        )
+        self.assertFalse((fixture.root / "date-checks/A1.json").exists())
+        self.assertTrue((fixture.root / "date-checks/A2.json").exists())

@@ -10,7 +10,11 @@ from sfr_enrichment.common import read, sha
 from sfr_enrichment.compact import expand_input
 from sfr_enrichment.config import RUBRIC
 from sfr_enrichment.contacts import check_contact_input
-from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, check_dates
+from sfr_enrichment.fragments import (
+    MissingCitedDateYear,
+    UnsupportedIdentityMetadataDate,
+    check_dates,
+)
 from sfr_enrichment.runner import check_result, code_hashes
 
 
@@ -183,7 +187,10 @@ def measure(root: Path) -> dict[str, Any]:
             data = read(failure)
             row.update(outcome=data["status"], failure=data)
             if data.get("model_called") is not False:
-                if data.get("status") != "invalid_identity_metadata_date":
+                if data.get("status") not in (
+                    "invalid_identity_metadata_date",
+                    "date_year_absent_unverified",
+                ):
                     raise ValueError("Unverified profile must not claim model completion")
                 bad_result = Path(data["result_path"])
                 if sha(bad_result) != data["result_sha256"]:
@@ -191,7 +198,7 @@ def measure(root: Path) -> dict[str, Any]:
                 check_result(run, inp_path, bad_result)
                 try:
                     check_dates(read(run / "corpora" / f"{aid}.json"), read(bad_result)["result"])
-                except UnsupportedIdentityMetadataDate:
+                except (UnsupportedIdentityMetadataDate, MissingCitedDateYear):
                     pass
                 else:
                     raise ValueError("Invalid identity metadata outcome not reproduced")

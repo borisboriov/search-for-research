@@ -26,7 +26,11 @@ from sfr_enrichment.contacts import (
     verify_contact_input,
 )
 from sfr_enrichment.evidence import identifier, immutable_json
-from sfr_enrichment.fragments import UnsupportedIdentityMetadataDate, check_dates
+from sfr_enrichment.fragments import (
+    MissingCitedDateYear,
+    UnsupportedIdentityMetadataDate,
+    check_dates,
+)
 from sfr_enrichment.native import normalized_provenance
 from sfr_enrichment.replay import legacy_pdf_text
 from sfr_enrichment.review import make_packet, normalize
@@ -589,17 +593,21 @@ async def run_pipeline(
         # Raw/native result не переписывается; gate обязателен до выдачи карточек.
         try:
             dates = check_dates(read(root / "corpora" / f"{aid}.json"), read(result_path)["result"])
-        except UnsupportedIdentityMetadataDate as exc:
+        except (UnsupportedIdentityMetadataDate, MissingCitedDateYear) as exc:
             # check_result already established source/raw/schema binding. Reject the
             # unsupported identity date; never export this output as a verified card.
             immutable_json(
                 root / "profile-failures" / f"{aid}.json",
                 {
                     "author_id": aid,
-                    "status": "invalid_identity_metadata_date",
+                    "status": (
+                        "invalid_identity_metadata_date"
+                        if isinstance(exc, UnsupportedIdentityMetadataDate)
+                        else "date_year_absent_unverified"
+                    ),
                     "model_called": True,
                     "date_error": str(exc),
-                    "axis": "identity",
+                    "error_kind": type(exc).__name__,
                     "input_path": str(input_path),
                     "input_sha256": sha(input_path),
                     "result_path": str(result_path),
