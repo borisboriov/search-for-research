@@ -5,6 +5,12 @@ version = "0.1.0"
 description = "Search For Research — cross-university research supervisor matching (SFR-0: monorepo foundation + OpenAlex ETL)"
 requires-python = ">=3.12"
 
+[tool.uv]
+# #214: semgrep==1.179.0 закрепляет mcp==1.29.0 с CVE-2026-59951.
+# Исправленная версия той же ветки SDK; не добавляет MCP в runtime продукта.
+# Убрать override, когда pin Semgrep позволит безопасную версию MCP.
+override-dependencies = ["mcp==1.30.0"]
+
 [tool.uv.workspace]
 members = ["packages/sfr-core", "packages/sfr-etl", "packages/sfr-match", "apps/api", "enrichment"]
 
