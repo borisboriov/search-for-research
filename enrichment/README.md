@@ -109,7 +109,7 @@ Sol принял 3 личных контакта у 3 людей. Это зав�
 Нужен checkout этого репозитория на конкретном Git SHA, Python 3.12+ и `uv`.
 Из корня: `uv sync --locked --all-packages --group enrichment`, затем `make unhide`
 (для editable imports на macOS). Версии библиотек заданы `uv.lock`, включая
-`pypdf==6.19.0`. Изолированного wheel без ресурсов репозитория недостаточно.
+PDF-парсер `pypdf`. Изолированного wheel без ресурсов репозитория недостаточно.
 Offline повтор установки возможен только при уже заполненном кэше зависимостей.
 Команда `uv run sfr-enrichment --help` показывает единый CLI; равнозначен
 `.venv/bin/python -m sfr_enrichment`.
