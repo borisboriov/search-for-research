@@ -9,7 +9,18 @@ requires-python = ">=3.12"
 # #214: semgrep==1.179.0 закрепляет mcp==1.29.0 с CVE-2026-59951.
 # Исправленная версия той же ветки SDK; не добавляет MCP в runtime продукта.
 # Убрать override, когда pin Semgrep позволит безопасную версию MCP.
-override-dependencies = ["mcp==1.30.0"]
+# #219: Semgrep 1.179.0 (и актуальный 1.182.1) ограничивает OTel уязвимой
+# веткой 1.37. Обновляем согласованный SDK/exporter/instrumentation вместе;
+# API 1.45.1 исправляет CVE-2026-114603. Только инструменты security.
+# Убрать эти overrides после исправления ограничений Semgrep upstream.
+override-dependencies = [
+    "mcp==1.30.0",
+    "opentelemetry-api==1.45.1",
+    "opentelemetry-sdk==1.45.1",
+    "opentelemetry-exporter-otlp-proto-http==1.45.1",
+    "opentelemetry-instrumentation-requests==0.66b1",
+    "opentelemetry-instrumentation-threading==0.66b1",
+]
 
 [tool.uv.workspace]
 members = ["packages/sfr-core", "packages/sfr-etl", "packages/sfr-match", "apps/api", "enrichment"]
@@ -40,7 +51,7 @@ dev = [
     "pre-commit>=3.8",
 ]
 enrichment = [
-    "pypdf==6.21.1",
+    "pypdf==6.21.2",
 ]
 # SFR-4b. Версии запинены точно: аудит должен быть воспроизводим, а обновление
 # сканера — осознанным шагом (новая версия приносит новые правила и новые
