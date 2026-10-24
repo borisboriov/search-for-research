@@ -57,8 +57,8 @@ describe("Next ESLint glob replacement", () => {
   it("contains a different implementation with no braces package", () => {
     expect(require("micromatch/package.json").name).toBe("@sfr/fast-glob-patterns");
     expect(() => require.resolve("braces")).toThrow();
-    expect(JSON.parse(readFileSync(path.join(path.dirname(require.resolve("eslint-config-next")), "../package.json"), "utf8")).version).toBe("16.3.8");
-    expect(require("@next/eslint-plugin-next/package.json").version).toBe("16.3.8");
+    expect(JSON.parse(readFileSync(path.join(path.dirname(require.resolve("eslint-config-next")), "../package.json"), "utf8")).version).toBe("16.4.3");
+    expect(require("@next/eslint-plugin-next/package.json").version).toBe("16.4.3");
   });
   it("preserves all 113 existing rule settings on app, library and test files", async () => {
     const eslint = new ESLint();
