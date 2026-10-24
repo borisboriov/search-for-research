@@ -3,7 +3,7 @@ name = "sfr-enrichment"
 version = "0.1.0"
 description = "Sol-assisted public source enrichment and independent human review"
 requires-python = ">=3.12"
-dependencies = ["httpx>=0.27", "pypdf==6.21.1"]
+dependencies = ["httpx>=0.27", "pypdf==6.21.2"]
 
 [project.scripts]
 sfr-enrichment = "sfr_enrichment.cli:main"
