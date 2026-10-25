@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
+from urllib.parse import quote
 
 import docs_check as check
 
@@ -110,6 +111,88 @@ score_high: float = 0.49
             check.check_state_vs_index(check.check_brief(findings), findings)
         self.assertTrue(any("profiles" in item for item in findings))
         self.assertTrue(any("ApiSettings" in item for item in findings))
+
+
+class MarkdownLinks(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name).resolve()
+        self.addCleanup(patch.stopall)
+        patch.object(check, "ROOT", self.root).start()
+        patch.object(check, "LIVE_DOCS", ["docs/README.md"]).start()
+        patch.object(check, "is_ignored", return_value=False).start()
+
+    def put(self, name: str, value: str) -> None:
+        path = self.root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(value)
+
+    def findings(self, source: str) -> list[str]:
+        self.put("docs/README.md", source)
+        findings: list[str] = []
+        check.check_paths(findings)
+        return findings
+
+    def test_missing_file_and_anchor_are_reported_even_in_history(self) -> None:
+        self.put("docs/topic.md", "# Тема\n")
+        findings = self.findings(
+            "История: [исходник](missing.md).\n[метод](topic.md#нет-раздела)\n"
+        )
+        self.assertEqual(len(findings), 2)
+        self.assertIn("docs/README.md:1:", findings[0])
+        self.assertIn("файл не существует", findings[0])
+        self.assertIn("якорь не существует", findings[1])
+
+    def test_unicode_spaces_duplicate_headings_and_explicit_anchor(self) -> None:
+        self.put(
+            "docs/Тема (НИР).md",
+            "# Ёмкость: **метод** / `B_C`\n"
+            "## Проверка\n## Проверка\n## Проверка-1\n"
+            "<a id='прежний-якорь'></a>\n",
+        )
+        path = quote("Тема (НИР).md")
+        source = f"[метод]({path}#{quote('ёмкость-метод--b_c')})\n"
+        source += "[второй](<Тема (НИР).md#проверка-1>)\n"
+        source += "[третий](<Тема (НИР).md#проверка-1-1>)\n"
+        source += "[старый](<Тема (НИР).md#прежний-якорь>)\n"
+        self.assertEqual(self.findings(source), [])
+
+    def test_references_images_and_parentheses(self) -> None:
+        self.put("docs/guide(v1).md", "Заголовок\n==========\n")
+        self.put("docs/picture.png", "fixture")
+        self.assertEqual(
+            self.findings(
+                '[guide][ref]\n[ref]: guide(v1).md#заголовок "title"\n'
+                "![image](picture.png)\n[inline](guide\\(v1\\).md#заголовок)\n"
+            ),
+            [],
+        )
+        self.assertTrue(self.findings("[bad][ref]\n[ref]: missing.md\n"))
+
+    def test_code_examples_and_external_or_private_paths_are_not_opened(self) -> None:
+        self.assertEqual(
+            self.findings(
+                "```md\n[пример](missing.md)\n```\n"
+                "~~~\n[пример](missing.md)\n~~~\n"
+                "`[inline](missing.md)`\n<!-- [hidden](missing.md) -->\n"
+                "[web](https://example.invalid/no.md) [mail](mailto:a@example.invalid)\n"
+                "[local](</Users/private/no file.md>) [outside](../../private.md)\n"
+            ),
+            [],
+        )
+
+    def test_code_heading_and_inline_anchor_do_not_create_real_targets(self) -> None:
+        self.put("docs/topic.md", "```\n# Скрыто\n```\n`<a id='пример'></a>`\n")
+        self.assertEqual(
+            len(self.findings("[code](topic.md#скрыто) [inline](topic.md#пример)\n")), 2
+        )
+
+    def test_new_monetization_documents_are_checked_when_present(self) -> None:
+        self.put("docs/product/monetization/model.md", "[evidence](missing.md)\n")
+        findings = self.findings("# Index\n")
+        self.assertEqual(len(findings), 1)
+        self.assertIn("docs/product/monetization/model.md:1:", findings[0])
 
 
 if __name__ == "__main__":
