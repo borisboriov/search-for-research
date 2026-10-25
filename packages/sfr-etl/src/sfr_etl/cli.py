@@ -39,6 +39,7 @@ from sfr_etl.dedup import (
 )
 from sfr_etl.export import export_cards_jsonl, export_profiles_jsonl
 from sfr_etl.ingest import ingest_authors, short_id, upsert_institution
+from sfr_etl.national import NationalRegistry
 from sfr_etl.orcid import OrcidClient, foreign_orcid_note
 from sfr_etl.profiles import build_profiles
 from sfr_etl.report import (
@@ -581,3 +582,34 @@ def report(
 
 if __name__ == "__main__":  # pragma: no cover
     app()
+
+
+@etl_app.command("national")
+def national_registry(
+    out: Annotated[Path, typer.Option(help="Separate gitignored registry directory")],
+    env_file: Annotated[Path, typer.Option(help="Existing settings file; never copied")] = Path(
+        ".env"
+    ),
+    status_only: Annotated[bool, typer.Option(help="Verify local data without network")] = False,
+) -> None:
+    """Collect all RU-affiliated authors and Russian institutions; resume saved cursor."""
+    registry: NationalRegistry | None = None
+    try:
+        if status_only:
+            typer.echo(json.dumps(NationalRegistry.inspect(out), ensure_ascii=False, indent=2))
+            return
+        settings = Settings(_env_file=env_file)  # type: ignore[call-arg]
+        registry = NationalRegistry(out, settings)
+        typer.echo(json.dumps(registry.run(), ensure_ascii=False, indent=2))
+    except Exception as exc:
+        # Constructor, JSON and transport exceptions must never print settings/URLs.
+        if registry is not None:
+            try:
+                registry.snapshot("stopped_error")
+            except Exception as snapshot_error:
+                typer.echo(f"Status unavailable: {type(snapshot_error).__name__}", err=True)
+        typer.echo(f"Collection stopped: {type(exc).__name__}; saved cursor preserved", err=True)
+        raise typer.Exit(1) from None
+    finally:
+        if registry is not None:
+            registry.close()
