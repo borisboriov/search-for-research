@@ -35,8 +35,8 @@
 | Источник | Как использован |
 |---|---|
 | [Наш обзор 24.10, включая сопоставление §10](monetization_world_2026-10-24.md) | Первичные тарифы, закупки, источники покупателя; исправления нового материала Perplexity |
-| [Perplexity: США и Европа](</Users/boris/Desktop/Search for Research/eng-deep-research.md>) | 544 строки; новые Pivot-RP, Dimensions, детали корпоративных моделей и предложения проверок |
-| [Perplexity: Китай](</Users/boris/Desktop/Search for Research/china-deep-research.md>) | 484 строки; 导师通, 鼎选, Qingta, научный рекрутинг, модели кредитов |
+| [Perplexity: США и Европа](</Users/boris/Desktop/Search for Research/eng-deep-research.md>) | Новые Pivot-RP, Dimensions, детали корпоративных моделей и предложения проверок |
+| [Perplexity: Китай](</Users/boris/Desktop/Search for Research/china-deep-research.md>) | 导师通, 鼎选, Qingta, научный рекрутинг, модели кредитов |
 | [Мировые аналоги августа](world_analogs_2026-08.md), локальные конкурентные исследования | Карта альтернатив и история аргументации; спорные выводы пересмотрены в §4 |
 | [Паспорт](</Users/boris/Desktop/Search for Research/01_core/Паспорт_Search_For_Research.xlsx>), [обоснование рынка](</Users/boris/Desktop/Search for Research/01_core/обоснование_TAM_SAM_SOM_Search_For_Research.docx>) | Прочитаны без редактирования: принятые цифры, ячейки, формулы и несогласованности |
 | [Карта рыночных допущений 08.08](../market_stretch_map_2026-08-08.md) | Диагностика слабых оснований. Её рекомендации и альтернативные проценты сами не являются доказанным прогнозом |
