@@ -576,7 +576,7 @@ def validate_answer(answer: dict[str, Any], case: dict[str, Any]) -> None:
 
 
 def import_human(root: Path, answers_path: Path, record_id: str) -> Path:
-    _, cases, _ = checked(root)
+    manifest, cases, protocol = checked(root)
     identifier(record_id)
     answers = read(answers_path)
     annotator = nonempty(answers.get("annotator"), "annotator")
@@ -589,11 +589,14 @@ def import_human(root: Path, answers_path: Path, record_id: str) -> Path:
     expected = {
         "schema": "nir_human_packet_v1",
         "annotator": annotator,
-        "rubric": read(root / "protocol.json")["rubric"],
-        "common_examples": read(root / "protocol.json")["common_examples"],
+        "rubric": protocol["rubric"],
+        "common_examples": protocol["common_examples"],
         "cases": cases,
         "warning": "Только сохранённые источники. Не искать новые; не обсуждать до сдачи ответов.",
+        **diagnostic_scope(manifest),
     }
+    if manifest.get("holdout_status") == DIAGNOSTIC_STATUS:
+        expected["holdout_status"] = DIAGNOSTIC_STATUS
     if frozen_packet != expected:
         raise ValueError("Нейтральный пакет изменён")
     for case in cases:

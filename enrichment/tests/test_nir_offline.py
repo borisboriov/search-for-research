@@ -135,7 +135,7 @@ class NirOfflineTests(unittest.TestCase):
             },
         )
         if capture_gaps:
-            rows = [{"author_id": f"A60{index}"} for index in range(11)]
+            rows: list[dict[str, Any]] = [{"author_id": f"A60{index}"} for index in range(11)]
             for index in (6, 9, 10)[:capture_gaps]:
                 rows[index] = {"author_id": f"A60{index}", "email_published": True}
             write_new(old_root / "contacts_manual_sfr5.json", {"rows": rows})
@@ -624,16 +624,73 @@ class NirOfflineTests(unittest.TestCase):
                 diagnostic_decision=decision,
             )
 
+    def test_diagnostic_human_exports_import_and_analyze_end_to_end(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        rows = read(self.selection)[:3]
+        for index, row in enumerate(rows):
+            row["group_id"] = f"new_group{index}"
+            row["profile"] = {"name": "Synthetic new target", "id": f"A90{index}"}
+        selection = self.tmp / "diagnostic-human-roundtrip.json"
+        write_new(selection, rows)
+        self.root = self.tmp / "diagnostic-human-roundtrip"
+        manifest = read(
+            freeze(
+                self.root,
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=self.diagnostic_decision(inventory, selection),
+            )
+        )
+        labels: list[str | None] = ["supported", "refuted", "insufficient"]
+        for annotator in ("adelina", "sasha"):
+            record = read(self.humans(annotator, labels))
+            self.assertEqual(record["answers"]["annotator"], annotator)
+            self.assertEqual(record["answers"]["answers"][1]["label"], "refuted")
+        self.models("B", ["supported", "supported", "supported"])
+        self.models("C", labels)
+        report = read(analyze(self.root, self.tmp / "diagnostic-human-analysis.json", resamples=5))
+        self.assertEqual(report["holdout_status"], DIAGNOSTIC_STATUS)
+        self.assertEqual(report["diagnostic_scope"], manifest["diagnostic_scope"])
+        self.assertEqual(report["human_status_counts"], {"agreement": 3})
+        self.assertEqual(report["unknown_human_case_ids"], [])
+        self.assertEqual(report["intention_to_process"]["B"]["R_resolved"], 2 / 3)
+        self.assertEqual(report["intention_to_process"]["C"]["R_resolved"], 0)
+
+    def test_diagnostic_human_import_rejects_changed_scope_even_with_updated_packet_hash(
+        self,
+    ) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        root = self.tmp / "diagnostic-human-scope-tamper"
+        freeze(
+            root,
+            selection,
+            inventory,
+            self.protocol,
+            diagnostic_decision=self.diagnostic_decision(inventory, selection),
+        )
+        packet_path = export(root, "adelina")
+        packet = read(packet_path)
+        packet["holdout_status"] = "recorded_prior_overlap_checked"
+        packet["diagnostic_scope"]["sample_status"] = "complete_planned_count"
+        packet_path.write_bytes(encoded(packet))
+        answers = read(packet_path.parent / "answers-template.json")
+        answers["packet_sha256"] = sha(packet_path)
+        answers_path = self.tmp / "diagnostic-human-tampered-answer.json"
+        write_new(answers_path, answers)
+        with self.assertRaisesRegex(ValueError, "Нейтральный пакет изменён"):
+            import_human(root, answers_path, "initial")
+
     def test_diagnostic_rejects_other_gaps_and_changed_provenance(self) -> None:
         selection = self.real_selection()
-        for index, arguments in enumerate(
-            (
-                {"capture_gaps": 3},
-                {"capture_gaps": 1},
-                {"capture_gaps": 2, "incomplete": True},
-                {},
-            )
-        ):
+        cases: tuple[dict[str, Any], ...] = (
+            {"capture_gaps": 3},
+            {"capture_gaps": 1},
+            {"capture_gaps": 2, "incomplete": True},
+            {},
+        )
+        for index, arguments in enumerate(cases):
             inventory, _ = self.full_prior_inventory(**arguments)
             decision = self.diagnostic_decision(inventory, selection)
             with self.subTest(arguments=arguments), self.assertRaises(ValueError):
