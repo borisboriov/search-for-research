@@ -537,6 +537,16 @@ exclusions.json и build-proof.json. Полный inventory хранит иде�
 разобранных случаев. SHA JSON source-record и model-result не выдаются за hash
 доказательного документа; excerpt совпадение отдельно от равенства всего снимка.
 
+Классификация опирается на существующие writer contracts: материалы collector/
+verifier v2 и их seals, derived ORCID results, corpora/source-maps/tasks,
+comparison inputs/results, verification/normalized wrappers и packets. Сырой
+ORCID каталог raw не смешивается с derived orcid. Общий лимит metadata-файла
+в сохранённом плане — 8 MiB; для указанной derived ORCID family отдельно задано
+32 MiB. Это ограниченные JSON-данные, а не разрешение майнить source text.
+Seals/input/corpus/task/copy ссылки проверяются как metadata dependencies;
+непрочитанные non-JSON receipts остаются provenance и не называются свежей
+проверкой содержимого документов.
+
 Coverage проверяет объявленные cohort и ссылки на исходные metadata. complete
 относится к указанному записанному scope и не вычисляется из одного факта наличия
 каталогов. Неразрешённые содержательные gaps сохраняют complete=false. Для
@@ -552,7 +562,7 @@ registry. Наличие registry не разрешает запуск, не п�
 email, URL и полные paths/селекторы остаются в частном реестре; в Git — только
 код, вымышленные тесты, агрегаты и границы проверки. Исходные архивы не изменяются.
 
-Текущий частный v6 восстановлен: metadata_scope_complete=true, однако
+Текущий частный v7 восстановлен: metadata_scope_complete=true, однако
 prior_details_complete=false и overall complete=false. В двух строках старого
 ручного опыта есть факт публикации email без сохранённого адреса/документного
 локатора. Это реальный capture limit, не отсутствие каталога; default freeze

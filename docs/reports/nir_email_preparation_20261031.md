@@ -48,12 +48,13 @@ C, нулевые знаменатели, разногласия/пропуск�
 |---|---|
 | make lint | Ruff и форматирование пройдены |
 | make typecheck | 194 файла, ошибок нет |
-| make test | 63 unittest скриптов; 348 enrichment offline; 388 pytest passed, 8 skipped, 5 deselected; coverage 94,06 % |
+| make test | 63 unittest скриптов; 352 enrichment offline; 388 pytest passed, 8 skipped, 5 deselected; coverage 94,06 % |
 | make docs-check; git diff --check | Пройдены; ниже указана граница сверки production meta |
 | make audit AUDIT_ARGS="--no-images --strict" | Все 9 проверок пройдены, включая Node; режим no-images |
 | Точный маршрут из операционной инструкции | freeze → два нейтральных export → prepare-model → analyze; 4 искусственных case, 8 подготовленных requests, human_missing=4, R/T=null, launch_authorized=false |
 
-В числе enrichment — 22 новых регрессии пакета. Совместимость адаптера проверена
+Пакет, overlap guard и metadata-сборщик проверяются отдельными регрессиями
+в составе enrichment. Совместимость адаптера проверена
 с настоящим кодом native.execute/isolation_probe и замоканным транспортом; CLI,
 HTTP и реальные модели не запускались. Восстановление окружения использовало
 существующие locked dependencies; lock-файлы и критерии проверок не менялись.
@@ -70,20 +71,20 @@ CI запускает её с настоящим сервисом.
 ## Исторический реестр и защита нового отбора
 
 Доступный catalogue прочитан с проверкой заданного SHA. Из него и последующих
-metadata воспроизводимо построен частный prior-inventory-v6; source архивы не
+metadata воспроизводимо построен частный prior-inventory-v7; source архивы не
 изменялись. Producer — [nir_inventory.py](../../enrichment/src/sfr_enrichment/nir_inventory.py),
 команда и контракты — [README](../../enrichment/README.md#частный-реестр-исторических-исключений).
 В Git нет данных этого реестра. Каталог результата содержит plan, полный inventory,
 совместимую списковую проекцию exclusions и build-proof с SHA кода/входов/выходов.
 
-| Проверенный охват v6 | Результат |
+| Проверенный охват v7 | Результат |
 |---|---|
-| Источники и roots | 4 549 metadata sources, 58 roots; catalogue от 11.10 дополнен поздними этапами, SFR-5 contacts и fixtures |
+| Источники и roots | 5 492 metadata sources, 58 roots; catalogue от 11.10 дополнен поздними этапами, SFR-5 contacts и fixtures |
 | Идентификаторы | 214 OpenAlex ID + 183 ORCID-алиаса; отдельно 4 synthetic target records, не новые реальные люди |
-| Прежние пары-кандидаты | 250 с реальными ID + 4 synthetic; все вердикты, не только accepted |
-| Доказательные записи | 5 642 typed entries, 1 136 URL, 7 160 scoped examples, 114 DOI refs; это не 5 642 независимых документов |
-| Семантическая closure | 183 cohort sets, 615 sample/profiles SHA references, 18 690 source-record references |
-| Объём одного semantic pass | 143 915 979 metadata bytes; 11 646 bytes целевых искусственных документов; 216 355 raw/unselected files не читались |
+| Прежние пары-кандидаты | 254 с реальными ID + 4 synthetic; все вердикты, не только accepted |
+| Доказательные записи | 6 426 typed entries, 1 201 URL, 10 357 scoped examples, 114 DOI refs; это не 6 426 независимых документов |
+| Семантическая closure | 184 cohort sets, 677 cohort SHA references, 25 513 metadata references и 51 corpus/task SHA checks |
+| Объём одного semantic pass | 378 067 553 metadata bytes; 11 646 bytes целевых искусственных документов; 215 522 raw/unselected files не читались |
 | Полнота | metadata_scope_complete=true, prior_details_complete=false, overall complete=false |
 
 Повторная валидация заново читает hashes и строит metadata derivation; её IO
@@ -109,17 +110,26 @@ UTF-8 snapshots/excerpts. Смена локального group/pair/example ID 
 `development_only_not_holdout`. Даже пройденный recorded overlap check не является
 глобальной гарантией новой выборки. Реальных новых данных или вызовов нет.
 
-Две независимые сборки v6 и v6-replay дали одинаковые records/coverage и
+Охват включает подтверждённые legacy writer families: collector/verifier source
+materials v2 с их seals, derived ORCID results (отдельно от raw ORCID), corpora,
+source-maps, tasks, comparison inputs/results, verification wrappers, normalized
+outputs и текущие packet/input/result metadata. Ссылки seals/input/corpus/task/copy
+проверяются как metadata dependencies; generic file SHA не становится body SHA.
+103 non-JSON receipts сохранены как непрочитанный provenance. Регрессии и private
+writer-family-audit подтверждают покрытие выявленных независимым ревью пропусков
+excerpt/URL и sealed material. Неизвестные строки/cumulative events не майнятся.
+
+Две независимые сборки v7 и v7-replay дали одинаковые records/coverage и
 payload SHA без created_at:
-4475fd9df28e3298a80ae1bc0b0d0025e2eb593a07620b4f759298e14272ef41.
+f77fb6daa21ceea47d5085021abb9a639a28a38d79beaf8b340c3bb84f314e52.
 Полный inventory SHA:
-574f1d3cc17784d2b542e76814715db170bbfae7f386dff52313e48ccc0ce43f;
+a2bacbbee26805acbfcc2aa9730b7dd64aec7c0f234f8ea97221228436b451ed;
 producer SHA:
-32cd597a70bc03f85d0a352b1ddf26c9ff5b0ebad8c990d6cd4ad03a4884ae04.
-Private каталог 0700, файлы 0600. Дополнительно реальный v6 заново валидирован;
+6f058ed266780067be95f50b6c3142331a4442e8c9946dac07793416d8329892.
+Private каталог 0700, файлы 0600. Дополнительно реальный v7 заново валидирован;
 ordinary freeze с ним отклонён по двум capture gaps. На fixtures development mode
-сохранён и явно отмечен в manifest/request/analysis. Промежуточные v1–v5 сохранены как prototypes;
-для текущей процедуры они не заменяют итоговый v6 и проверку новым кодом.
+сохранён и явно отмечен в manifest/request/analysis. Промежуточные v1–v6 сохранены как prototypes;
+для текущей процедуры они не заменяют итоговый v7 и проверку новым кодом.
 
 ## Ограничения и передача
 

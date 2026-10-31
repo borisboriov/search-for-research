@@ -83,6 +83,171 @@ class PriorInventoryTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(value, ensure_ascii=False))
 
+    def test_writer_materials_and_seals_preserve_independent_evidence(self) -> None:
+        material = self.root / "v2/verifier-source-materials/evaluation-1/A123.json"
+        excerpt = "Independent synthetic verifier evidence"
+        self.save(
+            material,
+            {
+                "author_id": "A123",
+                "rules_version": "synthetic_complete_v2",
+                "provenance": {"independent_search": True},
+                "claim_verdicts": [
+                    {
+                        "claim_id": "contact_001",
+                        "evidence": [
+                            {
+                                "url": "https://independent.invalid/evidence",
+                                "excerpt": excerpt,
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        seal = self.root / "v2/verifier-materials-evaluation1-final.json"
+        self.save(
+            seal,
+            {
+                "writing_stopped": True,
+                "files": [
+                    {
+                        "path": str(material.relative_to(self.root)),
+                        "sha256": sha(material),
+                    }
+                ],
+            },
+        )
+        inventory = build_inventory(self.plan)
+        digest = hashlib.sha256(excerpt.encode()).hexdigest()
+        self.assertIn(digest, inventory["lookup"]["document_sha256"]["excerpt"])
+        self.assertIn("https://independent.invalid/evidence", inventory["lookup"]["document_urls"])
+        self.assertNotIn(
+            sha(material), {h for hs in inventory["lookup"]["document_sha256"].values() for h in hs}
+        )
+        checks = inventory["coverage"]["source_record_reference_checks"]
+        self.assertEqual(checks[0]["status"], "resolved_exact_metadata")
+        self.assertTrue(inventory["completeness"]["complete"])
+        material.unlink()
+        missing = build_inventory(self.plan)
+        self.assertFalse(missing["completeness"]["complete"])
+        self.assertTrue(
+            any(
+                g["kind"] == "unresolved_metadata_reference"
+                for g in missing["completeness"]["gaps"]
+            )
+        )
+
+    def test_derived_writer_families_and_keyed_targets_are_selected(self) -> None:
+        for family in (
+            "corpora",
+            "tasks",
+            "comparison-inputs/leg",
+            "comparison-results/leg",
+            "verification/A123",
+            "normalized",
+            "model-inputs",
+            "results",
+            "human-packets/annotator",
+        ):
+            self.save(
+                self.root / family / "task.json",
+                {
+                    "author_id": "A123",
+                    "sources": [
+                        {"url": "https://writer.invalid/" + family, "text_sha256": "c" * 64}
+                    ],
+                    "prompt": "never @ prompt.invalid",
+                },
+            )
+        self.save(
+            self.root / "v2/collector-source-materials/defs.json",
+            {
+                "defs": {"A123": {"special": {"personal_contact": "keyed@writer.invalid"}}},
+            },
+        )
+        self.save(
+            self.root / "orcid/A123--synthetic.json",
+            {
+                "author_id": "A123",
+                "method": "synthetic-derived",
+                "fields": {},
+                "orcid_status": "ok",
+                "source": "https://orcid.invalid/public-record",
+                "candidates": {
+                    "links": [{"url": "https://profile.invalid/researcher"}],
+                    "emails": [{"email": "public@writer.invalid"}],
+                    "activities": {"email": "never@activity.invalid"},
+                },
+            },
+        )
+        self.save(
+            self.root / "orcid/raw/A999.json", {"author_id": "A999", "email": "never@raw.invalid"}
+        )
+        inventory = build_inventory(self.plan)
+        emails = {p["email"] for p in inventory["pairs"]}
+        self.assertIn("keyed@writer.invalid", emails)
+        self.assertIn("public@writer.invalid", emails)
+        self.assertIn("https://orcid.invalid/public-record", inventory["lookup"]["document_urls"])
+        self.assertIn("https://profile.invalid/researcher", inventory["lookup"]["document_urls"])
+        self.assertFalse(any(address.startswith("never") for address in emails))
+        self.assertIn("c" * 64, inventory["lookup"]["document_sha256"]["text"])
+        self.assertEqual(
+            inventory["coverage"]["writer_family_source_counts"]["derived_orcid_result"], 1
+        )
+        self.assertTrue(inventory["completeness"]["complete"])
+
+    def test_writer_metadata_reference_closure_is_typed(self) -> None:
+        corpus = self.root / "corpora/A123.json"
+        self.save(corpus, {"author_id": "A123", "sources": []})
+        self.save(
+            self.root / "source-maps/A123.json",
+            [
+                {
+                    "text_sha256": "d" * 64,
+                    "copied_dependencies": {str(corpus): sha(corpus), "body.bin": "e" * 64},
+                }
+            ],
+        )
+        self.save(
+            self.root / "groups/1/mapping.json",
+            {
+                "input-local": {
+                    "author_id": "A123",
+                    "original_input_path": str(corpus),
+                    "original_input_sha256": sha(corpus),
+                    "corpus_sha256": sha(corpus),
+                }
+            },
+        )
+        inventory = build_inventory(self.plan)
+        self.assertTrue(inventory["completeness"]["complete"])
+        self.assertEqual(len(inventory["coverage"]["source_record_reference_checks"]), 2)
+        self.assertEqual(
+            inventory["coverage"]["writer_metadata_hash_checks"][0]["status"],
+            "resolved_exact_metadata_hash",
+        )
+        self.assertEqual(len(inventory["coverage"]["unread_dependency_file_receipts"]), 1)
+        hashes = {h for hs in inventory["lookup"]["document_sha256"].values() for h in hs}
+        self.assertNotIn("e" * 64, hashes)
+        self.assertNotIn(sha(corpus), hashes)
+        self.assertIn("d" * 64, hashes)
+
+    def test_derived_orcid_schema_and_cap_fail_closed(self) -> None:
+        target = self.root / "orcid/A123.json"
+        self.save(target, {"author_id": "A123", "unexpected": "not a derived result"})
+        inventory = build_inventory(self.plan)
+        self.assertFalse(inventory["completeness"]["complete"])
+        self.assertTrue(
+            any(
+                g["kind"] == "unsupported_derived_orcid_schema"
+                for g in inventory["completeness"]["gaps"]
+            )
+        )
+        self.plan["metadata_kind_byte_limits"] = {"arbitrary": 100}
+        with self.assertRaisesRegex(ValueError, "bounded derived ORCID"):
+            build_inventory(self.plan)
+
     def test_targets_partial_candidates_documents_and_provenance(self) -> None:
         inventory = build_inventory(self.plan)
         self.assertTrue(inventory["completeness"]["complete"])

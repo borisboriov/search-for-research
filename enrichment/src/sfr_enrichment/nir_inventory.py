@@ -22,7 +22,21 @@ ORCID = re.compile(
 )
 EMAIL = re.compile(r"[^\s<>@,;]+\s*@\s*[^\s<>@,;]+\.[^\s<>@,;]+")
 PRUNE = {".git", ".venv", "node_modules", "__pycache__", ".cache"}
-SKIP_PARTS = {"raw", "cache", "orcid", "pi-events", "session-events", "snapshots", "events"}
+SKIP_PARTS = {"raw", "cache", "pi-events", "session-events", "snapshots", "events"}
+WRITER_FAMILIES = {
+    "collector-source-materials",
+    "verifier-source-materials",
+    "corpora",
+    "source-maps",
+    "tasks",
+    "comparison-inputs",
+    "comparison-results",
+    "verification",
+    "normalized",
+    "model-inputs",
+    "results",
+    "human-packets",
+}
 META_NAMES = {
     "sample.json",
     "profiles.json",
@@ -212,6 +226,18 @@ def metadata_kind(path: Path, root: Path) -> str | None:
     lower = str(relative).lower()
     if path.suffix != ".json" or any(part in SKIP_PARTS for part in relative.parts):
         return None
+    if "orcid" in relative.parts:
+        return (
+            "derived_orcid_result"
+            if re.fullmatch(r"A[0-9]+(?:--[^/]+)?\.json", path.name)
+            else None
+        )
+    if any(part in WRITER_FAMILIES for part in relative.parts):
+        return "writer_material_metadata"
+    if "materials" in path.name and len(relative.parts) <= 3:
+        return "materials_seal_metadata"
+    if path.name == "mapping.json" and "groups" in relative.parts:
+        return "writer_mapping_metadata"
     if path.name.endswith("-mcp-request.json"):
         return "source_request_metadata"
     if path.name.endswith("-http.json"):
@@ -321,6 +347,8 @@ class Accumulator:
         self.cohort_hashes: list[dict[str, Any]] = []
         self.publications: dict[tuple[str | None, str], dict[str, Any]] = {}
         self.capture_limits: list[dict[str, Any]] = []
+        self.metadata_hash_references: list[dict[str, Any]] = []
+        self.file_receipts: list[dict[str, Any]] = []
 
     def ref(self, source: dict[str, Any], selector: str) -> dict[str, Any]:
         return {"source_id": source["source_id"], "selector": selector, "role": source["role"]}
@@ -397,10 +425,16 @@ class Accumulator:
         candidates = []
         if ("email" in field or "contact" in field) and isinstance(node.get("value"), str):
             candidates.append(("value", node["value"]))
-        for key in ("email", "normalized_email", "email_normalized"):
+        for key in (
+            "email",
+            "normalized_email",
+            "email_normalized",
+            "personal_contact",
+            "coordinator_contact",
+        ):
             if isinstance(node.get(key), str):
                 candidates.append((key, node[key]))
-        for key in ("orcid_emails", "crossref_emails"):
+        for key in ("orcid_emails", "crossref_emails", "emails"):
             if isinstance(node.get(key), list):
                 candidates.extend((key, value) for value in node[key] if isinstance(value, str))
         if node.get("email_published") is True and not candidates:
@@ -466,7 +500,7 @@ class Accumulator:
                 for part in ("evidence_pool", ".sources", ".evidence", ".profile_evidence")
             )
         )
-        if url and is_evidence:
+        if is_evidence or source["kind"] == "writer_material_metadata":
             recorded = False
             for representation in ("body", "decoded", "text", "html", "static_text"):
                 digest = node.get(representation + "_sha256")
@@ -489,8 +523,24 @@ class Accumulator:
                     selector + ".excerpt",
                 )
                 recorded = True
-            if not recorded:
+            if url and not recorded:
                 self.document("url_only", None, url, source, selector + ".url")
+        for locator_key in ("source_urls", "reviewed_source_urls"):
+            if isinstance(node.get(locator_key), list):
+                for index, value in enumerate(node[locator_key]):
+                    if locator_url := canonical_document_url(value):
+                        self.document(
+                            "url_only",
+                            None,
+                            locator_url,
+                            source,
+                            f"{selector}.{locator_key}[{index}]",
+                        )
+        if source["kind"] == "derived_orcid_result":
+            if locator_url := canonical_document_url(node.get("source")):
+                self.document("source_reference", None, locator_url, source, selector + ".source")
+            if ".candidates.links" in selector and url:
+                self.document("profile_link_reference", None, url, source, selector + ".url")
         if source["kind"] == "source_request_metadata":
             for locator in ("url", "location", "uri", "ref_id"):
                 request_url = canonical_document_url(node.get(locator))
@@ -501,15 +551,66 @@ class Accumulator:
         for path_key, hash_key in (
             ("source_record_path", "source_record_sha256"),
             ("metadata_path", "metadata_sha256"),
+            ("input_path", "input_sha256"),
+            ("original_input_path", "original_input_sha256"),
+            ("corpus_path", "corpus_sha256"),
+            ("task_path", "task_sha256"),
         ):
             if isinstance(node.get(path_key), str) and isinstance(node.get(hash_key), str):
-                self.references.append(
+                self.add_reference(
                     {
                         "path": node[path_key],
                         "sha256": node[hash_key],
                         "source_id": source["source_id"],
                         "selector": selector + "." + path_key,
                         "root": source["root"],
+                    }
+                )
+        for map_key in ("source_snapshots_sha256", "copied_dependencies"):
+            mapping = node.get(map_key)
+            if isinstance(mapping, dict):
+                for reference_path, digest in mapping.items():
+                    if (
+                        isinstance(reference_path, str)
+                        and isinstance(digest, str)
+                        and HASH.fullmatch(digest)
+                    ):
+                        self.add_reference(
+                            {
+                                "path": reference_path,
+                                "sha256": digest,
+                                "source_id": source["source_id"],
+                                "selector": selector
+                                + "."
+                                + map_key
+                                + "["
+                                + json.dumps(reference_path)
+                                + "]",
+                                "root": source["root"],
+                            }
+                        )
+        if (
+            source["kind"] == "materials_seal_metadata"
+            and isinstance(node.get("path"), str)
+            and isinstance(node.get("sha256"), str)
+        ):
+            self.add_reference(
+                {
+                    "path": node["path"],
+                    "sha256": node["sha256"],
+                    "source_id": source["source_id"],
+                    "selector": selector + ".path",
+                    "root": source["root"],
+                }
+            )
+        for key in ("corpus_sha256", "task_sha256"):
+            digest = node.get(key)
+            if isinstance(digest, str) and HASH.fullmatch(digest):
+                self.metadata_hash_references.append(
+                    {
+                        "sha256": digest,
+                        "source_id": source["source_id"],
+                        "selector": selector + "." + key,
                     }
                 )
         for key in ("sample_sha256", "profiles_sha256"):
@@ -549,9 +650,20 @@ class Accumulator:
                     value,
                     source,
                     selector + "." + key,
-                    person,
+                    self.person([identity], {}, source, selector + "." + key)
+                    if (identity := canonical_identifier(key))
+                    else person,
                     profile_context=key in {"profiles", "sample", "profile"},
                 )
+
+    def add_reference(self, reference: dict[str, Any]) -> None:
+        # Non-JSON dependency seals describe files; never read them as source bodies.
+        if Path(reference["path"]).suffix == ".json":
+            self.references.append(reference)
+        else:
+            self.file_receipts.append(
+                {**reference, "role": "unread_dependency_file_receipt_not_content_hash"}
+            )
 
     def document(
         self,
@@ -596,6 +708,12 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
     cap = plan.get("metadata_byte_limit", 8 * 1024 * 1024)
     if type(cap) is not int or cap <= 0:
         raise ValueError("metadata_byte_limit must be a positive integer")
+    kind_caps = plan.get("metadata_kind_byte_limits", {})
+    if not isinstance(kind_caps, dict) or any(
+        key != "derived_orcid_result" or type(value) is not int or value <= 0
+        for key, value in kind_caps.items()
+    ):
+        raise ValueError("Only an explicit bounded derived ORCID result cap is supported")
     accumulator = Accumulator()
     references = []
     roots = set()
@@ -681,7 +799,7 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
         parsed = 0
         for path, kind in files:
             size = path.stat().st_size
-            if size > cap:
+            if size > kind_caps.get(kind, cap):
                 statistics["oversized_metadata_not_read"] += 1
                 accumulator.gaps.append(
                     {
@@ -723,7 +841,7 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
                 if fixture
                 else "recorded_experiment_metadata"
             )
-            source = {
+            source: dict[str, Any] = {
                 "source_id": "m" + hashlib.sha256(str(path).encode()).hexdigest()[:24],
                 "path": str(path),
                 "sha256": hashlib.sha256(payload).hexdigest(),
@@ -748,6 +866,27 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
                     if isinstance(data, dict) and isinstance(data.get(k), str)
                 },
             }
+            if kind == "materials_seal_metadata":
+                if (
+                    not isinstance(data, dict)
+                    or not isinstance(data.get("files"), list)
+                    or any(
+                        not isinstance(item, dict)
+                        or not isinstance(item.get("path"), str)
+                        or not isinstance(item.get("sha256"), str)
+                        or not HASH.fullmatch(item["sha256"])
+                        for item in data.get("files", [])
+                    )
+                ):
+                    accumulator.gaps.append(
+                        {
+                            "kind": "unsupported_materials_seal_schema",
+                            "path": str(path),
+                            "blocking": True,
+                        }
+                    )
+                elif isinstance(data.get("writing_stopped"), bool):
+                    source["versions"]["writing_stopped"] = data["writing_stopped"]
             accumulator.sources.append(source)
             for cohort in declared_cohorts(data, path.name):
                 accumulator.cohorts.append(
@@ -807,6 +946,36 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
             )
             if inherited:
                 inherited = accumulator.person([inherited], {}, source, "$path_case_id")
+            if kind == "derived_orcid_result":
+                if (
+                    not isinstance(data, dict)
+                    or not {"author_id", "method", "fields", "orcid_status"} <= data.keys()
+                ):
+                    accumulator.gaps.append(
+                        {
+                            "kind": "unsupported_derived_orcid_schema",
+                            "path": str(path),
+                            "blocking": True,
+                        }
+                    )
+                    continue
+                # Retain typed public candidates; never traverse raw ORCID activity trees.
+                candidates = data.get("candidates")
+                data = {k: v for k, v in data.items() if k != "candidates"}
+                if isinstance(candidates, dict):
+                    data["candidates"] = {
+                        k: v
+                        for k, v in candidates.items()
+                        if k
+                        in {
+                            "emails",
+                            "links",
+                            "name",
+                            "other_names",
+                            "identity_verdict",
+                            "record_last_modified",
+                        }
+                    }
             accumulator.walk(
                 data,
                 source,
@@ -881,7 +1050,17 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
             reference_checks.append({**reference, **checked_references[key]})
             continue
         raw_path = Path(reference["path"])
-        choices = [raw_path] if raw_path.is_absolute() else [Path(reference["root"]) / raw_path]
+        referring_source = next(
+            s for s in accumulator.sources if s["source_id"] == reference["source_id"]
+        )
+        choices = (
+            [raw_path]
+            if raw_path.is_absolute()
+            else [
+                Path(reference["root"]) / raw_path,
+                Path(referring_source["path"]).parent / raw_path,
+            ]
+        )
         for i, part in enumerate(raw_path.parts):
             if part in roots_by_name:
                 choices.append(roots_by_name[part].joinpath(*raw_path.parts[i + 1 :]))
@@ -999,6 +1178,32 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
                 }
             )
         cohort_snapshot_checks.append(result)
+    metadata_hash_checks = []
+    for reference in accumulator.metadata_hash_references:
+        match = sources_by_hash.get(reference["sha256"])
+        result = {
+            **reference,
+            "status": "resolved_exact_metadata_hash"
+            if match
+            else "unresolved_metadata_snapshot_hash",
+        }
+        if match:
+            result["resolved_path"] = match["path"]
+        else:
+            accumulator.gaps.append(
+                {
+                    "kind": result["status"],
+                    "source_id": reference["source_id"],
+                    "selector": reference["selector"],
+                    "path": next(
+                        s["path"]
+                        for s in accumulator.sources
+                        if s["source_id"] == reference["source_id"]
+                    ),
+                    "blocking": True,
+                }
+            )
+        metadata_hash_checks.append(result)
     for item in plan.get("development_documents", []):
         path = Path(item["path"]).resolve()
         if not path.is_file() or path.is_symlink() or path.stat().st_size > cap:
@@ -1080,6 +1285,9 @@ def build_inventory(plan: dict[str, Any]) -> dict[str, Any]:
             "declared_cohorts": accumulator.cohorts,
             "source_record_reference_checks": reference_checks,
             "cohort_snapshot_hash_checks": cohort_snapshot_checks,
+            "writer_metadata_hash_checks": metadata_hash_checks,
+            "unread_dependency_file_receipts": accumulator.file_receipts,
+            "writer_family_source_counts": dict(Counter(s["kind"] for s in accumulator.sources)),
             "historical_capture_limits": accumulator.capture_limits,
             "metadata_scope_complete": metadata_complete,
             "statistics": dict(statistics),

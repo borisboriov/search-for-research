@@ -354,7 +354,7 @@ label/reason/source_ids, C — identity/object_relation/reason/source_ids.
 profile, email и evidence. В evidence ровно source_id/url/captured_at/content_date/
 source_path/excerpt; цитата должна буквально входить в UTF-8 body. Незнакомые поля
 отклоняются: туда нельзя добавлять «удобные» прежние labels. Исходный lists-only формат exclusions предназначен только для явного
-разработочного режима. Для доступного private v5 coverage.metadata_scope_complete=true, но
+разработочного режима. Для текущего частного реестра coverage.metadata_scope_complete=true, но
 completeness.prior_details_complete=false и overall complete=false из-за двух
 не сохранённых адресов/локаторов старой ручной проверки. Поэтому его обычный
 freeze останавливается; ни --development-only, ни списковая проекция не являются
