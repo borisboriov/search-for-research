@@ -6,6 +6,7 @@ import json
 import ssl
 import tempfile
 import unittest
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,7 @@ from sfr_enrichment.nir_acquisition import (
     validate_recovery,
     validate_recovery_decision,
 )
+from sfr_enrichment.sources import PublicLoader
 
 
 class AcquisitionTests(unittest.TestCase):
@@ -302,6 +304,105 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(
             read(self.root / "batches/first/people/A1/result.json")["status"], "no_usable_source"
         )
+
+
+class SourceDeadlineTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.fixture = AcquisitionTests()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.root = self.fixture.root
+        self.current = [datetime.now(UTC)]
+        self.deadline = self.current[0] + timedelta(seconds=5)
+        self.fixture.scope["deadline_acquisition"] = self.deadline.isoformat()
+        self.fixture.init()
+        self.url = "https://synthetic.example/source"
+        self.loader = PublicLoader(self.root / "source-fixture", [self.url], self.root, "A1")
+        self.calls: list[httpx.Request] = []
+        self.outer_timeouts: list[float | None] = []
+
+    def request(self, mode: str) -> dict[str, Any]:
+        current, deadline = self.current, self.deadline
+
+        class Stream(httpx.AsyncByteStream):
+            async def __aiter__(self) -> AsyncIterator[bytes]:
+                yield b"first"
+                current[0] = deadline
+                yield b"late"
+
+        async def wait(url: str, delay: float) -> None:
+            if mode == "expired_wait":
+                current[0] = deadline
+            elif mode == "stop_wait":
+                immutable_json(self.root / "stopped.json", {"synthetic_stop": True})
+            else:
+                current[0] += timedelta(seconds=2)
+
+        def response(request: httpx.Request) -> httpx.Response:
+            self.calls.append(request)
+            if mode == "expired_stream":
+                return httpx.Response(200, stream=Stream(), headers={"content-type": "text/plain"})
+            return httpx.Response(200, content=b"synthetic", headers={"content-type": "text/plain"})
+
+        async def invoke() -> dict[str, Any]:
+            async with httpx.AsyncClient(transport=httpx.MockTransport(response)) as client:
+                return await self.loader.request(client, self.url, "direct_http", 1024)
+
+        original_timeout = asyncio.timeout
+
+        def timeout(delay: float | None) -> asyncio.Timeout:
+            self.outer_timeouts.append(delay)
+            return original_timeout(delay)
+
+        with (
+            patch("sfr_enrichment.sources.datetime") as clock,
+            patch(
+                "sfr_enrichment.sources.socket.getaddrinfo",
+                return_value=[(0, 0, 0, "", ("8.8.8.8", 443))],
+            ),
+            patch.object(self.loader.budget, "wait", side_effect=wait),
+            patch("sfr_enrichment.sources.asyncio.timeout", side_effect=timeout),
+        ):
+            clock.fromisoformat.side_effect = datetime.fromisoformat
+            clock.now.side_effect = lambda tz: current[0]
+            return asyncio.run(invoke())
+
+    def receipt(self) -> dict[str, Any]:
+        paths = list(self.loader.root.glob("request-result-*.json"))
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(len(list((self.root / "HTTP-ledger").glob("*-finished.json"))), 1)
+        return dict(read(paths[0]))
+
+    def test_expiry_during_rate_wait_never_starts_get_and_preserves_receipt(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Acquisition deadline"):
+            self.request("expired_wait")
+        self.assertEqual(self.calls, [])
+        receipt = self.receipt()
+        self.assertFalse(receipt["HTTP_started"])
+        self.assertFalse(receipt["complete"])
+        self.assertEqual(receipt["error"], "ValueError")
+
+    def test_remaining_timeout_bounds_whole_request_and_transport(self) -> None:
+        result = self.request("remaining_timeout")
+        self.assertTrue(result["complete"])
+        self.assertEqual(self.outer_timeouts, [5.0])
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(set(self.calls[0].extensions["timeout"].values()), {3.0})
+
+    def test_stream_crossing_deadline_keeps_only_pre_deadline_bytes(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Acquisition deadline"):
+            self.request("expired_stream")
+        self.assertEqual(len(self.calls), 1)
+        receipt = self.receipt()
+        self.assertTrue(receipt["HTTP_started"])
+        self.assertFalse(receipt["complete"])
+        self.assertEqual((self.loader.root / receipt["body_path"]).read_bytes(), b"first")
+
+    def test_stop_during_rate_wait_never_starts_get(self) -> None:
+        with self.assertRaisesRegex(ValueError, "STOP"):
+            self.request("stop_wait")
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.receipt()["HTTP_started"])
 
 
 class SSLRecoveryTests(unittest.TestCase):
