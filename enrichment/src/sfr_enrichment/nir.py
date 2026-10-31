@@ -56,6 +56,21 @@ def ratio(numerator: int, denominator: int) -> float | None:
     return numerator / denominator if denominator else None
 
 
+def private_output(path: Path) -> Path:
+    """Keep output outside Git without changing permissions of existing shared parents."""
+    target = path.resolve()
+    if any((parent / ".git").exists() for parent in target.parents):
+        raise ValueError("Исходные материалы и контакты должны находиться вне git")
+    missing = []
+    parent = target.parent
+    while not parent.exists():
+        missing.append(parent)
+        parent = parent.parent
+    for directory in reversed(missing):
+        directory.mkdir(mode=0o700, exist_ok=True)
+    return target
+
+
 def compose(identity: str, relation: str) -> str:
     if identity not in LABELS or relation not in LABELS:
         raise ValueError("Неизвестный класс")
@@ -962,7 +977,7 @@ def paired_bootstrap(rows: list[dict[str, Any]], seed: int, resamples: int) -> d
 
 def analyze(root: Path, output: Path, *, seed: int = 154, resamples: int = 2000) -> Path:
     _, cases, _ = checked(root)
-    output = private_root(output.parent) / output.name
+    output = private_output(output)
     states = human_state(root, cases)
     models: dict[str, dict[str, Any]] = {"B": {}, "C": {}}
     resources: dict[str, Any] = {}
@@ -1147,8 +1162,7 @@ def main() -> None:
     elif args.command == "export":
         result = export(root, args.annotator)
     elif args.command == "analyze":
-        output = private_root(args.out.parent) / args.out.name
-        result = analyze(root, output, seed=args.seed, resamples=args.resamples)
+        result = analyze(root, args.out, seed=args.seed, resamples=args.resamples)
     elif args.command == "prepare-model":
         result = prepare_model(root, seed=args.seed)
     elif args.command == "import-native":

@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import stat
 import subprocess
 import time
 import unittest
@@ -23,6 +24,7 @@ from sfr_enrichment.nir import (
     import_human,
     import_model,
     import_native,
+    main,
     paired_bootstrap,
     prepare_model,
     prepared_request,
@@ -579,6 +581,45 @@ class NirOfflineTests(unittest.TestCase):
                 "degenerate": False,
             },
         )
+
+    def test_analysis_keeps_shared_parent_mode_and_creates_private_output(self) -> None:
+        shared = self.tmp / "shared-parent"
+        shared.mkdir()
+        shared.chmod(0o755)
+        output = analyze(self.root, shared / "analysis.json", resamples=5)
+        self.assertEqual(stat.S_IMODE(shared.stat().st_mode), 0o755)
+        self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o600)
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "nir",
+                    "analyze",
+                    "--root",
+                    str(self.root),
+                    "--out",
+                    str(shared / "cli.json"),
+                    "--resamples",
+                    "5",
+                ],
+            ),
+            patch("builtins.print"),
+        ):
+            main()
+        self.assertEqual(stat.S_IMODE(shared.stat().st_mode), 0o755)
+        self.assertEqual(stat.S_IMODE((shared / "cli.json").stat().st_mode), 0o600)
+
+    def test_analysis_new_parents_are_private_and_git_outputs_are_rejected(self) -> None:
+        new_parent = self.tmp / "new-private" / "nested"
+        analyze(self.root, new_parent / "analysis.json", resamples=5)
+        self.assertEqual(stat.S_IMODE(new_parent.stat().st_mode), 0o700)
+        self.assertEqual(stat.S_IMODE(new_parent.parent.stat().st_mode), 0o700)
+        repository = self.tmp / "repository"
+        repository.mkdir()
+        (repository / ".git").write_text("gitdir: synthetic-worktree-marker")
+        with self.assertRaisesRegex(ValueError, "вне git"):
+            analyze(self.root, repository / "new-directory" / "analysis.json", resamples=5)
+        self.assertFalse((repository / "new-directory").exists())
 
     def test_shared_cluster_resampling_recalculates_arm_denominators(self) -> None:
         rows: list[dict[str, Any]] = [
