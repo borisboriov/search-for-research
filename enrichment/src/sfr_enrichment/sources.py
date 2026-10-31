@@ -371,9 +371,10 @@ class PublicLoader(Loader):
             trust_env=False,
         ) as client:
             visited: set[str] = set()
+            redirect_response: dict[str, Any] | None = None
             for hop in range(6):
                 if url in visited:
-                    raise ValueError("Redirect cycle")
+                    raise self.unavailable("Redirect cycle", url, redirect_response)
                 visited.add(url)
                 registered = self.root / f"source-{digest(url.encode())}.json"
                 if registered.exists():
@@ -449,6 +450,7 @@ class PublicLoader(Loader):
                             "hop": hop,
                         },
                     )
+                    redirect_response = response
                     url = target
                     continue
                 if response["status"] in (404, 410):

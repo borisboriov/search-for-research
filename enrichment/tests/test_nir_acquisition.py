@@ -20,20 +20,27 @@ from sfr_enrichment.nir_acquisition import (
     MAXIMA,
     RECOVERY_FILES,
     RECOVERY_SCHEMA,
+    REDIRECT_REVISION,
+    REDIRECT_SCHEMA,
     REVISION,
+    CampaignLoader,
     checked,
     code_hashes,
     collect_person,
+    continue_redirect_cycle,
     continue_ssl_abort,
     initialize,
     prepare,
     preserved_snapshot,
+    register_redirect_cycle,
     register_ssl_abort,
     run,
     validate_recovery,
     validate_recovery_decision,
+    validate_redirect_decision,
+    validate_redirect_recovery,
 )
-from sfr_enrichment.sources import PublicLoader
+from sfr_enrichment.sources import PublicLoader, SourceUnavailable
 
 
 class AcquisitionTests(unittest.TestCase):
@@ -89,6 +96,8 @@ class AcquisitionTests(unittest.TestCase):
         status: int = 200,
         ssl_failure: bool = False,
         continuation: bool = False,
+        redirect_person: str | None = None,
+        redirect_continuation: bool = False,
     ) -> tuple[list[str], AsyncMock]:
         calls: list[str] = []
 
@@ -100,6 +109,8 @@ class AcquisitionTests(unittest.TestCase):
                 )
             if ssl_failure:
                 raise ssl.SSLError("synthetic record layer failure")
+            if request.url.host == redirect_person:
+                return httpx.Response(302, headers={"location": str(request.url)})
             return httpx.Response(
                 status,
                 text=body
@@ -127,7 +138,9 @@ class AcquisitionTests(unittest.TestCase):
                 side_effect=AssertionError("No verifier"),
             ) as verify,
         ):
-            if continuation:
+            if redirect_continuation:
+                asyncio.run(continue_redirect_cycle(self.root, live=True))
+            elif continuation:
                 asyncio.run(continue_ssl_abort(self.root, live=True))
             else:
                 asyncio.run(run(self.root, name, live=True))
@@ -304,6 +317,17 @@ class AcquisitionTests(unittest.TestCase):
         self.assertEqual(
             read(self.root / "batches/first/people/A1/result.json")["status"], "no_usable_source"
         )
+
+    def test_redirect_cycle_is_a_saved_source_failure_not_a_batch_abort(self) -> None:
+        self.init()
+        self.batch("first", [self.row(1), self.row(2)])
+        calls, _ = self.invoke("first", redirect_person="source1.example")
+        self.assertEqual(sum(url == "https://source1.example/person" for url in calls), 1)
+        rows = read(self.root / "batches/first/result.json")["people"]
+        self.assertEqual([r["status"] for r in rows], ["no_usable_source", "candidates"])
+        failure = read(next((self.root / "batches/first/failures/A1").glob("*.json")))
+        self.assertEqual(failure["error"], "Redirect cycle")
+        self.assertEqual(read(Path(failure["receipt_path"]))["status"], 302)
 
 
 class SourceDeadlineTests(unittest.TestCase):
@@ -554,6 +578,135 @@ class SSLRecoveryTests(unittest.TestCase):
         decision = self.decision | {"preserved_files_sha256": preserved_snapshot(self.root)}
         with self.assertRaisesRegex(ValueError, "SSL transport abort"):
             validate_recovery_decision(self.root, decision, initial=True)
+
+
+class RedirectRecoveryTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        v1dir = Path(temporary.name)
+        v1hashes = code_hashes()
+        runtime_dir = Path(__file__).parents[1] / "src/sfr_enrichment"
+        for name in v1hashes:
+            if name.endswith(".py"):
+                (v1dir / name).write_bytes((runtime_dir / name).read_bytes())
+        for name in RECOVERY_FILES:
+            (v1dir / name).write_text("# synthetic reviewed v1 runtime " + name)
+            v1hashes[name] = sha(v1dir / name)
+        self.v1hashes = v1hashes
+        self.prior = SSLRecoveryTests()
+
+        async def abort_old_redirect(*args: Any) -> dict[str, Any]:
+            root, directory, profile, plan, ids = args
+            if profile["id"] != "A5":
+                return await collect_person(*args)
+            spec = plan["sources"][0]
+            loader = CampaignLoader(directory / "sources/A5", [spec["url"]], root, "A5", ids)
+            with self.assertRaises(SourceUnavailable):
+                await loader.load(spec["url"], kind=spec["kind"])
+            # Reproduce only the old uncaught classification after a fully saved 302.
+            raise ValueError("Redirect cycle")
+
+        with (
+            patch("sfr_enrichment.nir_acquisition.code_hashes", return_value=v1hashes),
+            patch("sfr_enrichment.nir_acquisition.__file__", str(v1dir / "nir_acquisition.py")),
+        ):
+            self.prior.setUp()
+            self.addCleanup(self.prior.doCleanups)
+            self.fixture, self.root, self.base = (
+                self.prior.fixture,
+                self.prior.root,
+                self.prior.base,
+            )
+            register_ssl_abort(self.root, self.prior.path)
+            self.fixture.invoke("first", continuation=True)
+            self.fixture.batch("second", [self.fixture.row(i) for i in (4, 5, 6)])
+            with (
+                patch(
+                    "sfr_enrichment.nir_acquisition.collect_person", side_effect=abort_old_redirect
+                ),
+                self.assertRaisesRegex(ValueError, "Redirect cycle"),
+            ):
+                self.fixture.invoke("second", redirect_person="source5.example")
+        source_dir = self.root / "batches/second/sources/A5"
+        redirect = next(source_dir.glob("redirect-*.json"))
+        receipt = next(
+            p for p in source_dir.glob("request-result-*.json") if read(p)["status"] == 302
+        )
+        self.decision: dict[str, Any] = {
+            "schema": REDIRECT_SCHEMA,
+            "authorization_reference": "synthetic approved repair",
+            "independent_review_reference": "synthetic review",
+            "batch": "second",
+            "predecessor_revision_sha256": sha(self.root / REVISION / "manifest.json"),
+            "original_code_sha256": v1hashes,
+            "replacement_code_sha256": code_hashes(),
+            "preserved_files_sha256": preserved_snapshot(self.root),
+            "original_runtime_files": {n: str(v1dir / n) for n in RECOVERY_FILES},
+            "aborted_author_id": "A5",
+            "aborted_queue_index": 4,
+            "resume_author_ids": ["A6"],
+            "self_redirect_path": str(redirect.relative_to(self.root)),
+            "request_receipt_path": str(receipt.relative_to(self.root)),
+            "reserved_requests_before": len(
+                list((self.root / "HTTP-ledger").glob("*-reserved.json"))
+            ),
+            "finished_requests_before": len(
+                list((self.root / "HTTP-ledger").glob("*-finished.json"))
+            ),
+        }
+        self.path = self.base / "redirect-decision.json"
+        immutable_json(self.path, self.decision)
+
+    def test_second_fixed_revision_preserves_ssl_and_runs_only_tail(self) -> None:
+        before = self.decision["preserved_files_sha256"]
+        register_redirect_cycle(self.root, self.path)
+        self.assertEqual(validate_redirect_recovery(self.root), self.decision)
+        self.assertEqual(validate_recovery(self.root)["reserved_ticket"], "0002")
+        calls, _ = self.fixture.invoke("second", redirect_continuation=True)
+        self.assertTrue(calls)
+        self.assertTrue(all("source6.example" in url for url in calls))
+        self.assertTrue(all(sha(self.root / name) == digest for name, digest in before.items()))
+        abort = read(self.root / "batches/second/people/A5/result.json")
+        self.assertEqual(abort["reason"], "redirect_cycle_source_abort_no_retry")
+        self.assertIsNone(abort["candidates"])
+        self.assertEqual(len(list((self.root / "HTTP-ledger").glob("*-retired.json"))), 1)
+        self.fixture.batch("third", [self.fixture.row(7)])
+        self.fixture.invoke("third")
+        checked(self.root)
+        with self.assertRaisesRegex(ValueError, "already attempted"):
+            self.fixture.invoke("second", redirect_continuation=True)
+
+    def test_wrong_revision_tail_receipt_or_extra_unknown_is_rejected(self) -> None:
+        changes: list[dict[str, Any]] = [
+            {"independent_review_reference": None},
+            {"predecessor_revision_sha256": "0" * 64},
+            {"original_code_sha256": code_hashes()},
+            {"resume_author_ids": ["A5", "A6"]},
+            {"aborted_queue_index": 5},
+            {"reserved_requests_before": 0},
+            {"request_receipt_path": self.decision["self_redirect_path"]},
+        ]
+        for change in changes:
+            with self.subTest(fields=list(change)), self.assertRaises((ValueError, KeyError)):
+                validate_redirect_decision(self.root, self.decision | change, initial=True)
+        immutable_json(
+            self.root / "HTTP-ledger/9999-reserved.json",
+            {"author_id": "A5", "url": "https://synthetic.example/unknown", "kind": "direct_http"},
+        )
+        extra = self.decision | {
+            "preserved_files_sha256": preserved_snapshot(self.root),
+            "reserved_requests_before": self.decision["reserved_requests_before"] + 1,
+        }
+        with self.assertRaisesRegex(ValueError, "additional unknown"):
+            validate_redirect_decision(self.root, extra, initial=True)
+
+    def test_predecessor_or_abort_proof_cannot_be_rewritten(self) -> None:
+        register_redirect_cycle(self.root, self.path)
+        proof = self.root / REDIRECT_REVISION / "abort.json"
+        proof.write_text(json.dumps(read(proof) | {"candidate_outcome": "no_email"}))
+        with self.assertRaisesRegex(ValueError, "abort proof"):
+            checked(self.root)
 
 
 if __name__ == "__main__":

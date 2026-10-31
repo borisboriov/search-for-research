@@ -15,6 +15,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 
@@ -35,6 +36,8 @@ from sfr_enrichment.sources import PublicLoader, SourceUnavailable
 SCHEMA = "nir_acquisition_only_v1"
 RECOVERY_SCHEMA = "nir_ssl_abort_recovery_v1"
 REVISION = "revisions/ssl-abort-01"
+REDIRECT_REVISION = "revisions/redirect-cycle-02"
+REDIRECT_SCHEMA = "nir_redirect_cycle_recovery_v1"
 RECOVERY_FILES = {"nir_acquisition.py", "sources.py"}
 MAXIMA = {
     "profile_total_cap": 60,
@@ -188,6 +191,12 @@ def preserved_snapshot(root: Path) -> dict[str, str]:
 
 
 def validate_recovery_decision(root: Path, decision: dict[str, Any], *, initial: bool) -> None:
+    _validate_ssl_decision(root, decision, initial=initial, runtime_hashes=code_hashes())
+
+
+def _validate_ssl_decision(
+    root: Path, decision: dict[str, Any], *, initial: bool, runtime_hashes: dict[str, str]
+) -> None:
     """One reviewed SSL-abort revision, not a generic bypass for code or unknown jobs."""
     ensure_not_stopped(root)
     if any(path.is_symlink() for path in root.rglob("*")):
@@ -210,7 +219,7 @@ def validate_recovery_decision(root: Path, decision: dict[str, Any], *, initial:
     old, new = decision["original_code_sha256"], decision["replacement_code_sha256"]
     if (
         old != manifest["code_sha256"]
-        or new != code_hashes()
+        or new != runtime_hashes
         or set(old) != set(new)
         or {key for key in old if old[key] != new[key]} != RECOVERY_FILES
     ):
@@ -385,8 +394,7 @@ def register_ssl_abort(root: Path, decision_path: Path) -> Path:
     return revision / "manifest.json"
 
 
-def validate_recovery(root: Path) -> dict[str, Any]:
-    """Read-only binding check; safe for the acquisition→selection compiler."""
+def _validate_ssl_recovery(root: Path, runtime_hashes: dict[str, str]) -> dict[str, Any]:
     revision = root / REVISION
     record, decision = read(revision / "manifest.json"), read(revision / "decision.json")
     if (
@@ -395,7 +403,7 @@ def validate_recovery(root: Path) -> dict[str, Any]:
         or record["predecessor_manifest_sha256"] != sha(root / "manifest.json")
     ):
         raise ValueError("Recovery revision binding changed")
-    validate_recovery_decision(root, decision, initial=False)
+    _validate_ssl_decision(root, decision, initial=False, runtime_hashes=runtime_hashes)
     for kind, hashes in (
         ("original-code", decision["original_code_sha256"]),
         ("replacement-code", decision["replacement_code_sha256"]),
@@ -415,6 +423,226 @@ def validate_recovery(root: Path) -> dict[str, Any]:
     )
     if read(result) != abort_result(decision, sha(retired)):
         raise ValueError("Technical-abort result changed")
+    return dict(decision)
+
+
+def validate_recovery(root: Path) -> dict[str, Any]:
+    """Validate the active fixed revision chain, retain the SSL ticket API."""
+    if (root / REDIRECT_REVISION).exists():
+        validate_redirect_recovery(root)
+        return dict(read(root / REVISION / "decision.json"))
+    return _validate_ssl_recovery(root, code_hashes())
+
+
+def validate_redirect_decision(root: Path, decision: dict[str, Any], *, initial: bool) -> None:
+    """Second and final fixed repair: recorded self-redirect, no new unknown HTTP job."""
+    if decision.get("schema") != REDIRECT_SCHEMA or any(
+        not isinstance(decision.get(key), str) or not decision[key].strip()
+        for key in ("authorization_reference", "independent_review_reference")
+    ):
+        raise ValueError("Redirect repair requires authorization and independent review")
+    old, new = decision["original_code_sha256"], decision["replacement_code_sha256"]
+    if (
+        decision["predecessor_revision_sha256"] != sha(root / REVISION / "manifest.json")
+        or new != code_hashes()
+        or set(old) != set(new)
+        or {key for key in old if old[key] != new[key]} != RECOVERY_FILES
+    ):
+        raise ValueError("Redirect runtime must extend the exact reviewed SSL revision")
+    prior = _validate_ssl_recovery(root, old)
+    if old != prior["replacement_code_sha256"]:
+        raise ValueError("Redirect predecessor runtime changed")
+    prior_result = batch_directory(root, prior["batch"]) / "result.json"
+    if read(root / REVISION / "continuation/finished.json")["batch_result_sha256"] != sha(
+        prior_result
+    ):
+        raise ValueError("SSL continuation must be complete and unchanged")
+    preserved = decision["preserved_files_sha256"]
+    for name, expected in preserved.items():
+        path = (root / name).resolve()
+        if not path.is_relative_to(root.resolve()) or sha(path) != expected:
+            raise ValueError("Preserved redirect evidence changed")
+    if initial and (preserved != preserved_snapshot(root) or (root / REDIRECT_REVISION).exists()):
+        raise ValueError("Redirect repair needs the complete current snapshot and a new revision")
+    directory = batch_directory(root, decision["batch"])
+    item = read(directory / "manifest.json")
+    ordered = batches(root)
+    if any(
+        not (p / "result.json").exists()
+        for p, m in ordered
+        if m["start_index"] < item["start_index"]
+    ):
+        raise ValueError("Earlier batches are incomplete")
+    if initial and any(
+        (p / "started.json").exists() for p, m in ordered if m["start_index"] > item["start_index"]
+    ):
+        raise ValueError("Later batch already attempted")
+    failure = read(directory / "failure.json")
+    if (failure.get("error_type"), failure.get("error"), failure.get("retry_allowed")) != (
+        "ValueError",
+        "Redirect cycle",
+        False,
+    ):
+        raise ValueError("Only the exact recorded Redirect cycle is eligible")
+    rows = read(directory / "plan.json")["profiles"]
+    aborted = decision["aborted_author_id"]
+    offset = next((i for i, row in enumerate(rows) if row["author_id"] == aborted), -1)
+    if (
+        offset < 0
+        or decision["aborted_queue_index"] != item["start_index"] + offset
+        or decision["resume_author_ids"] != [r["author_id"] for r in rows[offset + 1 :]]
+        or not decision["resume_author_ids"]
+    ):
+        raise ValueError("Redirect continuation must preserve the exact frozen tail")
+    prefix = str(directory.relative_to(root))
+    required = {"manifest.json", "scope.json", "profiles.json", REVISION + "/manifest.json"}
+    required.update(
+        prefix + "/" + n for n in ("manifest.json", "plan.json", "started.json", "failure.json")
+    )
+    for row in rows[:offset]:
+        required.update(
+            f"{prefix}/people/{row['author_id']}/{n}"
+            for n in ("result.json", "collector.json", "corpus.json")
+        )
+    redirect_path, receipt_path = decision["self_redirect_path"], decision["request_receipt_path"]
+    required.update((redirect_path, receipt_path))
+    if not required <= set(preserved) or any(
+        not (root / p).resolve().is_relative_to((directory / "sources" / aborted).resolve())
+        for p in (redirect_path, receipt_path)
+    ):
+        raise ValueError("Redirect evidence lacks required person/plan bindings")
+    redirect, receipt = read(root / redirect_path), read(root / receipt_path)
+    if (
+        redirect["source_url"] != redirect["observed_target"]
+        or redirect["source_url"] != receipt["url"]
+        or redirect["source_url"] not in {s["url"] for s in rows[offset]["sources"]}
+        or receipt.get("status") not in (301, 302, 303, 307, 308)
+        or receipt.get("complete") is not True
+        or urljoin(receipt["url"], receipt.get("location") or "") != redirect["observed_target"]
+    ):
+        raise ValueError("Recorded self-redirect/HTTP receipt mismatch")
+    before = [p for p in preserved if re.fullmatch(r"HTTP-ledger/\d{4}-reserved.json", p)]
+    finished = [p for p in preserved if re.fullmatch(r"HTTP-ledger/\d{4}-finished.json", p)]
+    if (
+        len(before) != decision["reserved_requests_before"]
+        or len(finished) != decision["finished_requests_before"]
+        or {p for p in before if p.replace("-reserved", "-finished") not in preserved}
+        != {f"HTTP-ledger/{prior['reserved_ticket']}-reserved.json"}
+    ):
+        raise ValueError("Redirect repair cannot retire an additional unknown HTTP job")
+    if initial:
+        if (directory / "result.json").exists() or any(
+            (directory / "people" / r["author_id"]).exists() for r in rows[offset:]
+        ):
+            raise ValueError("Redirect person/tail already has a result")
+        if any(read(root / p)["author_id"] in decision["resume_author_ids"] for p in before):
+            raise ValueError("Redirect tail already attempted")
+        originals = decision["original_runtime_files"]
+        if set(originals) != RECOVERY_FILES or any(
+            sha(Path(originals[k])) != old[k] for k in originals
+        ):
+            raise ValueError("Exact predecessor runtime snapshots are required")
+
+
+def redirect_abort_record(decision: dict[str, Any], decision_sha: str, at: str) -> dict[str, Any]:
+    return {
+        "schema": "nir_source_abort_v1",
+        "author_id": decision["aborted_author_id"],
+        "outcome": "source_redirect_cycle",
+        "candidate_outcome": "unknown",
+        "evidence_usable": False,
+        "budget_consumed": True,
+        "retry_allowed": False,
+        "decision_sha256": decision_sha,
+        "revision_path": REDIRECT_REVISION,
+        "recorded_at": at,
+    }
+
+
+def redirect_abort_result(decision: dict[str, Any], proof_sha: str) -> dict[str, Any]:
+    return {
+        "author_id": decision["aborted_author_id"],
+        "model_jobs": 0,
+        "status": "technical_abort",
+        "candidates": None,
+        "usable_sources": None,
+        "source_failures": None,
+        "reason": "redirect_cycle_source_abort_no_retry",
+        "abort_proof_path": REDIRECT_REVISION + "/abort.json",
+        "abort_proof_sha256": proof_sha,
+    }
+
+
+def register_redirect_cycle(root: Path, decision_path: Path) -> Path:
+    root = root.resolve()
+    with writer(root):
+        decision = read(decision_path)
+        validate_redirect_decision(root, decision, initial=True)
+        revision = root / REDIRECT_REVISION
+        check_storage_budget(root, decision_path.stat().st_size + 1024 * 1024)
+        immutable_bytes(revision / "decision.json", decision_path.read_bytes())
+        for name in RECOVERY_FILES:
+            immutable_bytes(
+                revision / "original-code" / name,
+                Path(decision["original_runtime_files"][name]).read_bytes(),
+            )
+            immutable_bytes(
+                revision / "replacement-code" / name, (Path(__file__).parent / name).read_bytes()
+            )
+        at, decision_sha = now(), sha(revision / "decision.json")
+        save(root, revision / "abort.json", redirect_abort_record(decision, decision_sha, at))
+        save(
+            root,
+            batch_directory(root, decision["batch"])
+            / "people"
+            / decision["aborted_author_id"]
+            / "result.json",
+            redirect_abort_result(decision, sha(revision / "abort.json")),
+        )
+        save(
+            root,
+            revision / "manifest.json",
+            {
+                "schema": "nir_redirect_revision_v1",
+                "registered_at": at,
+                "predecessor_revision_sha256": decision["predecessor_revision_sha256"],
+                "decision_sha256": decision_sha,
+                "abort_sha256": sha(revision / "abort.json"),
+            },
+        )
+        validate_redirect_recovery(root)
+    return revision / "manifest.json"
+
+
+def validate_redirect_recovery(root: Path) -> dict[str, Any]:
+    revision = root / REDIRECT_REVISION
+    record, decision = read(revision / "manifest.json"), read(revision / "decision.json")
+    if (
+        record.get("schema") != "nir_redirect_revision_v1"
+        or record["decision_sha256"] != sha(revision / "decision.json")
+        or record["predecessor_revision_sha256"] != sha(root / REVISION / "manifest.json")
+    ):
+        raise ValueError("Redirect revision binding changed")
+    validate_redirect_decision(root, decision, initial=False)
+    for kind, hashes in (
+        ("original-code", decision["original_code_sha256"]),
+        ("replacement-code", decision["replacement_code_sha256"]),
+    ):
+        if any(sha(revision / kind / name) != hashes[name] for name in RECOVERY_FILES):
+            raise ValueError("Redirect runtime snapshot changed")
+    proof = revision / "abort.json"
+    if sha(proof) != record["abort_sha256"] or read(proof) != redirect_abort_record(
+        decision, record["decision_sha256"], record["registered_at"]
+    ):
+        raise ValueError("Redirect abort proof changed")
+    result = (
+        batch_directory(root, decision["batch"])
+        / "people"
+        / decision["aborted_author_id"]
+        / "result.json"
+    )
+    if read(result) != redirect_abort_result(decision, sha(proof)):
+        raise ValueError("Redirect technical-abort result changed")
     return dict(decision)
 
 
@@ -627,17 +855,26 @@ async def run(root: Path, name: str, *, live: bool = False) -> Path:
 
 
 async def continue_ssl_abort(root: Path, *, live: bool = False) -> Path:
+    return await _continue_tail(root, live=live, redirect_cycle=False)
+
+
+async def continue_redirect_cycle(root: Path, *, live: bool = False) -> Path:
+    return await _continue_tail(root, live=live, redirect_cycle=True)
+
+
+async def _continue_tail(root: Path, *, live: bool, redirect_cycle: bool) -> Path:
     """One new attempt for the exact tail; never retry the aborted person/request."""
     root = root.resolve()
     with writer(root):
         profiles, manifest = checked(root)
-        decision = validate_recovery(root)
+        decision = validate_redirect_recovery(root) if redirect_cycle else validate_recovery(root)
+        revision = REDIRECT_REVISION if redirect_cycle else REVISION
         if not live or manifest["live_authorized"] is not True:
             raise ValueError("Explicit --live acquisition authorization required")
         if datetime.now(UTC) >= datetime.fromisoformat(manifest["deadline_acquisition"]):
             raise ValueError("Acquisition deadline")
         directory = batch_directory(root, decision["batch"])
-        attempt = root / REVISION / "continuation"
+        attempt = root / revision / "continuation"
         if (attempt / "started.json").exists() or (directory / "result.json").exists():
             raise ValueError("Continuation already attempted; no resubmission")
         rows = read(directory / "plan.json")["profiles"]
@@ -648,7 +885,7 @@ async def continue_ssl_abort(root: Path, *, live: bool = False) -> Path:
             attempt / "started.json",
             {
                 "at": now(),
-                "decision_sha256": sha(root / REVISION / "decision.json"),
+                "decision_sha256": sha(root / revision / "decision.json"),
                 "author_ids": decision["resume_author_ids"],
                 "model_jobs": 0,
             },
@@ -667,7 +904,7 @@ async def continue_ssl_abort(root: Path, *, live: bool = False) -> Path:
                     "people": results,
                     "model_jobs": 0,
                     "technical_aborts": 1,
-                    "continuation_decision_sha256": sha(root / REVISION / "decision.json"),
+                    "continuation_decision_sha256": sha(root / revision / "decision.json"),
                 },
             )
             save(
@@ -699,7 +936,15 @@ async def continue_ssl_abort(root: Path, *, live: bool = False) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for command in ("init", "prepare", "run", "register-ssl-abort", "continue-ssl-abort"):
+    for command in (
+        "init",
+        "prepare",
+        "run",
+        "register-ssl-abort",
+        "continue-ssl-abort",
+        "register-redirect-cycle",
+        "continue-redirect-cycle",
+    ):
         item = sub.add_parser(command)
         item.add_argument("--root", type=Path, required=True)
         if command == "init":
@@ -707,11 +952,11 @@ def main() -> None:
             item.add_argument("--scope", type=Path, required=True)
         elif command in ("prepare", "run"):
             item.add_argument("--batch", required=True)
-        elif command == "register-ssl-abort":
+        elif command in ("register-ssl-abort", "register-redirect-cycle"):
             item.add_argument("--decision", type=Path, required=True)
         if command == "prepare":
             item.add_argument("--plan", type=Path, required=True)
-        if command in ("run", "continue-ssl-abort"):
+        if command in ("run", "continue-ssl-abort", "continue-redirect-cycle"):
             item.add_argument("--live", action="store_true", required=True)
     args = parser.parse_args()
     if args.command == "init":
@@ -722,6 +967,10 @@ def main() -> None:
         result = register_ssl_abort(args.root, args.decision)
     elif args.command == "continue-ssl-abort":
         result = asyncio.run(continue_ssl_abort(args.root, live=args.live))
+    elif args.command == "register-redirect-cycle":
+        result = register_redirect_cycle(args.root, args.decision)
+    elif args.command == "continue-redirect-cycle":
+        result = asyncio.run(continue_redirect_cycle(args.root, live=args.live))
     else:
         result = asyncio.run(run(args.root, args.batch, live=args.live))
     print(result)
