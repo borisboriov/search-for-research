@@ -14,10 +14,27 @@ from urllib.parse import urlparse
 from sfr_enrichment.batch import encoded
 from sfr_enrichment.common import now, private_root, read, sha, write_new
 from sfr_enrichment.evidence import identifier, immutable_bytes
+from sfr_enrichment.nir_inventory import (
+    candidate_identity_keys,
+    canonical_document_url,
+    canonical_email,
+    overlap_reasons,
+    validate_inventory,
+)
 
 LABELS = ("supported", "refuted", "insufficient")
 ANNOTATORS = ("adelina", "sasha")
-PROFILE_KEYS = {"name", "aliases", "identifiers", "affiliations", "topics"}
+PROFILE_KEYS = {
+    "name",
+    "aliases",
+    "identifiers",
+    "affiliations",
+    "topics",
+    "id",
+    "author_id",
+    "openalex_id",
+    "orcid",
+}
 CASE_KEYS = {"case_id", "group_id", "pair_id", "example_ids", "profile", "email", "evidence"}
 SOURCE_KEYS = {"source_id", "url", "captured_at", "content_date", "source_path", "excerpt"}
 
@@ -81,7 +98,14 @@ def compose(identity: str, relation: str) -> str:
     return "insufficient"
 
 
-def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -> Path:
+def freeze(
+    root: Path,
+    selection: Path,
+    exclusions: Path,
+    protocol_path: Path,
+    *,
+    development_only: bool = False,
+) -> Path:
     """Copy allowlisted inputs and source bodies, excluding every declared previous use."""
     root = private_root(root)
     if (root / "manifest.json").exists():
@@ -89,14 +113,23 @@ def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -
     rows, old, protocol = read(selection), read(exclusions), read(protocol_path)
     if not isinstance(rows, list) or not rows:
         raise ValueError("Нужна непустая выборка")
-    if old.get("complete_prior_use_inventory") is not True or not old.get("inventory_sources"):
-        raise ValueError("Нужен явный полный реестр прежних использований и его источники")
-    for source in old["inventory_sources"]:
-        if sha(exclusions.parent / source["path"]) != source["sha256"]:
-            raise ValueError("Изменён источник реестра исключений")
-    for key in ("group_ids", "pair_ids", "example_ids"):
-        if not isinstance(old.get(key), list) or any(not isinstance(x, str) for x in old[key]):
-            raise ValueError("Нужны списки всех прежних людей, пар и примеров")
+    if development_only:
+        if old.get("complete_prior_use_inventory") is not True or not old.get("inventory_sources"):
+            raise ValueError("Нужны источники даже для разработочного реестра")
+        for source in old["inventory_sources"]:
+            if sha(exclusions.parent / source["path"]) != source["sha256"]:
+                raise ValueError("Изменён источник реестра исключений")
+        for key in ("group_ids", "pair_ids", "example_ids"):
+            if not isinstance(old.get(key), list) or any(not isinstance(x, str) for x in old[key]):
+                raise ValueError("Нужны списки прежних людей, пар и примеров разработки")
+    elif old.get("schema") != "nir_prior_inventory_v1":
+        raise ValueError(
+            "Для нового отбора нужен producer registry; legacy только --development-only"
+        )
+    else:
+        validate_inventory(old, exclusions.parent)
+        if old.get("completeness", {}).get("complete") is not True:
+            raise ValueError("Неполный реестр: новый независимый отбор заблокирован")
     for key in (
         "rubric",
         "common_examples",
@@ -118,6 +151,7 @@ def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -
     case_ids: set[str] = set()
     pair_ids: set[str] = set()
     exact_pairs: set[tuple[str, str]] = set()
+    identity_groups: dict[str, str] = {}
     for row in rows:
         if set(row) != CASE_KEYS or set(row["profile"]) - PROFILE_KEYS:
             raise ValueError("Посторонние поля могут раскрыть ответы; используйте чистый input")
@@ -125,17 +159,23 @@ def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -
             identifier(row[key])
         if row["case_id"] in case_ids or row["pair_id"] in pair_ids:
             raise ValueError("Повтор case_id/pair_id")
-        if (
+        if not isinstance(row["example_ids"], list) or any(
+            not isinstance(x, str) for x in row["example_ids"]
+        ):
+            raise ValueError("Нужен список идентификаторов доказательных примеров")
+        if development_only and (
             row["group_id"] in old["group_ids"]
             or row["pair_id"] in old["pair_ids"]
-            or not isinstance(row["example_ids"], list)
             or any(x in old["example_ids"] for x in row["example_ids"])
         ):
             raise ValueError("Прежний человек, пара или доказательный пример запрещены")
         case_ids.add(row["case_id"])
         pair_ids.add(row["pair_id"])
         nonempty(row["email"], "email")
-        exact_pair = (row["group_id"], row["email"].strip())
+        exact_pair = (
+            row["group_id"],
+            row["email"].strip() if development_only else canonical_email(row["email"]),
+        )
         if exact_pair in exact_pairs:
             raise ValueError("Повтор пары group_id/email под другим идентификатором")
         exact_pairs.add(exact_pair)
@@ -150,7 +190,9 @@ def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -
             identifier(item["source_id"])
             seen_sources.add(item["source_id"])
             timestamp(item["captured_at"])
-            if urlparse(item["url"]).scheme not in ("https", "http"):
+            if urlparse(item["url"]).scheme not in ("https", "http") or (
+                not development_only and canonical_document_url(item["url"]) is None
+            ):
                 raise ValueError("Нужен публичный URL источника")
             if item["content_date"] is not None:
                 nonempty(item["content_date"], "content_date")
@@ -165,6 +207,32 @@ def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -
                 {k: v for k, v in item.items() if k != "source_path"}
                 | {"body_sha256": body_hash, "snapshot": f"sources/{body_hash}.txt"}
             )
+        if not development_only:
+            identity_keys = candidate_identity_keys(row["profile"], row["group_id"])
+            if not identity_keys:
+                raise ValueError("Для нового отбора нужен сильный идентификатор исследователя")
+            if any(
+                key in identity_groups and identity_groups[key] != row["group_id"]
+                for key in identity_keys
+            ):
+                raise ValueError("Один исследователь не может иметь разные group_id в выборке")
+            for key in identity_keys:
+                identity_groups[key] = row["group_id"]
+            reasons = overlap_reasons(
+                old,
+                {
+                    "identity_keys": identity_keys,
+                    "email": row["email"],
+                    "snapshot_sha256": [s["body_sha256"] for s in sources],
+                    "excerpt_sha256": [
+                        hashlib.sha256(s["excerpt"].encode("utf-8")).hexdigest() for s in sources
+                    ],
+                    "source_urls": [s["url"] for s in sources],
+                    "example_keys": row["example_ids"],
+                },
+            )
+            if reasons:
+                raise ValueError("Пересечение с прежним использованием: " + ", ".join(reasons))
         cases.append({**row, "evidence": sources})
     # Both arms receive precisely the same JSON; only the required output structure differs.
     write_new(root / "cases.json", cases)
@@ -205,8 +273,18 @@ def freeze(root: Path, selection: Path, exclusions: Path, protocol_path: Path) -
         "case_input_sha256": input_hashes,
         "cases": len(cases),
         "groups": len({r["group_id"] for r in cases}),
+        "holdout_status": "development_only_not_holdout"
+        if development_only
+        else "recorded_prior_overlap_checked",
         "launch_authorized": False,
-        "warning": "Offline preparation only; inventory completeness requires human verification",
+        "warning": (
+            "Development data only; no new-holdout claim"
+            if development_only
+            else (
+                "Recorded prior-overlap check only; "
+                "new-frame identity/coherence requires verification"
+            )
+        ),
     }
     write_new(root / "manifest.json", manifest)
     return root / "manifest.json"
@@ -560,6 +638,7 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
                 "requires_existing_isolation_probe": True,
                 "output_byte_cap_scope": "native stdout/stderr; raw-result postchecked at import",
                 "launch_authorized": False,
+                "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
             }
             write_new(target / "request.json", request)
             requests[request_id] = {
@@ -577,6 +656,7 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
             "requests": requests,
             "order_rule": "shuffle cases; alternate first arm, balanced B/C-first within one case",
             "launch_authorized": False,
+            "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
         },
     )
     return directory / "manifest.json"
@@ -976,7 +1056,7 @@ def paired_bootstrap(rows: list[dict[str, Any]], seed: int, resamples: int) -> d
 
 
 def analyze(root: Path, output: Path, *, seed: int = 154, resamples: int = 2000) -> Path:
-    _, cases, _ = checked(root)
+    manifest, cases, _ = checked(root)
     output = private_output(output)
     states = human_state(root, cases)
     models: dict[str, dict[str, Any]] = {"B": {}, "C": {}}
@@ -1080,6 +1160,7 @@ def analyze(root: Path, output: Path, *, seed: int = 154, resamples: int = 2000)
             "manifest_sha256": sha(root / "manifest.json"),
             "created_at": now(),
             "status": "offline_analysis_not_scientific_completion",
+            "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
             "configuration_status": (
                 "mismatch"
                 if any(r["configuration_mismatches"] for r in resources.values())
@@ -1140,6 +1221,7 @@ def main() -> None:
             command.add_argument("--selection", required=True, type=Path)
             command.add_argument("--exclusions", required=True, type=Path)
             command.add_argument("--protocol", required=True, type=Path)
+            command.add_argument("--development-only", action="store_true")
         elif name == "export":
             command.add_argument("--annotator", required=True, choices=ANNOTATORS)
         elif name == "analyze":
@@ -1158,7 +1240,13 @@ def main() -> None:
     args = parser.parse_args()
     root = private_root(args.root)
     if args.command == "freeze":
-        result = freeze(root, args.selection, args.exclusions, args.protocol)
+        result = freeze(
+            root,
+            args.selection,
+            args.exclusions,
+            args.protocol,
+            development_only=args.development_only,
+        )
     elif args.command == "export":
         result = export(root, args.annotator)
     elif args.command == "analyze":

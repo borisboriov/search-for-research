@@ -47,8 +47,8 @@ C, нулевые знаменатели, разногласия/пропуск�
 | Проверка | Результат |
 |---|---|
 | make lint | Ruff и форматирование пройдены |
-| make typecheck | 192 файла, ошибок нет |
-| make test | 63 unittest скриптов; 321 enrichment offline; 388 pytest passed, 8 skipped, 5 deselected; coverage 94,06 % |
+| make typecheck | 194 файла, ошибок нет |
+| make test | 63 unittest скриптов; 348 enrichment offline; 388 pytest passed, 8 skipped, 5 deselected; coverage 94,06 % |
 | make docs-check; git diff --check | Пройдены; ниже указана граница сверки production meta |
 | make audit AUDIT_ARGS="--no-images --strict" | Все 9 проверок пройдены, включая Node; режим no-images |
 | Точный маршрут из операционной инструкции | freeze → два нейтральных export → prepare-model → analyze; 4 искусственных case, 8 подготовленных requests, human_missing=4, R/T=null, launch_authorized=false |
@@ -67,15 +67,71 @@ CI запускает её с настоящим сервисом.
 проверяются существующими jobs CI. Strict audit выполняется с no-images, что
 является действующим режимом поручения, а не проверкой контейнерных образов.
 
+## Исторический реестр и защита нового отбора
+
+Доступный catalogue прочитан с проверкой заданного SHA. Из него и последующих
+metadata воспроизводимо построен частный prior-inventory-v6; source архивы не
+изменялись. Producer — [nir_inventory.py](../../enrichment/src/sfr_enrichment/nir_inventory.py),
+команда и контракты — [README](../../enrichment/README.md#частный-реестр-исторических-исключений).
+В Git нет данных этого реестра. Каталог результата содержит plan, полный inventory,
+совместимую списковую проекцию exclusions и build-proof с SHA кода/входов/выходов.
+
+| Проверенный охват v6 | Результат |
+|---|---|
+| Источники и roots | 4 549 metadata sources, 58 roots; catalogue от 11.10 дополнен поздними этапами, SFR-5 contacts и fixtures |
+| Идентификаторы | 214 OpenAlex ID + 183 ORCID-алиаса; отдельно 4 synthetic target records, не новые реальные люди |
+| Прежние пары-кандидаты | 250 с реальными ID + 4 synthetic; все вердикты, не только accepted |
+| Доказательные записи | 5 642 typed entries, 1 136 URL, 7 160 scoped examples, 114 DOI refs; это не 5 642 независимых документов |
+| Семантическая closure | 183 cohort sets, 615 sample/profiles SHA references, 18 690 source-record references |
+| Объём одного semantic pass | 143 915 979 metadata bytes; 11 646 bytes целевых искусственных документов; 216 355 raw/unselected files не читались |
+| Полнота | metadata_scope_complete=true, prior_details_complete=false, overall complete=false |
+
+Повторная валидация заново читает hashes и строит metadata derivation; её IO
+не включён второй раз в размер одного semantic pass. Names не сливаются как
+доказанная идентичность. Неизвестные hashes не выдумываются; body/decoded/text/
+excerpt, source-record SHA и публикационные DOI не смешиваются.
+
+Два известных capture gaps — $.rows[6] и $.rows[9] частного
+«contacts_manual_sfr5.json»: стоит email_published=true, но адрес и документный
+локатор не сохранены. Private inventory содержит source paths/SHA/selectors.
+Это не parser omission или отсутствующий catalogue. IDs этих людей исключены,
+а неизвестные pair/document details сохраняют overall complete=false и блокируют
+обычный freeze. Тонкие request metadata (585 MCP request и 1 145 HTTP sidecars) читаются
+без prompts/responses/header/auth/body harvesting; 75 requested_url references
+не выдаются за полные загруженные документы. Три служебных пропуска адресно обоснованы в coverage как
+nonblocking; они не выданы за отсутствующие исследовательские данные.
+
+Guard теперь использует canonical identity keys, пары, URL и SHA фактических
+UTF-8 snapshots/excerpts. Смена локального group/pair/example ID не обходит
+проверку. Списковая projection не принимается вместо полного registry. Изменённый
+источник, удалённая запись/подмена lookup и незакрытые gaps отклоняются. Старый
+формат и fixtures доступны явно через --development-only с меткой
+`development_only_not_holdout`. Даже пройденный recorded overlap check не является
+глобальной гарантией новой выборки. Реальных новых данных или вызовов нет.
+
+Две независимые сборки v6 и v6-replay дали одинаковые records/coverage и
+payload SHA без created_at:
+4475fd9df28e3298a80ae1bc0b0d0025e2eb593a07620b4f759298e14272ef41.
+Полный inventory SHA:
+574f1d3cc17784d2b542e76814715db170bbfae7f386dff52313e48ccc0ce43f;
+producer SHA:
+32cd597a70bc03f85d0a352b1ddf26c9ff5b0ebad8c990d6cd4ad03a4884ae04.
+Private каталог 0700, файлы 0600. Дополнительно реальный v6 заново валидирован;
+ordinary freeze с ним отклонён по двум capture gaps. На fixtures development mode
+сохранён и явно отмечен в manifest/request/analysis. Промежуточные v1–v5 сохранены как prototypes;
+для текущей процедуры они не заменяют итоговый v6 и проверку новым кодом.
+
 ## Ограничения и передача
 
 Реальный пилот, человеческие ответы, модельные receipts и рассчитанный по пилоту
 объём основного теста пока отсутствуют. Нужны отдельное разрешение запуска,
-проверенный полный реестр исключений/новый отбор, сохранённые источники,
+новый отбор и сохранённые источники,
 подтверждённые сроки разметчиков и решение о численных границах/ресурсах.
-В доступных metadata-каталогах полный исторический inventory не найден: нужны
-частный artifact-catalogue и manifests ID/доказательных документов прежних этапов.
-Предыдущий ограниченный список 155 ID не выдаётся за исчерпывающий.
+Исторический artifact-catalogue от 11.10 найден и читается, SHA проверен;
+доступны manifests последующих этапов 13–14.10. Их чтение и воспроизводимый
+частный derivative выполнены в автономной подготовке; предоставлять каталог
+Борису заново не требуется. Границы полноты проверены по содержательному coverage
+этапов и provenance; два конкретных capture gaps раскрыты выше; прежний ограниченный список 155 ID не считается исчерпывающим.
 В локальном архиве «2026-10-31_НИР_источники_и_проверки» сохранены 34 полных
 первичных PDF с SHA, manifest 35 работ (одна изучена по HTML), исходные тела
 затронутых issues и искусственный пример экспорта; это не пилотные данные.

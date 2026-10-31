@@ -29,6 +29,7 @@ from sfr_enrichment.nir import (
     prepare_model,
     prepared_request,
 )
+from sfr_enrichment.nir_inventory import build_inventory, make_lookup
 
 
 class NirOfflineTests(unittest.TestCase):
@@ -93,7 +94,84 @@ class NirOfflineTests(unittest.TestCase):
                 "limits": {"model_calls": 0, "http_calls": 0},
             },
         )
-        freeze(self.root, self.selection, self.exclusions, self.protocol)
+        freeze(self.root, self.selection, self.exclusions, self.protocol, development_only=True)
+
+    def full_prior_inventory(
+        self,
+        *,
+        representation: str = "body",
+        document_hash: str | None = None,
+        incomplete: bool = False,
+    ) -> tuple[Path, Path]:
+        sequence = len(list(self.tmp.glob("prior-experiments-*")))
+        base = self.tmp / f"prior-experiments-{sequence}"
+        old_root = base / "enrichment-synthetic"
+        old_root.mkdir(parents=True)
+        write_new(
+            old_root / "sample.json",
+            [
+                {"id": "A123", "orcid": "0000-0000-0000-0001"},
+                {"id": "A456", "orcid": "0000-0000-0000-001X"},
+            ],
+        )
+        old_metadata = old_root / "collector.json"
+        write_new(
+            old_metadata,
+            {
+                "author_id": "A123",
+                "items": [
+                    {"field": "email", "value": "old@example.invalid", "item_id": "old-item"}
+                ],
+                "evidence_pool": {
+                    "old-evidence": {
+                        "url": "https://archive.invalid/paper",
+                        representation + "_sha256": document_hash
+                        or hashlib.sha256(b"Old synthetic text").hexdigest(),
+                        "excerpt": "Old synthetic excerpt",
+                    }
+                },
+            },
+        )
+        catalogue = self.tmp / f"catalogue-{sequence}.json"
+        references = [{"path": str(old_root)}]
+        if incomplete:
+            references.append({"path": str(base / "enrichment-missing")})
+        write_new(
+            catalogue,
+            {
+                "schema": "enrichment-storage-catalogue-v1",
+                "at": "2026-10-31T00:00:00+03:00",
+                "roots": references,
+            },
+        )
+        inventory = build_inventory(
+            {
+                "schema": "nir_prior_inventory_plan_v1",
+                "scope": "Fixed synthetic metadata scope",
+                "catalogue": {"path": str(catalogue), "sha256": sha(catalogue)},
+                "experiment_base": str(base),
+                "metadata_byte_limit": 8388608,
+                "extra_roots": [],
+            }
+        )
+        self.assertEqual(inventory["completeness"]["complete"], not incomplete)
+        inventory_path = self.tmp / f"prior-inventory-{sequence}.json"
+        write_new(inventory_path, inventory)
+        return inventory_path, old_metadata
+
+    def real_selection(
+        self, *, profile: dict[str, Any] | None = None, source_url: str | None = None
+    ) -> Path:
+        rows = read(self.selection)[:1]
+        rows[0]["profile"] = profile or {
+            "name": "Synthetic new target",
+            "identifiers": {"openalex": "https://openalex.org/A900"},
+        }
+        if source_url is not None:
+            rows[0]["evidence"][0]["url"] = source_url
+        path = self.tmp / f"real-selection-{len(list(self.tmp.glob('real-selection-*.json')))}.json"
+        write_new(path, rows)
+        return path
 
     def humans(self, annotator: str, labels: list[str | None]) -> Path:
         packet = export(self.root, annotator)
@@ -250,7 +328,7 @@ class NirOfflineTests(unittest.TestCase):
         self.assertIsNone(b["deadline_epoch"])
         self.assertTrue(b["requires_existing_isolation_probe"])
         other_root = self.tmp / "replicated"
-        freeze(other_root, self.selection, self.exclusions, self.protocol)
+        freeze(other_root, self.selection, self.exclusions, self.protocol, development_only=True)
         self.assertEqual(prepared["order"], read(prepare_model(other_root, seed=154))["order"])
 
     def test_native_normalization_keeps_unknown_model_cost_and_actual_usage(self) -> None:
@@ -313,7 +391,7 @@ class NirOfflineTests(unittest.TestCase):
         protocol_path = self.tmp / "native-protocol.json"
         write_new(protocol_path, protocol)
         root = self.tmp / "native-contract-root"
-        freeze(root, self.selection, self.exclusions, protocol_path)
+        freeze(root, self.selection, self.exclusions, protocol_path, development_only=True)
         prepare_model(root)
         request = prepared_request(root, "c1-B")
         common, prompt = (
@@ -400,7 +478,211 @@ class NirOfflineTests(unittest.TestCase):
                 path = self.tmp / f"excluded-{key}.json"
                 write_new(path, rows)
                 with self.assertRaisesRegex(ValueError, "Прежний"):
-                    freeze(self.tmp / f"root-{key}", path, self.exclusions, self.protocol)
+                    freeze(
+                        self.tmp / f"root-{key}",
+                        path,
+                        self.exclusions,
+                        self.protocol,
+                        development_only=True,
+                    )
+
+    def test_legacy_inventory_needs_explicit_development_and_cannot_claim_holdout(self) -> None:
+        with self.assertRaisesRegex(ValueError, "producer registry"):
+            freeze(self.tmp / "legacy-default", self.selection, self.exclusions, self.protocol)
+        self.assertEqual(
+            read(self.root / "manifest.json")["holdout_status"], "development_only_not_holdout"
+        )
+        report = read(analyze(self.root, self.tmp / "development-analysis.json", resamples=5))
+        self.assertEqual(report["holdout_status"], "development_only_not_holdout")
+
+    def test_lightweight_lookup_projection_cannot_replace_a_full_producer_inventory(self) -> None:
+        projection = self.tmp / "lookup-only.json"
+        write_new(
+            projection,
+            {
+                "schema": "nir_prior_inventory_v1",
+                "completeness": {"complete": True, "gaps": []},
+                "lookup": {
+                    "identity_keys": [],
+                    "pair_keys": [],
+                    "casefold_pair_keys": [],
+                    "document_urls": [],
+                    "document_sha256": {"body": [], "decoded": [], "text": []},
+                    "example_keys": [],
+                },
+            },
+        )
+        target = self.tmp / "projection-bypass"
+        with self.assertRaises(ValueError):
+            freeze(target, self.selection, projection, self.protocol)
+        self.assertFalse((target / "manifest.json").exists())
+
+    def test_full_producer_allows_only_recorded_overlap_claim_for_new_declared_identity(
+        self,
+    ) -> None:
+        inventory, _ = self.full_prior_inventory()
+        target = self.tmp / "guarded-new-frame"
+        path = freeze(target, self.real_selection(), inventory, self.protocol)
+        manifest = read(path)
+        self.assertEqual(manifest["holdout_status"], "recorded_prior_overlap_checked")
+        self.assertIn("new-frame identity/coherence requires verification", manifest["warning"])
+        self.assertFalse(manifest["launch_authorized"])
+
+    def test_historical_identity_aliases_cannot_be_hidden_by_fresh_group_or_pair_ids(self) -> None:
+        inventory, _ = self.full_prior_inventory()
+        profiles: list[dict[str, Any]] = [
+            {"name": "Renamed synthetic target", "author_id": "https://openalex.org/A123"},
+            {"name": "Renamed synthetic target", "identifiers": {"aliases": ["A123"]}},
+            {
+                "name": "Renamed synthetic target",
+                "identifiers": {"openalex": "A900"},
+                "orcid": "https://orcid.org/0000-0000-0000-0001",
+            },
+            {
+                "name": "Renamed synthetic target",
+                "identifiers": {"openalex": "A900"},
+                "aliases": ["Arbitrary name", "orcid:0000-0000-0000-0001"],
+            },
+        ]
+        for index, profile in enumerate(profiles):
+            with (
+                self.subTest(index=index),
+                self.assertRaisesRegex(ValueError, "researcher_alias_overlap"),
+            ):
+                freeze(
+                    self.tmp / f"alias-bypass-{index}",
+                    self.real_selection(profile=profile),
+                    inventory,
+                    self.protocol,
+                )
+        mismatched = {
+            "name": "Synthetic conflicting aliases",
+            "author_id": "A123",
+            "orcid": "0000-0000-0000-001X",
+        }
+        with self.assertRaisesRegex(ValueError, "identity_alias_conflict"):
+            freeze(
+                self.tmp / "alias-mismatch",
+                self.real_selection(profile=mismatched),
+                inventory,
+                self.protocol,
+            )
+
+    def test_real_guard_detects_canonical_person_email_even_after_id_renaming(self) -> None:
+        inventory, _ = self.full_prior_inventory()
+        for index, (address, reason) in enumerate(
+            [
+                (" old @ example.invalid ", "researcher_email_pair_overlap"),
+                ("OLD@example.invalid", "conservative_email_casefold_collision"),
+            ]
+        ):
+            rows = read(self.real_selection(profile={"name": "Synthetic", "id": "A123"}))
+            rows[0].update(group_id="fresh_group", pair_id=f"fresh_pair_{index}", email=address)
+            path = self.tmp / f"renamed-pair-selection-{index}.json"
+            write_new(path, rows)
+            with self.assertRaisesRegex(ValueError, reason):
+                freeze(self.tmp / f"canonical-pair-bypass-{index}", path, inventory, self.protocol)
+
+    def test_actual_new_snapshot_is_compared_to_each_recorded_hash_namespace(self) -> None:
+        for representation in ("body", "decoded", "text"):
+            inventory, _ = self.full_prior_inventory(
+                representation=representation, document_hash=sha(self.source)
+            )
+            with (
+                self.subTest(representation=representation),
+                self.assertRaisesRegex(ValueError, "document_bytes_overlap:" + representation),
+            ):
+                freeze(
+                    self.tmp / f"document-{representation}",
+                    self.real_selection(),
+                    inventory,
+                    self.protocol,
+                )
+
+    def test_document_url_collision_ignores_fragment_and_hostname_case(self) -> None:
+        inventory, _ = self.full_prior_inventory()
+        selection = self.real_selection(source_url="https://ARCHIVE.invalid/paper#renamed")
+        with self.assertRaisesRegex(ValueError, "document_url_overlap"):
+            freeze(self.tmp / "same-url-new-bytes", selection, inventory, self.protocol)
+        for index, invalid in enumerate(
+            ("https:///missing-host", "https://user@archive.invalid/paper")
+        ):
+            with self.assertRaisesRegex(ValueError, "публичный URL"):
+                freeze(
+                    self.tmp / f"invalid-public-url-{index}",
+                    self.real_selection(source_url=invalid),
+                    inventory,
+                    self.protocol,
+                )
+
+    def test_old_evidence_excerpt_cannot_be_reused_under_a_larger_body_and_new_url(self) -> None:
+        inventory, _ = self.full_prior_inventory()
+        self.source.write_text("New synthetic context. Old synthetic excerpt. More new context.")
+        rows = read(self.real_selection())
+        rows[0]["evidence"][0]["excerpt"] = "Old synthetic excerpt"
+        path = self.tmp / "reused-fragment-new-document.json"
+        write_new(path, rows)
+        with self.assertRaisesRegex(ValueError, "evidence_excerpt_overlap:excerpt"):
+            freeze(self.tmp / "fragment-reuse", path, inventory, self.protocol)
+
+    def test_real_guard_rejects_missing_identity_and_split_researcher_groups(self) -> None:
+        inventory, _ = self.full_prior_inventory()
+        selection = self.real_selection(
+            profile={"name": "No ID", "identifiers": {"openalex": None}}
+        )
+        with self.assertRaisesRegex(ValueError, "сильный идентификатор"):
+            freeze(self.tmp / "no-identity", selection, inventory, self.protocol)
+        rows = read(self.selection)[:2]
+        for index, row in enumerate(rows):
+            row.update(group_id=f"split_group_{index}")
+            row["profile"] = {"name": "Same synthetic researcher", "id": "A900"}
+        path = self.tmp / "split-groups.json"
+        write_new(path, rows)
+        with self.assertRaisesRegex(ValueError, "разные group_id"):
+            freeze(self.tmp / "split-current-researcher", path, inventory, self.protocol)
+
+    def test_incomplete_full_registry_and_changed_provenance_hash_are_rejected(self) -> None:
+        inventory, _ = self.full_prior_inventory(incomplete=True)
+        with self.assertRaisesRegex(ValueError, "Неполный реестр"):
+            freeze(
+                self.tmp / "incomplete-full-registry",
+                self.real_selection(),
+                inventory,
+                self.protocol,
+            )
+        inventory, metadata = self.full_prior_inventory()
+        metadata.write_bytes(metadata.read_bytes() + b"\n")
+        with self.assertRaisesRegex(ValueError, "hash changed"):
+            freeze(
+                self.tmp / "changed-source-metadata",
+                self.real_selection(),
+                inventory,
+                self.protocol,
+            )
+
+    def test_cleared_recordsets_with_consistent_lookup_cannot_bypass_source_derivation(
+        self,
+    ) -> None:
+        inventory_path, _ = self.full_prior_inventory()
+        forged = read(inventory_path)
+        for table in ("people", "pairs", "documents", "examples"):
+            forged[table] = []
+        forged["lookup"] = make_lookup([], [], [], [])
+        projection = self.tmp / "cleared-recordsets.json"
+        write_new(projection, forged)
+        with self.assertRaises(ValueError):
+            freeze(self.tmp / "recordset-erasure", self.real_selection(), projection, self.protocol)
+
+    def test_empty_historical_metadata_cannot_certify_a_new_holdout(self) -> None:
+        inventory_path, metadata = self.full_prior_inventory()
+        metadata.write_text("{}")
+        (metadata.parent / "sample.json").write_text("[]")
+        empty_inventory = build_inventory(read(inventory_path)["plan"])
+        self.assertFalse(empty_inventory["completeness"]["complete"])
+        path = self.tmp / "empty-historical-metadata.json"
+        write_new(path, empty_inventory)
+        with self.assertRaises(ValueError):
+            freeze(self.tmp / "zero-history-bypass", self.real_selection(), path, self.protocol)
 
     def test_model_or_human_answer_fields_cannot_enter_source_input(self) -> None:
         rows = read(self.selection)
@@ -408,7 +690,13 @@ class NirOfflineTests(unittest.TestCase):
         path = self.tmp / "leaked.json"
         write_new(path, rows)
         with self.assertRaisesRegex(ValueError, "раскрыть ответы"):
-            freeze(self.tmp / "leaked-root", path, self.exclusions, self.protocol)
+            freeze(
+                self.tmp / "leaked-root",
+                path,
+                self.exclusions,
+                self.protocol,
+                development_only=True,
+            )
 
     def test_duplicate_person_email_cannot_be_renamed_into_a_new_observation(self) -> None:
         rows = read(self.selection)
@@ -423,7 +711,13 @@ class NirOfflineTests(unittest.TestCase):
         path = self.tmp / "renamed-pair.json"
         write_new(path, rows)
         with self.assertRaisesRegex(ValueError, "group_id/email"):
-            freeze(self.tmp / "duplicate-pair-root", path, self.exclusions, self.protocol)
+            freeze(
+                self.tmp / "duplicate-pair-root",
+                path,
+                self.exclusions,
+                self.protocol,
+                development_only=True,
+            )
 
     def test_source_or_common_input_tampering_stops_imports(self) -> None:
         for source in (self.root / "sources").glob("*.txt"):
@@ -559,7 +853,13 @@ class NirOfflineTests(unittest.TestCase):
         path = self.tmp / "template-protocol.json"
         write_new(path, protocol)
         with self.assertRaisesRegex(ValueError, "TEMPLATE"):
-            freeze(self.tmp / "template-root", self.selection, self.exclusions, path)
+            freeze(
+                self.tmp / "template-root",
+                self.selection,
+                self.exclusions,
+                path,
+                development_only=True,
+            )
 
     def test_no_labels_or_no_acceptance_are_undefined_not_zero_risk(self) -> None:
         report = read(analyze(self.root, self.tmp / "empty.json", resamples=10))

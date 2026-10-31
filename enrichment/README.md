@@ -265,7 +265,7 @@ receipt, request, usage, ошибки и timeout. Pi-клиент с отдел�
 Команды из корня репозитория (пути ниже обозначают подготовленные приватные входы):
 
 ```bash
-uv run --frozen python -m sfr_enrichment.nir freeze --root /private/tmp/nir-private/run-v1 --selection /private/tmp/nir-private/selection.json --exclusions /private/tmp/nir-private/exclusions.json --protocol /private/tmp/nir-private/protocol.json
+uv run --frozen python -m sfr_enrichment.nir freeze --root /private/tmp/nir-private/run-v1 --selection /private/tmp/nir-private/selection.json --exclusions /private/tmp/nir-private/prior-inventory/inventory.json --protocol /private/tmp/nir-private/protocol.json
 uv run --frozen python -m sfr_enrichment.nir export --root /private/tmp/nir-private/run-v1 --annotator adelina
 uv run --frozen python -m sfr_enrichment.nir export --root /private/tmp/nir-private/run-v1 --annotator sasha
 uv run --frozen python -m sfr_enrichment.nir import-human --root /private/tmp/nir-private/run-v1 --answers /private/tmp/nir-private/adelina-answers.json --record-id first
@@ -286,7 +286,7 @@ uv run --frozen python -m sfr_enrichment.nir analyze --root /private/tmp/nir-pri
 `selection.json` — список объектов с **ровно** полями `case_id`, `group_id`
 (один исследователь, в том числе при нескольких email), `pair_id`, `example_ids`,
 `profile`, `email`, `evidence`. Профиль допускает `name`, `aliases`, `identifiers`,
-`affiliations`, `topics`; ответы и модельные оценки в него не добавляют. Источник
+`affiliations`, `topics`, а также `id`, `author_id`, `openalex_id`, `orcid`; ответы и модельные оценки в него не добавляют. Источник
 содержит `source_id`, HTTP(S) `url`, `captured_at` с часовым поясом, `content_date`
 (строка либо `null`), `source_path` к сохранённому UTF-8 тексту и буквальный
 `excerpt`. Путь к тексту разрешается относительно `selection.json`. Полный текст
@@ -294,14 +294,21 @@ uv run --frozen python -m sfr_enrichment.nir analyze --root /private/tmp/nir-pri
 `(group_id, email.strip())` отвергается даже с новыми case/pair ID. Более сложную
 нормализацию адресов выполняет контракт отбора; модуль не изобретает правила RFC.
 
-`exclusions.json` содержит `group_ids`, `pair_ids`, `example_ids` всех прежних
-использований, `inventory_sources: [{"path": "...", "sha256": "..."}]` и
-`complete_prior_use_inventory: true`. Пути источников реестра — относительно
-этого JSON. Код проверяет их SHA и исключает совпадения по трём спискам; полноту
-реестра, соответствие псевдонимов реальным людям и отсутствие незаписанных прежних
-примеров должен проверить ответственный человек. Нельзя помечать реальный реестр
-полным только ради успешной команды. [Синтетическая выборка и исключения](tests/fixtures/nir-email-bc-v1/README.md)
-показывают заполненный формат, не содержат реальных контактов и не заменяют реестр SFR.
+Для обычного режима аргумент --exclusions указывает непосредственно на полный
+частный producer inventory.json; списковая exclusions.json является только
+совместимой проекцией и по умолчанию отвергается. Он содержит канонические идентификаторы, пары, типизированные hashes/URL
+документов, provenance и coverage audit. Проверка выполняется по фактическим
+profile.identifiers и bytes нового снимка, а не только по произвольным локальным
+ID. Смена group_id/pair_id/example_ids не должна скрывать совпадение. Проверка
+SHA источников и отсутствие содержательных gaps обязательны; найденный список
+файлов или bool complete сами по себе полноту не доказывают.
+
+Прежний формат со списками group_ids, pair_ids, example_ids и inventory_sources
+сохранён только при явном флаге --development-only: manifest помечается
+`development_only_not_holdout`. Это относится к [искусственному примеру](tests/fixtures/nir-email-bc-v1/README.md)
+и прежним разработочным материалам; списковая проекция не заменяет реальный
+alias-aware реестр. По умолчанию неполный или устаревший registry отвергается.
+Сборщик исторического реестра и точная процедура приведены ниже.
 
 Шаблон [protocol JSON](research/methods/nir_email_bc_protocol_v1.json) содержит
 одинаковые `rubric` и `common_examples`, отдельные симметричные `instructions_B`
@@ -497,3 +504,58 @@ Cached/reasoning tokens не прибавляются повторно к input/
 `native.execute`/`isolation_probe` при замоканных subprocess и выходном потоке,
 а также отказы на другом case, изменённых schema/raw SHA и подменённой доставке.
 Ни CLI Codex, ни HTTP, ни реальная модель в этих тестах не запускаются.
+
+### Частный реестр исторических исключений
+
+[`sfr_enrichment.nir_inventory`](src/sfr_enrichment/nir_inventory.py) восстанавливает
+предыдущую экспозицию по локальному storage catalogue, доступным архивным metadata,
+последующим roots и явно заданным дополнительным наборам. Это чтение прежних
+результатов, а не получение новых контактов. Точная область, источники, допустимый
+размер metadata и правила покрытия записаны в приватном plan JSON.
+
+Воспроизведение по сохранённому плану, с новым выходным каталогом:
+
+```sh
+.venv/bin/python -m sfr_enrichment.nir_inventory \
+  --plan /absolute/private/prior-inventory/plan.json \
+  --out /absolute/private/prior-inventory-replay
+```
+
+Команда не читает произвольно все страницы/логи: обходит имена файлов и выбирает
+известные metadata JSON; тела страниц и cumulative Pi/model events не майнит.
+Исключения из чтения, разрешённые роли служебных файлов и непокрытые данные
+сохраняются адресно. Структурированные rows старого контактного эксперимента
+не приравниваются к сырому тексту страницы только из-за имени поля raw.
+Синтетические и разработочные входы не выдаются за новых реальных людей.
+
+Выход создаётся вне Git в новом закрытом каталоге: plan.json, inventory.json,
+exclusions.json и build-proof.json. Полный inventory хранит идентификаторы и
+алиасы человека, прежние пары-кандидаты независимо от вердикта, документы с
+раздельными body/decoded/text/excerpt hashes и URL, scoped примеры и provenance
+до metadata-файла/SHA/selector. Имена сами по себе не используются для слияния
+одноимённых людей; список всех профилей каталога не становится списком прежних
+разобранных случаев. SHA JSON source-record и model-result не выдаются за hash
+доказательного документа; excerpt совпадение отдельно от равенства всего снимка.
+
+Coverage проверяет объявленные cohort и ссылки на исходные metadata. complete
+относится к указанному записанному scope и не вычисляется из одного факта наличия
+каталогов. Неразрешённые содержательные gaps сохраняют complete=false. Для
+валидации повторно строятся records/lookup/coverage по тому же плану и проверяются
+SHA источников: удаление записей, подмена lookup/complete или изменение источника
+не должны дать рабочий допуск. Перед новым отбором нужен актуальный rebuild,
+а не старый список 155 IDs.
+
+Для обычного nir freeze аргумент --exclusions указывает на полный inventory.json.
+Списковая exclusions.json остаётся совместимой проекцией и не заменяет producer
+registry. Наличие registry не разрешает запуск, не проверяет доставляемость и
+не доказывает отсутствие неизвестной/незаписанной экспозиции. Реальные IDs,
+email, URL и полные paths/селекторы остаются в частном реестре; в Git — только
+код, вымышленные тесты, агрегаты и границы проверки. Исходные архивы не изменяются.
+
+Текущий частный v6 восстановлен: metadata_scope_complete=true, однако
+prior_details_complete=false и overall complete=false. В двух строках старого
+ручного опыта есть факт публикации email без сохранённого адреса/документного
+локатора. Это реальный capture limit, не отсутствие каталога; default freeze
+остаётся закрыт. Его нельзя обойти списковой проекцией или выдать разработочный
+режим за независимый пилот. Точные исходные SHA/селекторы сохранены в private gaps,
+агрегаты и границы — в основном исследовательском обзоре.

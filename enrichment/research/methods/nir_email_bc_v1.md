@@ -268,12 +268,16 @@ protocol = json.loads(Path(
 ).read_text())
 revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
 code_sha = hashlib.sha256(Path("enrichment/src/sfr_enrichment/nir.py").read_bytes()).hexdigest()
+inventory_code_sha = hashlib.sha256(Path(
+    "enrichment/src/sfr_enrichment/nir_inventory.py"
+).read_bytes()).hexdigest()
 lock_sha = hashlib.sha256(Path("uv.lock").read_bytes()).hexdigest()
-protocol["code_revision"] = revision + "+nir.py-sha256:" + code_sha
+protocol["code_revision"] = (revision + "+nir.py-sha256:" + code_sha
+    + "+nir_inventory.py-sha256:" + inventory_code_sha)
 protocol["runtime_version"] = platform.python_version() + ";uv.lock-sha256:" + lock_sha
 Path(sys.argv[1]).write_text(json.dumps(protocol, ensure_ascii=False, indent=2) + "\n")
 PYTHON
-.venv/bin/python -m sfr_enrichment.nir freeze \
+.venv/bin/python -m sfr_enrichment.nir freeze --development-only \
   --root "$nir_demo_dir/run" \
   --selection enrichment/tests/fixtures/nir-email-bc-v1/selection.json \
   --exclusions enrichment/tests/fixtures/nir-email-bc-v1/exclusions.json \
@@ -287,17 +291,21 @@ PYTHON
 ```
 
 Каждый demo root новый; команды не запускают модели/сеть. В синтетическом
-маршруте code_revision включает HEAD и SHA текущего файла, чтобы незакоммиченный
+маршруте code_revision включает HEAD и SHA обоих текущих модулей, чтобы незакоммиченный
 код не выдавался за байты base-коммита. Для реального чистого checkout следует
 использовать его точный implementation commit и сохранять фактический lock/runtime.
 Перед реальным transport отдельно проверяется поддержка предложенного generation
 параметра; offline импорт не подтверждает совместимость с model API.
- Fixtures содержат вымышленные данные;
-пустой synthetic inventory не переносится на реальный пилот. Относительный
-`source_path` разрешается относительно selection.json; inventory source path —
-относительно exclusions.json. Источник exclusion inventory проверяется по SHA,
-но bool `complete_prior_use_inventory` является утверждением подготовившего
-реестр человека, а не автоматическим доказательством полноты старых использований.
+Fixtures содержат вымышленные данные; пустой synthetic inventory не переносится
+на реальный пилот. Явный --development-only сохраняет статус
+`development_only_not_holdout`: это разработочный пакет, а не подтверждение
+новизны отбора. Относительный source_path разрешается относительно selection.json.
+В обычном режиме --exclusions указывает на полный producer inventory.json
+с проверенными provenance и coverage, а не только строковые group/pair/example lists. Guard сверяет канонические
+идентификаторы человека, пару и hashes/URL фактически предъявляемого снимка;
+смена локального case_id/group_id не скрывает уже известного исследователя.
+Даже пройденный overlap check не доказывает истинность нового отбора или отсутствие
+незарегистрированной экспозиции: границы registry остаются явными.
 
 После freeze: `cases.json`, `protocol.json`, `exclusions.json`, `sources/`,
 `model-inputs/{case_id}.json`, `prompt-B.json`, `prompt-C.json` и `manifest.json`.
@@ -345,9 +353,16 @@ label/reason/source_ids, C — identity/object_relation/reason/source_ids.
 Входные selection rows содержат ровно case_id/group_id/pair_id/example_ids,
 profile, email и evidence. В evidence ровно source_id/url/captured_at/content_date/
 source_path/excerpt; цитата должна буквально входить в UTF-8 body. Незнакомые поля
-отклоняются: туда нельзя добавлять «удобные» прежние labels. Exclusions содержит
-complete_prior_use_inventory, inventory_sources с path/SHA и списки group_ids,
-pair_ids, example_ids. Подстановка вымышленного evidence или ложного bool для
+отклоняются: туда нельзя добавлять «удобные» прежние labels. Исходный lists-only формат exclusions предназначен только для явного
+разработочного режима. Для доступного private v5 coverage.metadata_scope_complete=true, но
+completeness.prior_details_complete=false и overall complete=false из-за двух
+не сохранённых адресов/локаторов старой ручной проверки. Поэтому его обычный
+freeze останавливается; ни --development-only, ни списковая проекция не являются
+допуском нового независимого пилота. Точный scope/предел — в основном обзоре.
+
+Обычный режим читает полный inventory.json с
+каноническими ключами, типизированными документными hashes, provenance и
+неподменённым выводом coverage audit. Подстановка вымышленного evidence или ложного bool для
 допуска реального набора нарушает процедуру, даже если JSON технически валиден.
 
 Результат analyze читается вместе с исходными counts/flags. Различаются human
