@@ -6,6 +6,7 @@ import ipaddress
 import json
 import re
 import socket
+import ssl
 import time
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -295,7 +296,13 @@ class PublicLoader(Loader):
                             raise SourceBodyLimit("Bounded source body")
                         body.extend(chunk)
                     meta["complete"] = True
-        except (httpx.HTTPError, TimeoutError, socket.gaierror, SourceBodyLimit) as exc:
+        except (
+            httpx.HTTPError,
+            TimeoutError,
+            socket.gaierror,
+            ssl.SSLError,
+            SourceBodyLimit,
+        ) as exc:
             meta["error"] = type(exc).__name__
         except ValueError as exc:
             # Preserve the receipt, then propagate unsafe destinations/unknown code errors.

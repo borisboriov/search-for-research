@@ -394,7 +394,7 @@ def freeze(
             {
                 "case": case,
                 "source_bodies": {
-                    source["source_id"]: (root / source["snapshot"]).read_text("utf-8")
+                    source["source_id"]: (root / source["snapshot"]).read_bytes().decode("utf-8")
                     for source in case["evidence"]
                 },
             },

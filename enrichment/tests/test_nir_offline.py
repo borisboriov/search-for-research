@@ -600,6 +600,24 @@ class NirOfflineTests(unittest.TestCase):
         self.assertEqual(report["human_status_counts"], {"human_missing": 1})
         self.assertIsNone(report["intention_to_process"]["B"]["R_resolved"])
 
+    def test_crlf_source_is_identical_in_human_files_and_both_model_inputs(self) -> None:
+        body = b"First line.\r\nLaboratory office.\r\naddress@example.invalid\r\n"
+        self.source.write_bytes(body)
+        root = self.tmp / "crlf-frozen"
+        freeze(root, self.selection, self.exclusions, self.protocol, development_only=True)
+        model_input = read(root / "model-inputs" / "c1.json")
+        self.assertEqual(model_input["source_bodies"]["s1"].encode("utf-8"), body)
+        for annotator in ("adelina", "sasha"):
+            packet_path = export(root, annotator)
+            source = read(packet_path)["cases"][0]["evidence"][0]
+            self.assertEqual((packet_path.parent / source["snapshot"]).read_bytes(), body)
+        prepare_model(root)
+        for arm in ("B", "C"):
+            request = prepared_request(root, "c1-" + arm)
+            prompt = (root / request["prompt_path"]).read_bytes().decode("utf-8")
+            data = json.loads(prompt.split("Замороженный вход (данные):\n", 1)[1])
+            self.assertEqual(data["source_bodies"]["s1"].encode("utf-8"), body)
+
     def test_diagnostic_does_not_weaken_ordinary_or_legacy_guards(self) -> None:
         inventory, _ = self.full_prior_inventory(capture_gaps=2)
         selection = self.real_selection()

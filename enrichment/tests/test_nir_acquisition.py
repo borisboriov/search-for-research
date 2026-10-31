@@ -3,6 +3,7 @@
 import asyncio
 import fcntl
 import json
+import ssl
 import tempfile
 import unittest
 from datetime import UTC, datetime, timedelta
@@ -12,9 +13,25 @@ from unittest.mock import AsyncMock, patch
 
 import httpx
 
-from sfr_enrichment.common import read
+from sfr_enrichment.common import read, sha
 from sfr_enrichment.evidence import immutable_json
-from sfr_enrichment.nir_acquisition import MAXIMA, initialize, prepare, run
+from sfr_enrichment.nir_acquisition import (
+    MAXIMA,
+    RECOVERY_FILES,
+    RECOVERY_SCHEMA,
+    REVISION,
+    checked,
+    code_hashes,
+    collect_person,
+    continue_ssl_abort,
+    initialize,
+    prepare,
+    preserved_snapshot,
+    register_ssl_abort,
+    run,
+    validate_recovery,
+    validate_recovery_decision,
+)
 
 
 class AcquisitionTests(unittest.TestCase):
@@ -63,7 +80,13 @@ class AcquisitionTests(unittest.TestCase):
         return prepare(self.root, name, path)
 
     def invoke(
-        self, name: str, *, body: str | None = None, status: int = 200
+        self,
+        name: str,
+        *,
+        body: str | None = None,
+        status: int = 200,
+        ssl_failure: bool = False,
+        continuation: bool = False,
     ) -> tuple[list[str], AsyncMock]:
         calls: list[str] = []
 
@@ -73,6 +96,8 @@ class AcquisitionTests(unittest.TestCase):
                 return httpx.Response(
                     200, text="User-agent: *\nAllow: /", headers={"content-type": "text/plain"}
                 )
+            if ssl_failure:
+                raise ssl.SSLError("synthetic record layer failure")
             return httpx.Response(
                 status,
                 text=body
@@ -100,7 +125,10 @@ class AcquisitionTests(unittest.TestCase):
                 side_effect=AssertionError("No verifier"),
             ) as verify,
         ):
-            asyncio.run(run(self.root, name, live=True))
+            if continuation:
+                asyncio.run(continue_ssl_abort(self.root, live=True))
+            else:
+                asyncio.run(run(self.root, name, live=True))
             model.assert_not_called()
             verify.assert_not_called()
         return calls, wait
@@ -256,6 +284,175 @@ class AcquisitionTests(unittest.TestCase):
         path.write_text(json.dumps(item))
         with self.assertRaisesRegex(ValueError, "sequence changed"):
             self.invoke("first")
+
+    def test_ssl_failure_keeps_error_receipt_without_retry_or_disabling_tls(self) -> None:
+        self.init()
+        self.batch("first", [self.row(1)])
+        calls, _ = self.invoke("first", ssl_failure=True)
+        self.assertEqual(len(calls), 2)
+        ledger = self.root / "HTTP-ledger"
+        self.assertEqual(len(list(ledger.glob("*-reserved.json"))), 2)
+        self.assertEqual(len(list(ledger.glob("*-finished.json"))), 2)
+        receipts = list((self.root / "batches/first/sources/A1").glob("request-result-*.json"))
+        errors = [read(p) for p in receipts if read(p).get("error")]
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0]["error"], "SSLError")
+        self.assertFalse(errors[0]["complete"])
+        self.assertTrue(errors[0]["HTTP_started"])
+        self.assertEqual(
+            read(self.root / "batches/first/people/A1/result.json")["status"], "no_usable_source"
+        )
+
+
+class SSLRecoveryTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.fixture = AcquisitionTests()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+        self.root, self.base = self.fixture.root, self.fixture.base
+        self.old = code_hashes()
+        originals = {}
+        for name in RECOVERY_FILES:
+            path = self.base / ("old-" + name)
+            path.write_text("# synthetic prior runtime " + name)
+            self.old[name] = sha(path)
+            originals[name] = str(path)
+
+        async def abort_on_second(*args: Any) -> dict[str, Any]:
+            root, directory, profile, _, _ = args
+            if profile["id"] == "A2":
+                reservation = {
+                    "author_id": "A2",
+                    "url": "https://source2.example/person",
+                    "kind": "direct_http",
+                    "at": "2026-10-31T00:00:00Z",
+                }
+                immutable_json(root / "HTTP-ledger/0002-reserved.json", reservation)
+                immutable_json(directory / "sources/A2/requests/0002.json", reservation)
+                raise ssl.SSLError("synthetic unhandled transport failure")
+            return await collect_person(*args)
+
+        with patch("sfr_enrichment.nir_acquisition.code_hashes", return_value=self.old):
+            self.fixture.init()
+            self.fixture.batch("first", [self.fixture.row(i) for i in (1, 2, 3)])
+            with (
+                patch("sfr_enrichment.nir_acquisition.collect_person", side_effect=abort_on_second),
+                self.assertRaises(ssl.SSLError),
+            ):
+                self.fixture.invoke("first")
+        (self.root / "batches/first/console.log").write_text("SYNTHETIC ssl.SSLError; no real HTTP")
+        self.decision: dict[str, Any] = {
+            "schema": RECOVERY_SCHEMA,
+            "authorization_reference": "synthetic repair authorization",
+            "independent_review_reference": "synthetic review only",
+            "batch": "first",
+            "reserved_ticket": "0002",
+            "aborted_author_id": "A2",
+            "aborted_queue_index": 1,
+            "resume_author_ids": ["A3"],
+            "campaign_manifest_sha256": sha(self.root / "manifest.json"),
+            "original_code_sha256": self.old,
+            "replacement_code_sha256": code_hashes(),
+            "preserved_files_sha256": preserved_snapshot(self.root),
+            "original_runtime_files": originals,
+            "reserved_requests_before": 3,
+            "finished_requests_before": 2,
+        }
+        self.path = self.base / "decision.json"
+        immutable_json(self.path, self.decision)
+
+    def test_exact_tail_preserves_old_records_unknown_outcome_and_budgets(self) -> None:
+        before = self.decision["preserved_files_sha256"]
+        register_ssl_abort(self.root, self.path)
+        self.assertEqual(validate_recovery(self.root), self.decision)
+        abort = read(self.root / "batches/first/people/A2/result.json")
+        self.assertEqual(abort["status"], "technical_abort")
+        self.assertIsNone(abort["candidates"])
+        self.assertFalse((self.root / "HTTP-ledger/0002-finished.json").exists())
+        with self.assertRaisesRegex(ValueError, "already attempted"):
+            self.fixture.invoke("first")
+        calls, _ = self.fixture.invoke("first", continuation=True)
+        self.assertTrue(calls)
+        self.assertTrue(all("source3.example" in url for url in calls))
+        self.assertEqual(len(list((self.root / "HTTP-ledger").glob("*-reserved.json"))), 5)
+        self.assertEqual(len(list((self.root / "HTTP-ledger").glob("*-finished.json"))), 4)
+        self.assertTrue(all(sha(self.root / name) == value for name, value in before.items()))
+        self.assertEqual(
+            [r["status"] for r in read(self.root / "batches/first/result.json")["people"]],
+            ["candidates", "technical_abort", "candidates"],
+        )
+        with self.assertRaisesRegex(ValueError, "already attempted"):
+            self.fixture.invoke("first", continuation=True)
+        self.fixture.batch("second", [self.fixture.row(4)])
+        self.fixture.invoke("second")
+        checked(self.root)
+
+    def test_review_exact_tail_ticket_code_and_snapshot_negative_cases(self) -> None:
+        changes: list[dict[str, Any]] = [
+            {"independent_review_reference": None},
+            {"reserved_ticket": "0001"},
+            {"resume_author_ids": ["A2", "A3"]},
+            {"aborted_queue_index": 2},
+            {"reserved_requests_before": 2},
+            {"finished_requests_before": 3},
+            {"campaign_manifest_sha256": "0" * 64},
+            {
+                "preserved_files_sha256": {
+                    k: v
+                    for k, v in self.decision["preserved_files_sha256"].items()
+                    if not k.endswith("failure.json")
+                }
+            },
+            {"replacement_code_sha256": self.old},
+            {"original_runtime_files": {}},
+        ]
+        for change in changes:
+            with self.subTest(fields=list(change)), self.assertRaises(ValueError):
+                validate_recovery_decision(self.root, self.decision | change, initial=True)
+
+    def test_retirement_tampering_and_a_second_unknown_attempt_block(self) -> None:
+        register_ssl_abort(self.root, self.path)
+        retired = self.root / "HTTP-ledger/0002-retired.json"
+        original = retired.read_bytes()
+        retired.write_text(json.dumps(read(retired) | {"retry_allowed": True}))
+        with self.assertRaisesRegex(ValueError, "Retired outcome"):
+            checked(self.root)
+        retired.write_bytes(original)
+        immutable_json(
+            self.root / "HTTP-ledger/0003-reserved.json",
+            {
+                "author_id": "A3",
+                "url": "https://source3.example/unknown",
+                "kind": "direct_http",
+            },
+        )
+        with self.assertRaisesRegex(ValueError, "Unfinished HTTP"):
+            self.fixture.invoke("first", continuation=True)
+        self.assertEqual(len(list((self.root / "HTTP-ledger").glob("*-reserved.json"))), 4)
+
+    def test_no_recovery_without_revision_and_no_second_registration(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Frozen acquisition"):
+            checked(self.root)
+        register_ssl_abort(self.root, self.path)
+        with self.assertRaises(ValueError):
+            register_ssl_abort(self.root, self.path)
+        manifest = self.root / REVISION / "manifest.json"
+        manifest.write_text(json.dumps(read(manifest) | {"predecessor_manifest_sha256": "0" * 64}))
+        with self.assertRaisesRegex(ValueError, "revision binding"):
+            validate_recovery(self.root)
+
+    def test_fabricated_finished_receipt_is_rejected(self) -> None:
+        register_ssl_abort(self.root, self.path)
+        immutable_json(self.root / "HTTP-ledger/0002-finished.json", {"synthetic_fake": True})
+        with self.assertRaisesRegex(ValueError, "finished receipt"):
+            checked(self.root)
+
+    def test_non_ssl_error_cannot_be_retired(self) -> None:
+        failure = self.root / "batches/first/failure.json"
+        failure.write_text(json.dumps(read(failure) | {"error_type": "ValueError"}))
+        decision = self.decision | {"preserved_files_sha256": preserved_snapshot(self.root)}
+        with self.assertRaisesRegex(ValueError, "SSL transport abort"):
+            validate_recovery_decision(self.root, decision, initial=True)
 
 
 if __name__ == "__main__":

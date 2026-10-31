@@ -29,10 +29,13 @@ from sfr_enrichment.common import (
 )
 from sfr_enrichment.config import repository_root
 from sfr_enrichment.contacts import checked_source, contact_packet, digest, safe_url
-from sfr_enrichment.evidence import identifier, immutable_json
+from sfr_enrichment.evidence import identifier, immutable_bytes, immutable_json
 from sfr_enrichment.sources import PublicLoader, SourceUnavailable
 
 SCHEMA = "nir_acquisition_only_v1"
+RECOVERY_SCHEMA = "nir_ssl_abort_recovery_v1"
+REVISION = "revisions/ssl-abort-01"
+RECOVERY_FILES = {"nir_acquisition.py", "sources.py"}
 MAXIMA = {
     "profile_total_cap": 60,
     "HTTP_total_cap": 600,
@@ -132,12 +135,15 @@ def checked(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     if (
         sha(root / "profiles.json") != manifest["profiles_sha256"]
         or sha(root / "scope.json") != manifest["scope_sha256"]
-        or manifest["code_sha256"] != code_hashes()
     ):
         raise ValueError("Frozen acquisition inputs/code changed")
     scope = read(root / "scope.json")
     if any(manifest.get(key) != value for key, value in scope.items()):
         raise ValueError("Frozen acquisition scope changed")
+    if (root / REVISION).exists():
+        validate_recovery(root)
+    elif manifest["code_sha256"] != code_hashes():
+        raise ValueError("Frozen acquisition inputs/code changed")
     return list(read(root / "profiles.json")), manifest
 
 
@@ -170,6 +176,246 @@ def batches(root: Path) -> list[tuple[Path, dict[str, Any]]]:
             raise ValueError("Frozen batch sequence changed")
         expected_start += len(rows)
     return ordered
+
+
+def preserved_snapshot(root: Path) -> dict[str, str]:
+    """Exact pre-recovery snapshot; the writer's empty lock is not evidence."""
+    return {
+        str(path.relative_to(root)): sha(path)
+        for path in sorted(root.rglob("*"))
+        if path.is_file() and path != root / "acquisition.lock"
+    }
+
+
+def validate_recovery_decision(root: Path, decision: dict[str, Any], *, initial: bool) -> None:
+    """One reviewed SSL-abort revision, not a generic bypass for code or unknown jobs."""
+    ensure_not_stopped(root)
+    if any(path.is_symlink() for path in root.rglob("*")):
+        raise ValueError("Campaign must not contain symlinks")
+    if decision.get("schema") != RECOVERY_SCHEMA or any(
+        not isinstance(decision.get(key), str) or not decision[key].strip()
+        for key in ("authorization_reference", "independent_review_reference")
+    ):
+        raise ValueError("Recovery requires explicit authorization and independent review")
+    manifest = read(root / "manifest.json")
+    scope = read(root / "scope.json")
+    if (
+        decision["campaign_manifest_sha256"] != sha(root / "manifest.json")
+        or manifest["profiles_sha256"] != sha(root / "profiles.json")
+        or manifest["scope_sha256"] != sha(root / "scope.json")
+        or any(manifest.get(key) != value for key, value in scope.items())
+        or scope.get("model_job_cap") != 0
+    ):
+        raise ValueError("Recovery cannot change campaign inputs or budgets")
+    old, new = decision["original_code_sha256"], decision["replacement_code_sha256"]
+    if (
+        old != manifest["code_sha256"]
+        or new != code_hashes()
+        or set(old) != set(new)
+        or {key for key in old if old[key] != new[key]} != RECOVERY_FILES
+    ):
+        raise ValueError("Recovery allows only the reviewed SSL/acquisition runtime revision")
+    preserved = decision["preserved_files_sha256"]
+    if not isinstance(preserved, dict) or not preserved:
+        raise ValueError("Recovery requires a complete prior evidence snapshot")
+    for name, expected in preserved.items():
+        path = (root / name).resolve()
+        if not path.is_relative_to(root.resolve()) or sha(path) != expected:
+            raise ValueError("Preserved recovery evidence changed")
+    if initial and preserved != preserved_snapshot(root):
+        raise ValueError("Recovery snapshot must cover every existing campaign artifact")
+    directory = batch_directory(root, decision["batch"])
+    item = read(directory / "manifest.json")
+    ordered = batches(root)
+    if any(
+        not (p / "result.json").exists()
+        for p, m in ordered
+        if m["start_index"] < item["start_index"]
+    ):
+        raise ValueError("Earlier batches must be complete before recovery")
+    if initial and any(
+        (p / "started.json").exists() for p, m in ordered if m["start_index"] > item["start_index"]
+    ):
+        raise ValueError("Later batches already attempted")
+    failure = read(directory / "failure.json")
+    if failure.get("error_type") != "SSLError" or failure.get("retry_allowed") is not False:
+        raise ValueError("Only the recorded SSL transport abort is recoverable")
+    rows = read(directory / "plan.json")["profiles"]
+    aborted = decision["aborted_author_id"]
+    positions = [i for i, row in enumerate(rows) if row["author_id"] == aborted]
+    if len(positions) != 1:
+        raise ValueError("Aborted person is outside the frozen batch")
+    offset = positions[0]
+    if (
+        decision["aborted_queue_index"] != item["start_index"] + offset
+        or decision["resume_author_ids"] != [row["author_id"] for row in rows[offset + 1 :]]
+        or not decision["resume_author_ids"]
+    ):
+        raise ValueError("Recovery must continue only the exact unattempted tail")
+    required = {"manifest.json", "scope.json", "profiles.json"}
+    prefix = str(directory.relative_to(root))
+    required.update(
+        prefix + "/" + name
+        for name in ("manifest.json", "plan.json", "started.json", "failure.json", "console.log")
+    )
+    for row in rows[:offset]:
+        for name in ("result.json", "collector.json", "corpus.json"):
+            required.add(f"{prefix}/people/{row['author_id']}/{name}")
+        if read(directory / "people" / row["author_id"] / "result.json").get("status") not in (
+            "candidates",
+            "no_candidate",
+            "no_usable_source",
+        ):
+            raise ValueError("Recovery prefix is not an existing completed result")
+    ticket = decision["reserved_ticket"]
+    if not isinstance(ticket, str) or not re.fullmatch(r"\d{4}", ticket):
+        raise ValueError("Invalid exact recovery ticket")
+    reservation = f"HTTP-ledger/{ticket}-reserved.json"
+    local_ticket = f"{prefix}/sources/{aborted}/requests/{ticket}.json"
+    required.update((reservation, local_ticket))
+    if not required <= set(preserved):
+        raise ValueError("Recovery snapshot lacks required bindings")
+    reserved = read(root / reservation)
+    if reserved["author_id"] != aborted or read(root / local_ticket) != reserved:
+        raise ValueError("Recovery ticket does not belong to the aborted person")
+    if (root / "HTTP-ledger" / f"{ticket}-finished.json").exists():
+        raise ValueError("Unknown outcome must not be converted to a finished receipt")
+    reserved_before = {p for p in preserved if re.fullmatch(r"HTTP-ledger/\d{4}-reserved.json", p)}
+    finished_before = {p for p in preserved if re.fullmatch(r"HTTP-ledger/\d{4}-finished.json", p)}
+    missing = {
+        p for p in reserved_before if p.replace("-reserved", "-finished") not in finished_before
+    }
+    if (
+        missing != {reservation}
+        or len(reserved_before) != decision["reserved_requests_before"]
+        or len(finished_before) != decision["finished_requests_before"]
+    ):
+        raise ValueError("Only one exact unknown HTTP outcome can be retired")
+    if initial:
+        if (root / REVISION).exists() or (directory / "result.json").exists():
+            raise ValueError("Recovery revision already exists or batch has completed")
+        for row in rows[offset:]:
+            if (directory / "people" / row["author_id"]).exists():
+                raise ValueError("Aborted/tail person already has results")
+        if any(
+            read(root / p)["author_id"] in decision["resume_author_ids"] for p in reserved_before
+        ):
+            raise ValueError("Recovery tail has already consumed HTTP attempts")
+        originals = decision["original_runtime_files"]
+        if set(originals) != RECOVERY_FILES or any(
+            sha(Path(originals[k])) != old[k] for k in originals
+        ):
+            raise ValueError("Original runtime snapshots are required")
+
+
+def retirement_record(decision: dict[str, Any], decision_sha: str, at: str) -> dict[str, Any]:
+    ticket = decision["reserved_ticket"]
+    return {
+        "schema": "nir_http_retirement_v1",
+        "ticket": ticket,
+        "reserved_sha256": decision["preserved_files_sha256"][
+            f"HTTP-ledger/{ticket}-reserved.json"
+        ],
+        "author_id": decision["aborted_author_id"],
+        "outcome": "unknown_transport_outcome",
+        "HTTP_started": None,
+        "evidence_usable": False,
+        "budget_consumed": True,
+        "retry_allowed": False,
+        "decision_sha256": decision_sha,
+        "revision_path": REVISION,
+        "retired_at": at,
+    }
+
+
+def abort_result(decision: dict[str, Any], retirement_sha: str) -> dict[str, Any]:
+    return {
+        "author_id": decision["aborted_author_id"],
+        "model_jobs": 0,
+        "status": "technical_abort",
+        "candidates": None,
+        "usable_sources": None,
+        "source_failures": None,
+        "reason": "ssl_transport_outcome_unknown_no_retry",
+        "retirement_path": f"HTTP-ledger/{decision['reserved_ticket']}-retired.json",
+        "retirement_sha256": retirement_sha,
+    }
+
+
+def register_ssl_abort(root: Path, decision_path: Path) -> Path:
+    """Offline only: seal a reviewed revision and discard the unknown attempt."""
+    root = root.resolve()
+    with writer(root):
+        decision = read(decision_path)
+        validate_recovery_decision(root, decision, initial=True)
+        revision = root / REVISION
+        check_storage_budget(root, decision_path.stat().st_size + 1024 * 1024)
+        immutable_bytes(revision / "decision.json", decision_path.read_bytes())
+        for name in RECOVERY_FILES:
+            immutable_bytes(
+                revision / "original-code" / name,
+                Path(decision["original_runtime_files"][name]).read_bytes(),
+            )
+            immutable_bytes(
+                revision / "replacement-code" / name, (Path(__file__).parent / name).read_bytes()
+            )
+        at, decision_sha = now(), sha(revision / "decision.json")
+        retired = root / "HTTP-ledger" / f"{decision['reserved_ticket']}-retired.json"
+        save(root, retired, retirement_record(decision, decision_sha, at))
+        save(
+            root,
+            batch_directory(root, decision["batch"])
+            / "people"
+            / decision["aborted_author_id"]
+            / "result.json",
+            abort_result(decision, sha(retired)),
+        )
+        save(
+            root,
+            revision / "manifest.json",
+            {
+                "schema": "nir_acquisition_revision_v1",
+                "registered_at": at,
+                "predecessor_manifest_sha256": decision["campaign_manifest_sha256"],
+                "decision_sha256": decision_sha,
+                "retirement_sha256": sha(retired),
+            },
+        )
+        validate_recovery(root)
+    return revision / "manifest.json"
+
+
+def validate_recovery(root: Path) -> dict[str, Any]:
+    """Read-only binding check; safe for the acquisition→selection compiler."""
+    revision = root / REVISION
+    record, decision = read(revision / "manifest.json"), read(revision / "decision.json")
+    if (
+        record.get("schema") != "nir_acquisition_revision_v1"
+        or record["decision_sha256"] != sha(revision / "decision.json")
+        or record["predecessor_manifest_sha256"] != sha(root / "manifest.json")
+    ):
+        raise ValueError("Recovery revision binding changed")
+    validate_recovery_decision(root, decision, initial=False)
+    for kind, hashes in (
+        ("original-code", decision["original_code_sha256"]),
+        ("replacement-code", decision["replacement_code_sha256"]),
+    ):
+        if any(sha(revision / kind / name) != hashes[name] for name in RECOVERY_FILES):
+            raise ValueError("Recovery runtime snapshot changed")
+    retired = root / "HTTP-ledger" / f"{decision['reserved_ticket']}-retired.json"
+    if sha(retired) != record["retirement_sha256"] or read(retired) != retirement_record(
+        decision, record["decision_sha256"], record["registered_at"]
+    ):
+        raise ValueError("Retired outcome binding changed")
+    result = (
+        batch_directory(root, decision["batch"])
+        / "people"
+        / decision["aborted_author_id"]
+        / "result.json"
+    )
+    if read(result) != abort_result(decision, sha(retired)):
+        raise ValueError("Technical-abort result changed")
+    return dict(decision)
 
 
 def prepare(root: Path, name: str, plan_path: Path) -> Path:
@@ -236,6 +482,9 @@ class CampaignLoader(PublicLoader):
     ) -> None:
         super().__init__(root, urls, campaign, author_id)
         self.batch_ids = batch_ids
+        self.retired_tickets = set()
+        if (campaign / REVISION).exists():
+            self.retired_tickets.add(validate_recovery(campaign)["reserved_ticket"])
 
     async def request(
         self, client: httpx.AsyncClient, url: str, kind: str, cap: int
@@ -244,7 +493,9 @@ class CampaignLoader(PublicLoader):
         if not (self.root / f"request-result-{key}.json").exists():
             reserved = list(self.ledger.glob("*-reserved.json"))
             if any(
-                not p.with_name(p.name.replace("-reserved", "-finished")).exists() for p in reserved
+                not p.with_name(p.name.replace("-reserved", "-finished")).exists()
+                and p.name.split("-")[0] not in self.retired_tickets
+                for p in reserved
             ):
                 raise ValueError("Unfinished HTTP attempt: no retry or new requests")
             count = sum(read(p)["author_id"] in self.batch_ids for p in reserved)
@@ -375,26 +626,102 @@ async def run(root: Path, name: str, *, live: bool = False) -> Path:
     return directory / "result.json"
 
 
+async def continue_ssl_abort(root: Path, *, live: bool = False) -> Path:
+    """One new attempt for the exact tail; never retry the aborted person/request."""
+    root = root.resolve()
+    with writer(root):
+        profiles, manifest = checked(root)
+        decision = validate_recovery(root)
+        if not live or manifest["live_authorized"] is not True:
+            raise ValueError("Explicit --live acquisition authorization required")
+        if datetime.now(UTC) >= datetime.fromisoformat(manifest["deadline_acquisition"]):
+            raise ValueError("Acquisition deadline")
+        directory = batch_directory(root, decision["batch"])
+        attempt = root / REVISION / "continuation"
+        if (attempt / "started.json").exists() or (directory / "result.json").exists():
+            raise ValueError("Continuation already attempted; no resubmission")
+        rows = read(directory / "plan.json")["profiles"]
+        by_id = {p["id"]: p for p in profiles}
+        batch_ids = {row["author_id"] for row in rows}
+        save(
+            root,
+            attempt / "started.json",
+            {
+                "at": now(),
+                "decision_sha256": sha(root / REVISION / "decision.json"),
+                "author_ids": decision["resume_author_ids"],
+                "model_jobs": 0,
+            },
+        )
+        try:
+            for row in rows:
+                if row["author_id"] in decision["resume_author_ids"]:
+                    await collect_person(root, directory, by_id[row["author_id"]], row, batch_ids)
+            results = [
+                read(directory / "people" / row["author_id"] / "result.json") for row in rows
+            ]
+            save(
+                root,
+                directory / "result.json",
+                {
+                    "people": results,
+                    "model_jobs": 0,
+                    "technical_aborts": 1,
+                    "continuation_decision_sha256": sha(root / REVISION / "decision.json"),
+                },
+            )
+            save(
+                root,
+                attempt / "finished.json",
+                {
+                    "at": now(),
+                    "batch_result_sha256": sha(directory / "result.json"),
+                    "model_jobs": 0,
+                },
+            )
+        except Exception as exc:
+            save(
+                root,
+                attempt / "failure.json",
+                {
+                    "at": now(),
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                    "retry_allowed": False,
+                    "model_jobs": 0,
+                },
+                reserve=0,
+            )
+            raise
+    return directory / "result.json"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for command in ("init", "prepare", "run"):
+    for command in ("init", "prepare", "run", "register-ssl-abort", "continue-ssl-abort"):
         item = sub.add_parser(command)
         item.add_argument("--root", type=Path, required=True)
         if command == "init":
             item.add_argument("--profiles", type=Path, required=True)
             item.add_argument("--scope", type=Path, required=True)
-        else:
+        elif command in ("prepare", "run"):
             item.add_argument("--batch", required=True)
+        elif command == "register-ssl-abort":
+            item.add_argument("--decision", type=Path, required=True)
         if command == "prepare":
             item.add_argument("--plan", type=Path, required=True)
-        if command == "run":
+        if command in ("run", "continue-ssl-abort"):
             item.add_argument("--live", action="store_true", required=True)
     args = parser.parse_args()
     if args.command == "init":
         result = initialize(args.root, args.profiles, args.scope)
     elif args.command == "prepare":
         result = prepare(args.root, args.batch, args.plan)
+    elif args.command == "register-ssl-abort":
+        result = register_ssl_abort(args.root, args.decision)
+    elif args.command == "continue-ssl-abort":
+        result = asyncio.run(continue_ssl_abort(args.root, live=args.live))
     else:
         result = asyncio.run(run(args.root, args.batch, live=args.live))
     print(result)
