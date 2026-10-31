@@ -2,7 +2,7 @@
 
 Ловит рассинхрон до того, как его прочитает следующий тред или сессия:
 
-1. Пути в обратных кавычках в живых md существуют в репозитории.
+1. Пути в обратных кавычках и локальные Markdown-ссылки/якоря существуют.
 2. В живых документах нет старых адресов (`docs/SFR<N>_REPORT.md` без `reports/`,
    `docs/product/edits/`, копии в проекте Claude, `SFR_TODO.md`, `GITHUB_WORKFLOW.md`).
 3. Бриф «Где мы сейчас» — единственное принятое состояние; его факты обязательны.
@@ -16,8 +16,9 @@
    index_version, пороги — против брифа.
 
 Только стандартная библиотека. Расхождения печатаются списком, код возврата 1.
-Строки с пометкой истории (удалён, снят, до дд.мм, `git show`, «старые пути»)
-не проверяются на пути — там старые адреса стоят намеренно.
+Исторические упоминания путей не проверяются; действующие Markdown-ссылки
+проверяются и в историческом тексте. Внешние и частные пути вне репозитория
+не открываются. Проверка структуры ссылок не устанавливает истинность текста.
 
     python3 scripts/docs_check.py          # локально и в CI
     python3 scripts/docs_check.py --live   # плюс сверка с боевым /health
@@ -26,13 +27,16 @@
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
 import subprocess
 import sys
 import urllib.request
+from collections.abc import Iterator
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,6 +51,10 @@ LIVE_DOCS = [
     "docs/product/brief.md",
     "docs/DECISIONS.md",
     "docs/product/mvp_spec.md",
+    "docs/product/nir_vkrs.md",
+    "docs/product/course_grading_NIR3.md",
+    "docs/product/course_grading_VKRS.md",
+    "docs/product/research/profile_evidence_review_2026-10.md",
     "docs/product/grants_tracker_2026-2027.md",
     "docs/product/market_stretch_map_2026-08-08.md",
     "docs/PILOT_TEST_GUIDE.md",
@@ -178,10 +186,113 @@ def known_iterations() -> set[str]:
     return codes
 
 
+def live_docs() -> list[str]:
+    """Тематические документы подхватываются, когда появляются в проверяемой ветке."""
+    return list(
+        dict.fromkeys(
+            LIVE_DOCS
+            + sorted(
+                str(path.relative_to(ROOT))
+                for path in (ROOT / "docs/product/monetization").rglob("*.md")
+            )
+        )
+    )
+
+
+def prose_lines(text: str) -> Iterator[tuple[int, str]]:
+    """Не считать fenced code и HTML-комментарии действующими ссылками/заголовками."""
+    text = re.sub(r"<!--.*?-->", lambda m: "\n" * m.group().count("\n"), text, flags=re.S)
+    fence = ""
+    for number, line in enumerate(text.splitlines(), 1):
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if marker:
+            run = marker.group(1)
+            if not fence:
+                fence = run
+            elif run[0] == fence[0] and len(run) >= len(fence):
+                fence = ""
+            continue
+        if not fence:
+            yield number, line
+
+
+def markdown_anchors(text: str) -> set[str]:
+    anchors: set[str] = set()
+    headings: set[str] = set()
+    previous = ""
+    for _, line in prose_lines(text):
+        no_code = re.sub(r"(`+).*?\1", "", line)
+        anchors.update(re.findall(r"\b(?:id|name)=[\"']([^\"']+)[\"']", no_code))
+        heading = re.match(r"^ {0,3}#{1,6}\s+(.+?)(?:\s+#+\s*)?$", line)
+        title = heading.group(1) if heading else ""
+        if previous and re.fullmatch(r" {0,3}(?:=+|-+)\s*", line):
+            title = previous
+        previous = line.strip()
+        if not title:
+            continue
+        title = re.sub(r"!?\[([^]]*)\]\([^)]*\)", r"\1", title)
+        title = html.unescape(re.sub(r"<[^>]+>", "", title)).lower()
+        slug = re.sub(r"[^\w\- ]", "", title).replace(" ", "-")
+        unique, suffix = slug, 0
+        while unique in headings:
+            suffix += 1
+            unique = f"{slug}-{suffix}"
+        headings.add(unique)
+        anchors.add(unique)
+    return anchors
+
+
+def markdown_links(text: str) -> Iterator[tuple[int, str]]:
+    # Destinations support angle brackets, escapes and balanced parentheses.
+    # Reference definitions are checked once, at the definition's location.
+    for number, line in prose_lines(text):
+        line = re.sub(r"(`+).*?\1", "", line)
+        reference = re.match(r"^ {0,3}\[[^]]+\]:\s*", line)
+        starts = [reference.end()] if reference else []
+        starts += [match.end() for match in re.finditer(r"!?\[[^]\n]*\]\(\s*", line)]
+        for start in starts:
+            if start >= len(line):
+                continue
+            if line[start] == "<":
+                end = line.find(">", start + 1)
+                if end >= 0:
+                    yield number, line[start + 1 : end]
+                continue
+            end, depth = start, 0
+            while end < len(line):
+                char = line[end]
+                if char == "\\" and end + 1 < len(line):
+                    end += 2
+                    continue
+                if char.isspace() or (char == ")" and depth == 0):
+                    break
+                depth += (char == "(") - (char == ")")
+                end += 1
+            yield number, line[start:end]
+
+
+def check_markdown_links(rel: str, text: str, findings: list[str]) -> None:
+    for number, href in markdown_links(text):
+        href = html.unescape(re.sub(r"\\([() ])", r"\1", href))
+        link = urlsplit(href)
+        if link.scheme or link.netloc or link.path.startswith(("/", "~")):
+            continue
+        target = ((ROOT / rel).parent / unquote(link.path)).resolve() if link.path else ROOT / rel
+        if not target.is_relative_to(ROOT.resolve()):
+            continue  # Private local sources are outside this repository check.
+        if not target.exists():
+            if not is_ignored(str(target.relative_to(ROOT))):
+                findings.append(f"{rel}:{number}: ссылка `{href}` — файл не существует")
+        elif link.fragment and target.suffix.lower() == ".md":
+            anchors = markdown_anchors(target.read_text(encoding="utf-8"))
+            if unquote(link.fragment) not in anchors:
+                findings.append(f"{rel}:{number}: ссылка `{href}` — якорь не существует")
+
+
 def check_paths(findings: list[str]) -> None:
     basenames = repo_basenames()
     iterations = known_iterations()
-    for rel in LIVE_DOCS:
+    for rel in live_docs():
         path = ROOT / rel
         if not path.exists():
             findings.append(f"{rel}: файла нет, а он в списке живых документов скрипта")
@@ -189,6 +300,7 @@ def check_paths(findings: list[str]) -> None:
         text = path.read_text(encoding="utf-8")
         if rel == "docs/DECISIONS.md":
             text = text.split("\n## 2026-", 1)[0]
+        check_markdown_links(rel, text, findings)
         for lineno, line in enumerate(text.split("\n"), 1):
             if HISTORY.search(line) or EXAMPLE.search(line):
                 continue
@@ -401,7 +513,7 @@ def main() -> int:
             print(f"  - {item}")
         return 1
     print(
-        "docs-check: живые документы согласованы"
+        "docs-check: пути, якоря и проверяемые показатели согласованы"
         + (" (включая боевой /health)" if args.live else "")
     )
     return 0
