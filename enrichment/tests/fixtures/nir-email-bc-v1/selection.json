@@ -1,0 +1,102 @@
+[
+  {
+    "case_id": "synthetic_case_1",
+    "group_id": "synthetic_person_1",
+    "pair_id": "synthetic_pair_1",
+    "example_ids": [
+      "synthetic_example_1"
+    ],
+    "profile": {
+      "name": "Synthetic Person 1",
+      "identifiers": {
+        "synthetic_id": "X-1"
+      }
+    },
+    "email": "one@example.invalid",
+    "evidence": [
+      {
+        "source_id": "synthetic_source_1",
+        "url": "https://example.invalid/source/1",
+        "captured_at": "2026-10-31T00:00:00+03:00",
+        "content_date": null,
+        "source_path": "source-1.txt",
+        "excerpt": "Synthetic Person One; synthetic researcher identifier X-1. Personal email: one@example.invalid."
+      }
+    ]
+  },
+  {
+    "case_id": "synthetic_case_2",
+    "group_id": "synthetic_person_2",
+    "pair_id": "synthetic_pair_2",
+    "example_ids": [
+      "synthetic_example_2"
+    ],
+    "profile": {
+      "name": "Synthetic Person 2",
+      "identifiers": {
+        "synthetic_id": "X-2"
+      }
+    },
+    "email": "two@example.invalid",
+    "evidence": [
+      {
+        "source_id": "synthetic_source_2",
+        "url": "https://example.invalid/source/2",
+        "captured_at": "2026-10-31T00:00:00+03:00",
+        "content_date": null,
+        "source_path": "source-2.txt",
+        "excerpt": "Synthetic Person Two, identifier X-OTHER. Personal email: two@example.invalid. The target has identifier X-2."
+      }
+    ]
+  },
+  {
+    "case_id": "synthetic_case_3",
+    "group_id": "synthetic_person_3",
+    "pair_id": "synthetic_pair_3",
+    "example_ids": [
+      "synthetic_example_3"
+    ],
+    "profile": {
+      "name": "Synthetic Person 3",
+      "identifiers": {
+        "synthetic_id": "X-3"
+      }
+    },
+    "email": "office@example.invalid",
+    "evidence": [
+      {
+        "source_id": "synthetic_source_3",
+        "url": "https://example.invalid/source/3",
+        "captured_at": "2026-10-31T00:00:00+03:00",
+        "content_date": null,
+        "source_path": "source-3.txt",
+        "excerpt": "Synthetic Laboratory Three. General office mailbox: office@example.invalid. No personal mailbox is listed."
+      }
+    ]
+  },
+  {
+    "case_id": "synthetic_case_4",
+    "group_id": "synthetic_person_4",
+    "pair_id": "synthetic_pair_4",
+    "example_ids": [
+      "synthetic_example_4"
+    ],
+    "profile": {
+      "name": "Synthetic Person 4",
+      "identifiers": {
+        "synthetic_id": "X-4"
+      }
+    },
+    "email": "four@example.invalid",
+    "evidence": [
+      {
+        "source_id": "synthetic_source_4",
+        "url": "https://example.invalid/source/4",
+        "captured_at": "2026-10-31T00:00:00+03:00",
+        "content_date": null,
+        "source_path": "source-4.txt",
+        "excerpt": "Synthetic Person Four. Contact: four@example.invalid. No independent identity anchor is available."
+      }
+    ]
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "complete_prior_use_inventory": true,
+  "inventory_sources": [
+    {
+      "path": "previous-use.json",
+      "sha256": "8762e5f3744a8d0634e3fa48bb50a683ce04645dfa486d25adf2ed693b1746ce"
+    }
+  ],
+  "group_ids": [
+    "synthetic_prior_person"
+  ],
+  "pair_ids": [
+    "synthetic_prior_pair"
+  ],
+  "example_ids": [
+    "synthetic_prior_example"
+  ],
+  "warning": "Complete only for this synthetic fixture. Not an inventory of SFR people or evidence."
+}

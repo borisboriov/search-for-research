@@ -251,3 +251,249 @@ receipt, request, usage, ошибки и timeout. Pi-клиент с отдел�
 ни освобождённого места. Для будущих запусков предлагается один внешний
 `SFR_ENRICHMENT_DATA_ROOT` с отдельным root на разрешённый run; прежние каталоги
 остаются адресуемыми оригиналами.
+
+## Offline-подготовка НИР: общая и раздельная проверка email
+
+[`sfr_enrichment.nir`](src/sfr_enrichment/nir.py) дополняет существующее хранение
+снимков и отдельных человеческих решений для [методики НИР B/C](research/methods/nir_email_bc_v1.md).
+Модуль только читает локальные файлы и создаёт новые артефакты вне Git. В нём
+**нет получения источников, модельного транспорта или реального запуска B/C**.
+Его подготовка и синтетические тесты не означают выполненный пилот. Старые
+карточки `human` показывают модельные решения и для независимой разметки нового
+пилота не подходят; новый экспорт использует отдельный нейтральный контракт.
+
+Команды из корня репозитория (пути ниже обозначают подготовленные приватные входы):
+
+```bash
+uv run --frozen python -m sfr_enrichment.nir freeze --root /private/tmp/nir-private/run-v1 --selection /private/tmp/nir-private/selection.json --exclusions /private/tmp/nir-private/exclusions.json --protocol /private/tmp/nir-private/protocol.json
+uv run --frozen python -m sfr_enrichment.nir export --root /private/tmp/nir-private/run-v1 --annotator adelina
+uv run --frozen python -m sfr_enrichment.nir export --root /private/tmp/nir-private/run-v1 --annotator sasha
+uv run --frozen python -m sfr_enrichment.nir import-human --root /private/tmp/nir-private/run-v1 --answers /private/tmp/nir-private/adelina-answers.json --record-id first
+uv run --frozen python -m sfr_enrichment.nir import-human --root /private/tmp/nir-private/run-v1 --answers /private/tmp/nir-private/sasha-answers.json --record-id first
+uv run --frozen python -m sfr_enrichment.nir import-model --root /private/tmp/nir-private/run-v1 --answers /private/tmp/nir-private/model-B.json --record-id first
+uv run --frozen python -m sfr_enrichment.nir import-model --root /private/tmp/nir-private/run-v1 --answers /private/tmp/nir-private/model-C.json --record-id first
+uv run --frozen python -m sfr_enrichment.nir adjudicate --root /private/tmp/nir-private/run-v1 --answers /private/tmp/nir-private/adjudication.json --record-id first
+uv run --frozen python -m sfr_enrichment.nir analyze --root /private/tmp/nir-private/run-v1 --out /private/tmp/nir-private/analysis-v1.json --seed 154 --resamples 2000
+```
+
+Это последовательность подготовки и импорта **уже существующих** ответов. Переход
+к реальному сбору и B/C требует отдельного разрешения, завершённого протокола и
+ресурсной проверки перед использованием существующего native-транспорта. Текущий CLI обогащения сохраняет
+свой лимит 1–10 профилей: `nir freeze` не получает ни одного нового профиля и не
+повышает этот лимит. Офлайн-выборка может включать несколько заранее разрешённых
+партий; связь человека между партиями сохраняется через `group_id`.
+
+`selection.json` — список объектов с **ровно** полями `case_id`, `group_id`
+(один исследователь, в том числе при нескольких email), `pair_id`, `example_ids`,
+`profile`, `email`, `evidence`. Профиль допускает `name`, `aliases`, `identifiers`,
+`affiliations`, `topics`; ответы и модельные оценки в него не добавляют. Источник
+содержит `source_id`, HTTP(S) `url`, `captured_at` с часовым поясом, `content_date`
+(строка либо `null`), `source_path` к сохранённому UTF-8 тексту и буквальный
+`excerpt`. Путь к тексту разрешается относительно `selection.json`. Полный текст
+снимка сохраняется вместе с цитатой; HTTP-загрузка не выполняется. Повтор
+`(group_id, email.strip())` отвергается даже с новыми case/pair ID. Более сложную
+нормализацию адресов выполняет контракт отбора; модуль не изобретает правила RFC.
+
+`exclusions.json` содержит `group_ids`, `pair_ids`, `example_ids` всех прежних
+использований, `inventory_sources: [{"path": "...", "sha256": "..."}]` и
+`complete_prior_use_inventory: true`. Пути источников реестра — относительно
+этого JSON. Код проверяет их SHA и исключает совпадения по трём спискам; полноту
+реестра, соответствие псевдонимов реальным людям и отсутствие незаписанных прежних
+примеров должен проверить ответственный человек. Нельзя помечать реальный реестр
+полным только ради успешной команды. [Синтетическая выборка и исключения](tests/fixtures/nir-email-bc-v1/README.md)
+показывают заполненный формат, не содержат реальных контактов и не заменяют реестр SFR.
+
+Шаблон [protocol JSON](research/methods/nir_email_bc_protocol_v1.json) содержит
+одинаковые `rubric` и `common_examples`, отдельные симметричные `instructions_B`
+и `instructions_C`, запрошенные `model`/`effort`, `generation`, `limits` и версии
+`code_revision`/`runtime_version`. Поля с `TEMPLATE` нужно заполнить фактическими
+версиями; `freeze` отвергает незаполненные версии. Сохранение предложения лимитов
+не означает их согласования или применения отсутствующим транспортом. Manifest
+всегда явно сохраняет `launch_authorized: false`.
+
+После `freeze` корень содержит неизменяемые `<root>/manifest.json`, `<root>/cases.json`,
+`<root>/protocol.json`, `exclusions.json`, `sources/*.txt`, общие для B/C
+`model-inputs/<case_id>.json` (включая полные тела) и `<root>/prompt-B.json`/`<root>/prompt-C.json`
+с одинаковой рубрикой и примерами. SHA связывают каждый ответ с данным входом,
+инструкцией и протоколом. Это фиксация файлов, а не доказательство того, что внешний
+транспорт действительно отправил их без изменений.
+
+Каждый разметчик получает **только собственный каталог**
+`human-packets/adelina/` или `human-packets/sasha/`: `<own-package>/packet.json`, `sources/` и
+`<own-package>/answers-template.json`. Передавать весь рабочий корень нельзя: там позднее
+будут ответы моделей и другого человека. JSON-форма заполняется отдельно:
+`actual_human_attestation: true`, фактические `reviewed_at` и `minutes`; каждое
+решение имеет `case_id`, `status: "ok"`, `label: "supported" | "refuted" |
+"insufficient"`, `reason`, `source_ids`. Для подтверждения и опровержения нужны
+ссылки на сохранённые источники. Техническая невозможность просмотра:
+`status: "technical_skip"`, `label: null`, причина. Незавершённая форма не
+импортируется. Частичный ответ допускается; пропущенные случаи явно остаются
+без человеческого эталона. Ответы сохраняются отдельно в `human-records/<annotator>/`;
+повторное решение того же разметчика по той же паре отвергается.
+
+Модельный JSON имеет `schema: "nir_model_answers_v1"`, `arm: "B" | "C"`,
+`manifest_sha256`, `cases_sha256`, `protocol_sha256`, `prompt_sha256`,
+запрошенные `model`, `effort`, `generation`, `code_revision`, `runtime_version` из
+протокола и список `results`. Каждая запись:
+
+```json
+{
+  "case_id": "synthetic_case_1",
+  "case_input_sha256": "SHA файла model-inputs/<case_id>.json",
+  "status": "ok",
+  "raw_response": "{\"label\":\"supported\",\"reason\":\"пример формата, не результат\",\"source_ids\":[\"synthetic_source_1\"]}",
+  "started_at": "2026-10-31T00:00:00+03:00",
+  "latency_seconds": 1.0,
+  "input_tokens": null,
+  "output_tokens": null,
+  "cost_usd": null,
+  "observed_model": null,
+  "observed_effort": null,
+  "receipt": null
+}
+```
+
+Для C `raw_response` вместо общего `label` содержит `identity` и
+`object_relation` с теми же тремя классами, `reason` и `source_ids`; итог
+вычисляется кодом. Для `technical_skip` сохраняются исходный ответ/ошибка и
+`error`, содержательный класс остаётся `null`. Числа в примере показывают
+формат, не измерения. Затраты, токены и наблюдаемая конфигурация сохраняются
+как `null`, если транспорт их не предоставляет; стоимость не выводится из
+догадок о токенах. `receipt` — исходные метаданные провайдера без секретов,
+заголовков авторизации и ключей либо `null`; код сохраняет их SHA и SHA сырого
+ответа. `observed_model`/`observed_effort` отделены от запрошенных параметров;
+это сведения передавшего файл, а не независимая аттестация модели. Расхождения,
+отсутствующие квитанции и неизвестные значения явно попадают в анализ.
+
+Арбитражный JSON: `schema: "nir_adjudication_v1"`, `manifest_sha256`,
+`adjudicator`, `reviewed_at`, `actual_human_attestation: true`, список
+`decisions: [{"case_id": "...", "label": "...", "reason": "...", "source_ids": ["..."]}]`.
+Он допустим только для действительного неразрешённого разногласия двух людей.
+Исходные ответы сохраняются, повторный арбитраж и исправление уже согласованного
+эталона этим CLI не поддерживаются; нужна отдельная явная версия и проверка
+происхождения. Отсутствие ответа человека не разрешается арбитражем.
+
+Анализ сохраняет знаменатели и нулевые отношения как `null`, исходные 3×3
+решения и κ до арбитража, чувствительность к каждому разметчику, раздельные
+компоненты риска по `refuted`/`insufficient`, 12 клеток парного принятия по
+трём классам и отдельные клетки неизвестного эталона. `R_resolved` считается
+по каждому собственному множеству принятых пар с разрешённым эталоном;
+`R_all_accepted_bounds` показывает крайние сценарии неизвестных принятых пар.
+Технические пропуски считаются непринятыми в `intention_to_process` и отдельно
+показываются; `paired_valid_diagnostic` исключает пары с технической ошибкой
+хотя бы одной руки. Положительный `R_B_minus_C` означает уменьшение риска;
+`T_C_minus_B` и `coverage_C_minus_B` — изменения сохранения и покрытия.
+Bootstrap использует одинаковую выборку групп исследователей для обеих рук
+и пересчитывает их разные знаменатели. Отдельно показаны неопределённые
+реплики, условность интервала и вырождение. Нулевой риск в маленьком пилоте
+или нулевой bootstrap-интервал не доказывает нулевой риск популяции.
+Анализ не выдаёт подтверждающий p-value или объём основной выборки без
+реального пилота и заранее выбранных практических границ.
+
+Проверка без сети и моделей:
+
+```bash
+uv run --frozen python enrichment/tests/run_offline.py
+```
+
+### Подготовленные native-запросы и нормализация сохранённых ответов
+
+Дополнительные команды полностью локальны:
+
+```bash
+uv run --frozen python -m sfr_enrichment.nir prepare-model --root /private/tmp/nir-private/run-v1 --seed 154
+uv run --frozen python -m sfr_enrichment.nir import-native --root /private/tmp/nir-private/run-v1 --request-id synthetic_case_1-B --native-dir /private/tmp/nir-private/native-result-synthetic_case_1-B --record-id native-synthetic-case-1-B
+```
+
+Вторая команда допустима только когда указанный каталог **уже содержит**
+результат; она не вызывает `native.execute`, не восстанавливает неизвестные
+попытки и не запускает модель. `synthetic_case_1-B` — пример идентификатора из
+демонстрационной выборки, а не полученный результат SFR.
+
+`prepare-model` создаёт `<root>/prepared-model/manifest.json` и по одному
+неизменяемому каталогу на каждую пару case/arm. Каждый содержит
+`<job>/system-prompt.txt` с одинаковыми общей рубрикой и примерами,
+`<job>/prompt.txt` с заданием B либо C и точным содержимым общего model-input JSON,
+`<job>/schema.json` со строгой схемой результата B/C и `<job>/request.json`.
+Это точный состав совмещённого запроса, разделённый по ролям: общий system и
+отдельный user. Привязки case/input/common/arm/schema и каждого request сохранены
+через SHA. Схема сериализована тем же способом, что в существующем `native.execute`.
+
+Manifest фиксирует seed и порядок запросов: перемешанные случаи, попеременно
+B-first/C-first, по две независимые попытки на случай; разница числа случаев
+каждого первого варианта не больше одного. Этот порядок воспроизводим, не зависит
+от ответов и ничего не запускает. `native_configuration_supported` указывает
+поддерживаемый существующим контрактом вариант `gpt-6.1-sol/high`; искусственная
+конфигурация тестов остаётся неподдерживаемой для реального вызова. Поле
+`launch_authorized` остаётся `false` во всех подготовленных запросах.
+
+При отсутствии иных предложений в frozen protocol запрос сохраняет timeout
+300 секунд, общий deadline 3600 секунд от начала **одного разрешённого прогона**,
+лимит входа 1 000 000 байт и выходных файлов 65 536 байт. Их можно заранее
+переопределить через `limits.proposed_timeout_seconds_per_call`,
+`proposed_run_deadline_seconds`, `proposed_max_input_bytes_per_case`,
+`proposed_max_output_file_bytes`. Полный вход больше лимита отвергается без
+обрезания. Absolute deadline заранее неизвестен и остаётся `null`; при реальном
+разрешённом запуске его вычисляют один раз от общего начала, не заново для каждой
+пары. Это предложения ресурсов, а не подтверждение согласованного бюджета.
+
+`generation.max_output_tokens: 4096` остаётся **неприменённым предложением**:
+существующий `native.execute` не поддерживает такой аргумент. Это явно записано
+как `generation_proposal_not_enforced_by_native`. Его реальный timeout ограничивает
+процесс, а `max_output_file_bytes` ограничивает потоки stdout/stderr. Файл
+raw-result CLI пишет отдельно: импорт проверяет его размер после завершения,
+но это не жёсткий лимит потребления токенов, стоимости или диска во время записи.
+Оценку стоимости нельзя выдавать за фактическую оплату; денежный бюджет и квоты
+проверяются до отдельного разрешения запуска. Если эти условия недостаточны,
+прогон не начинают и не подменяют лимиты обещаниями.
+
+После отдельного разрешения последовательность конкретна: проверить утверждённые
+лимиты и общий бюджет, загрузить очередной request через `prepared_request`,
+создать новый приватный каталог результата и отдельную пустую приватную рабочую
+папку. Затем использовать существующий вызов ниже с `request["native_kwargs"]`.
+В этой подготовительной работе вызов **не выполнялся**:
+
+```python
+from sfr_enrichment.common import read
+from sfr_enrichment.native import execute
+from sfr_enrichment.nir import prepared_request
+
+request = prepared_request(root, request_id)
+# root, request_id, native_result_dir и empty_private_workdir выбраны
+# в разрешённом прогоне; authorized_run_started_epoch фиксируется один раз.
+execute(
+    directory=native_result_dir,
+    prompt=(root / request["prompt_path"]).read_text(),
+    output_schema=read(root / request["output_schema_path"]),
+    cwd=empty_private_workdir,
+    system_prompt=(root / request["system_prompt_path"]).read_text(),
+    deadline_epoch=authorized_run_started_epoch + request["proposed_run_deadline_seconds"],
+    **request["native_kwargs"],
+)
+```
+
+Обязательны существующие `required_config`, `disable_mcp`, `system_prompt` и
+`isolation_probe`. Проверка доставки должна пройти для точного общего system и
+точного конечного user; её отказ означает остановку. Нельзя убирать изоляцию,
+менять sandbox/approvals или выдавать отсутствие всех клиентских инструкций
+за доказанный факт: исходный render сохраняет наблюдаемый контекст и ограничения.
+Новый runner и обход существующих guards здесь не добавлены. Автоматических
+повторов нет; незавершённая/ошибочная попытка остаётся техническим пропуском,
+а не содержательным `insufficient`.
+
+`import-native` проверяет подготовленный request, сохранённые prompt/schema и
+общие инструкции, raw-result/receipt/events SHA, успешные started/finished,
+запрошенную конфигурацию, отсутствие инструментов в событиях, usage и сохранённое
+доказательство доставки из `isolation_probe`. Затем копирует исходные артефакты в
+`<root>/native-imports/<record-id>/`, создаёт нормализованный envelope и использует
+обычный `import-model`. Наблюдаемые модель/effort берутся из receipt и остаются
+`null`, если existing CLI их не раскрывает; запрошенные значения их не заменяют.
+Cached/reasoning tokens не прибавляются повторно к input/output. Стоимость
+сохраняется только из фактического receipt либо `null`. Ошибки, timeout, неизвестный
+исход и отказ изоляции импортируют отдельным `technical_skip` через существующий
+`import-model`, сохраняя фактические расходы или неизвестность; успех не выдумывают.
+
+Регрессии проверяют совместимость normalizer с **реальным кодом**
+`native.execute`/`isolation_probe` при замоканных subprocess и выходном потоке,
+а также отказы на другом case, изменённых schema/raw SHA и подменённой доставке.
+Ни CLI Codex, ни HTTP, ни реальная модель в этих тестах не запускаются.

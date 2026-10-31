@@ -1,0 +1,12 @@
+{
+  "schema": "synthetic_previous_use_only",
+  "group_ids": [
+    "synthetic_prior_person"
+  ],
+  "pair_ids": [
+    "synthetic_prior_pair"
+  ],
+  "example_ids": [
+    "synthetic_prior_example"
+  ]
+}
