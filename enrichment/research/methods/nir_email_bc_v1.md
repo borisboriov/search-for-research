@@ -623,35 +623,54 @@ schema, порядок и `launch_authorized: false` те же, что у v1. `p
 отклоняет несовпадение транспорта protocol/manifest/request и чужой набор аргументов.
 
 **Вызов.** [`native_claude.py`](../../src/sfr_enrichment/native_claude.py) выполняет
-одну попытку в пустом изолированном cwd, prompt передаётся только через stdin:
+одну попытку в пустом изолированном cwd, prompt передаётся только через stdin.
+Профиль изоляции — `--safe-mode --setting-sources ""` вместо `--bare` (решение
+координатора 01.11): в `--bare` CLI 2.1.316 не читает OAuth/keychain подписки.
 
 ```sh
-claude -p --bare --tools "" --strict-mcp-config --no-session-persistence \
+claude -p --safe-mode --setting-sources "" --strict-mcp-config --tools "" \
+  --no-session-persistence --max-turns 1 \
   --system-prompt "<system-prompt.txt>" --json-schema "<schema.json>" \
-  --model <model> --effort <effort> --max-turns 1 --output-format json
+  --model <model> --effort <effort> --output-format json
 ```
 
-До задания код сохраняет `claude --version` и `--help` и отказывает явной ошибкой,
-если в help нет любого флага, кроме скрытого, но принятого 2.1.316 `--max-turns`,
-или нет запрошенного effort. Ключи `ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` в
-окружении означают платный API и запрещают запуск; в started записываются только
-имена унаследованных `CLAUDE*`/`ANTHROPIC*` переменных, без значений. Timeout
-задания, общий deadline и `max_output_file_bytes` для stdout/stderr действуют
-так же, как у codex: превышение сохраняет частичный вывод, timeout — `finished`,
-повтора нет; начатая попытка без `finished` остаётся неизвестным исходом.
+Пустое значение `--setting-sources ""` парсер 2.1.316 принимает: событие `init`
+выдаётся без ошибки разбора. До задания код сохраняет `claude --version` и `--help`
+и отказывает явной ошибкой, если в help нет любого флага, кроме скрытого, но
+принятого 2.1.316 `--max-turns`, или нет запрошенного effort. Ключи
+`ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` в окружении означают платный API и
+запрещают запуск; в started записываются только имена унаследованных
+`CLAUDE*`/`ANTHROPIC*` переменных, без значений. Timeout задания, общий deadline
+и `max_output_file_bytes` для stdout/stderr действуют так же, как у codex:
+превышение сохраняет частичный вывод, timeout — `finished`, повтора нет; начатая
+попытка без `finished` остаётся неизвестным исходом.
 
-**Изоляция.** Перед заданием те же флаги, включая system и schema, запускаются
-дважды в `--output-format stream-json --verbose` с безвредным фиксированным prompt:
-проба с `--tools ""` и положительный контроль с `--tools Read`. Процесс
-останавливается на событии `system/init`; его `tools` и `mcp_servers` — объявленный
-registry. Нужны `[]`/`[]` у пробы и `["Read"]`/`[]` у контроля, `apiKeySource:
-"none"` и cwd, равный изолированному. Отсутствие `init`, нераспознанная строка или
-активность модели до него — ошибка, а не пустой registry. Сырые потоки сохраняются
-как `isolation-<label>-stdout-<sha>.bin`, доказательства — `isolation-probe.json` и
-`isolation-control.json`, отказ — отдельным файлом с SHA. Это проверка registry
-клиента, не перехват API. Списки skills/agents/slash_commands/plugins из `init`
-сохраняются числом и SHA: это не инструменты, и без инструментов они не вызываются,
-но их возможная передача в контекст не проверена.
+**Изоляция — отдельный шаг до authorization.** `nir_execute probe --root ...
+--request-id ... --out <новый каталог>` запускает те же флаги, включая system и
+`--json-schema` выбранного request, дважды в `--output-format stream-json --verbose`
+с безвредным фиксированным prompt: проба с `--tools ""` и положительный контроль с
+`--tools Read`. Процесс останавливается на событии `system/init`; его `tools` и
+`mcp_servers` — объявленный registry. Критерий: `tools: []` и `mcp_servers: []` у
+пробы, `["Read"]` и `[]` у контроля; дополнительно `apiKeySource: "none"` (иначе
+платный ключ) и cwd, равный изолированному. Отказ называет точные имена лишних
+инструментов и серверов. Отсутствие `init`, нераспознанная строка или активность
+модели до него — ошибка, а не пустой registry. Списки skills/agents/
+slash_commands/plugins из `init` записываются как есть, числом и SHA. Это не
+инструменты, и критерием они не являются; их возможная передача в контекст не
+проверена. Это проверка registry клиента, не перехват API.
+
+Шаг пишет сырые потоки `isolation-<label>-stdout-<sha>.bin`, `isolation-probe.json`,
+`isolation-control.json`, `cli-version.txt`, `cli-help.txt` и итоговый
+`isolation-proof.json`. В итоговом файле — версия CLI и SHA help, модель, effort,
+профили флагов (system/schema заменены метками), найденные tools и SHA файлов. Это
+реальный запуск CLI, остановленный на `init`: он требует отдельного разрешения, его
+usage неизвестен, а не нулевой, и в ledger он не записывается. Authorization ссылается
+на `isolation_proof_path` и `isolation_proof_sha256`. Runner до первой и перед каждой
+попыткой заново разбирает сохранённые `init` и сверяет SHA, версию CLI, модель/effort
+и профиль флагов; сам пробу не запускает, поэтому слот на неё не расходуется. Попытка
+копирует proof в свой каталог для импорта. Proof привязывает флаги и версию CLI, а
+не конкретный schema: наличие `--json-schema` в пробе обязательно, содержимое схемы
+на registry не влияет. Свой cwd задания проверяется пустым до и после вызова.
 
 **Receipt и импорт.** В каталоге попытки — `stdout.json` (сырой результат CLI),
 `stderr.log`, `raw-result.json` (`structured_output`), `command.json`, `started.json`,
@@ -681,7 +700,8 @@ uv run --frozen python -m sfr_enrichment.nir_execute execute \
 `retries: 0`, `parallelism: 1`, абсолютный `absolute_deadline` с часовым поясом,
 `run_deadline_seconds`, `per_call_timeout_seconds`, `max_output_file_bytes`,
 `max_input_bytes_per_case`, `model_job_cap`, `model`, `effort`, точный вывод
-`cli_version`, `authorization_reference`, `execution_root` и SHA `native.py`,
+`cli_version`, `authorization_reference`, `execution_root`, `isolation_proof_path`
+с `isolation_proof_sha256` и SHA `native.py`,
 `native_claude.py`, `nir.py`, runner, frozen и prepared manifests. Модель, effort,
 timeout и лимит байт сверяются с каждым request; CLI version проверяется до
 записи попытки.
@@ -695,26 +715,27 @@ Claude всегда `{"source": "unavailable", ...}`: официального e
 записывается как `deferred-NNN-<request_id>.json` со статусом `transport_deferred`:
 слот не расходуется, runner завершается с кодом 3. То же задание продолжается
 только новым явным запуском. Иная ошибка, включая отказ аутентификации, —
-`technical_failure` с кодом 2; следующий запуск отказывает до разбора. Как у codex,
-попытка записывается до пробы изоляции, поэтому отказ пробы тоже расходует слот. Попытка без
+`technical_failure` с кодом 2; следующий запуск отказывает до разбора. Попытка без
 outcome блокирует продолжение. Новая authorization не продолжает старый run-clock:
 нужна отдельная записанная decision, как в v1.
 
-`nir_execute probe --root ... --request-id ... --out <новый каталог>` выполняет
-только проверку флагов и registry для request, без prompt задания и без записи в
-ledger. Это реальный запуск CLI, остановленный на `init`; он требует отдельного
-разрешения, и его usage неизвестен, а не нулевой.
-
 **Ограничения, известные до freeze v2.**
 
-- `--bare` по help CLI 2.1.316 читает только `ANTHROPIC_API_KEY` или
-  `apiKeyHelper`; OAuth и keychain подписки не читаются. Технический вызов
-  01.11 без ключа вернул ошибку аутентификации. Ключ API отклоняется как платный,
-  поэтому с этим набором флагов запуск по подписке невозможен. Замена `--bare`
-  требует отдельного решения и нового доказательства изоляции; код этого не делает.
-- Совместимость `--json-schema` с `--tools ""` и `--max-turns 1` реальным ответом
-  не проверена. Если CLI добавит служебный инструмент структурированного вывода в
-  registry, проба откажет явно.
+- **Проба в текущем профиле не проходит.** Технические пробы 01.11 (песочница
+  Claude Code 2.1.316, haiku, `--json-schema` включён) показали в `init`
+  `apiKeySource: "none"` и сверх ожидаемого `StructuredOutput` у пробы и контроля.
+  Это служебный инструмент структурированного вывода, который добавляет
+  `--json-schema`. Кроме того, появились сервер `claude-in-chrome` (`source: "dynamic"`)
+  и 22 его инструмента, несмотря на `--strict-mcp-config`. Контроль показал `Read`
+  на месте. По критерию обе пробы отказывают с точными именами; ограничение не
+  обходится. Динамический сервер, вероятно, вносит окружение песочницы (дочерний
+  процесс сессии Claude Code); на Mac Бориса это не проверено. Флаг `--no-chrome`
+  есть в help, но не проверялся. Допуск `StructuredOutput` или смена способа
+  структурированного вывода требуют отдельного решения.
+- Аутентификация подписки в профиле `--safe-mode` не наблюдалась: пробы
+  остановлены на `init`, ответа модели нет. Прежние вызовы с `--bare` вернули
+  ошибку аутентификации; их fixtures помечены `bare-profile-rejected`.
+- Совместимость `--json-schema` с `--max-turns 1` реальным ответом не проверена.
 - Внутренние повторы API у CLI неизвестны (`transport_retries: null`); правило
   deferred основано на наблюдённой форме ошибки и синтетическом 429.
 
@@ -722,8 +743,10 @@ ledger. Это реальный запуск CLI, остановленный н�
 [`test_nir_claude.py`](../../tests/test_nir_claude.py) мокают subprocess.
 Fixtures CLI 2.1.316 и их происхождение — в
 [`provenance.json`](../../tests/fixtures/claude-cli-2.1.316/provenance.json):
-реальные ответ с ошибкой аутентификации и два потока `init` из двух разрешённых
-технических вызовов без частных данных. Успех и rate-limit там помечены synthetic.
+реальные ответ с ошибкой аутентификации и потоки `init` профиля `--bare`
+(`bare-profile-rejected`), а также потоки `init` профиля `--safe-mode`. Все они
+получены в разрешённых технических вызовах без частных данных. Успех и rate-limit
+там помечены synthetic.
 
 ## Частный реестр исторических исключений
 
