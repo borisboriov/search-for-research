@@ -14,8 +14,8 @@ from urllib.parse import urlparse
 from sfr_enrichment.batch import encoded
 from sfr_enrichment.common import now, private_root, read, sha, write_new
 from sfr_enrichment.evidence import identifier, immutable_bytes
-from sfr_enrichment.native_claude import CONTROL_TOOL, init_event, registry_check
 from sfr_enrichment.native_claude import EFFORTS as CLAUDE_EFFORTS
+from sfr_enrichment.native_claude import verify_isolation_proof
 from sfr_enrichment.nir_inventory import (
     candidate_identity_keys,
     canonical_document_url,
@@ -1208,37 +1208,24 @@ def import_claude_native(
         or result.get("session_id") != receipt.get("session_id")
     ):
         raise ValueError("Claude receipt не согласован с сохранённым результатом")
-    proof_names: list[str] = []
-    cwd: str | None = None
-    for label, expected in (("probe", []), ("control", [CONTROL_TOOL])):
-        path = native_dir / f"isolation-{label}.json"
-        if sha(path) != receipt.get(f"isolation_{label}_sha256") or sha(path) != started.get(
-            f"isolation_{label}_sha256"
-        ):
-            raise ValueError("Claude isolation proof hash не совпадает")
-        proof = read(path)
-        if (
-            proof.get("instruction_sha256") != request["system_prompt_sha256"]
-            or proof.get("schema_sha256") != request["output_schema_sha256"]
-            or proof.get("expected_tools") != expected
-            or proof.get("terminated_after_init") is not True
-        ):
-            raise ValueError("Claude isolation proof не относится к этому request")
-        # Recheck the saved init event rather than trusting a status field.
-        stdout_hash = nonempty(proof.get("stdout_sha256"), "stdout_sha256")
-        if len(stdout_hash) != 64 or any(c not in "0123456789abcdef" for c in stdout_hash):
-            raise ValueError("Некорректный Claude isolation SHA")
-        saved = native_dir / f"isolation-{label}-stdout-{stdout_hash}.bin"
-        if proof.get("stdout_path") != saved.name or sha(saved) != stdout_hash:
-            raise ValueError("Claude isolation stdout hash/path не совпадает")
-        _, init, _ = init_event(saved.read_bytes())
-        cwd = cwd or init.get("cwd")
-        check = registry_check(init, expected, Path(str(cwd)))
-        if any(check[key] != proof.get(key) for key in ("tools", "mcp_servers", "apiKeySource")):
-            raise ValueError("Claude isolation proof не совпадает с сохранённым init")
-        if not str(receipt.get("cli_version", "")).startswith(check["claude_code_version"] + " "):
-            raise ValueError("Версия Claude CLI в init не совпадает с receipt")
-        proof_names += [path.name, saved.name]
+    # Recheck the copied stored proof (saved init events), not only recorded hashes.
+    proof = verify_isolation_proof(
+        native_dir,
+        model=kwargs["model"],
+        effort=kwargs["effort"],
+        cli_version=str(receipt.get("cli_version")),
+    )
+    if (
+        proof["isolation_proof_sha256"] != receipt.get("isolation_proof_sha256")
+        or proof["isolation_proof_sha256"] != started.get("isolation_proof_sha256")
+        or any(
+            sha(native_dir / f"isolation-{label}.json") != receipt.get(f"isolation_{label}_sha256")
+            or receipt.get(f"isolation_{label}_sha256") != started.get(f"isolation_{label}_sha256")
+            for label in ("probe", "control")
+        )
+    ):
+        raise ValueError("Claude isolation proof hash не совпадает")
+    proof_names = ["isolation-proof.json", *proof["files_sha256"]]
     if receipt.get("tool_registry") != [] or receipt.get("mcp_servers") != []:
         raise ValueError("Claude receipt не подтверждает пустой registry")
     start, finish = started.get("started_at_epoch"), finished.get("finished_at_epoch")

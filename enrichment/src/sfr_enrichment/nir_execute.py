@@ -6,7 +6,10 @@
 и остановку на неразрешённом или техническом исходе. Отказ rate-limit/overload
 до вывода модели фиксируется как ``transport_deferred``: слот не расходуется,
 runner останавливается, продолжение возможно только новым явным запуском.
-Модуль ничего не запускает при импорте; поиск, повторы и fallback отсутствуют.
+Проба изоляции — отдельный шаг ``probe`` до authorization: authorization ссылается
+на SHA proof, а runner перед каждой попыткой проверяет сохранённый proof и сам
+пробу не запускает. Модуль ничего не запускает при импорте; поиск, повторы и
+fallback отсутствуют.
 """
 
 import argparse
@@ -98,12 +101,34 @@ def validated(root: Path, path: Path) -> tuple[dict[str, Any], dict[str, Any], f
             "prepared order",
         ),
     ]
+    proof = auth.get("isolation_proof_path")
+    checks.append(
+        (
+            isinstance(proof, str)
+            and Path(proof).name == native_claude.PROOF
+            and Path(proof).is_file()
+            and sha(Path(proof)) == auth.get("isolation_proof_sha256"),
+            "isolation_proof_sha256",
+        )
+    )
     failed = [name for ok, name in checks if not ok]
     if failed:
         raise ValueError("Authorization precondition failed: " + ", ".join(failed))
     if auth["model_job_cap"] > len(order):
         raise ValueError("Authorization precondition failed: model_job_cap")
+    proof_directory(auth)
     return auth, prepared, deadline.timestamp()
+
+
+def proof_directory(auth: dict[str, Any]) -> Path:
+    """Verify the stored proof for the authorized flags and CLI; never launch a probe."""
+    directory = Path(auth["isolation_proof_path"]).parent
+    verified = native_claude.verify_isolation_proof(
+        directory, model=auth["model"], effort=auth["effort"], cli_version=auth["cli_version"]
+    )
+    if verified["isolation_proof_sha256"] != auth["isolation_proof_sha256"]:
+        raise ValueError("Authorization precondition failed: isolation proof changed")
+    return directory
 
 
 def ledger_position(execution: Path, order: list[str]) -> tuple[int, int]:
@@ -163,6 +188,7 @@ def run_job(
     native_claude.paid_key_guard()
     if native_claude.installed_cli_version(deadline) != auth["cli_version"]:
         raise ValueError("Installed Claude CLI differs from authorization")
+    proof = proof_directory(auth)
     write_new(
         execution / f"attempt-{attempt_index:03d}.json",
         {
@@ -189,6 +215,7 @@ def run_job(
             read(root / request["output_schema_path"]),
             cwd,
             system_prompt=system,
+            isolation_proof_dir=proof,
             deadline_epoch=deadline,
             expected_cli_version=auth["cli_version"],
             **kwargs,
@@ -285,10 +312,10 @@ def execute(
 
 
 def probe(root: Path, request_id: str, out: Path) -> Path:
-    """Compatibility check only: CLI flags plus isolation probe/control, no task prompt.
+    """Separate isolation step before authorization; never touches the ledger.
 
-    Each probe is a real CLI launch terminated at system/init; it needs its own
-    permission and never consumes or records a ledger slot.
+    Each probe is a real CLI launch terminated at system/init and needs its own
+    permission; the resulting ``isolation-proof.json`` SHA goes into authorization.
     """
     root = root.resolve()
     request = nir.prepared_request(root, request_id)
@@ -297,50 +324,21 @@ def probe(root: Path, request_id: str, out: Path) -> Path:
     out = out.resolve()
     if out.exists():
         raise FileExistsError(out)
-    out.mkdir(parents=True, mode=0o700)
-    cwd = out / "isolated-cwd"
-    cwd.mkdir(mode=0o700)
-    native_claude.paid_key_guard()
     kwargs = request["claude_kwargs"]
-    system = (root / request["system_prompt_path"]).read_bytes().decode("utf-8")
-    schema_text = (root / request["output_schema_path"]).read_text()
-    capabilities = native_claude.cli_capabilities(out, kwargs["effort"])
-    proofs = {}
-    for label, tools in (("probe", ""), ("control", native_claude.CONTROL_TOOL)):
-        proofs[label] = native_claude.isolation_probe(
-            out,
-            label,
-            native_claude.task_flags(
-                system_prompt=system,
-                schema_text=schema_text,
-                model=kwargs["model"],
-                effort=kwargs["effort"],
-                tools=tools,
-            ),
-            cwd,
-            [tools] if tools else [],
-            system_prompt=system,
-            schema_text=schema_text,
-        )
-    native_claude.require_empty_directory(cwd)
-    summary = out / "compatibility.json"
-    write_new(
-        summary,
-        {
+    return native_claude.run_isolation_check(
+        out,
+        system_prompt=(root / request["system_prompt_path"]).read_bytes().decode("utf-8"),
+        schema_text=(root / request["output_schema_path"]).read_text(),
+        model=kwargs["model"],
+        effort=kwargs["effort"],
+        context={
             "request_id": request_id,
             "request_sha256": read(root / "prepared-model" / "manifest.json")["requests"][
                 request_id
             ]["sha256"],
-            "cli": capabilities,
             "implementation": implementation_hashes(),
-            "isolation_probe_sha256": sha(out / "isolation-probe.json"),
-            "isolation_control_sha256": sha(out / "isolation-control.json"),
-            "probe_tools": proofs["probe"]["tools"],
-            "control_tools": proofs["control"]["tools"],
-            "scope": "isolation registry only; no task prompt, no model answer, not a launch",
         },
     )
-    return summary
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -352,13 +350,18 @@ def main(argv: list[str] | None = None) -> int:
     which = run.add_mutually_exclusive_group()
     which.add_argument("--next", action="store_true", help="Run exactly the next job")
     which.add_argument("--request-id", help="Run exactly this job; it must be next")
-    check = commands.add_parser("probe", help="Isolation compatibility check, no task prompt")
+    check = commands.add_parser("probe", help="Isolation proof before authorization")
     check.add_argument("--root", required=True, type=Path)
     check.add_argument("--request-id", required=True)
     check.add_argument("--out", required=True, type=Path)
     args = parser.parse_args(argv)
     if args.command == "probe":
-        print(probe(args.root, args.request_id, args.out))
+        summary = probe(args.root, args.request_id, args.out)
+        print(
+            json.dumps(
+                {"isolation_proof_path": str(summary), "isolation_proof_sha256": sha(summary)}
+            )
+        )
         return 0
     return execute(args.root, args.authorization, single=args.next, request_id=args.request_id)
 

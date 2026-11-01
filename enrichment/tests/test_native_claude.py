@@ -112,6 +112,7 @@ class ClaudeFakes:
         self.results: list[Any] = []
         self.probe: dict[str, Any] = {}
         self.control: dict[str, Any] = {}
+        self.streams: dict[str, str] = {}
         self.version = b"2.1.316 (Claude Code)\n"
         self.help = HELP
         self.calls: list[list[str]] = []
@@ -129,8 +130,14 @@ class ClaudeFakes:
         output_format = command[command.index("--output-format") + 1]
         tools = command[command.index("--tools") + 1]
         if output_format == "stream-json":
-            spec = self.control if tools else self.probe
-            process = FakeProcess(probe_stream(tools, self.cwd, spec))
+            label = "control" if tools else "probe"
+            if label in self.streams:
+                text = (FIXTURES / self.streams[label]).read_text()
+                stream = text.replace(PLACEHOLDER_CWD, str(Path(kwargs["cwd"]).resolve())).encode()
+            else:
+                spec = self.control if tools else self.probe
+                stream = probe_stream(tools, Path(kwargs["cwd"]), spec)
+            process = FakeProcess(stream)
         else:
             item = self.results.pop(0)
             process = item if isinstance(item, FakeProcess) else FakeProcess(item)
@@ -161,8 +168,22 @@ class ClaudeTransportTests(unittest.TestCase):
         self.binary.write_bytes(b"fixture executable")
         self.fakes = ClaudeFakes(self.cwd)
 
-    def run_execute(self, directory: Path | None = None, **changes: Any) -> tuple[Path, Any]:
+    def make_proof(self, name: str = "proof", **changes: Any) -> Path:
         arguments: dict[str, Any] = {
+            "system_prompt": "Synthetic shared rubric",
+            "schema_text": json.dumps(SCHEMA),
+            "model": "claude-haiku-5-5",
+            "effort": "high",
+            "context": {"synthetic": True},
+        } | changes
+        with self.fakes.active(self.binary):
+            return native_claude.run_isolation_check(self.tmp / name, **arguments)
+
+    def run_execute(self, directory: Path | None = None, **changes: Any) -> tuple[Path, Any]:
+        if not (self.tmp / "proof" / native_claude.PROOF).exists():
+            self.make_proof()
+        arguments: dict[str, Any] = {
+            "isolation_proof_dir": self.tmp / "proof",
             "model": "claude-haiku-5-5",
             "effort": "high",
             "system_prompt": "Synthetic shared rubric",
@@ -204,8 +225,10 @@ class ClaudeTransportTests(unittest.TestCase):
         self.assertEqual(receipt["tool_registry"], [])
         task = self.fakes.calls[-1]
         self.assertEqual(task[:2], ["claude", "-p"])
-        for flag in ("--bare", "--strict-mcp-config", "--no-session-persistence"):
+        for flag in ("--safe-mode", "--strict-mcp-config", "--no-session-persistence"):
             self.assertIn(flag, task)
+        self.assertNotIn("--bare", task)
+        self.assertEqual(task[task.index("--setting-sources") + 1], "")
         self.assertEqual(task[task.index("--tools") + 1], "")
         self.assertEqual(task[task.index("--output-format") + 1], "json")
         self.assertEqual(task[task.index("--max-turns") + 1], "1")
@@ -215,12 +238,16 @@ class ClaudeTransportTests(unittest.TestCase):
         self.assertEqual(json.loads(task[task.index("--json-schema") + 1]), SCHEMA)
         self.assertNotIn("Synthetic task prompt", task)
         self.assertEqual(self.fakes.processes[-1].stdin.data, b"Synthetic task prompt")
-        self.assertEqual({kwargs["cwd"] for kwargs in self.fakes.popen_kwargs}, {self.cwd})
+        self.assertEqual(self.fakes.popen_kwargs[-1]["cwd"], self.cwd)
+        self.assertEqual(sum("json" in c[-2:] for c in self.fakes.calls), 1)
         probes = [c for c in self.fakes.calls if "stream-json" in c]
         self.assertEqual([c[c.index("--tools") + 1] for c in probes], ["", "Read"])
         job = self.tmp / "job"
         self.assertEqual(read(job / "isolation-control.json")["tools"], ["Read"])
         self.assertEqual(sha(job / "isolation-probe.json"), receipt["isolation_probe_sha256"])
+        self.assertEqual(
+            sha(self.tmp / "proof" / native_claude.PROOF), receipt["isolation_proof_sha256"]
+        )
         launches = len(self.fakes.calls)
         _, again = self.run_execute()
         self.assertEqual((len(self.fakes.calls), again), (launches, receipt))
@@ -284,26 +311,78 @@ class ClaudeTransportTests(unittest.TestCase):
             self.run_execute(self.tmp / "timeout")
         self.assertEqual(len(self.fakes.calls), launches)
 
-    def test_missing_init_or_wrong_registry_refuses_before_task(self) -> None:
+    def test_missing_init_or_wrong_registry_refuses_the_proof(self) -> None:
         refusals: tuple[tuple[dict[str, Any], dict[str, Any], str], ...] = (
             ({"drop_init": True}, {}, "нет события system/init"),
-            ({"tools": ["Bash"]}, {}, "registry инструментов"),
-            ({"mcp_servers": [{"name": "x", "status": "connected"}]}, {}, "MCP"),
+            ({"tools": ["Bash"]}, {}, "лишние: Bash"),
+            ({"tools": ["StructuredOutput"]}, {}, "лишние: StructuredOutput"),
+            ({"mcp_servers": [{"name": "x", "status": "connected"}]}, {}, "MCP-серверы.*: x"),
             ({"apiKeySource": "ANTHROPIC_API_KEY"}, {}, "платный API"),
             ({"cwd": "/elsewhere"}, {}, "изолированном cwd"),
-            ({}, {"tools": []}, "registry инструментов"),
+            ({}, {"tools": []}, "отсутствуют: Read"),
         )
         for index, (probe, control, message) in enumerate(refusals):
             with self.subTest(message=message, index=index):
                 self.fakes.probe, self.fakes.control = probe, control
                 directory = self.tmp / f"refused-{index}"
                 with self.assertRaisesRegex(ValueError, message):
-                    self.run_execute(directory)
-                self.assertFalse((directory / "started.json").exists())
-                self.assertFalse(
-                    any(c[-2:] == ["--output-format", "json"] for c in self.fakes.calls)
-                )
+                    self.make_proof(directory.name)
+                self.assertFalse((directory / native_claude.PROOF).exists())
                 self.assertTrue(list(directory.glob("isolation-*-refused-*.json")))
+        self.assertFalse(any(c[-2:] == ["--output-format", "json"] for c in self.fakes.calls))
+
+    def test_real_safe_mode_registry_is_refused_by_exact_tool_names(self) -> None:
+        self.fakes.streams = {
+            "probe": "real-probe-safe-mode-tools-empty.jsonl",
+            "control": "real-probe-safe-mode-tools-read.jsonl",
+        }
+        with self.assertRaisesRegex(
+            ValueError, "лишние: StructuredOutput, mcp__claude-in-chrome__browser_batch"
+        ):
+            self.make_proof("safe-mode")
+        refused = read(next((self.tmp / "safe-mode").glob("isolation-probe-refused-*.json")))
+        self.assertIn("StructuredOutput", refused["refusal"])
+        self.assertIn("--safe-mode", self.fakes.calls[-1])
+        self.assertEqual(
+            self.fakes.calls[-1][self.fakes.calls[-1].index("--setting-sources") + 1], ""
+        )
+        _, init, _ = init_event((FIXTURES / "real-probe-safe-mode-tools-empty.jsonl").read_bytes())
+        self.assertEqual(init["apiKeySource"], "none")
+        self.assertEqual(init["mcp_servers"][0]["name"], "claude-in-chrome")
+
+    def test_stored_proof_is_rechecked_and_bound_to_flags_and_cli(self) -> None:
+        proof = self.make_proof()
+        verified = native_claude.verify_isolation_proof(
+            proof.parent,
+            model="claude-haiku-5-5",
+            effort="high",
+            cli_version="2.1.316 (Claude Code)",
+        )
+        self.assertEqual(verified["isolation_proof_sha256"], sha(proof))
+        for changes, message in (
+            ({"model": "claude-other"}, "другим флагам"),
+            ({"effort": "low"}, "другим флагам"),
+            ({"cli_version": "2.1.317 (Claude Code)"}, "другим флагам"),
+        ):
+            with self.subTest(changes=changes), self.assertRaisesRegex(ValueError, message):
+                native_claude.verify_isolation_proof(
+                    proof.parent,
+                    **{
+                        "model": "claude-haiku-5-5",
+                        "effort": "high",
+                        "cli_version": "2.1.316 (Claude Code)",
+                    }
+                    | changes,
+                )
+        self.fakes.version = b"2.1.317 (Claude Code)\n"
+        with self.assertRaisesRegex(ValueError, "другим флагам"):
+            self.run_execute(self.tmp / "newer-cli")
+        self.assertFalse((self.tmp / "newer-cli" / "started.json").exists())
+        self.fakes.version = b"2.1.316 (Claude Code)\n"
+        saved = proof.parent / read(proof.parent / "isolation-probe.json")["stdout_path"]
+        saved.write_bytes(saved.read_bytes().replace(b'"tools": []', b'"tools": ["Bash"]'))
+        with self.assertRaisesRegex(ValueError, "файлы изменены"):
+            self.run_execute(self.tmp / "tampered")
 
     def test_init_parser_reads_real_stream_and_rejects_ambiguous_output(self) -> None:
         for name, tools in (("empty", []), ("read", ["Read"])):
@@ -320,14 +399,16 @@ class ClaudeTransportTests(unittest.TestCase):
             init_event(assistant + (FIXTURES / "real-probe-tools-empty.jsonl").read_bytes())
 
     def test_unsupported_configuration_is_rejected_explicitly(self) -> None:
+        self.make_proof()
+        self.fakes.calls.clear()
         with self.assertRaisesRegex(ValueError, "effort"):
             self.run_execute(effort="ultra")
         with self.assertRaisesRegex(ValueError, "model"):
             self.run_execute(model="--dangerously-skip-permissions")
         self.assertEqual(self.fakes.calls, [])
-        self.fakes.help = HELP.replace(b"--bare", b"--other")
-        with self.assertRaisesRegex(ValueError, "--bare"):
-            self.run_execute(self.tmp / "no-bare")
+        self.fakes.help = HELP.replace(b"--safe-mode", b"--other")
+        with self.assertRaisesRegex(ValueError, "--safe-mode"):
+            self.run_execute(self.tmp / "no-safe-mode")
         self.fakes.help = HELP
         with self.assertRaisesRegex(ValueError, "Версия Claude CLI"):
             self.run_execute(self.tmp / "version", expected_cli_version="9.9.9 (Claude Code)")
@@ -346,6 +427,7 @@ class ClaudeTransportTests(unittest.TestCase):
                     system_prompt="s",
                     timeout_seconds=1,
                     max_output_file_bytes=1,
+                    isolation_proof_dir=self.tmp / "proof",
                 )
             launch.assert_not_called()
         (self.cwd / "leftover").write_text("x")
@@ -364,6 +446,8 @@ class ClaudeTransportTests(unittest.TestCase):
             self.assertNotIn("/Users/", text)
 
     def test_unknown_outcome_of_started_attempt_is_not_retried(self) -> None:
+        self.make_proof()
+        self.fakes.calls.clear()
         directory = self.tmp / "unknown"
         directory.mkdir()
         (directory / "started.json").write_text("{}")

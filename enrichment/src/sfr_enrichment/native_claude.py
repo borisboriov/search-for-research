@@ -1,11 +1,13 @@
 """Claude Code CLI transport for frozen NIR B/C jobs, beside ``codex exec`` (protocol v2).
 
-Однократный ``claude -p`` по существующей подписке: без инструментов и MCP, без
-сохранения сессии, в пустом cwd, prompt через stdin, с теми же лимитами времени
-и байт потоков, что у codex-транспорта. ``native.py`` и его гарантии не меняются.
-Изоляция проверяется событием ``system/init`` в stream-json до задания, с
-положительным контролем одного разрешённого инструмента. Неизвестный исход
-не повторяется автоматически; сырые ответы неизменяемы.
+Однократный ``claude -p`` по существующей подписке в профиле ``--safe-mode
+--setting-sources ""``: без инструментов и MCP, без сохранения сессии, в пустом
+cwd, prompt через stdin, с теми же лимитами времени и байт потоков, что у
+codex-транспорта. ``native.py`` и его гарантии не меняются. Изоляция доказывается
+отдельным шагом до authorization: событие ``system/init`` в stream-json и
+положительный контроль одного инструмента; попытка только проверяет сохранённый
+proof и сама пробу не запускает. Неизвестный исход не повторяется; сырые ответы
+неизменяемы.
 """
 
 import hashlib
@@ -29,7 +31,8 @@ EFFORTS = ("low", "medium", "high", "xhigh", "max")
 # Каждый флаг должен быть описан в `claude --help` установленной версии.
 DOCUMENTED_FLAGS = (
     "--print",
-    "--bare",
+    "--safe-mode",
+    "--setting-sources",
     "--tools",
     "--strict-mcp-config",
     "--no-session-persistence",
@@ -74,16 +77,27 @@ def checked_value(value: Any, field: str) -> str:
     return value
 
 
+PROFILE_PLACEHOLDERS = {"system_prompt": "<system-prompt>", "schema_text": "<json-schema>"}
+
+
 def task_flags(
     *, system_prompt: str, schema_text: str, model: str, effort: str, tools: str = ""
 ) -> list[str]:
-    """Exact isolation flags shared by the probe, the control and the task."""
+    """Exact isolation flags shared by the probe, the control and the task.
+
+    ``--bare`` is not used: CLI 2.1.316 then reads only API keys, never the
+    subscription OAuth/keychain. ``--setting-sources ""`` is accepted by 2.1.316.
+    """
     return [
-        "--bare",
+        "--safe-mode",
+        "--setting-sources",
+        "",
+        "--strict-mcp-config",
         "--tools",
         tools,
-        "--strict-mcp-config",
         "--no-session-persistence",
+        "--max-turns",
+        "1",
         "--system-prompt",
         system_prompt,
         "--json-schema",
@@ -92,9 +106,12 @@ def task_flags(
         model,
         "--effort",
         effort,
-        "--max-turns",
-        "1",
     ]
+
+
+def flag_profile(model: str, effort: str, tools: str = "") -> list[str]:
+    """Task flags with prompt/schema values replaced: what a stored proof must match."""
+    return task_flags(**PROFILE_PLACEHOLDERS, model=model, effort=effort, tools=tools)
 
 
 def command(flags: list[str], output_format: str) -> list[str]:
@@ -192,11 +209,32 @@ def init_event(stdout: bytes) -> tuple[int, dict[str, Any], list[str]]:
 
 
 def registry_check(init: dict[str, Any], expected_tools: list[str], cwd: Path) -> dict[str, Any]:
+    """Probe criterion: exactly the expected tools and no MCP server, named on refusal.
+
+    With --json-schema a structured-output helper such as StructuredOutput would
+    appear here; it is refused by exact name rather than allowed or hidden.
+    """
     tools, servers = init.get("tools"), init.get("mcp_servers")
     if not isinstance(tools, list) or tools != expected_tools:
-        raise ValueError("Claude CLI registry инструментов не совпадает с ожидаемым")
+        extra = (
+            [str(t) for t in tools if t not in expected_tools] if isinstance(tools, list) else []
+        )
+        missing = [t for t in expected_tools if not isinstance(tools, list) or t not in tools]
+        raise ValueError(
+            "Claude CLI registry инструментов не совпадает с ожидаемым; лишние: "
+            + (", ".join(extra) or "нет")
+            + "; отсутствуют: "
+            + (", ".join(missing) or "нет")
+        )
     if not isinstance(servers, list) or servers:
-        raise ValueError("Claude CLI объявил MCP-серверы при --strict-mcp-config")
+        names = (
+            [str(x.get("name") if isinstance(x, dict) else x) for x in servers]
+            if isinstance(servers, list)
+            else []
+        )
+        raise ValueError(
+            "Claude CLI объявил MCP-серверы при --strict-mcp-config: " + ", ".join(names)
+        )
     if init.get("apiKeySource") != "none":
         raise ValueError("Claude CLI использует ключ API: платный API, не подписка")
     if not isinstance(init.get("cwd"), str) or Path(init["cwd"]).resolve() != cwd.resolve():
@@ -231,6 +269,7 @@ def isolation_probe(
     *,
     system_prompt: str,
     schema_text: str,
+    profile: list[str],
     deadline_epoch: float | None = None,
 ) -> dict[str, Any]:
     """Run the exact flags in stream-json, stop at system/init and save the proof.
@@ -309,6 +348,7 @@ def isolation_probe(
         "transport": TRANSPORT,
         "command_sha256": hashlib.sha256(encoded(probe_command)).hexdigest(),
         "expected_tools": expected_tools,
+        "flag_profile": profile,
         "probe_prompt_sha256": hashlib.sha256(PROBE_PROMPT.encode()).hexdigest(),
         "instruction_sha256": hashlib.sha256(system_prompt.encode()).hexdigest(),
         "schema_sha256": hashlib.sha256(schema_text.encode()).hexdigest(),
@@ -343,6 +383,130 @@ def isolation_probe(
     proof["terminated_after_init"] = True
     immutable(directory / f"isolation-{label}.json", encoded(proof))
     return proof
+
+
+PROOF = "isolation-proof.json"
+PROBES = (("probe", ""), ("control", CONTROL_TOOL))
+
+
+def run_isolation_check(
+    out: Path,
+    *,
+    system_prompt: str,
+    schema_text: str,
+    model: str,
+    effort: str,
+    context: dict[str, Any],
+) -> Path:
+    """Separate pre-authorization step: CLI flags plus probe and control, no task prompt.
+
+    Writes ``isolation-proof.json`` binding CLI version, flag profiles, init events
+    and file SHA. Each probe is a real CLI launch terminated at system/init.
+    """
+    checked_value(model, "model")
+    if effort not in EFFORTS:
+        raise ValueError("Неподдерживаемый effort Claude CLI")
+    out.mkdir(parents=True, mode=0o700)
+    cwd = out / "isolated-cwd"
+    cwd.mkdir(mode=0o700)
+    paid_key_guard()
+    capabilities = cli_capabilities(out, effort)
+    proofs = {}
+    for label, tools in PROBES:
+        proofs[label] = isolation_probe(
+            out,
+            label,
+            task_flags(
+                system_prompt=system_prompt,
+                schema_text=schema_text,
+                model=model,
+                effort=effort,
+                tools=tools,
+            ),
+            cwd,
+            [tools] if tools else [],
+            system_prompt=system_prompt,
+            schema_text=schema_text,
+            profile=flag_profile(model, effort, tools),
+        )
+        if not capabilities["cli_version"].startswith(proofs[label]["claude_code_version"] + " "):
+            raise ValueError("Версия Claude CLI в init не совпадает с claude --version")
+    require_empty_directory(cwd)
+    # CLI --version/--help hashes are inside `cli`; the copied files are the probes.
+    files: list[str] = []
+    for label, _ in PROBES:
+        files += [
+            f"isolation-{label}.json",
+            proofs[label]["stdout_path"],
+            proofs[label]["stderr_path"],
+        ]
+    summary = out / PROOF
+    immutable(
+        summary,
+        encoded(
+            {
+                "schema": "claude_isolation_proof_v1",
+                "transport": TRANSPORT,
+                "model": model,
+                "effort": effort,
+                "cli": capabilities,
+                "flag_profiles": {label: flag_profile(model, effort, t) for label, t in PROBES},
+                "probe_tools": proofs["probe"]["tools"],
+                "control_tools": proofs["control"]["tools"],
+                "files_sha256": {name: sha(out / name) for name in files},
+                "context": context,
+                "native_claude_sha256": sha(Path(__file__)),
+                "scope": "isolation registry only; no task prompt, no model answer, not a launch",
+            }
+        ),
+    )
+    return summary
+
+
+def verify_isolation_proof(
+    directory: Path, *, model: str, effort: str, cli_version: str
+) -> dict[str, Any]:
+    """Recheck a stored proof without launching the CLI; return it with its SHA."""
+    path = directory / PROOF
+    summary: dict[str, Any] = read(path)
+    if (
+        summary.get("schema") != "claude_isolation_proof_v1"
+        or summary.get("transport") != TRANSPORT
+        or (summary.get("model"), summary.get("effort")) != (model, effort)
+        or summary.get("cli", {}).get("cli_version") != cli_version
+        or summary.get("flag_profiles")
+        != {label: flag_profile(model, effort, tools) for label, tools in PROBES}
+    ):
+        raise ValueError("Isolation proof относится к другим флагам, модели или версии CLI")
+    files = summary.get("files_sha256")
+    if not isinstance(files, dict) or any(
+        not re.fullmatch(r"[A-Za-z0-9._-]+", str(name)) or sha(directory / name) != digest
+        for name, digest in files.items()
+    ):
+        raise ValueError("Isolation proof: файлы изменены или отсутствуют")
+    cwd: str | None = None
+    for label, tools in PROBES:
+        proof = read(directory / f"isolation-{label}.json")
+        expected = [tools] if tools else []
+        name = proof.get("stdout_path")
+        if (
+            files.get(f"isolation-{label}.json") is None
+            or name not in files
+            or name != f"isolation-{label}-stdout-{proof.get('stdout_sha256')}.bin"
+            or proof.get("expected_tools") != expected
+            or proof.get("flag_profile") != flag_profile(model, effort, tools)
+            or proof.get("terminated_after_init") is not True
+        ):
+            raise ValueError("Isolation proof не согласован с пробой " + label)
+        # The saved init event is reparsed; a status field is never trusted alone.
+        _, init, _ = init_event((directory / str(name)).read_bytes())
+        cwd = cwd or init.get("cwd")
+        check = registry_check(init, expected, Path(str(cwd)))
+        if any(check[key] != proof.get(key) for key in ("tools", "mcp_servers", "apiKeySource")):
+            raise ValueError("Isolation proof не совпадает с сохранённым init")
+        if not cli_version.startswith(check["claude_code_version"] + " "):
+            raise ValueError("Версия Claude CLI в init не совпадает с proof")
+    return summary | {"isolation_proof_sha256": sha(path)}
 
 
 def bounded_run(
@@ -488,10 +652,15 @@ def execute(
     system_prompt: str,
     timeout_seconds: int,
     max_output_file_bytes: int,
+    isolation_proof_dir: Path,
     deadline_epoch: float | None = None,
     expected_cli_version: str | None = None,
 ) -> tuple[Path, dict[str, Any]]:
-    """One real Claude CLI attempt; a saved receipt is returned without a new call."""
+    """One real Claude CLI attempt; a saved receipt is returned without a new call.
+
+    The isolation proof is a stored pre-authorization artifact: it is verified
+    and copied here, but no probe is launched and no slot is spent on it.
+    """
     checked_value(model, "model")
     if effort not in EFFORTS:
         raise ValueError("Неподдерживаемый effort Claude CLI")
@@ -529,26 +698,14 @@ def execute(
         capabilities = cli_capabilities(directory, effort, deadline_epoch)
         if expected_cli_version is not None and capabilities["cli_version"] != expected_cli_version:
             raise ValueError("Версия Claude CLI отличается от разрешённой")
-        probes = {}
-        for label, tools in (("probe", ""), ("control", CONTROL_TOOL)):
-            probes[label] = isolation_probe(
-                directory,
-                label,
-                task_flags(
-                    system_prompt=system_prompt,
-                    schema_text=schema_text,
-                    model=model,
-                    effort=effort,
-                    tools=tools,
-                ),
-                cwd,
-                [tools] if tools else [],
-                system_prompt=system_prompt,
-                schema_text=schema_text,
-                deadline_epoch=deadline_epoch,
-            )
-        if not capabilities["cli_version"].startswith(probes["probe"]["claude_code_version"] + " "):
-            raise ValueError("Версия Claude CLI в init не совпадает с claude --version")
+        proof = verify_isolation_proof(
+            isolation_proof_dir,
+            model=model,
+            effort=effort,
+            cli_version=capabilities["cli_version"],
+        )
+        for name in (PROOF, *proof["files_sha256"]):
+            immutable(directory / name, (isolation_proof_dir / name).read_bytes())
         require_empty_directory(cwd)
         task_command = command(flags, "json")
         immutable(directory / "command.json", encoded(task_command))
@@ -558,10 +715,12 @@ def execute(
                 {
                     "started_at_epoch": time.time(),
                     "prompt_sha256": hashlib.sha256(prompt_bytes).hexdigest(),
-                    "mode": "claude -p bare no-tools strict-mcp no-session-persistence json",
+                    "mode": "claude -p safe-mode no-setting-sources no-tools strict-mcp "
+                    "no-session-persistence json",
                     "requested_config": requested,
                     "cli": capabilities,
                     "inherited_client_environment_names": environment,
+                    "isolation_proof_sha256": proof["isolation_proof_sha256"],
                     "isolation_probe_sha256": sha(directory / "isolation-probe.json"),
                     "isolation_control_sha256": sha(directory / "isolation-control.json"),
                 }
@@ -686,13 +845,14 @@ def execute(
         "prompt_sha256": sha(directory / "prompt.txt"),
         "schema_sha256": sha(directory / "schema.json"),
         "instructions_sha256": sha(directory / "instructions.txt"),
+        "isolation_proof_sha256": start["isolation_proof_sha256"],
         "isolation_probe_sha256": sha(directory / "isolation-probe.json"),
         "isolation_control_sha256": sha(directory / "isolation-control.json"),
         "tool_registry": probe["tools"],
         "mcp_servers": probe["mcp_servers"],
         "tool_calls": None,
-        "tool_calls_basis": "result JSON does not list tool use; registry empty at init, "
-        "permission_denials empty, --max-turns 1",
+        "tool_calls_basis": "result JSON does not list tool use; stored proof shows an empty "
+        "registry at init, permission_denials empty, --max-turns 1",
         "cli_version": start["cli"]["cli_version"],
         "cli_binary_sha256": start["cli"]["cli_binary_sha256"],
         "native_claude_sha256": sha(Path(__file__)),

@@ -112,6 +112,14 @@ class NirClaudeTests(unittest.TestCase):
         prepare_model(self.root)
         self.fakes = Responder(self.root / "isolated-cwd")
 
+    def proof(self, name: str = "proof") -> Path:
+        """Separate pre-authorization step; the ledger never launches it."""
+        path = self.tmp / f"{self.root.name}-{name}"
+        if not (path / "isolation-proof.json").exists():
+            with self.fakes.active(self.binary):
+                nir_execute.probe(self.root, self.order()[0], path)
+        return path / "isolation-proof.json"
+
     def authorization(self, **changes: Any) -> Path:
         value = {
             "purpose": "diagnostic_pilot_not_holdout",
@@ -131,6 +139,8 @@ class NirClaudeTests(unittest.TestCase):
             "cli_version": "2.1.316 (Claude Code)",
             "authorization_reference": "synthetic test only",
             "execution_root": str(self.root),
+            "isolation_proof_path": str(self.proof()),
+            "isolation_proof_sha256": sha(self.proof()),
             "frozen_manifest_sha256": sha(self.root / "manifest.json"),
             "prepared_manifest_sha256": sha(self.root / "prepared-model" / "manifest.json"),
             **nir_execute.implementation_hashes(),
@@ -140,8 +150,13 @@ class NirClaudeTests(unittest.TestCase):
         return path
 
     def run_ledger(self, authorization: Path, **options: Any) -> int:
-        with self.fakes.active(self.binary):
-            return nir_execute.execute(self.root, authorization, **options)
+        before = len(self.fakes.calls)
+        try:
+            with self.fakes.active(self.binary):
+                return nir_execute.execute(self.root, authorization, **options)
+        finally:
+            launched = self.fakes.calls[before:]
+            self.assertFalse([c for c in launched if "stream-json" in c], "runner launched a probe")
 
     def order(self) -> list[str]:
         return list(read(self.root / "prepared-model" / "manifest.json")["order"])
@@ -208,6 +223,7 @@ class NirClaudeTests(unittest.TestCase):
                 read(self.root / request["output_schema_path"]),
                 cwd,
                 system_prompt=(self.root / request["system_prompt_path"]).read_text(),
+                isolation_proof_dir=self.proof().parent,
                 deadline_epoch=time.time() + 3600,
                 **request["claude_kwargs"],
             )
@@ -216,7 +232,7 @@ class NirClaudeTests(unittest.TestCase):
         original = saved.read_bytes()
         saved.chmod(0o600)
         saved.write_bytes(original.replace(b'"tools": ["Read"]', b'"tools": []'))
-        with self.assertRaisesRegex(ValueError, "isolation stdout"):
+        with self.assertRaisesRegex(ValueError, "файлы изменены"):
             import_native(self.root, "c1-C", directory, "tampered")
         saved.write_bytes(original)
         result = read(import_native(self.root, "c1-C", directory, "native-c1-C"))["results"][0]
@@ -291,18 +307,23 @@ class NirClaudeTests(unittest.TestCase):
             ({"retries": 1}, "retries"),
             ({"model_job_cap": 99}, "model_job_cap"),
             ({"execution_root": "/elsewhere"}, "execution_root"),
+            ({"isolation_proof_sha256": "0" * 64}, "isolation_proof_sha256"),
         ):
             with self.subTest(field=field), self.assertRaisesRegex(ValueError, field):
                 self.run_ledger(self.authorization(**change))
         self.assertFalse((self.root / "execution").exists())
         for name, change, message in (
-            ("other-model", {"model": "claude-other"}, "differs from authorization"),
-            ("other-cli", {"cli_version": "9.9.9 (Claude Code)"}, "Installed Claude CLI"),
+            ("other-model", {"model": "claude-other"}, "другим флагам"),
+            ("proof-other-cli", {"cli_version": "9.9.9 (Claude Code)"}, "другим флагам"),
+            ("installed-other-cli", {}, "Installed Claude CLI"),
         ):
             with self.subTest(name=name):
                 self.use_root(name)
+                authorization = self.authorization(**change)
+                if name == "installed-other-cli":
+                    self.fakes.version = b"2.1.317 (Claude Code)\n"
                 with self.assertRaisesRegex(ValueError, message):
-                    self.run_ledger(self.authorization(**change))
+                    self.run_ledger(authorization)
                 self.assertFalse(list((self.root / "execution").glob("attempt-*")))
         self.use_root("order-clock-lock")
         authorization = self.authorization()
