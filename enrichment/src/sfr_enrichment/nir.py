@@ -37,6 +37,12 @@ PROFILE_KEYS = {
 }
 CASE_KEYS = {"case_id", "group_id", "pair_id", "example_ids", "profile", "email", "evidence"}
 SOURCE_KEYS = {"source_id", "url", "captured_at", "content_date", "source_path", "excerpt"}
+DIAGNOSTIC_STATUS = "diagnostic_known_capture_gaps_not_holdout"
+DIAGNOSTIC_LIMITATION = (
+    "Diagnostic pilot only: two historical email/document details remain unknown; "
+    "known people and all recorded evidence remain excluded. Not an independent holdout "
+    "or confirmation of the hypothesis."
+)
 
 
 def digest(value: Any) -> str:
@@ -98,6 +104,125 @@ def compose(identity: str, relation: str) -> str:
     return "insufficient"
 
 
+def validate_diagnostic_decision(
+    decision: dict[str, Any],
+    inventory: dict[str, Any],
+    rows: list[dict[str, Any]],
+    *,
+    inventory_sha256: str,
+    selection_sha256: str,
+    protocol_sha256: str,
+) -> None:
+    """Admit only the documented two capture gaps, never arbitrary incomplete history."""
+    required = {
+        "schema",
+        "purpose",
+        "planned_n",
+        "maximum_n",
+        "one_pair_per_person",
+        "advisor_agreement",
+        "authorization",
+        "inventory_sha256",
+        "selection_sha256",
+        "protocol_sha256",
+        "accepted_blocking_gaps",
+        "accepted_capture_limits",
+        "limitation_acknowledged",
+    }
+    if not isinstance(decision, dict) or set(decision) != required:
+        raise ValueError("Нужна точная diagnostic decision schema")
+    if (
+        decision["schema"] != "nir_diagnostic_decision_v1"
+        or decision["purpose"] != "diagnostic_pilot_not_holdout"
+        or type(decision["planned_n"]) is not int
+        or decision["planned_n"] != 30
+        or type(decision["maximum_n"]) is not int
+        or decision["maximum_n"] != 30
+        or decision["one_pair_per_person"] is not True
+        or decision["advisor_agreement"] != "preliminary"
+        or decision["limitation_acknowledged"] is not True
+    ):
+        raise ValueError("Diagnostic decision допускает только согласованный ограниченный пилот")
+    authorization = decision["authorization"]
+    if not isinstance(authorization, dict) or set(authorization) != {
+        "authorized_by",
+        "authorized_at",
+        "reference",
+        "scope",
+    }:
+        raise ValueError("Нужна provenance разрешения диагностической процедуры")
+    for key in ("authorized_by", "reference"):
+        nonempty(authorization[key], key)
+    timestamp(authorization["authorized_at"])
+    if authorization["scope"] != "diagnostic_30_pairs":
+        raise ValueError("Неверный scope разрешения диагностической процедуры")
+    for field, expected in (
+        ("inventory_sha256", inventory_sha256),
+        ("selection_sha256", selection_sha256),
+        ("protocol_sha256", protocol_sha256),
+    ):
+        if decision[field] != expected:
+            raise ValueError("Diagnostic decision не соответствует замороженным входам: " + field)
+    if not 1 <= len(rows) <= 30 or len({row["group_id"] for row in rows}) != len(rows):
+        raise ValueError("Диагностический пилот: максимум 30 пар, одна пара на человека")
+    completeness, coverage = inventory["completeness"], inventory["coverage"]
+    if (
+        completeness.get("complete") is not False
+        or completeness.get("prior_details_complete") is not False
+        or coverage.get("metadata_scope_complete") is not True
+    ):
+        raise ValueError("Diagnostic decision не отменяет полноту metadata scope")
+    gaps = [gap for gap in completeness["gaps"] if gap["blocking"]]
+    limits = coverage.get("historical_capture_limits", [])
+    if (
+        len(gaps) != 2
+        or len(limits) != 2
+        or not isinstance(decision["accepted_blocking_gaps"], list)
+        or not isinstance(decision["accepted_capture_limits"], list)
+        or sorted(map(digest, gaps)) != sorted(map(digest, decision["accepted_blocking_gaps"]))
+        or sorted(map(digest, limits)) != sorted(map(digest, decision["accepted_capture_limits"]))
+    ):
+        raise ValueError("Разрешены только два точных исторических capture gaps")
+    if {gap["selector"] for gap in gaps} != {"$.rows[6]", "$.rows[9]"} or len(
+        {(gap["source_id"], gap["path"]) for gap in gaps}
+    ) != 1:
+        raise ValueError("Diagnostic decision относится только к двум исходным строкам")
+    for gap in gaps:
+        if (
+            gap["kind"] != "historical_capture_detail_missing"
+            or Path(gap["path"]).name != "contacts_manual_sfr5.json"
+            or gap["missing_fields"] != ["email_literal", "document_locator"]
+        ):
+            raise ValueError("Неподдерживаемое историческое ограничение")
+        matching = [
+            limit
+            for limit in limits
+            if all(limit[key] == gap[key] for key in ("source_id", "path", "selector"))
+        ]
+        if (
+            len(matching) != 1
+            or matching[0].get("kind") != "publication_flag_without_recorded_address"
+            or matching[0].get("document_locator_recorded") is not False
+            or matching[0].get("person_key") not in inventory["lookup"]["identity_keys"]
+        ):
+            raise ValueError("Известный человек из capture gap должен остаться исключённым")
+
+
+def diagnostic_scope(manifest: dict[str, Any]) -> dict[str, Any]:
+    """Neutral, non-personal scope safe for both annotators and downstream artifacts."""
+    if manifest.get("holdout_status") != DIAGNOSTIC_STATUS:
+        return {}
+    return {
+        "diagnostic_scope": {
+            "purpose": "diagnostic_pilot_not_holdout",
+            "planned_n": 30,
+            "actual_n": manifest["cases"],
+            "sample_status": "complete_planned_count" if manifest["cases"] == 30 else "shortfall",
+            "limitation": DIAGNOSTIC_LIMITATION,
+        }
+    }
+
+
 def freeze(
     root: Path,
     selection: Path,
@@ -105,6 +230,7 @@ def freeze(
     protocol_path: Path,
     *,
     development_only: bool = False,
+    diagnostic_decision: Path | None = None,
 ) -> Path:
     """Copy allowlisted inputs and source bodies, excluding every declared previous use."""
     root = private_root(root)
@@ -113,6 +239,9 @@ def freeze(
     rows, old, protocol = read(selection), read(exclusions), read(protocol_path)
     if not isinstance(rows, list) or not rows:
         raise ValueError("Нужна непустая выборка")
+    if development_only and diagnostic_decision is not None:
+        raise ValueError("Diagnostic decision несовместима с development-only")
+    decision = read(diagnostic_decision) if diagnostic_decision is not None else None
     if development_only:
         if old.get("complete_prior_use_inventory") is not True or not old.get("inventory_sources"):
             raise ValueError("Нужны источники даже для разработочного реестра")
@@ -128,7 +257,16 @@ def freeze(
         )
     else:
         validate_inventory(old, exclusions.parent)
-        if old.get("completeness", {}).get("complete") is not True:
+        if decision is not None:
+            validate_diagnostic_decision(
+                decision,
+                old,
+                rows,
+                inventory_sha256=sha(exclusions),
+                selection_sha256=sha(selection),
+                protocol_sha256=sha(protocol_path),
+            )
+        elif old.get("completeness", {}).get("complete") is not True:
             raise ValueError("Неполный реестр: новый независимый отбор заблокирован")
     for key in (
         "rubric",
@@ -236,8 +374,18 @@ def freeze(
         cases.append({**row, "evidence": sources})
     # Both arms receive precisely the same JSON; only the required output structure differs.
     write_new(root / "cases.json", cases)
-    write_new(root / "exclusions.json", old)
-    write_new(root / "protocol.json", protocol)
+    if diagnostic_decision is not None:
+        # Preserve exact approved bytes; input hashes are checked again after freeze.
+        for source, filename in (
+            (exclusions, "exclusions.json"),
+            (protocol_path, "protocol.json"),
+            (selection, "selection.json"),
+            (diagnostic_decision, "diagnostic-decision.json"),
+        ):
+            immutable_bytes(root / filename, source.read_bytes())
+    else:
+        write_new(root / "exclusions.json", old)
+        write_new(root / "protocol.json", protocol)
     input_hashes = {}
     for case in cases:
         path = root / "model-inputs" / f"{case['case_id']}.json"
@@ -246,7 +394,7 @@ def freeze(
             {
                 "case": case,
                 "source_bodies": {
-                    source["source_id"]: (root / source["snapshot"]).read_text("utf-8")
+                    source["source_id"]: (root / source["snapshot"]).read_bytes().decode("utf-8")
                     for source in case["evidence"]
                 },
             },
@@ -275,6 +423,8 @@ def freeze(
         "groups": len({r["group_id"] for r in cases}),
         "holdout_status": "development_only_not_holdout"
         if development_only
+        else DIAGNOSTIC_STATUS
+        if decision is not None
         else "recorded_prior_overlap_checked",
         "launch_authorized": False,
         "warning": (
@@ -286,6 +436,12 @@ def freeze(
             )
         ),
     }
+    if decision is not None:
+        manifest.update(
+            diagnostic_decision_sha256=sha(root / "diagnostic-decision.json"),
+            warning=DIAGNOSTIC_LIMITATION,
+        )
+        manifest.update(diagnostic_scope(manifest))
     write_new(root / "manifest.json", manifest)
     return root / "manifest.json"
 
@@ -306,6 +462,36 @@ def checked(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str,
         if sha(root / f"prompt-{arm}.json") != manifest["prompt_sha256"][arm]:
             raise ValueError("Замороженная инструкция изменена")
     cases = read(root / "cases.json")
+    inventory = read(root / "exclusions.json")
+    if (
+        manifest.get("holdout_status") == DIAGNOSTIC_STATUS
+        or "diagnostic_decision_sha256" in manifest
+        or (root / "diagnostic-decision.json").exists()
+        or (
+            inventory.get("schema") == "nir_prior_inventory_v1"
+            and inventory.get("completeness", {}).get("complete") is not True
+        )
+    ):
+        if (
+            manifest.get("holdout_status") != DIAGNOSTIC_STATUS
+            or sha(root / "diagnostic-decision.json") != manifest.get("diagnostic_decision_sha256")
+            or sha(root / "selection.json") != manifest["selection_sha256"]
+            or manifest["exclusion_input_sha256"] != manifest["exclusions_sha256"]
+            or manifest["cases"] != len(cases)
+            or manifest["cases"] != len(read(root / "selection.json"))
+            or manifest["groups"] != len({case["group_id"] for case in cases})
+            or manifest.get("diagnostic_scope") != diagnostic_scope(manifest)["diagnostic_scope"]
+            or manifest.get("launch_authorized") is not False
+        ):
+            raise ValueError("Диагностический статус или decision изменены")
+        validate_diagnostic_decision(
+            read(root / "diagnostic-decision.json"),
+            inventory,
+            read(root / "selection.json"),
+            inventory_sha256=manifest["exclusions_sha256"],
+            selection_sha256=manifest["selection_sha256"],
+            protocol_sha256=manifest["protocol_sha256"],
+        )
     for case in cases:
         if (
             sha(root / "model-inputs" / f"{case['case_id']}.json")
@@ -322,7 +508,7 @@ def export(root: Path, annotator: str) -> Path:
     """Separate neutral forms; no model outputs, assignments, or peer answers are copied."""
     if annotator not in ANNOTATORS:
         raise ValueError("Неизвестный разметчик")
-    _, cases, protocol = checked(root)
+    manifest, cases, protocol = checked(root)
     directory = root / "human-packets" / annotator
     clean_cases = []
     for case in cases:
@@ -341,7 +527,10 @@ def export(root: Path, annotator: str) -> Path:
         "common_examples": protocol["common_examples"],
         "cases": clean_cases,
         "warning": "Только сохранённые источники. Не искать новые; не обсуждать до сдачи ответов.",
+        **diagnostic_scope(manifest),
     }
+    if manifest.get("holdout_status") == DIAGNOSTIC_STATUS:
+        package["holdout_status"] = DIAGNOSTIC_STATUS
     write_new(directory / "packet.json", package)
     template = {
         "schema": "nir_human_answers_v1",
@@ -387,7 +576,7 @@ def validate_answer(answer: dict[str, Any], case: dict[str, Any]) -> None:
 
 
 def import_human(root: Path, answers_path: Path, record_id: str) -> Path:
-    _, cases, _ = checked(root)
+    manifest, cases, protocol = checked(root)
     identifier(record_id)
     answers = read(answers_path)
     annotator = nonempty(answers.get("annotator"), "annotator")
@@ -400,11 +589,14 @@ def import_human(root: Path, answers_path: Path, record_id: str) -> Path:
     expected = {
         "schema": "nir_human_packet_v1",
         "annotator": annotator,
-        "rubric": read(root / "protocol.json")["rubric"],
-        "common_examples": read(root / "protocol.json")["common_examples"],
+        "rubric": protocol["rubric"],
+        "common_examples": protocol["common_examples"],
         "cases": cases,
         "warning": "Только сохранённые источники. Не искать новые; не обсуждать до сдачи ответов.",
+        **diagnostic_scope(manifest),
     }
+    if manifest.get("holdout_status") == DIAGNOSTIC_STATUS:
+        expected["holdout_status"] = DIAGNOSTIC_STATUS
     if frozen_packet != expected:
         raise ValueError("Нейтральный пакет изменён")
     for case in cases:
@@ -639,6 +831,7 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
                 "output_byte_cap_scope": "native stdout/stderr; raw-result postchecked at import",
                 "launch_authorized": False,
                 "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
+                **diagnostic_scope(manifest),
             }
             write_new(target / "request.json", request)
             requests[request_id] = {
@@ -657,13 +850,14 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
             "order_rule": "shuffle cases; alternate first arm, balanced B/C-first within one case",
             "launch_authorized": False,
             "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
+            **diagnostic_scope(manifest),
         },
     )
     return directory / "manifest.json"
 
 
 def prepared_request(root: Path, request_id: str) -> dict[str, Any]:
-    checked(root)
+    manifest, _, _ = checked(root)
     identifier(request_id)
     prepared = read(root / "prepared-model" / "manifest.json")
     if prepared.get("manifest_sha256") != sha(root / "manifest.json"):
@@ -672,6 +866,13 @@ def prepared_request(root: Path, request_id: str) -> dict[str, Any]:
     if entry is None or sha(root / entry["path"]) != entry["sha256"]:
         raise ValueError("Prepared request отсутствует или изменён")
     request: dict[str, Any] = read(root / entry["path"])
+    if manifest.get("holdout_status") == DIAGNOSTIC_STATUS and any(
+        item.get("holdout_status") != DIAGNOSTIC_STATUS
+        or item.get("diagnostic_scope") != manifest["diagnostic_scope"]
+        or item.get("launch_authorized") is not False
+        for item in (prepared, request)
+    ):
+        raise ValueError("Prepared request потерял диагностическое ограничение")
     if (
         request["request_id"] != request_id
         or request["manifest_sha256"] != prepared["manifest_sha256"]
@@ -719,6 +920,19 @@ def import_native(root: Path, request_id: str, native_dir: Path, record_id: str)
         raise ValueError("Native requested configuration отличается от протокола")
     if finished.get("exit_code") != 0 or receipt.get("tool_calls") != 0:
         raise ValueError("Нет успешного cache-only native результата; используйте technical_skip")
+    execution_provenance = receipt.get("execution_provenance")
+    if execution_provenance is not None and (
+        started.get("execution_provenance") != execution_provenance
+        or any(
+            sha(native_dir / filename) != execution_provenance.get(key)
+            for filename, key in (
+                ("execution-amendment.json", "execution_amendment_sha256"),
+                ("isolated-model-catalog.json", "isolated_catalog_sha256"),
+                ("effective-features.txt", "effective_features_sha256"),
+            )
+        )
+    ):
+        raise ValueError("Native execution amendment provenance mismatch")
     if sha(native_dir / "events.jsonl") != receipt.get("events_sha256"):
         raise ValueError("Native events hash не совпадает")
     events = [
@@ -807,7 +1021,14 @@ def import_native(root: Path, request_id: str, native_dir: Path, record_id: str)
     )
     optional_names = [
         name
-        for name in ("command.json", "requested-config.json", "stderr.log")
+        for name in (
+            "command.json",
+            "requested-config.json",
+            "stderr.log",
+            "execution-amendment.json",
+            "isolated-model-catalog.json",
+            "effective-features.txt",
+        )
         if (native_dir / name).is_file()
     ]
     optional_names.extend(
@@ -1161,6 +1382,7 @@ def analyze(root: Path, output: Path, *, seed: int = 154, resamples: int = 2000)
             "created_at": now(),
             "status": "offline_analysis_not_scientific_completion",
             "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
+            **diagnostic_scope(manifest),
             "configuration_status": (
                 "mismatch"
                 if any(r["configuration_mismatches"] for r in resources.values())
@@ -1221,7 +1443,9 @@ def main() -> None:
             command.add_argument("--selection", required=True, type=Path)
             command.add_argument("--exclusions", required=True, type=Path)
             command.add_argument("--protocol", required=True, type=Path)
-            command.add_argument("--development-only", action="store_true")
+            mode = command.add_mutually_exclusive_group()
+            mode.add_argument("--development-only", action="store_true")
+            mode.add_argument("--diagnostic-decision", type=Path)
         elif name == "export":
             command.add_argument("--annotator", required=True, choices=ANNOTATORS)
         elif name == "analyze":
@@ -1246,6 +1470,7 @@ def main() -> None:
             args.exclusions,
             args.protocol,
             development_only=args.development_only,
+            diagnostic_decision=args.diagnostic_decision,
         )
     elif args.command == "export":
         result = export(root, args.annotator)

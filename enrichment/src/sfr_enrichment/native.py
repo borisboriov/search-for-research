@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import threading
 import time
@@ -117,6 +118,75 @@ def schema(stage: str, *, strict_levels: bool = False) -> dict[str, Any]:
             ),
         }
     )
+
+
+def isolated_catalog_options(
+    directory: Path, model: str, amendment: Path
+) -> tuple[list[str], dict[str, Any]]:
+    """Opt-in tools-only catalog overlay; never replace model instructions or policy."""
+    config = read(amendment)
+    original = Path(config["original_catalog_path"])
+    isolated = Path(config["isolated_catalog_path"])
+    for label, path in (("original", original), ("isolated", isolated)):
+        if sha(path) != config[f"{label}_catalog_sha256"]:
+            raise ValueError("Native catalog amendment hash mismatch")
+    before = read(original)
+    expected = json.loads(json.dumps(before))
+    selected = [entry for entry in expected["models"] if entry.get("slug") == model]
+    if len(selected) != 1:
+        raise ValueError("Native catalog must contain exactly one selected model")
+    if selected[0].get("use_responses_lite") is not True:
+        raise ValueError("Native catalog requires rendered Responses Lite tool inventory")
+    selected[0].update(
+        tool_mode="direct",
+        multi_agent_version="disabled",
+        apply_patch_tool_type=None,
+        experimental_supported_tools=[],
+    )
+    if read(isolated) != expected:
+        raise ValueError("Native catalog changed fields beyond tool capabilities")
+    executable = shutil.which("codex")
+    if not executable or sha(Path(executable)) != config["cli_binary_sha256"]:
+        raise ValueError("Native executable changed after compatibility verification")
+    if sha(Path(__file__)) != config["native_sha256"]:
+        raise ValueError("Native implementation changed after execution amendment")
+    directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    target = directory / "isolated-model-catalog.json"
+    immutable(target, isolated.read_bytes())
+    target.chmod(0o600)
+    immutable(directory / "execution-amendment.json", amendment.read_bytes())
+    options = [
+        "model_catalog_json=" + json.dumps(str(target.resolve())),
+        "agents.enabled=false",
+        "tools.experimental_request_user_input.enabled=false",
+        "tools.update_plan.enabled=false",
+        "features.incremental_tools=true",
+    ]
+    features = subprocess.run(
+        ["codex", "features", "list", *[a for c in options for a in ("-c", c)]],
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if features.returncode != 0 or not any(
+        line.split() == ["incremental_tools", "stable", "true"]
+        for line in features.stdout.decode().splitlines()
+    ):
+        raise ValueError("Native incremental tool inventory is not enabled")
+    immutable(directory / "effective-features.txt", features.stdout)
+    provenance = {
+        "execution_amendment_sha256": sha(amendment),
+        "original_catalog_sha256": sha(original),
+        "isolated_catalog_sha256": sha(target),
+        "native_sha256": sha(Path(__file__)),
+        "cli_binary_sha256": sha(Path(executable)),
+        "cli_version": config["cli_version"],
+        "implementation_revision": config["implementation_revision"],
+        "effective_features_sha256": sha(directory / "effective-features.txt"),
+        "tool_inventory_contract": "codex 0.164.0 Responses Lite incremental model_visible_specs",
+        "scope": "execution_transport_only; frozen design unchanged",
+    }
+    return options, provenance
 
 
 def isolation_options(directory: Path) -> list[str]:
@@ -347,6 +417,7 @@ def execute(
     system_prompt: str | None = None,
     deadline_epoch: float | None = None,
     max_output_file_bytes: int | None = None,
+    execution_amendment: Path | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     """Однократная реальная попытка, recover готового вывода без повторного CLI."""
     if required_config is not None:
@@ -364,6 +435,14 @@ def execute(
     ):
         raise ValueError("Invalid native output file cap")
     directory.mkdir(parents=True, exist_ok=True, mode=0o700)
+    catalog_options: list[str] = []
+    execution_provenance: dict[str, Any] | None = None
+    if execution_amendment is not None:
+        if not system_prompt or not model or required_config is None:
+            raise ValueError("Catalog isolation requires explicit isolated task configuration")
+        catalog_options, execution_provenance = isolated_catalog_options(
+            directory, model, execution_amendment
+        )
     if required_config is not None:
         immutable(directory / "requested-config.json", encoded(required_config))
     prompt_bytes = prompt.encode()
@@ -374,6 +453,8 @@ def execute(
     receipt = directory / "receipt.json"
     if receipt.exists():
         value = read(receipt)
+        if value.get("execution_provenance") != execution_provenance:
+            raise ValueError("Сохранённый native runtime другого execution amendment")
         if required_config and (value.get("requested_model"), value.get("requested_effort")) != (
             model,
             effort,
@@ -388,7 +469,7 @@ def execute(
     if not started.exists():
         isolation_config: list[str] = []
         if system_prompt is not None:
-            isolation_config = isolation_options(directory)
+            isolation_config = isolation_options(directory) + catalog_options
             isolation_probe(
                 directory,
                 prompt,
@@ -406,6 +487,11 @@ def execute(
                     "prompt_sha256": hashlib.sha256(prompt_bytes).hexdigest(),
                     "mode": "codex exec ephemeral read-only cache-only",
                     **({"requested_config": required_config} if required_config else {}),
+                    **(
+                        {"execution_provenance": execution_provenance}
+                        if execution_provenance
+                        else {}
+                    ),
                 }
             ),
         )
@@ -524,6 +610,8 @@ def execute(
         )
     if required_config and read(started).get("requested_config") != required_config:
         raise ValueError("Сохранённая native попытка другой конфигурации")
+    if read(started).get("execution_provenance") != execution_provenance:
+        raise ValueError("Сохранённая native попытка другого execution amendment")
     finished = read(directory / "finished.json")
     if finished["exit_code"] != 0 or not (directory / "raw-result.json").exists():
         raise ValueError("CLI не завершил результат; доказательства сохранены, нужен разбор")
@@ -584,6 +672,7 @@ def execute(
         "requested_effort": effort,
         "transport_retries": None,
         **({"automatic_cli_retries": 0, "requested_provider": "openai"} if required_config else {}),
+        **({"execution_provenance": execution_provenance} if execution_provenance else {}),
     }
     immutable(receipt, encoded(value))
     return directory / "raw-result.json", value

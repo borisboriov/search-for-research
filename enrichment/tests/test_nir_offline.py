@@ -14,6 +14,7 @@ from unittest.mock import patch
 from sfr_enrichment.batch import encoded
 from sfr_enrichment.common import read, sha, write_new
 from sfr_enrichment.nir import (
+    DIAGNOSTIC_STATUS,
     adjudicate,
     analyze,
     arm_metrics,
@@ -102,6 +103,7 @@ class NirOfflineTests(unittest.TestCase):
         representation: str = "body",
         document_hash: str | None = None,
         incomplete: bool = False,
+        capture_gaps: int = 0,
     ) -> tuple[Path, Path]:
         sequence = len(list(self.tmp.glob("prior-experiments-*")))
         base = self.tmp / f"prior-experiments-{sequence}"
@@ -132,6 +134,11 @@ class NirOfflineTests(unittest.TestCase):
                 },
             },
         )
+        if capture_gaps:
+            rows: list[dict[str, Any]] = [{"author_id": f"A60{index}"} for index in range(11)]
+            for index in (6, 9, 10)[:capture_gaps]:
+                rows[index] = {"author_id": f"A60{index}", "email_published": True}
+            write_new(old_root / "contacts_manual_sfr5.json", {"rows": rows})
         catalogue = self.tmp / f"catalogue-{sequence}.json"
         references = [{"path": str(old_root)}]
         if incomplete:
@@ -154,10 +161,40 @@ class NirOfflineTests(unittest.TestCase):
                 "extra_roots": [],
             }
         )
-        self.assertEqual(inventory["completeness"]["complete"], not incomplete)
+        self.assertEqual(inventory["completeness"]["complete"], not (incomplete or capture_gaps))
         inventory_path = self.tmp / f"prior-inventory-{sequence}.json"
         write_new(inventory_path, inventory)
         return inventory_path, old_metadata
+
+    def diagnostic_decision(self, inventory: Path, selection: Path) -> Path:
+        old = read(inventory)
+        path = self.tmp / f"decision-{len(list(self.tmp.glob('decision-*.json')))}.json"
+        write_new(
+            path,
+            {
+                "schema": "nir_diagnostic_decision_v1",
+                "purpose": "diagnostic_pilot_not_holdout",
+                "planned_n": 30,
+                "maximum_n": 30,
+                "one_pair_per_person": True,
+                "advisor_agreement": "preliminary",
+                "authorization": {
+                    "authorized_by": "Synthetic owner",
+                    "authorized_at": "2026-10-31T23:00:00+03:00",
+                    "reference": "Synthetic test authorization only",
+                    "scope": "diagnostic_30_pairs",
+                },
+                "inventory_sha256": sha(inventory),
+                "selection_sha256": sha(selection),
+                "protocol_sha256": sha(self.protocol),
+                "accepted_blocking_gaps": [
+                    gap for gap in old["completeness"]["gaps"] if gap["blocking"]
+                ],
+                "accepted_capture_limits": old["coverage"]["historical_capture_limits"],
+                "limitation_acknowledged": True,
+            },
+        )
+        return path
 
     def real_selection(
         self, *, profile: dict[str, Any] | None = None, source_url: str | None = None
@@ -527,6 +564,333 @@ class NirOfflineTests(unittest.TestCase):
         self.assertEqual(manifest["holdout_status"], "recorded_prior_overlap_checked")
         self.assertIn("new-frame identity/coherence requires verification", manifest["warning"])
         self.assertFalse(manifest["launch_authorized"])
+
+    def test_diagnostic_shortfall_is_explicit_and_exports_remain_blind(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        decision = self.diagnostic_decision(inventory, selection)
+        root = self.tmp / "diagnostic"
+        manifest = read(
+            freeze(root, selection, inventory, self.protocol, diagnostic_decision=decision)
+        )
+        self.assertEqual(manifest["holdout_status"], DIAGNOSTIC_STATUS)
+        self.assertFalse(read(root / "exclusions.json")["completeness"]["complete"])
+        self.assertEqual(sha(root / "exclusions.json"), sha(inventory))
+        self.assertEqual(sha(root / "protocol.json"), sha(self.protocol))
+        self.assertEqual(manifest["diagnostic_scope"]["planned_n"], 30)
+        self.assertEqual(manifest["diagnostic_scope"]["actual_n"], 1)
+        self.assertEqual(manifest["diagnostic_scope"]["sample_status"], "shortfall")
+        for annotator in ("adelina", "sasha"):
+            packet = read(export(root, annotator))
+            self.assertEqual(packet["holdout_status"], DIAGNOSTIC_STATUS)
+            self.assertEqual(packet["diagnostic_scope"], manifest["diagnostic_scope"])
+            serialized = json.dumps(packet)
+            for forbidden in ("accepted_capture_limits", "instructions_C", "authorization", "A606"):
+                self.assertNotIn(forbidden, serialized)
+        prepared = read(prepare_model(root))
+        self.assertEqual(len(prepared["requests"]), 2)
+        self.assertEqual(prepared["diagnostic_scope"], manifest["diagnostic_scope"])
+        for request_id in prepared["order"]:
+            request = prepared_request(root, request_id)
+            self.assertFalse(request["launch_authorized"])
+            self.assertEqual(request["diagnostic_scope"], manifest["diagnostic_scope"])
+        report = read(analyze(root, self.tmp / "diagnostic-analysis.json", resamples=5))
+        self.assertEqual(report["holdout_status"], DIAGNOSTIC_STATUS)
+        self.assertEqual(report["diagnostic_scope"], manifest["diagnostic_scope"])
+        self.assertEqual(report["human_status_counts"], {"human_missing": 1})
+        self.assertIsNone(report["intention_to_process"]["B"]["R_resolved"])
+
+    def test_crlf_source_is_identical_in_human_files_and_both_model_inputs(self) -> None:
+        body = b"First line.\r\nLaboratory office.\r\naddress@example.invalid\r\n"
+        self.source.write_bytes(body)
+        root = self.tmp / "crlf-frozen"
+        freeze(root, self.selection, self.exclusions, self.protocol, development_only=True)
+        model_input = read(root / "model-inputs" / "c1.json")
+        self.assertEqual(model_input["source_bodies"]["s1"].encode("utf-8"), body)
+        for annotator in ("adelina", "sasha"):
+            packet_path = export(root, annotator)
+            source = read(packet_path)["cases"][0]["evidence"][0]
+            self.assertEqual((packet_path.parent / source["snapshot"]).read_bytes(), body)
+        prepare_model(root)
+        for arm in ("B", "C"):
+            request = prepared_request(root, "c1-" + arm)
+            prompt = (root / request["prompt_path"]).read_bytes().decode("utf-8")
+            data = json.loads(prompt.split("Замороженный вход (данные):\n", 1)[1])
+            self.assertEqual(data["source_bodies"]["s1"].encode("utf-8"), body)
+
+    def test_diagnostic_does_not_weaken_ordinary_or_legacy_guards(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        decision = self.diagnostic_decision(inventory, selection)
+        with self.assertRaisesRegex(ValueError, "Неполный реестр"):
+            freeze(self.tmp / "ordinary-capture", selection, inventory, self.protocol)
+        with self.assertRaisesRegex(ValueError, "несовместима"):
+            freeze(
+                self.tmp / "diagnostic-development",
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=decision,
+                development_only=True,
+            )
+        with self.assertRaisesRegex(ValueError, "producer registry"):
+            freeze(
+                self.tmp / "diagnostic-legacy",
+                selection,
+                self.exclusions,
+                self.protocol,
+                diagnostic_decision=decision,
+            )
+
+    def test_diagnostic_human_exports_import_and_analyze_end_to_end(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        rows = read(self.selection)[:3]
+        for index, row in enumerate(rows):
+            row["group_id"] = f"new_group{index}"
+            row["profile"] = {"name": "Synthetic new target", "id": f"A90{index}"}
+        selection = self.tmp / "diagnostic-human-roundtrip.json"
+        write_new(selection, rows)
+        self.root = self.tmp / "diagnostic-human-roundtrip"
+        manifest = read(
+            freeze(
+                self.root,
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=self.diagnostic_decision(inventory, selection),
+            )
+        )
+        labels: list[str | None] = ["supported", "refuted", "insufficient"]
+        for annotator in ("adelina", "sasha"):
+            record = read(self.humans(annotator, labels))
+            self.assertEqual(record["answers"]["annotator"], annotator)
+            self.assertEqual(record["answers"]["answers"][1]["label"], "refuted")
+        self.models("B", ["supported", "supported", "supported"])
+        self.models("C", labels)
+        report = read(analyze(self.root, self.tmp / "diagnostic-human-analysis.json", resamples=5))
+        self.assertEqual(report["holdout_status"], DIAGNOSTIC_STATUS)
+        self.assertEqual(report["diagnostic_scope"], manifest["diagnostic_scope"])
+        self.assertEqual(report["human_status_counts"], {"agreement": 3})
+        self.assertEqual(report["unknown_human_case_ids"], [])
+        self.assertEqual(report["intention_to_process"]["B"]["R_resolved"], 2 / 3)
+        self.assertEqual(report["intention_to_process"]["C"]["R_resolved"], 0)
+
+    def test_diagnostic_human_import_rejects_changed_scope_even_with_updated_packet_hash(
+        self,
+    ) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        root = self.tmp / "diagnostic-human-scope-tamper"
+        freeze(
+            root,
+            selection,
+            inventory,
+            self.protocol,
+            diagnostic_decision=self.diagnostic_decision(inventory, selection),
+        )
+        packet_path = export(root, "adelina")
+        packet = read(packet_path)
+        packet["holdout_status"] = "recorded_prior_overlap_checked"
+        packet["diagnostic_scope"]["sample_status"] = "complete_planned_count"
+        packet_path.write_bytes(encoded(packet))
+        answers = read(packet_path.parent / "answers-template.json")
+        answers["packet_sha256"] = sha(packet_path)
+        answers_path = self.tmp / "diagnostic-human-tampered-answer.json"
+        write_new(answers_path, answers)
+        with self.assertRaisesRegex(ValueError, "Нейтральный пакет изменён"):
+            import_human(root, answers_path, "initial")
+
+    def test_diagnostic_rejects_other_gaps_and_changed_provenance(self) -> None:
+        selection = self.real_selection()
+        cases: tuple[dict[str, Any], ...] = (
+            {"capture_gaps": 3},
+            {"capture_gaps": 1},
+            {"capture_gaps": 2, "incomplete": True},
+            {},
+        )
+        for index, arguments in enumerate(cases):
+            inventory, _ = self.full_prior_inventory(**arguments)
+            decision = self.diagnostic_decision(inventory, selection)
+            with self.subTest(arguments=arguments), self.assertRaises(ValueError):
+                freeze(
+                    self.tmp / f"diagnostic-wrong-gaps-{index}",
+                    selection,
+                    inventory,
+                    self.protocol,
+                    diagnostic_decision=decision,
+                )
+        inventory, metadata = self.full_prior_inventory(capture_gaps=2)
+        decision = self.diagnostic_decision(inventory, selection)
+        metadata.write_bytes(metadata.read_bytes() + b"\n")
+        with self.assertRaisesRegex(ValueError, "hash changed"):
+            freeze(
+                self.tmp / "diagnostic-changed-provenance",
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=decision,
+            )
+
+    def test_diagnostic_decision_binds_exact_inputs_gaps_and_preliminary_scope(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        good = read(self.diagnostic_decision(inventory, selection))
+        changes = [
+            {"inventory_sha256": "0" * 64},
+            {"selection_sha256": "0" * 64},
+            {"protocol_sha256": "0" * 64},
+            {"advisor_agreement": "approved"},
+            {"maximum_n": 31},
+            {"limitation_acknowledged": False},
+            {"accepted_blocking_gaps": good["accepted_blocking_gaps"][:1]},
+            {"accepted_capture_limits": []},
+        ]
+        wrong_selector = json.loads(json.dumps(good["accepted_blocking_gaps"]))
+        wrong_selector[0]["selector"] = "$.rows[5]"
+        changes.append({"accepted_blocking_gaps": wrong_selector})
+        for index, change in enumerate(changes):
+            decision = self.tmp / f"wrong-decision-{index}.json"
+            write_new(decision, good | change)
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                freeze(
+                    self.tmp / f"diagnostic-invalid-decision-{index}",
+                    selection,
+                    inventory,
+                    self.protocol,
+                    diagnostic_decision=decision,
+                )
+
+    def test_diagnostic_retains_canonical_identity_document_and_fragment_exclusions(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        base = read(self.real_selection())[0]
+        variants = [
+            ({"profile": {"name": "Alias", "id": "https://openalex.org/A606"}}, None),
+            ({"profile": {"name": "Alias", "id": "A123"}, "email": "OLD@example.invalid"}, None),
+            ({}, {"url": "https://ARCHIVE.invalid/paper#other"}),
+            ({}, {"url": "https://user@institute.invalid/page"}),
+            ({}, {"excerpt": "Old synthetic excerpt"}),
+        ]
+        self.source.write_text(self.source.read_text() + " Old synthetic excerpt")
+        for index, (case_change, evidence_change) in enumerate(variants):
+            row = json.loads(json.dumps(base)) | case_change
+            if evidence_change:
+                row["evidence"][0].update(evidence_change)
+            selection = self.tmp / f"diagnostic-overlap-{index}.json"
+            write_new(selection, [row])
+            decision = self.diagnostic_decision(inventory, selection)
+            with self.subTest(index=index), self.assertRaises(ValueError):
+                freeze(
+                    self.tmp / f"diagnostic-overlap-root-{index}",
+                    selection,
+                    inventory,
+                    self.protocol,
+                    diagnostic_decision=decision,
+                )
+        inventory, _ = self.full_prior_inventory(capture_gaps=2, document_hash=sha(self.source))
+        selection = self.real_selection()
+        with self.assertRaisesRegex(ValueError, "document_bytes_overlap"):
+            freeze(
+                self.tmp / "diagnostic-body-overlap",
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=self.diagnostic_decision(inventory, selection),
+            )
+
+    def test_diagnostic_count_cap_and_one_pair_per_person(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        base = read(self.real_selection())[0]
+        rows = []
+        for index in range(31):
+            row = json.loads(json.dumps(base))
+            row.update(case_id=f"case{index}", group_id=f"group{index}", pair_id=f"pair{index}")
+            row["profile"] = {"name": "Synthetic new target", "id": f"A90{index}"}
+            rows.append(row)
+        for name, selected in (
+            ("over-cap", rows),
+            ("same-group", rows[:2]),
+            ("same-person", rows[:2]),
+        ):
+            selected = json.loads(json.dumps(selected))
+            if name == "same-group":
+                selected[1]["group_id"] = selected[0]["group_id"]
+            elif name == "same-person":
+                selected[1]["profile"] = selected[0]["profile"]
+            selection = self.tmp / f"diagnostic-{name}.json"
+            write_new(selection, selected)
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                freeze(
+                    self.tmp / f"diagnostic-{name}-root",
+                    selection,
+                    inventory,
+                    self.protocol,
+                    diagnostic_decision=self.diagnostic_decision(inventory, selection),
+                )
+        selection = self.tmp / "diagnostic-30.json"
+        write_new(selection, rows[:30])
+        root = self.tmp / "diagnostic-30-root"
+        manifest = read(
+            freeze(
+                root,
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=self.diagnostic_decision(inventory, selection),
+            )
+        )
+        self.assertEqual(manifest["diagnostic_scope"]["sample_status"], "complete_planned_count")
+        self.assertEqual(len(read(prepare_model(root))["requests"]), 60)
+
+    def test_diagnostic_frozen_decision_and_status_cannot_be_downgraded(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        decision = self.diagnostic_decision(inventory, selection)
+        for index, mutation in enumerate(("decision", "status", "scope", "launch")):
+            root = self.tmp / f"diagnostic-tamper-{index}"
+            manifest_path = freeze(
+                root,
+                selection,
+                inventory,
+                self.protocol,
+                diagnostic_decision=decision,
+            )
+            manifest = read(manifest_path)
+            if mutation == "decision":
+                path = root / "diagnostic-decision.json"
+                path.write_bytes(path.read_bytes() + b"\n")
+            elif mutation == "status":
+                manifest["holdout_status"] = "recorded_prior_overlap_checked"
+                manifest.pop("diagnostic_decision_sha256")
+            elif mutation == "scope":
+                manifest["diagnostic_scope"]["actual_n"] = 30
+            else:
+                manifest["launch_authorized"] = True
+            manifest_path.write_bytes(encoded(manifest))
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                checked(root)
+
+    def test_diagnostic_prepared_request_cannot_grant_live_permission(self) -> None:
+        inventory, _ = self.full_prior_inventory(capture_gaps=2)
+        selection = self.real_selection()
+        root = self.tmp / "diagnostic-request-tamper"
+        freeze(
+            root,
+            selection,
+            inventory,
+            self.protocol,
+            diagnostic_decision=self.diagnostic_decision(inventory, selection),
+        )
+        prepared_path = prepare_model(root)
+        prepared = read(prepared_path)
+        request_id = prepared["order"][0]
+        path = root / prepared["requests"][request_id]["path"]
+        request = read(path)
+        request["launch_authorized"] = True
+        path.write_bytes(encoded(request))
+        prepared["requests"][request_id]["sha256"] = sha(path)
+        prepared_path.write_bytes(encoded(prepared))
+        with self.assertRaisesRegex(ValueError, "диагностическое ограничение"):
+            prepared_request(root, request_id)
 
     def test_historical_identity_aliases_cannot_be_hidden_by_fresh_group_or_pair_ids(self) -> None:
         inventory, _ = self.full_prior_inventory()

@@ -6,6 +6,7 @@ import ipaddress
 import json
 import re
 import socket
+import ssl
 import time
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -266,8 +267,19 @@ class PublicLoader(Loader):
             "error": None,
         }
         fatal_error: ValueError | None = None
+
+        def remaining_timeout() -> float:
+            ensure_not_stopped(self.experiment)
+            ensure_not_stopped(self.root)
+            remaining = (deadline - datetime.now(UTC)).total_seconds()
+            if remaining <= 0:
+                raise ValueError("Acquisition deadline")
+            return min(30.0, remaining)
+
         try:
-            async with asyncio.timeout(30):
+            # Bound DNS, rate waits and the whole response by the remaining scope.
+            # Cancellation is cooperative; this is not a hard real-time guarantee.
+            async with asyncio.timeout(remaining_timeout()):
                 parsed = urlsplit(url)
                 addresses = await asyncio.to_thread(
                     socket.getaddrinfo,
@@ -281,21 +293,31 @@ class PublicLoader(Loader):
                     raise ValueError("Nonpublic destination IP")
                 await self.budget.wait(url, 1)
                 client.cookies.clear()
+                transport_timeout = remaining_timeout()
                 meta["HTTP_started"] = True
-                async with client.stream("GET", url) as response:
+                async with client.stream("GET", url, timeout=transport_timeout) as response:
                     meta.update(
                         status=response.status_code,
                         content_type=response.headers.get("content-type", ""),
                         location=response.headers.get("location"),
                     )
                     self.stops.observe(url, response.status_code)
+                    remaining_timeout()
                     size = cap if response.status_code == 200 else min(cap, 65536)
                     async for chunk in response.aiter_bytes():
+                        remaining_timeout()
                         if len(body) + len(chunk) > size:
                             raise SourceBodyLimit("Bounded source body")
                         body.extend(chunk)
+                    remaining_timeout()
                     meta["complete"] = True
-        except (httpx.HTTPError, TimeoutError, socket.gaierror, SourceBodyLimit) as exc:
+        except (
+            httpx.HTTPError,
+            TimeoutError,
+            socket.gaierror,
+            ssl.SSLError,
+            SourceBodyLimit,
+        ) as exc:
             meta["error"] = type(exc).__name__
         except ValueError as exc:
             # Preserve the receipt, then propagate unsafe destinations/unknown code errors.
@@ -349,9 +371,10 @@ class PublicLoader(Loader):
             trust_env=False,
         ) as client:
             visited: set[str] = set()
+            redirect_response: dict[str, Any] | None = None
             for hop in range(6):
                 if url in visited:
-                    raise ValueError("Redirect cycle")
+                    raise self.unavailable("Redirect cycle", url, redirect_response)
                 visited.add(url)
                 registered = self.root / f"source-{digest(url.encode())}.json"
                 if registered.exists():
@@ -427,6 +450,7 @@ class PublicLoader(Loader):
                             "hop": hop,
                         },
                     )
+                    redirect_response = response
                     url = target
                     continue
                 if response["status"] in (404, 410):
