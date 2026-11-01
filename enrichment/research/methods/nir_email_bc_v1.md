@@ -678,8 +678,9 @@ usage неизвестен, а не нулевой, и в ledger он не за�
 попыткой заново разбирает сохранённые `init` и сверяет SHA, версию CLI, модель/effort
 и профиль флагов; сам пробу не запускает, поэтому слот на неё не расходуется. Попытка
 копирует proof в свой каталог для импорта. Proof привязывает флаги и версию CLI, а
-не конкретный schema: наличие `--json-schema` в пробе обязательно, содержимое схемы
-на registry не влияет. Свой cwd задания проверяется пустым до и после вызова.
+не конкретный schema: наличие `--json-schema` в пробе обязательно. То, что содержимое
+схемы на registry не влияет, — допущение по одной наблюдённой схеме, а не
+проверенный факт. Свой cwd задания проверяется пустым до и после вызова.
 
 **Receipt и импорт.** В каталоге попытки — `stdout.json` (сырой результат CLI),
 `stderr.log`, `raw-result.json` (`structured_output`), `command.json`, `started.json`,
@@ -690,9 +691,15 @@ effort `null`, токены input/output/cache read/cache write, `total_cost_usd
 `claude --version`, SHA бинарника и SHA всех артефактов. При подписке
 `total_cost_usd` — оценка клиента по ценам API, не счёт. `import-native` для
 `claude_cli` заново разбирает сохранённые `init`, сверяет SHA, размер, конфигурацию,
-usage и время и вызывает обычный `import-model`. Во входные токены envelope
+usage и время и вызывает обычный `import-model`. Ненулевые счётчики
+`usage.server_tool_use` (например, `web_search_requests`, `web_fetch_requests`) или
+`webSearchRequests`/`webFetchRequests` в `modelUsage` означают использование
+инструментов. Такой ответ не принимается как содержательный: импорт отказывает с
+перечнем признаков и требует `technical_skip`. Во входные токены envelope
 включаются cache read/write, которые Claude указывает рядом с `input_tokens`;
-разбивка остаётся в receipt.
+разбивка остаётся в receipt. `cost_basis` из receipt переносится в envelope; в
+`resources` анализа стоимость помечается `basis: "estimate"`, если хотя бы у одного
+известного значения основание не `invoice`. `num_turns` пока только записывается.
 
 **Runner.** `sfr_enrichment.nir_execute` повторяет дисциплину прежнего частного
 launcher. Команды не выполнялись в этой работе:
@@ -710,8 +717,9 @@ uv run --frozen python -m sfr_enrichment.nir_execute execute \
 `run_deadline_seconds`, `per_call_timeout_seconds`, `max_output_file_bytes`,
 `max_input_bytes_per_case`, `model_job_cap`, `model`, `effort`, точный вывод
 `cli_version`, `authorization_reference`, `execution_root`, `isolation_proof_path`
-с `isolation_proof_sha256` и SHA `native.py`,
-`native_claude.py`, `nir.py`, runner, frozen и prepared manifests. Модель, effort,
+с `isolation_proof_sha256`, а также SHA с ключами `native_sha256`,
+`native_claude_sha256`, `nir_sha256`, `runner_sha256`, `frozen_manifest_sha256` и
+`prepared_manifest_sha256`. Модель, effort,
 timeout и лимит байт сверяются с каждым request; CLI version проверяется до
 записи попытки.
 
@@ -744,8 +752,20 @@ outcome блокирует продолжение. Новая authorization не
   остановлены на `init`, ответа модели нет. Прежние вызовы с `--bare` вернули
   ошибку аутентификации; их fixtures помечены `bare-profile-rejected`.
 - Совместимость `--json-schema` с `--max-turns 1` реальным ответом не проверена.
+  Открытый пункт: правило для `num_turns` закрепить после первого реального ответа;
+  до тех пор значение только записывается в receipt.
 - Внутренние повторы API у CLI неизвестны (`transport_retries: null`); правило
   deferred основано на наблюдённой форме ошибки и синтетическом 429.
+- Гипотеза о файлах CLAUDE.md/AGENTS.md в родительских каталогах `isolated-cwd`
+  не проверена. Proof проверяет только registry; `--safe-mode` по help отключает
+  CLAUDE.md, но доказательства доставки инструкций, как у Codex v1, нет. Корень
+  запуска надо держать вне каталогов с такими файлами или проверить это отдельно.
+- `cli_binary_sha256` записывается, но с попыткой сверяется только строка версии.
+  На время запуска автообновление Claude Code нужно отключить.
+- Отказ по лимиту подписки без статуса 429/529 и без распознаваемого текста лимита
+  даст `technical_failure` с расходом слота, а не `transport_deferred`.
+- Deferred у границы deadline не продлевает окно: продолжение после истечения
+  deadline или run-clock требует новой записанной decision.
 
 Регрессии [`test_native_claude.py`](../../tests/test_native_claude.py) и
 [`test_nir_claude.py`](../../tests/test_nir_claude.py) мокают subprocess.
