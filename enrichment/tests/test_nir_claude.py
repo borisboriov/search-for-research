@@ -231,7 +231,7 @@ class NirClaudeTests(unittest.TestCase):
         saved = directory / proof["stdout_path"]
         original = saved.read_bytes()
         saved.chmod(0o600)
-        saved.write_bytes(original.replace(b'"tools": ["Read"]', b'"tools": []'))
+        saved.write_bytes(original.replace(b'"tools": ["Read", ', b'"tools": ['))
         with self.assertRaisesRegex(ValueError, "файлы изменены"):
             import_native(self.root, "c1-C", directory, "tampered")
         saved.write_bytes(original)

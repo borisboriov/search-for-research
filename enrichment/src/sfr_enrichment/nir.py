@@ -15,7 +15,7 @@ from sfr_enrichment.batch import encoded
 from sfr_enrichment.common import now, private_root, read, sha, write_new
 from sfr_enrichment.evidence import identifier, immutable_bytes
 from sfr_enrichment.native_claude import EFFORTS as CLAUDE_EFFORTS
-from sfr_enrichment.native_claude import verify_isolation_proof
+from sfr_enrichment.native_claude import OUTPUT_TOOL, verify_isolation_proof
 from sfr_enrichment.nir_inventory import (
     candidate_identity_keys,
     canonical_document_url,
@@ -1226,8 +1226,8 @@ def import_claude_native(
     ):
         raise ValueError("Claude isolation proof hash не совпадает")
     proof_names = ["isolation-proof.json", *proof["files_sha256"]]
-    if receipt.get("tool_registry") != [] or receipt.get("mcp_servers") != []:
-        raise ValueError("Claude receipt не подтверждает пустой registry")
+    if receipt.get("tool_registry") != [OUTPUT_TOOL] or receipt.get("mcp_servers") != []:
+        raise ValueError("Claude receipt не подтверждает registry только из StructuredOutput")
     start, finish = started.get("started_at_epoch"), finished.get("finished_at_epoch")
     number(start, "started_at_epoch")
     number(finish, "finished_at_epoch")

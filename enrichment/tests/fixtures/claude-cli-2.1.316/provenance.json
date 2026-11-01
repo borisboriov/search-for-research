@@ -69,8 +69,10 @@
       "profile": "not applicable (result shape only)"
     },
     "real-probe-safe-mode-tools-empty.jsonl": {
-      "kind": "real",
       "profile": "safe-mode",
+      "status": "chrome-mcp-profile-rejected",
+      "status_reason": "dynamic claude-in-chrome MCP server and its tools despite --strict-mcp-config; replaced by the --no-chrome profile",
+      "kind": "real",
       "recorded_at": "2026-11-01",
       "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --tools \"\" --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\":\"object\",\"properties\":{\"label\":{\"type\":\"string\"}},\"required\":[\"label\"],\"additionalProperties\":false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
       "exit_code": -9,
@@ -80,14 +82,38 @@
       "sha256": "2404af6f836d360a1a0e086769334159cb163666ebe401aac6a4fc3bb927869e"
     },
     "real-probe-safe-mode-tools-read.jsonl": {
-      "kind": "real",
       "profile": "safe-mode",
+      "status": "chrome-mcp-profile-rejected",
+      "status_reason": "dynamic claude-in-chrome MCP server and its tools despite --strict-mcp-config; replaced by the --no-chrome profile",
+      "kind": "real",
       "recorded_at": "2026-11-01",
       "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --tools Read --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\":\"object\",\"properties\":{\"label\":{\"type\":\"string\"}},\"required\":[\"label\"],\"additionalProperties\":false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
       "exit_code": -9,
       "observation": "positive control: tools=[Read, StructuredOutput, 22 mcp__claude-in-chrome__* tools]; mcp_servers=[claude-in-chrome]; apiKeySource=none. Read appears as requested; extras as in the empty probe",
       "sanitization": "as for real-probe-safe-mode-tools-empty.jsonl",
       "sha256": "2225687761035c8e5b4f6358f939f2373b0479e25777682eac72f215e4decb23"
+    },
+    "real-probe-safe-mode-no-chrome-tools-empty.jsonl": {
+      "kind": "real",
+      "profile": "safe-mode --no-chrome (current)",
+      "status": "current-profile",
+      "recorded_at": "2026-11-01",
+      "exit_code": -9,
+      "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --no-chrome --tools \"\" --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\": \"object\", \"properties\": {\"label\": {\"type\": \"string\"}}, \"required\": [\"label\"], \"additionalProperties\": false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
+      "observation": "system/init: tools=[StructuredOutput], mcp_servers=[], apiKeySource=none; skills 21, agents 5, slash_commands 53, plugins 4 builtin (recorded, not tools). Meets the criterion",
+      "sanitization": "cwd/original_cwd -> /private/isolated-cwd; scratchpad_path and messaging_socket_path replaced; lines re-serialized compactly; session_id/uuid kept",
+      "sha256": "f3fed220170b5532d290cebb496b2fb2cb95b4935d6d06e937e4a2166b1cd22a"
+    },
+    "real-probe-safe-mode-no-chrome-tools-read.jsonl": {
+      "kind": "real",
+      "profile": "safe-mode --no-chrome (current)",
+      "status": "current-profile",
+      "recorded_at": "2026-11-01",
+      "exit_code": -9,
+      "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --no-chrome --tools Read --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\": \"object\", \"properties\": {\"label\": {\"type\": \"string\"}}, \"required\": [\"label\"], \"additionalProperties\": false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
+      "observation": "positive control: tools=[Read, StructuredOutput], mcp_servers=[], apiKeySource=none. Meets the criterion",
+      "sanitization": "as for real-probe-safe-mode-no-chrome-tools-empty.jsonl",
+      "sha256": "03d0dc93c321b06fb31d2d2166209ebe93853e7c0f8bf25316f3a68801382d48"
     }
   }
 }

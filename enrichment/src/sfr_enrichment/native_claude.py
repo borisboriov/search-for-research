@@ -1,7 +1,8 @@
 """Claude Code CLI transport for frozen NIR B/C jobs, beside ``codex exec`` (protocol v2).
 
 Однократный ``claude -p`` по существующей подписке в профиле ``--safe-mode
---setting-sources ""``: без инструментов и MCP, без сохранения сессии, в пустом
+--setting-sources "" --no-chrome``: единственный инструмент — канал структурированного
+вывода StructuredOutput, без MCP, без сохранения сессии, в пустом
 cwd, prompt через stdin, с теми же лимитами времени и байт потоков, что у
 codex-транспорта. ``native.py`` и его гарантии не меняются. Изоляция доказывается
 отдельным шагом до authorization: событие ``system/init`` в stream-json и
@@ -35,6 +36,7 @@ DOCUMENTED_FLAGS = (
     "--setting-sources",
     "--tools",
     "--strict-mcp-config",
+    "--no-chrome",
     "--no-session-persistence",
     "--system-prompt",
     "--json-schema",
@@ -49,6 +51,9 @@ HIDDEN_FLAGS = ("--max-turns",)
 PAID_KEY_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
 PROBE_PROMPT = "Isolation probe: no task. Do not answer."
 CONTROL_TOOL = "Read"
+# Product-flow decision 01.11: the structured-output channel created by --json-schema
+# is the only permitted tool, the analogue of codex --output-schema; B and C share it.
+OUTPUT_TOOL = "StructuredOutput"
 PROBE_TIMEOUT_SECONDS = 30
 PROBE_STREAM_CAP = 1024 * 1024
 DEFERRAL_STATUSES = {429: "rate_limited", 529: "overloaded"}
@@ -86,13 +91,15 @@ def task_flags(
     """Exact isolation flags shared by the probe, the control and the task.
 
     ``--bare`` is not used: CLI 2.1.316 then reads only API keys, never the
-    subscription OAuth/keychain. ``--setting-sources ""`` is accepted by 2.1.316.
+    subscription OAuth/keychain. ``--setting-sources ""`` is accepted by 2.1.316;
+    ``--no-chrome`` removes the Claude in Chrome integration and its MCP server.
     """
     return [
         "--safe-mode",
         "--setting-sources",
         "",
         "--strict-mcp-config",
+        "--no-chrome",
         "--tools",
         tools,
         "--no-session-persistence",
@@ -211,11 +218,15 @@ def init_event(stdout: bytes) -> tuple[int, dict[str, Any], list[str]]:
 def registry_check(init: dict[str, Any], expected_tools: list[str], cwd: Path) -> dict[str, Any]:
     """Probe criterion: exactly the expected tools and no MCP server, named on refusal.
 
-    With --json-schema a structured-output helper such as StructuredOutput would
-    appear here; it is refused by exact name rather than allowed or hidden.
+    With --json-schema the expected set always includes the StructuredOutput
+    channel; anything else is refused by exact name rather than allowed or hidden.
     """
     tools, servers = init.get("tools"), init.get("mcp_servers")
-    if not isinstance(tools, list) or tools != expected_tools:
+    if (
+        not isinstance(tools, list)
+        or len(set(map(str, tools))) != len(tools)
+        or sorted(map(str, tools)) != sorted(expected_tools)
+    ):
         extra = (
             [str(t) for t in tools if t not in expected_tools] if isinstance(tools, list) else []
         )
@@ -389,6 +400,11 @@ PROOF = "isolation-proof.json"
 PROBES = (("probe", ""), ("control", CONTROL_TOOL))
 
 
+def expected_registry(tools: str) -> list[str]:
+    """Exact advertised registry: the requested tool, if any, plus the output channel."""
+    return [*([tools] if tools else []), OUTPUT_TOOL]
+
+
 def run_isolation_check(
     out: Path,
     *,
@@ -424,7 +440,7 @@ def run_isolation_check(
                 tools=tools,
             ),
             cwd,
-            [tools] if tools else [],
+            expected_registry(tools),
             system_prompt=system_prompt,
             schema_text=schema_text,
             profile=flag_profile(model, effort, tools),
@@ -487,7 +503,7 @@ def verify_isolation_proof(
     cwd: str | None = None
     for label, tools in PROBES:
         proof = read(directory / f"isolation-{label}.json")
-        expected = [tools] if tools else []
+        expected = expected_registry(tools)
         name = proof.get("stdout_path")
         if (
             files.get(f"isolation-{label}.json") is None
@@ -851,8 +867,8 @@ def execute(
         "tool_registry": probe["tools"],
         "mcp_servers": probe["mcp_servers"],
         "tool_calls": None,
-        "tool_calls_basis": "result JSON does not list tool use; stored proof shows an empty "
-        "registry at init, permission_denials empty, --max-turns 1",
+        "tool_calls_basis": "result JSON does not list tool use; stored proof shows only the "
+        "StructuredOutput channel at init, permission_denials empty, --max-turns 1",
         "cli_version": start["cli"]["cli_version"],
         "cli_binary_sha256": start["cli"]["cli_binary_sha256"],
         "native_claude_sha256": sha(Path(__file__)),

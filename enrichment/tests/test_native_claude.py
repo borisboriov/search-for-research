@@ -39,7 +39,8 @@ def fixture_result(name: str, **changes: Any) -> bytes:
 
 def probe_stream(tool_flag: str, cwd: Path, spec: dict[str, Any]) -> bytes:
     """Real 2.1.316 stream with the test cwd; `drop_init` ends the stream before init."""
-    name = "real-probe-tools-read.jsonl" if tool_flag else "real-probe-tools-empty.jsonl"
+    kind = "read" if tool_flag else "empty"
+    name = f"real-probe-safe-mode-no-chrome-tools-{kind}.jsonl"
     changes = dict(spec)
     drop_init = changes.pop("drop_init", False)
     lines = []
@@ -222,7 +223,7 @@ class ClaudeTransportTests(unittest.TestCase):
         )
         self.assertEqual((receipt["num_turns"], receipt["is_error"]), (1, False))
         self.assertEqual(receipt["cli_version"], "2.1.316 (Claude Code)")
-        self.assertEqual(receipt["tool_registry"], [])
+        self.assertEqual(receipt["tool_registry"], ["StructuredOutput"])
         task = self.fakes.calls[-1]
         self.assertEqual(task[:2], ["claude", "-p"])
         for flag in ("--safe-mode", "--strict-mcp-config", "--no-session-persistence"):
@@ -243,7 +244,9 @@ class ClaudeTransportTests(unittest.TestCase):
         probes = [c for c in self.fakes.calls if "stream-json" in c]
         self.assertEqual([c[c.index("--tools") + 1] for c in probes], ["", "Read"])
         job = self.tmp / "job"
-        self.assertEqual(read(job / "isolation-control.json")["tools"], ["Read"])
+        self.assertEqual(
+            read(job / "isolation-control.json")["tools"], ["Read", "StructuredOutput"]
+        )
         self.assertEqual(sha(job / "isolation-probe.json"), receipt["isolation_probe_sha256"])
         self.assertEqual(
             sha(self.tmp / "proof" / native_claude.PROOF), receipt["isolation_proof_sha256"]
@@ -315,7 +318,8 @@ class ClaudeTransportTests(unittest.TestCase):
         refusals: tuple[tuple[dict[str, Any], dict[str, Any], str], ...] = (
             ({"drop_init": True}, {}, "нет события system/init"),
             ({"tools": ["Bash"]}, {}, "лишние: Bash"),
-            ({"tools": ["StructuredOutput"]}, {}, "лишние: StructuredOutput"),
+            ({"tools": []}, {}, "отсутствуют: StructuredOutput"),
+            ({"tools": ["StructuredOutput", "StructuredOutput"]}, {}, "registry"),
             ({"mcp_servers": [{"name": "x", "status": "connected"}]}, {}, "MCP-серверы.*: x"),
             ({"apiKeySource": "ANTHROPIC_API_KEY"}, {}, "платный API"),
             ({"cwd": "/elsewhere"}, {}, "изолированном cwd"),
@@ -336,12 +340,10 @@ class ClaudeTransportTests(unittest.TestCase):
             "probe": "real-probe-safe-mode-tools-empty.jsonl",
             "control": "real-probe-safe-mode-tools-read.jsonl",
         }
-        with self.assertRaisesRegex(
-            ValueError, "лишние: StructuredOutput, mcp__claude-in-chrome__browser_batch"
-        ):
+        with self.assertRaisesRegex(ValueError, "лишние: mcp__claude-in-chrome__browser_batch"):
             self.make_proof("safe-mode")
         refused = read(next((self.tmp / "safe-mode").glob("isolation-probe-refused-*.json")))
-        self.assertIn("StructuredOutput", refused["refusal"])
+        self.assertNotIn("StructuredOutput", refused["refusal"].split("лишние:")[1])
         self.assertIn("--safe-mode", self.fakes.calls[-1])
         self.assertEqual(
             self.fakes.calls[-1][self.fakes.calls[-1].index("--setting-sources") + 1], ""
@@ -349,6 +351,18 @@ class ClaudeTransportTests(unittest.TestCase):
         _, init, _ = init_event((FIXTURES / "real-probe-safe-mode-tools-empty.jsonl").read_bytes())
         self.assertEqual(init["apiKeySource"], "none")
         self.assertEqual(init["mcp_servers"][0]["name"], "claude-in-chrome")
+
+    def test_real_no_chrome_registry_passes_with_only_the_output_channel(self) -> None:
+        self.fakes.streams = {
+            "probe": "real-probe-safe-mode-no-chrome-tools-empty.jsonl",
+            "control": "real-probe-safe-mode-no-chrome-tools-read.jsonl",
+        }
+        summary = read(self.make_proof("no-chrome"))
+        self.assertEqual(summary["probe_tools"], ["StructuredOutput"])
+        self.assertEqual(summary["control_tools"], ["Read", "StructuredOutput"])
+        command = [c for c in self.fakes.calls if "stream-json" in c][-1]
+        self.assertIn("--no-chrome", command)
+        self.assertNotIn("--bare", command)
 
     def test_stored_proof_is_rechecked_and_bound_to_flags_and_cli(self) -> None:
         proof = self.make_proof()
@@ -380,13 +394,20 @@ class ClaudeTransportTests(unittest.TestCase):
         self.assertFalse((self.tmp / "newer-cli" / "started.json").exists())
         self.fakes.version = b"2.1.316 (Claude Code)\n"
         saved = proof.parent / read(proof.parent / "isolation-probe.json")["stdout_path"]
-        saved.write_bytes(saved.read_bytes().replace(b'"tools": []', b'"tools": ["Bash"]'))
+        saved.write_bytes(
+            saved.read_bytes().replace(b'"tools": ["StructuredOutput"]', b'"tools": ["Bash"]')
+        )
         with self.assertRaisesRegex(ValueError, "файлы изменены"):
             self.run_execute(self.tmp / "tampered")
 
     def test_init_parser_reads_real_stream_and_rejects_ambiguous_output(self) -> None:
-        for name, tools in (("empty", []), ("read", ["Read"])):
-            _, init, before = init_event((FIXTURES / f"real-probe-tools-{name}.jsonl").read_bytes())
+        for name, tools in (
+            ("tools-empty", []),
+            ("tools-read", ["Read"]),
+            ("safe-mode-no-chrome-tools-empty", ["StructuredOutput"]),
+            ("safe-mode-no-chrome-tools-read", ["Read", "StructuredOutput"]),
+        ):
+            _, init, before = init_event((FIXTURES / f"real-probe-{name}.jsonl").read_bytes())
             self.assertEqual((init["tools"], init["mcp_servers"]), (tools, []))
             self.assertEqual(init["claude_code_version"], "2.1.316")
             self.assertIn("system/ui_invalidate", before)
