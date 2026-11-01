@@ -1,0 +1,119 @@
+{
+  "cli_version": "2.1.316 (Claude Code)",
+  "recorded_at": "2026-11-01",
+  "environment": "Claude Code remote sandbox without ANTHROPIC_API_KEY, child of a Claude Code session (inherits its CLAUDE_CODE_* variables); not Boris's Mac",
+  "private_data": "none: harmless technical prompts only, no B/C prompt, no case data",
+  "files": {
+    "real-result-bare-auth-error.json": {
+      "profile": "bare",
+      "status": "bare-profile-rejected",
+      "status_reason": "--bare does not read subscription OAuth/keychain; replaced by --safe-mode --setting-sources \"\"",
+      "kind": "real",
+      "command": "claude -p \"Ответь одним словом: OK\" --bare --tools \"\" --strict-mcp-config --no-session-persistence --output-format json --model haiku --max-turns 1",
+      "exit_code": 1,
+      "observation": "--bare reads only ANTHROPIC_API_KEY/apiKeyHelper; without a key the result is is_error=true, terminal_reason=api_error with subtype=success",
+      "sanitization": "none needed (no paths); session_id/uuid kept",
+      "sha256": "752b08527899a109bfcbd302895f5effce83912803170efec9d83ba451c22025"
+    },
+    "real-probe-tools-empty.jsonl": {
+      "profile": "bare",
+      "status": "bare-profile-rejected",
+      "status_reason": "--bare does not read subscription OAuth/keychain; replaced by --safe-mode --setting-sources \"\"",
+      "kind": "real",
+      "command": "claude -p --bare --tools \"\" --strict-mcp-config --no-session-persistence --system-prompt \"Synthetic isolation probe system prompt.\" --output-format stream-json --verbose --model haiku --max-turns 1 (stdin: \"Isolation probe. Reply: OK\")",
+      "exit_code": 1,
+      "observation": "system/init before status=requesting: tools=[], mcp_servers=[], apiKeySource=none; then the same authentication error",
+      "sanitization": "init cwd/original_cwd replaced by /private/isolated-cwd",
+      "sha256": "2088da165e54921b20da021d55911dd07a77ce4b452ddd2942f644b2b67c0347"
+    },
+    "real-probe-tools-read.jsonl": {
+      "profile": "bare",
+      "status": "bare-profile-rejected",
+      "status_reason": "--bare does not read subscription OAuth/keychain; replaced by --safe-mode --setting-sources \"\"",
+      "kind": "real",
+      "command": "claude -p --bare --tools Read --strict-mcp-config --no-session-persistence --system-prompt \"Synthetic isolation probe system prompt.\" --output-format stream-json --verbose --model haiku --max-turns 1 (stdin: \"Isolation probe. Reply: OK\")",
+      "exit_code": 1,
+      "observation": "positive control: system/init tools=[\"Read\"], mcp_servers=[]",
+      "sanitization": "init cwd/original_cwd replaced by /private/isolated-cwd",
+      "sha256": "a88e1ad29eaca63f61d98cfb76121e6395ac1ac32e8cdea325a457419b1bfa95"
+    },
+    "synthetic-result-success.json": {
+      "kind": "synthetic",
+      "derived_from": "real-result-bare-auth-error.json",
+      "changed_fields": [
+        "is_error",
+        "subtype",
+        "terminal_reason",
+        "stop_reason",
+        "duration_ms",
+        "duration_api_ms",
+        "total_cost_usd",
+        "result",
+        "structured_output",
+        "usage counts",
+        "modelUsage"
+      ],
+      "warning": "success, structured_output and modelUsage shape were not observed with this CLI here (authentication blocked under --bare); values are invented test data",
+      "sha256": "0957f22404c9a685416f9b72e9039502dbd405825dc00a524d13753b0ca1e88e",
+      "profile": "not applicable (result shape only)"
+    },
+    "synthetic-result-rate-limit.json": {
+      "kind": "synthetic",
+      "derived_from": "real-result-bare-auth-error.json",
+      "changed_fields": [
+        "api_error_status",
+        "result"
+      ],
+      "warning": "a real rate-limit/overload result was not observed; message text is invented",
+      "sha256": "d13ad48f0938dfcf0e73b41bd716d97a9f5c4420c12cdba82371ae139e644139",
+      "profile": "not applicable (result shape only)"
+    },
+    "real-probe-safe-mode-tools-empty.jsonl": {
+      "profile": "safe-mode",
+      "status": "chrome-mcp-profile-rejected",
+      "status_reason": "dynamic claude-in-chrome MCP server and its tools despite --strict-mcp-config; replaced by the --no-chrome profile",
+      "kind": "real",
+      "recorded_at": "2026-11-01",
+      "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --tools \"\" --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\":\"object\",\"properties\":{\"label\":{\"type\":\"string\"}},\"required\":[\"label\"],\"additionalProperties\":false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
+      "exit_code": -9,
+      "parser": "--setting-sources \"\" accepted by 2.1.316 (init was emitted, no parser error)",
+      "observation": "system/init: apiKeySource=none; tools=[StructuredOutput + 22 mcp__claude-in-chrome__* tools]; mcp_servers=[claude-in-chrome connected, source=dynamic]; skills 22, agents 5, slash_commands 54, plugins 4 builtin. Probe criterion fails: StructuredOutput comes from --json-schema; the Chrome MCP server is injected dynamically by this remote sandbox despite --strict-mcp-config",
+      "sanitization": "cwd/original_cwd -> /private/isolated-cwd; scratchpad_path and messaging_socket_path replaced; lines re-serialized compactly; session_id/uuid kept",
+      "sha256": "2404af6f836d360a1a0e086769334159cb163666ebe401aac6a4fc3bb927869e"
+    },
+    "real-probe-safe-mode-tools-read.jsonl": {
+      "profile": "safe-mode",
+      "status": "chrome-mcp-profile-rejected",
+      "status_reason": "dynamic claude-in-chrome MCP server and its tools despite --strict-mcp-config; replaced by the --no-chrome profile",
+      "kind": "real",
+      "recorded_at": "2026-11-01",
+      "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --tools Read --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\":\"object\",\"properties\":{\"label\":{\"type\":\"string\"}},\"required\":[\"label\"],\"additionalProperties\":false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
+      "exit_code": -9,
+      "observation": "positive control: tools=[Read, StructuredOutput, 22 mcp__claude-in-chrome__* tools]; mcp_servers=[claude-in-chrome]; apiKeySource=none. Read appears as requested; extras as in the empty probe",
+      "sanitization": "as for real-probe-safe-mode-tools-empty.jsonl",
+      "sha256": "2225687761035c8e5b4f6358f939f2373b0479e25777682eac72f215e4decb23"
+    },
+    "real-probe-safe-mode-no-chrome-tools-empty.jsonl": {
+      "kind": "real",
+      "profile": "safe-mode --no-chrome (current)",
+      "status": "current-profile",
+      "recorded_at": "2026-11-01",
+      "exit_code": -9,
+      "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --no-chrome --tools \"\" --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\": \"object\", \"properties\": {\"label\": {\"type\": \"string\"}}, \"required\": [\"label\"], \"additionalProperties\": false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
+      "observation": "system/init: tools=[StructuredOutput], mcp_servers=[], apiKeySource=none; skills 21, agents 5, slash_commands 53, plugins 4 builtin (recorded, not tools). Meets the criterion",
+      "sanitization": "cwd/original_cwd -> /private/isolated-cwd; scratchpad_path and messaging_socket_path replaced; lines re-serialized compactly; session_id/uuid kept",
+      "sha256": "f3fed220170b5532d290cebb496b2fb2cb95b4935d6d06e937e4a2166b1cd22a"
+    },
+    "real-probe-safe-mode-no-chrome-tools-read.jsonl": {
+      "kind": "real",
+      "profile": "safe-mode --no-chrome (current)",
+      "status": "current-profile",
+      "recorded_at": "2026-11-01",
+      "exit_code": -9,
+      "command": "claude -p --safe-mode --setting-sources \"\" --strict-mcp-config --no-chrome --tools Read --no-session-persistence --max-turns 1 --system-prompt \"Synthetic isolation probe system prompt.\" --json-schema '{\"type\": \"object\", \"properties\": {\"label\": {\"type\": \"string\"}}, \"required\": [\"label\"], \"additionalProperties\": false}' --model haiku --effort low --output-format stream-json --verbose (stdin: \"Isolation probe: no task. Do not answer.\"); process killed after the system/init line",
+      "observation": "positive control: tools=[Read, StructuredOutput], mcp_servers=[], apiKeySource=none. Meets the criterion",
+      "sanitization": "as for real-probe-safe-mode-no-chrome-tools-empty.jsonl",
+      "sha256": "03d0dc93c321b06fb31d2d2166209ebe93853e7c0f8bf25316f3a68801382d48"
+    }
+  }
+}

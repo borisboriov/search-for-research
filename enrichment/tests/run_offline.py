@@ -13,7 +13,7 @@ original_popen = subprocess.Popen
 
 def offline_popen(command: object, *args: object, **kwargs: object) -> subprocess.Popen[bytes]:
     executable = command[0] if isinstance(command, tuple | list) else str(command).split()[0]
-    if Path(str(executable)).name in {"codex", "node", "pi", "curl", "wget"}:
+    if Path(str(executable)).name in {"claude", "codex", "node", "pi", "curl", "wget"}:
         raise AssertionError("Offline tests require a mock for source/model/client transports")
     return cast("subprocess.Popen[bytes]", original_popen(command, *args, **kwargs))  # type: ignore[call-overload]
 

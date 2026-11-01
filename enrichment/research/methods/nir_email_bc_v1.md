@@ -11,6 +11,7 @@
 [условия запуска](#реальный-запуск-входы-и-ограничения) ·
 [форматы](#форматы-входов-и-заморозка) · [offline-команды](#проверенный-offline-маршрут) ·
 [native-запросы](#подготовленные-native-запросы-и-нормализация-сохранённых-ответов) ·
+[транспорт v2](#транспорт-v2-claude-cli) ·
 [исторические исключения](#частный-реестр-исторических-исключений).
 
 ## Что получает разметчик
@@ -600,6 +601,181 @@ Cached/reasoning tokens не прибавляются повторно к input/
 `native.execute`/`isolation_probe` при замоканных subprocess и выходном потоке,
 а также отказы на другом case, изменённых schema/raw SHA и подменённой доставке.
 Ни CLI Codex, ни HTTP, ни реальная модель в этих тестах не запускаются.
+
+## Транспорт v2: Claude CLI
+
+Второй транспорт для **новой версии протокола** (#227): Claude Code CLI по
+существующей подписке рядом с `codex exec --ephemeral`. Транспорт выбирает
+замороженный protocol, а не глобальная настройка. Протокол без поля `transport`
+остаётся codex: v1-запросы, их байты и Codex-регрессии не меняются, а
+[`native.py`](../../src/sfr_enrichment/native.py) не редактировался. 17 ответов
+Sol из `frozen-access-restored-v2/` — история и с v2 не смешиваются. Готовность
+кода **не разрешает запуск**: нужны протокол v2 с выбранными моделью/effort,
+freeze, authorization с SHA и отдельный допуск Бориса.
+
+**Протокол и подготовка.** В protocol v2 задаются `transport: "claude_cli"`,
+`model` (полный идентификатор модели Claude) и `effort` из `low`/`medium`/`high`/
+`xhigh`/`max`; `freeze` и `checked` отклоняют иной транспорт или effort.
+`prepare-model` пишет request со схемой `nir_native_request_v2`, полем `transport`
+и `claude_kwargs` (`model`, `effort`, `timeout_seconds`, `max_output_file_bytes`)
+вместо `native_kwargs`; prepared manifest получает `transport`. Prompt, system,
+schema, порядок и `launch_authorized: false` те же, что у v1. `prepared_request`
+отклоняет несовпадение транспорта protocol/manifest/request и чужой набор аргументов.
+
+**Вызов.** [`native_claude.py`](../../src/sfr_enrichment/native_claude.py) выполняет
+одну попытку в пустом изолированном cwd, prompt передаётся только через stdin.
+Профиль изоляции — `--safe-mode --setting-sources "" --no-chrome` вместо `--bare`
+(решения координатора 01.11): в `--bare` CLI 2.1.316 не читает OAuth/keychain
+подписки, а без `--no-chrome` в песочнице появлялся сервер Claude in Chrome.
+
+```sh
+claude -p --safe-mode --setting-sources "" --strict-mcp-config --no-chrome --tools "" \
+  --no-session-persistence --max-turns 1 \
+  --system-prompt "<system-prompt.txt>" --json-schema "<schema.json>" \
+  --model <model> --effort <effort> --output-format json
+```
+
+Пустое значение `--setting-sources ""` парсер 2.1.316 принимает: событие `init`
+выдаётся без ошибки разбора. До задания код сохраняет `claude --version` и `--help`
+и отказывает явной ошибкой, если в help нет любого флага, кроме скрытого, но
+принятого 2.1.316 `--max-turns`, или нет запрошенного effort. Ключи
+`ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN` в окружении означают платный API и
+запрещают запуск; в started записываются только имена унаследованных
+`CLAUDE*`/`ANTHROPIC*` переменных, без значений. Timeout задания, общий deadline
+и `max_output_file_bytes` для stdout/stderr действуют так же, как у codex:
+превышение сохраняет частичный вывод, timeout — `finished`, повтора нет; начатая
+попытка без `finished` остаётся неизвестным исходом.
+
+**Изоляция — отдельный шаг до authorization.** `nir_execute probe --root ...
+--request-id ... --out <новый каталог>` запускает те же флаги, включая system и
+`--json-schema` выбранного request, дважды в `--output-format stream-json --verbose`
+с безвредным фиксированным prompt: проба с `--tools ""` и положительный контроль с
+`--tools Read`. Процесс останавливается на событии `system/init`; его `tools` и
+`mcp_servers` — объявленный registry. Критерий: у пробы `tools` ровно
+`["StructuredOutput"]`, у контроля ровно `Read` и `StructuredOutput`, без
+повторов и иных имён; `mcp_servers: []` у обоих. Дополнительно нужны
+`apiKeySource: "none"` (иначе платный ключ) и cwd, равный изолированному. Отказ
+называет точные имена лишних и отсутствующих инструментов и серверов.
+
+**Канал вывода — методологическое решение продуктового потока (01.11).**
+`StructuredOutput` — единственный разрешённый инструмент. Это канал
+структурированного вывода, который создаёт `--json-schema`, аналог нативной
+output-schema у codex, без внешних возможностей. Оба плеча B/C получают один и тот
+же канал. Второй линией остаётся проверка JSON по схеме на стороне кода: импорт
+требует `structured_output` и затем валидирует ответ обычным `import-model`. Отсутствие `init`, нераспознанная строка или активность
+модели до него — ошибка, а не пустой registry. Списки skills/agents/
+slash_commands/plugins из `init` записываются как есть, числом и SHA. Это не
+инструменты, и критерием они не являются; их возможная передача в контекст не
+проверена. Это проверка registry клиента, не перехват API.
+
+Шаг пишет сырые потоки `isolation-<label>-stdout-<sha>.bin`, `isolation-probe.json`,
+`isolation-control.json`, `cli-version.txt`, `cli-help.txt` и итоговый
+`isolation-proof.json`. В итоговом файле — версия CLI и SHA help, модель, effort,
+профили флагов (system/schema заменены метками), найденные tools и SHA файлов. Это
+реальный запуск CLI, остановленный на `init`: он требует отдельного разрешения, его
+usage неизвестен, а не нулевой, и в ledger он не записывается. Authorization ссылается
+на `isolation_proof_path` и `isolation_proof_sha256`. Runner до первой и перед каждой
+попыткой заново разбирает сохранённые `init` и сверяет SHA, версию CLI, модель/effort
+и профиль флагов; сам пробу не запускает, поэтому слот на неё не расходуется. Попытка
+копирует proof в свой каталог для импорта. Proof привязывает флаги и версию CLI, а
+не конкретный schema: наличие `--json-schema` в пробе обязательно. То, что содержимое
+схемы на registry не влияет, — допущение по одной наблюдённой схеме, а не
+проверенный факт. Свой cwd задания проверяется пустым до и после вызова.
+
+**Receipt и импорт.** В каталоге попытки — `stdout.json` (сырой результат CLI),
+`stderr.log`, `raw-result.json` (`structured_output`), `command.json`, `started.json`,
+`finished.json`, `receipt.json` и proofs. Receipt хранит `transport`, запрошенные
+model/effort, наблюдаемую модель из единственного ключа `modelUsage` (иначе `null`),
+effort `null`, токены input/output/cache read/cache write, `total_cost_usd`,
+`duration_ms`, `num_turns`, `is_error`, `subtype`, `stop_reason`, `terminal_reason`,
+`claude --version`, SHA бинарника и SHA всех артефактов. При подписке
+`total_cost_usd` — оценка клиента по ценам API, не счёт. `import-native` для
+`claude_cli` заново разбирает сохранённые `init`, сверяет SHA, размер, конфигурацию,
+usage и время и вызывает обычный `import-model`. Ненулевые счётчики
+`usage.server_tool_use` (например, `web_search_requests`, `web_fetch_requests`) или
+`webSearchRequests`/`webFetchRequests` в `modelUsage` означают использование
+инструментов. Такой ответ не принимается как содержательный: импорт отказывает с
+перечнем признаков и требует `technical_skip`. Во входные токены envelope
+включаются cache read/write, которые Claude указывает рядом с `input_tokens`;
+разбивка остаётся в receipt. `cost_basis` из receipt переносится в envelope; в
+`resources` анализа стоимость помечается `basis: "estimate"`, если хотя бы у одного
+известного значения основание не `invoice`. `num_turns` пока только записывается.
+
+**Runner.** `sfr_enrichment.nir_execute` повторяет дисциплину прежнего частного
+launcher. Команды не выполнялись в этой работе:
+
+```sh
+uv run --frozen python -m sfr_enrichment.nir_execute execute \
+  --root /absolute/private/run-v2 --authorization /absolute/private/authorization.json --next
+```
+
+Без `--next`/`--request-id` runner идёт по порядку до cap, deadline или остановки;
+`--request-id` допускает только очередное задание. Authorization должна иметь
+`purpose: "diagnostic_pilot_not_holdout"`, `live_authorized: true`, `transport:
+"claude_cli_existing_subscription"`, `new_paid_services_authorized: false`,
+`retries: 0`, `parallelism: 1`, абсолютный `absolute_deadline` с часовым поясом,
+`run_deadline_seconds`, `per_call_timeout_seconds`, `max_output_file_bytes`,
+`max_input_bytes_per_case`, `model_job_cap`, `model`, `effort`, точный вывод
+`cli_version`, `authorization_reference`, `execution_root`, `isolation_proof_path`
+с `isolation_proof_sha256`, а также SHA с ключами `native_sha256`,
+`native_claude_sha256`, `nir_sha256`, `runner_sha256`, `frozen_manifest_sha256` и
+`prepared_manifest_sha256`. Модель, effort,
+timeout и лимит байт сверяются с каждым request; CLI version проверяется до
+записи попытки.
+
+В `<root>/execution/` действуют `writer.lock` (flock), `run-clock.json` с SHA
+authorization, `attempt-NNN.json` до вызова и `outcome-<request_id>.json` после
+импорта или технического сбоя — в формате прежнего launcher. `quota_observation` у
+Claude всегда `{"source": "unavailable", ...}`: официального endpoint квоты нет,
+проценты не выводятся. Отказ rate-limit/overload **до вывода модели** — `is_error`,
+нулевой вывод и HTTP 429/529 либо текст лимита при `terminal_reason: api_error` —
+записывается как `deferred-NNN-<request_id>.json` со статусом `transport_deferred`:
+слот не расходуется, runner завершается с кодом 3. То же задание продолжается
+только новым явным запуском. Иная ошибка, включая отказ аутентификации, —
+`technical_failure` с кодом 2; следующий запуск отказывает до разбора. Попытка без
+outcome блокирует продолжение. Новая authorization не продолжает старый run-clock:
+нужна отдельная записанная decision, как в v1.
+
+**Ограничения, известные до freeze v2.**
+
+- **Пробы профиля `--no-chrome` прошли критерий.** Технические пробы 01.11
+  (песочница Claude Code 2.1.316, haiku, `--json-schema` включён) показали
+  `tools: ["StructuredOutput"]` у пробы и `["Read", "StructuredOutput"]` у контроля,
+  `mcp_servers: []` и `apiKeySource: "none"`. Без `--no-chrome` в той же песочнице
+  появлялся сервер `claude-in-chrome` (`source: "dynamic"`) с 22 инструментами,
+  несмотря на `--strict-mcp-config`; эти fixtures помечены
+  `chrome-mcp-profile-rejected`. Результат песочницы не заменяет proof машины
+  запуска: итоговый `isolation-proof.json` для authorization делается только там
+  командой `nir_execute probe`. Если там появится иной инструмент или сервер, проба
+  откажет, и критерий не ослабляется.
+- Аутентификация подписки в профиле `--safe-mode` не наблюдалась: пробы
+  остановлены на `init`, ответа модели нет. Прежние вызовы с `--bare` вернули
+  ошибку аутентификации; их fixtures помечены `bare-profile-rejected`.
+- Совместимость `--json-schema` с `--max-turns 1` реальным ответом не проверена.
+  Открытый пункт: правило для `num_turns` закрепить после первого реального ответа;
+  до тех пор значение только записывается в receipt.
+- Внутренние повторы API у CLI неизвестны (`transport_retries: null`); правило
+  deferred основано на наблюдённой форме ошибки и синтетическом 429.
+- Гипотеза о файлах CLAUDE.md/AGENTS.md в родительских каталогах `isolated-cwd`
+  не проверена. Proof проверяет только registry; `--safe-mode` по help отключает
+  CLAUDE.md, но доказательства доставки инструкций, как у Codex v1, нет. Корень
+  запуска надо держать вне каталогов с такими файлами или проверить это отдельно.
+- `cli_binary_sha256` записывается, но с попыткой сверяется только строка версии.
+  На время запуска автообновление Claude Code нужно отключить.
+- Отказ по лимиту подписки без статуса 429/529 и без распознаваемого текста лимита
+  даст `technical_failure` с расходом слота, а не `transport_deferred`.
+- Deferred у границы deadline не продлевает окно: продолжение после истечения
+  deadline или run-clock требует новой записанной decision.
+
+Регрессии [`test_native_claude.py`](../../tests/test_native_claude.py) и
+[`test_nir_claude.py`](../../tests/test_nir_claude.py) мокают subprocess.
+Fixtures CLI 2.1.316 и их происхождение — в
+[`provenance.json`](../../tests/fixtures/claude-cli-2.1.316/provenance.json):
+реальные ответ с ошибкой аутентификации и потоки `init` профиля `--bare`
+(`bare-profile-rejected`), профиля `--safe-mode` без `--no-chrome`
+(`chrome-mcp-profile-rejected`) и текущего профиля с `--no-chrome`. Все они
+получены в разрешённых технических вызовах без частных данных. Успех и rate-limit
+там помечены synthetic.
 
 ## Частный реестр исторических исключений
 

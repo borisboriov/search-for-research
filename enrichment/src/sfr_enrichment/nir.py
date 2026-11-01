@@ -14,6 +14,8 @@ from urllib.parse import urlparse
 from sfr_enrichment.batch import encoded
 from sfr_enrichment.common import now, private_root, read, sha, write_new
 from sfr_enrichment.evidence import identifier, immutable_bytes
+from sfr_enrichment.native_claude import EFFORTS as CLAUDE_EFFORTS
+from sfr_enrichment.native_claude import OUTPUT_TOOL, verify_isolation_proof
 from sfr_enrichment.nir_inventory import (
     candidate_identity_keys,
     canonical_document_url,
@@ -38,11 +40,22 @@ PROFILE_KEYS = {
 CASE_KEYS = {"case_id", "group_id", "pair_id", "example_ids", "profile", "email", "evidence"}
 SOURCE_KEYS = {"source_id", "url", "captured_at", "content_date", "source_path", "excerpt"}
 DIAGNOSTIC_STATUS = "diagnostic_known_capture_gaps_not_holdout"
+# Absent field means the original codex transport; v1 protocols stay byte-identical.
+TRANSPORTS = ("codex_cli", "claude_cli")
 DIAGNOSTIC_LIMITATION = (
     "Diagnostic pilot only: two historical email/document details remain unknown; "
     "known people and all recorded evidence remain excluded. Not an independent holdout "
     "or confirmation of the hypothesis."
 )
+
+
+def protocol_transport(protocol: dict[str, Any]) -> str:
+    transport = protocol.get("transport", "codex_cli")
+    if transport not in TRANSPORTS:
+        raise ValueError("Неизвестный транспорт протокола")
+    if transport == "claude_cli" and protocol.get("effort") not in CLAUDE_EFFORTS:
+        raise ValueError("Неподдерживаемый effort для claude_cli")
+    return str(transport)
 
 
 def digest(value: Any) -> str:
@@ -281,6 +294,7 @@ def freeze(
         nonempty(protocol.get(key), key)
     if any(protocol[key].startswith("TEMPLATE") for key in ("code_revision", "runtime_version")):
         raise ValueError("Заполните фактические версии вместо TEMPLATE перед freeze")
+    protocol_transport(protocol)
     if not isinstance(protocol.get("generation"), dict):
         raise ValueError("Нужно зафиксировать параметры generation (пустой объект допустим)")
     if not isinstance(protocol.get("limits"), dict) or not protocol["limits"]:
@@ -463,6 +477,7 @@ def checked(root: Path) -> tuple[dict[str, Any], list[dict[str, Any]], dict[str,
             raise ValueError("Замороженная инструкция изменена")
     cases = read(root / "cases.json")
     inventory = read(root / "exclusions.json")
+    protocol_transport(read(root / "protocol.json"))
     if (
         manifest.get("holdout_status") == DIAGNOSTIC_STATUS
         or "diagnostic_decision_sha256" in manifest
@@ -754,9 +769,33 @@ def output_schema(arm: str, source_ids: list[str]) -> dict[str, Any]:
     }
 
 
+def claude_request(request: dict[str, Any]) -> dict[str, Any]:
+    """Same frozen request with the claude_cli transport arguments instead of codex ones."""
+    codex = request["native_kwargs"]
+    converted: dict[str, Any] = {}
+    for key, value in request.items():
+        if key == "schema":
+            converted.update(schema="nir_native_request_v2", transport="claude_cli")
+        elif key == "native_kwargs":
+            converted["claude_kwargs"] = {
+                name: codex[name]
+                for name in ("model", "effort", "timeout_seconds", "max_output_file_bytes")
+            }
+        elif key == "native_configuration_supported":
+            converted["claude_configuration_supported"] = codex["effort"] in CLAUDE_EFFORTS
+        elif key == "generation_proposal_not_enforced_by_native":
+            converted["generation_proposal_not_enforced_by_claude_cli"] = value
+        elif key == "output_byte_cap_scope":
+            converted[key] = "claude stdout/stderr during execution; raw-result derived from stdout"
+        else:
+            converted[key] = value
+    return converted
+
+
 def prepare_model(root: Path, *, seed: int = 154) -> Path:
     """Prepare exact role-separated requests and balanced order, without invoking a transport."""
     manifest, cases, protocol = checked(root)
+    transport = protocol_transport(protocol)
     directory = root / "prepared-model"
     if (directory / "manifest.json").exists():
         raise FileExistsError(directory / "manifest.json")
@@ -833,6 +872,8 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
                 "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
                 **diagnostic_scope(manifest),
             }
+            if transport == "claude_cli":
+                request = claude_request(request)
             write_new(target / "request.json", request)
             requests[request_id] = {
                 "path": str(relative / "request.json"),
@@ -848,6 +889,7 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
             "order": order,
             "requests": requests,
             "order_rule": "shuffle cases; alternate first arm, balanced B/C-first within one case",
+            **({"transport": transport} if transport != "codex_cli" else {}),
             "launch_authorized": False,
             "holdout_status": manifest.get("holdout_status", "legacy_unclassified_not_holdout"),
             **diagnostic_scope(manifest),
@@ -857,7 +899,8 @@ def prepare_model(root: Path, *, seed: int = 154) -> Path:
 
 
 def prepared_request(root: Path, request_id: str) -> dict[str, Any]:
-    manifest, _, _ = checked(root)
+    manifest, _, protocol = checked(root)
+    transport = protocol_transport(protocol)
     identifier(request_id)
     prepared = read(root / "prepared-model" / "manifest.json")
     if prepared.get("manifest_sha256") != sha(root / "manifest.json"):
@@ -878,6 +921,15 @@ def prepared_request(root: Path, request_id: str) -> dict[str, Any]:
         or request["manifest_sha256"] != prepared["manifest_sha256"]
     ):
         raise ValueError("Неверная привязка request/case")
+    arguments = "claude_kwargs" if transport == "claude_cli" else "native_kwargs"
+    other = "native_kwargs" if transport == "claude_cli" else "claude_kwargs"
+    if (
+        prepared.get("transport", "codex_cli") != transport
+        or request.get("transport", "codex_cli") != transport
+        or not isinstance(request.get(arguments), dict)
+        or other in request
+    ):
+        raise ValueError("Транспорт prepared request не совпадает с протоколом")
     for key, field in (
         ("prompt_path", "prompt_sha256"),
         ("system_prompt_path", "system_prompt_sha256"),
@@ -893,6 +945,8 @@ def import_native(root: Path, request_id: str, native_dir: Path, record_id: str)
     manifest, _, protocol = checked(root)
     request = prepared_request(root, request_id)
     identifier(record_id)
+    if request.get("transport") == "claude_cli":
+        return import_claude_native(root, request, native_dir, record_id)
     receipt, started, finished = (
         read(native_dir / name) for name in ("receipt.json", "started.json", "finished.json")
     )
@@ -1066,6 +1120,210 @@ def import_native(root: Path, request_id: str, native_dir: Path, record_id: str)
                 "receipt": {
                     "native_receipt": receipt,
                     "request_id": request_id,
+                    "native_artifacts_sha256": {
+                        name: sha(imported / "native" / name) for name in source_names
+                    },
+                },
+            }
+        ],
+    }
+    write_new(imported / "normalized.json", envelope)
+    return import_model(root, imported / "normalized.json", record_id)
+
+
+def import_claude_native(
+    root: Path, request: dict[str, Any], native_dir: Path, record_id: str
+) -> Path:
+    """Normalize saved native_claude.execute artifacts; never execute or recover a model job."""
+    manifest, _, protocol = checked(root)
+    kwargs = request["claude_kwargs"]
+    receipt, started, finished, requested_file = (
+        read(native_dir / name)
+        for name in ("receipt.json", "started.json", "finished.json", "requested-config.json")
+    )
+    for name, field in (
+        ("prompt.txt", "prompt_sha256"),
+        ("schema.json", "output_schema_sha256"),
+        ("instructions.txt", "system_prompt_sha256"),
+    ):
+        if sha(native_dir / name) != request[field]:
+            raise ValueError("Claude prompt/schema не соответствуют данному case/arm")
+    requested = {"transport": "claude_cli", "model": kwargs["model"], "effort": kwargs["effort"]}
+    if (
+        receipt.get("transport") != "claude_cli"
+        or started.get("requested_config") != requested
+        or requested_file != requested
+        or (receipt.get("requested_model"), receipt.get("requested_effort"))
+        != (kwargs["model"], kwargs["effort"])
+    ):
+        raise ValueError("Claude requested configuration отличается от протокола")
+    if (
+        receipt.get("prompt_sha256") != request["prompt_sha256"]
+        or started.get("prompt_sha256") != request["prompt_sha256"]
+    ):
+        raise ValueError("Claude receipt/started относятся к другому prompt")
+    raw_path, stdout_path = native_dir / "raw-result.json", native_dir / "stdout.json"
+    for path, field in (
+        (raw_path, "raw_result_sha256"),
+        (stdout_path, "stdout_sha256"),
+        (native_dir / "stderr.log", "stderr_sha256"),
+    ):
+        if sha(path) != receipt.get(field):
+            raise ValueError("Claude raw/stdout hash не совпадает")
+        if path.stat().st_size > kwargs["max_output_file_bytes"]:
+            raise ValueError("Claude output превышает byte cap")
+    result = read(stdout_path)
+    if (
+        finished.get("exit_code") != 0
+        or not isinstance(result, dict)
+        or result.get("type") != "result"
+        or result.get("is_error") is not False
+        or result.get("subtype") != "success"
+        or result.get("permission_denials") != []
+        or not isinstance(result.get("structured_output"), dict)
+        or read(raw_path) != result["structured_output"]
+    ):
+        raise ValueError("Нет успешного Claude результата; используйте technical_skip")
+    usage = result.get("usage")
+    usage = usage if isinstance(usage, dict) else {}
+    # Any server-side tool use (search, fetch, ...) makes the answer non-substantive.
+    server = usage.get("server_tool_use", {})
+    model_entries = result.get("modelUsage")
+    tool_signs = (
+        [f"usage.server_tool_use={server!r}"]
+        if not isinstance(server, dict)
+        else [
+            f"usage.server_tool_use.{key}={value!r}"
+            for key, value in sorted(server.items())
+            if value not in (0, None)
+        ]
+    ) + [
+        f"modelUsage.{name}.{key}={entry[key]!r}"
+        for name, entry in sorted((model_entries or {}).items())
+        if isinstance(entry, dict)
+        for key in ("webSearchRequests", "webFetchRequests")
+        if entry.get(key) not in (0, None)
+    ]
+    if tool_signs:
+        raise ValueError(
+            "Claude результат содержит признаки tool use ("
+            + ", ".join(tool_signs)
+            + "); используйте technical_skip"
+        )
+    tokens = {
+        key: usage.get(key)
+        for key in (
+            "input_tokens",
+            "output_tokens",
+            "cache_read_input_tokens",
+            "cache_creation_input_tokens",
+        )
+    }
+    cost = result.get("total_cost_usd")
+    model_usage = result.get("modelUsage")
+    observed = (
+        next(iter(model_usage)) if isinstance(model_usage, dict) and len(model_usage) == 1 else None
+    )
+    if (
+        tokens != receipt.get("tokens")
+        or (cost if type(cost) in (int, float) else None) != receipt.get("cost_usd")
+        or observed != receipt.get("model")
+        or receipt.get("effort") is not None
+        or result.get("session_id") != receipt.get("session_id")
+    ):
+        raise ValueError("Claude receipt не согласован с сохранённым результатом")
+    # Recheck the copied stored proof (saved init events), not only recorded hashes.
+    proof = verify_isolation_proof(
+        native_dir,
+        model=kwargs["model"],
+        effort=kwargs["effort"],
+        cli_version=str(receipt.get("cli_version")),
+    )
+    if (
+        proof["isolation_proof_sha256"] != receipt.get("isolation_proof_sha256")
+        or proof["isolation_proof_sha256"] != started.get("isolation_proof_sha256")
+        or any(
+            sha(native_dir / f"isolation-{label}.json") != receipt.get(f"isolation_{label}_sha256")
+            or receipt.get(f"isolation_{label}_sha256") != started.get(f"isolation_{label}_sha256")
+            for label in ("probe", "control")
+        )
+    ):
+        raise ValueError("Claude isolation proof hash не совпадает")
+    proof_names = ["isolation-proof.json", *proof["files_sha256"]]
+    if receipt.get("tool_registry") != [OUTPUT_TOOL] or receipt.get("mcp_servers") != []:
+        raise ValueError("Claude receipt не подтверждает registry только из StructuredOutput")
+    start, finish = started.get("started_at_epoch"), finished.get("finished_at_epoch")
+    number(start, "started_at_epoch")
+    number(finish, "finished_at_epoch")
+    number(receipt.get("wall_elapsed_seconds"), "wall_elapsed_seconds")
+    elapsed = finish - start
+    if elapsed < 0 or not math.isclose(elapsed, receipt["wall_elapsed_seconds"], abs_tol=1e-6):
+        raise ValueError("Claude времена не согласованы")
+    case_id, arm = request["case_id"], request["arm"]
+    imported = root / "native-imports" / record_id
+    source_names = tuple(
+        dict.fromkeys(
+            (
+                "raw-result.json",
+                "receipt.json",
+                "started.json",
+                "finished.json",
+                "requested-config.json",
+                "prompt.txt",
+                "schema.json",
+                "instructions.txt",
+                "stdout.json",
+                "stderr.log",
+                *proof_names,
+                *(
+                    name
+                    for name in ("command.json", "cli-version.txt", "cli-help.txt")
+                    if (native_dir / name).is_file()
+                ),
+                *sorted(p.name for p in native_dir.glob("isolation-*")),
+            )
+        )
+    )
+    for name in source_names:
+        immutable_bytes(imported / "native" / name, (native_dir / name).read_bytes())
+    parts = [
+        tokens[key]
+        for key in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")
+    ]
+    components = [n for n in parts if type(n) is int and n >= 0]
+    envelope = {
+        "schema": "nir_model_answers_v1",
+        "arm": arm,
+        "manifest_sha256": sha(root / "manifest.json"),
+        "cases_sha256": manifest["cases_sha256"],
+        "protocol_sha256": manifest["protocol_sha256"],
+        "prompt_sha256": manifest["prompt_sha256"][arm],
+        **{
+            k: protocol[k]
+            for k in ("model", "effort", "generation", "code_revision", "runtime_version")
+        },
+        "results": [
+            {
+                "case_id": case_id,
+                "case_input_sha256": request["case_input_sha256"],
+                "status": "ok",
+                "raw_response": raw_path.read_text(),
+                "started_at": datetime.fromtimestamp(start, UTC).isoformat(),
+                "latency_seconds": elapsed,
+                # Claude reports cache reads/writes beside input_tokens, not inside it.
+                "input_tokens": sum(components) if len(components) == len(parts) else None,
+                "output_tokens": tokens["output_tokens"]
+                if type(tokens["output_tokens"]) is int
+                else None,
+                "cost_usd": receipt.get("cost_usd"),
+                # Client estimate at API prices under a subscription, not an invoice.
+                "cost_basis": receipt.get("cost_basis"),
+                "observed_model": receipt.get("model"),
+                "observed_effort": None,
+                "receipt": {
+                    "native_receipt": receipt,
+                    "request_id": request["request_id"],
+                    "transport": "claude_cli",
                     "native_artifacts_sha256": {
                         name: sha(imported / "native" / name) for name in source_names
                     },
@@ -1306,6 +1564,12 @@ def analyze(root: Path, output: Path, *, seed: int = 154, resamples: int = 2000)
                 for field in ("input_tokens", "output_tokens", "cost_usd", "latency_seconds")
             },
         }
+        priced = [r for r in results if r["cost_usd"] is not None]
+        bases = Counter(str(r.get("cost_basis")) for r in priced)
+        resources[arm]["cost_usd"].update(
+            basis=None if not priced else "invoice" if set(bases) == {"invoice"} else "estimate",
+            basis_counts=dict(sorted(bases.items())),
+        )
     rows = []
     for case in cases:
         row = {
