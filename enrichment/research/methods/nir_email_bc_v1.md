@@ -624,11 +624,12 @@ schema, порядок и `launch_authorized: false` те же, что у v1. `p
 
 **Вызов.** [`native_claude.py`](../../src/sfr_enrichment/native_claude.py) выполняет
 одну попытку в пустом изолированном cwd, prompt передаётся только через stdin.
-Профиль изоляции — `--safe-mode --setting-sources ""` вместо `--bare` (решение
-координатора 01.11): в `--bare` CLI 2.1.316 не читает OAuth/keychain подписки.
+Профиль изоляции — `--safe-mode --setting-sources "" --no-chrome` вместо `--bare`
+(решения координатора 01.11): в `--bare` CLI 2.1.316 не читает OAuth/keychain
+подписки, а без `--no-chrome` в песочнице появлялся сервер Claude in Chrome.
 
 ```sh
-claude -p --safe-mode --setting-sources "" --strict-mcp-config --tools "" \
+claude -p --safe-mode --setting-sources "" --strict-mcp-config --no-chrome --tools "" \
   --no-session-persistence --max-turns 1 \
   --system-prompt "<system-prompt.txt>" --json-schema "<schema.json>" \
   --model <model> --effort <effort> --output-format json
@@ -650,10 +651,18 @@ claude -p --safe-mode --setting-sources "" --strict-mcp-config --tools "" \
 `--json-schema` выбранного request, дважды в `--output-format stream-json --verbose`
 с безвредным фиксированным prompt: проба с `--tools ""` и положительный контроль с
 `--tools Read`. Процесс останавливается на событии `system/init`; его `tools` и
-`mcp_servers` — объявленный registry. Критерий: `tools: []` и `mcp_servers: []` у
-пробы, `["Read"]` и `[]` у контроля; дополнительно `apiKeySource: "none"` (иначе
-платный ключ) и cwd, равный изолированному. Отказ называет точные имена лишних
-инструментов и серверов. Отсутствие `init`, нераспознанная строка или активность
+`mcp_servers` — объявленный registry. Критерий: у пробы `tools` ровно
+`["StructuredOutput"]`, у контроля ровно `Read` и `StructuredOutput`, без
+повторов и иных имён; `mcp_servers: []` у обоих. Дополнительно нужны
+`apiKeySource: "none"` (иначе платный ключ) и cwd, равный изолированному. Отказ
+называет точные имена лишних и отсутствующих инструментов и серверов.
+
+**Канал вывода — методологическое решение продуктового потока (01.11).**
+`StructuredOutput` — единственный разрешённый инструмент. Это канал
+структурированного вывода, который создаёт `--json-schema`, аналог нативной
+output-schema у codex, без внешних возможностей. Оба плеча B/C получают один и тот
+же канал. Второй линией остаётся проверка JSON по схеме на стороне кода: импорт
+требует `structured_output` и затем валидирует ответ обычным `import-model`. Отсутствие `init`, нераспознанная строка или активность
 модели до него — ошибка, а не пустой registry. Списки skills/agents/
 slash_commands/plugins из `init` записываются как есть, числом и SHA. Это не
 инструменты, и критерием они не являются; их возможная передача в контекст не
@@ -721,17 +730,16 @@ outcome блокирует продолжение. Новая authorization не
 
 **Ограничения, известные до freeze v2.**
 
-- **Проба в текущем профиле не проходит.** Технические пробы 01.11 (песочница
-  Claude Code 2.1.316, haiku, `--json-schema` включён) показали в `init`
-  `apiKeySource: "none"` и сверх ожидаемого `StructuredOutput` у пробы и контроля.
-  Это служебный инструмент структурированного вывода, который добавляет
-  `--json-schema`. Кроме того, появились сервер `claude-in-chrome` (`source: "dynamic"`)
-  и 22 его инструмента, несмотря на `--strict-mcp-config`. Контроль показал `Read`
-  на месте. По критерию обе пробы отказывают с точными именами; ограничение не
-  обходится. Динамический сервер, вероятно, вносит окружение песочницы (дочерний
-  процесс сессии Claude Code); на Mac Бориса это не проверено. Флаг `--no-chrome`
-  есть в help, но не проверялся. Допуск `StructuredOutput` или смена способа
-  структурированного вывода требуют отдельного решения.
+- **Пробы профиля `--no-chrome` прошли критерий.** Технические пробы 01.11
+  (песочница Claude Code 2.1.316, haiku, `--json-schema` включён) показали
+  `tools: ["StructuredOutput"]` у пробы и `["Read", "StructuredOutput"]` у контроля,
+  `mcp_servers: []` и `apiKeySource: "none"`. Без `--no-chrome` в той же песочнице
+  появлялся сервер `claude-in-chrome` (`source: "dynamic"`) с 22 инструментами,
+  несмотря на `--strict-mcp-config`; эти fixtures помечены
+  `chrome-mcp-profile-rejected`. Результат песочницы не заменяет proof машины
+  запуска: итоговый `isolation-proof.json` для authorization делается только там
+  командой `nir_execute probe`. Если там появится иной инструмент или сервер, проба
+  откажет, и критерий не ослабляется.
 - Аутентификация подписки в профиле `--safe-mode` не наблюдалась: пробы
   остановлены на `init`, ответа модели нет. Прежние вызовы с `--bare` вернули
   ошибку аутентификации; их fixtures помечены `bare-profile-rejected`.
@@ -744,7 +752,8 @@ outcome блокирует продолжение. Новая authorization не
 Fixtures CLI 2.1.316 и их происхождение — в
 [`provenance.json`](../../tests/fixtures/claude-cli-2.1.316/provenance.json):
 реальные ответ с ошибкой аутентификации и потоки `init` профиля `--bare`
-(`bare-profile-rejected`), а также потоки `init` профиля `--safe-mode`. Все они
+(`bare-profile-rejected`), профиля `--safe-mode` без `--no-chrome`
+(`chrome-mcp-profile-rejected`) и текущего профиля с `--no-chrome`. Все они
 получены в разрешённых технических вызовах без частных данных. Успех и rate-limit
 там помечены synthetic.
 
