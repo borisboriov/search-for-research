@@ -1,0 +1,61 @@
+{
+  "cli_version": "2.1.316 (Claude Code)",
+  "recorded_at": "2026-11-01",
+  "environment": "Claude Code remote sandbox without ANTHROPIC_API_KEY; not Boris's Mac",
+  "private_data": "none: harmless technical prompts only, no B/C prompt, no case data",
+  "files": {
+    "real-result-bare-auth-error.json": {
+      "kind": "real",
+      "command": "claude -p \"Ответь одним словом: OK\" --bare --tools \"\" --strict-mcp-config --no-session-persistence --output-format json --model haiku --max-turns 1",
+      "exit_code": 1,
+      "observation": "--bare reads only ANTHROPIC_API_KEY/apiKeyHelper; without a key the result is is_error=true, terminal_reason=api_error with subtype=success",
+      "sanitization": "none needed (no paths); session_id/uuid kept",
+      "sha256": "752b08527899a109bfcbd302895f5effce83912803170efec9d83ba451c22025"
+    },
+    "real-probe-tools-empty.jsonl": {
+      "kind": "real",
+      "command": "claude -p --bare --tools \"\" --strict-mcp-config --no-session-persistence --system-prompt \"Synthetic isolation probe system prompt.\" --output-format stream-json --verbose --model haiku --max-turns 1 (stdin: \"Isolation probe. Reply: OK\")",
+      "exit_code": 1,
+      "observation": "system/init before status=requesting: tools=[], mcp_servers=[], apiKeySource=none; then the same authentication error",
+      "sanitization": "init cwd/original_cwd replaced by /private/isolated-cwd",
+      "sha256": "2088da165e54921b20da021d55911dd07a77ce4b452ddd2942f644b2b67c0347"
+    },
+    "real-probe-tools-read.jsonl": {
+      "kind": "real",
+      "command": "claude -p --bare --tools Read --strict-mcp-config --no-session-persistence --system-prompt \"Synthetic isolation probe system prompt.\" --output-format stream-json --verbose --model haiku --max-turns 1 (stdin: \"Isolation probe. Reply: OK\")",
+      "exit_code": 1,
+      "observation": "positive control: system/init tools=[\"Read\"], mcp_servers=[]",
+      "sanitization": "init cwd/original_cwd replaced by /private/isolated-cwd",
+      "sha256": "a88e1ad29eaca63f61d98cfb76121e6395ac1ac32e8cdea325a457419b1bfa95"
+    },
+    "synthetic-result-success.json": {
+      "kind": "synthetic",
+      "derived_from": "real-result-bare-auth-error.json",
+      "changed_fields": [
+        "is_error",
+        "subtype",
+        "terminal_reason",
+        "stop_reason",
+        "duration_ms",
+        "duration_api_ms",
+        "total_cost_usd",
+        "result",
+        "structured_output",
+        "usage counts",
+        "modelUsage"
+      ],
+      "warning": "success, structured_output and modelUsage shape were not observed with this CLI here (authentication blocked under --bare); values are invented test data",
+      "sha256": "0957f22404c9a685416f9b72e9039502dbd405825dc00a524d13753b0ca1e88e"
+    },
+    "synthetic-result-rate-limit.json": {
+      "kind": "synthetic",
+      "derived_from": "real-result-bare-auth-error.json",
+      "changed_fields": [
+        "api_error_status",
+        "result"
+      ],
+      "warning": "a real rate-limit/overload result was not observed; message text is invented",
+      "sha256": "d13ad48f0938dfcf0e73b41bd716d97a9f5c4420c12cdba82371ae139e644139"
+    }
+  }
+}
