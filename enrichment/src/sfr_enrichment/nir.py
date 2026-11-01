@@ -920,6 +920,19 @@ def import_native(root: Path, request_id: str, native_dir: Path, record_id: str)
         raise ValueError("Native requested configuration отличается от протокола")
     if finished.get("exit_code") != 0 or receipt.get("tool_calls") != 0:
         raise ValueError("Нет успешного cache-only native результата; используйте technical_skip")
+    execution_provenance = receipt.get("execution_provenance")
+    if execution_provenance is not None and (
+        started.get("execution_provenance") != execution_provenance
+        or any(
+            sha(native_dir / filename) != execution_provenance.get(key)
+            for filename, key in (
+                ("execution-amendment.json", "execution_amendment_sha256"),
+                ("isolated-model-catalog.json", "isolated_catalog_sha256"),
+                ("effective-features.txt", "effective_features_sha256"),
+            )
+        )
+    ):
+        raise ValueError("Native execution amendment provenance mismatch")
     if sha(native_dir / "events.jsonl") != receipt.get("events_sha256"):
         raise ValueError("Native events hash не совпадает")
     events = [
@@ -1008,7 +1021,14 @@ def import_native(root: Path, request_id: str, native_dir: Path, record_id: str)
     )
     optional_names = [
         name
-        for name in ("command.json", "requested-config.json", "stderr.log")
+        for name in (
+            "command.json",
+            "requested-config.json",
+            "stderr.log",
+            "execution-amendment.json",
+            "isolated-model-catalog.json",
+            "effective-features.txt",
+        )
         if (native_dir / name).is_file()
     ]
     optional_names.extend(
