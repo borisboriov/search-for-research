@@ -12,7 +12,7 @@ from test_native_claude import FIXTURES, ClaudeFakes, FakeProcess, fixture_resul
 
 from sfr_enrichment import native_claude, nir_execute
 from sfr_enrichment.common import read, sha, write_new
-from sfr_enrichment.nir import freeze, import_native, prepare_model, prepared_request
+from sfr_enrichment.nir import analyze, freeze, import_native, prepare_model, prepared_request
 
 
 class Responder(ClaudeFakes):
@@ -210,6 +210,89 @@ class NirClaudeTests(unittest.TestCase):
                 self.assertRaisesRegex(ValueError, "транспорт|effort"),
             ):
                 self.freeze_root(name, self.protocol | change)
+
+    def executed(self, request_id: str, directory: Path) -> None:
+        request = prepared_request(self.root, request_id)
+        cwd = self.root / "isolated-cwd"
+        cwd.mkdir(exist_ok=True)
+        with self.fakes.active(self.binary):
+            native_claude.execute(
+                directory,
+                (self.root / request["prompt_path"]).read_text(),
+                read(self.root / request["output_schema_path"]),
+                cwd,
+                system_prompt=(self.root / request["system_prompt_path"]).read_text(),
+                isolation_proof_dir=self.proof().parent,
+                deadline_epoch=time.time() + 3600,
+                **request["claude_kwargs"],
+            )
+
+    def test_server_tool_use_signs_are_not_a_substantive_answer(self) -> None:
+        base = json.loads(fixture_result("synthetic-result-success.json"))
+        answer = {"label": "supported", "reason": "Synthetic fixture only", "source_ids": ["s1"]}
+        cases = (
+            (
+                "c1-B",
+                {
+                    "usage": base["usage"]
+                    | {"server_tool_use": {"web_search_requests": 1, "web_fetch_requests": 0}}
+                },
+                "server_tool_use.web_search_requests=1",
+            ),
+            (
+                "c2-B",
+                {
+                    "usage": base["usage"]
+                    | {"server_tool_use": {"web_search_requests": 0, "web_fetch_requests": 2}}
+                },
+                "server_tool_use.web_fetch_requests=2",
+            ),
+            (
+                "c3-B",
+                {
+                    "modelUsage": {
+                        "claude-haiku-5-5": base["modelUsage"]["claude-haiku-5-5"]
+                        | {"webSearchRequests": 3}
+                    }
+                },
+                "webSearchRequests=3",
+            ),
+        )
+        for request_id, change, message in cases:
+            with self.subTest(request_id=request_id):
+                self.fakes.results.append(
+                    fixture_result(
+                        "synthetic-result-success.json", structured_output=answer, **change
+                    )
+                )
+                directory = self.tmp / f"native-{request_id}"
+                self.executed(request_id, directory)
+                with self.assertRaisesRegex(ValueError, message + ".*technical_skip"):
+                    import_native(self.root, request_id, directory, f"tool-{request_id}")
+                self.assertFalse((self.root / "model-records" / "B").exists())
+
+    def test_cost_basis_reaches_envelope_and_analysis_as_estimate(self) -> None:
+        directory = self.tmp / "native-c1-C"
+        self.executed("c1-C", directory)
+        imported = read(import_native(self.root, "c1-C", directory, "native-c1-C"))
+        self.assertIn("not an invoice", imported["results"][0]["cost_basis"])
+        output = self.tmp / "analysis" / "analysis.json"
+        analyze(self.root, output, resamples=10)
+        cost = read(output)["resources"]["C"]["cost_usd"]
+        self.assertEqual(cost["basis"], "estimate")
+        self.assertEqual(cost["known_sum"], 0.0123)
+        self.assertIsNone(read(output)["resources"]["B"]["cost_usd"]["basis"])
+
+    def test_probe_refuses_stopped_root_and_output_inside_git(self) -> None:
+        repository = self.tmp / "checkout"
+        (repository / ".git").mkdir(parents=True)
+        with self.assertRaisesRegex(ValueError, "вне git"):
+            nir_execute.probe(self.root, self.order()[0], repository / "proof")
+        self.assertFalse((repository / "proof").exists())
+        write_new(self.root / "stopped.json", {"reason": "synthetic stop"})
+        with self.assertRaisesRegex(ValueError, "STOP"):
+            nir_execute.probe(self.root, self.order()[0], self.tmp / "stopped-proof")
+        self.assertFalse((self.tmp / "stopped-proof").exists())
 
     def test_import_rechecks_saved_init_and_normalizes_claude_usage(self) -> None:
         request = prepared_request(self.root, "c1-C")

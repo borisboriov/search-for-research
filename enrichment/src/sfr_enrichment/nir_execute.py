@@ -318,12 +318,16 @@ def probe(root: Path, request_id: str, out: Path) -> Path:
     permission; the resulting ``isolation-proof.json`` SHA goes into authorization.
     """
     root = root.resolve()
+    ensure_not_stopped(root)
     request = nir.prepared_request(root, request_id)
     if request.get("transport") != native_claude.TRANSPORT:
         raise ValueError("Probe applies only to claude_cli prepared requests")
     out = out.resolve()
+    if any((parent / ".git").exists() for parent in (out, *out.parents)):
+        raise ValueError("Probe --out должен находиться вне git: proof содержит пути и потоки CLI")
     if out.exists():
         raise FileExistsError(out)
+    nir.private_output(out)
     kwargs = request["claude_kwargs"]
     return native_claude.run_isolation_check(
         out,

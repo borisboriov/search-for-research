@@ -1186,6 +1186,30 @@ def import_claude_native(
         raise ValueError("Нет успешного Claude результата; используйте technical_skip")
     usage = result.get("usage")
     usage = usage if isinstance(usage, dict) else {}
+    # Any server-side tool use (search, fetch, ...) makes the answer non-substantive.
+    server = usage.get("server_tool_use", {})
+    model_entries = result.get("modelUsage")
+    tool_signs = (
+        [f"usage.server_tool_use={server!r}"]
+        if not isinstance(server, dict)
+        else [
+            f"usage.server_tool_use.{key}={value!r}"
+            for key, value in sorted(server.items())
+            if value not in (0, None)
+        ]
+    ) + [
+        f"modelUsage.{name}.{key}={entry[key]!r}"
+        for name, entry in sorted((model_entries or {}).items())
+        if isinstance(entry, dict)
+        for key in ("webSearchRequests", "webFetchRequests")
+        if entry.get(key) not in (0, None)
+    ]
+    if tool_signs:
+        raise ValueError(
+            "Claude результат содержит признаки tool use ("
+            + ", ".join(tool_signs)
+            + "); используйте technical_skip"
+        )
     tokens = {
         key: usage.get(key)
         for key in (
@@ -1292,6 +1316,8 @@ def import_claude_native(
                 if type(tokens["output_tokens"]) is int
                 else None,
                 "cost_usd": receipt.get("cost_usd"),
+                # Client estimate at API prices under a subscription, not an invoice.
+                "cost_basis": receipt.get("cost_basis"),
                 "observed_model": receipt.get("model"),
                 "observed_effort": None,
                 "receipt": {
@@ -1538,6 +1564,12 @@ def analyze(root: Path, output: Path, *, seed: int = 154, resamples: int = 2000)
                 for field in ("input_tokens", "output_tokens", "cost_usd", "latency_seconds")
             },
         }
+        priced = [r for r in results if r["cost_usd"] is not None]
+        bases = Counter(str(r.get("cost_basis")) for r in priced)
+        resources[arm]["cost_usd"].update(
+            basis=None if not priced else "invoice" if set(bases) == {"invoice"} else "estimate",
+            basis_counts=dict(sorted(bases.items())),
+        )
     rows = []
     for case in cases:
         row = {
